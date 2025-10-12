@@ -9,7 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -18,60 +17,88 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ServerValue
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
-import com.google.gson.Gson
+import java.text.SimpleDateFormat
+import java.util.*
 
 class RequestsFragment : Fragment() {
 
     private lateinit var requestsRecyclerView: RecyclerView
+    private lateinit var requestsAdapter: RequestsAdapter
+    private val requestsList = mutableListOf<RequestItem>()
 
     private lateinit var auth: FirebaseAuth
     private lateinit var database: FirebaseDatabase
+    private val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
-    private val USER_DETAILS_PREFS = "user_details_prefs"
-    private val KEY_USER_OBJECT = "user_object_json"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_requests, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Initialize Firebase
         auth = Firebase.auth
         database = Firebase.database
 
         requestsRecyclerView = view.findViewById(R.id.requests_recycler_view)
 
         requestsRecyclerView.layoutManager = LinearLayoutManager(context)
-
-        // MOCK DATA: In a complete app, you would fetch all requests linked to the current user's UID
-        // from the "BloodRequests" node and map them to RequestItem objects.
-        val mockRequests = listOf(
-            RequestItem("Req-001", "July 15, 2024", "Dhaka Medical College Hospital", "Completed", null),
-            RequestItem("Req-002", "June 20, 2024", "Kurmitola General Hospital", "Cancelled", null),
-            // This item simulates an accepted request where DonorDetails are saved in the database
-            RequestItem("Req-003", "May 5, 2024", "Jashore Sodor Hospital", "Accepted", DonorDetails("Azminur Rahman", "+8801234567890", "O+")),
-            RequestItem("Req-004", "May 5, 2024", "Jashore Sodor Hospital", "Pending", null)
-        )
-
-        requestsRecyclerView.adapter = RequestsAdapter(mockRequests) { requestItem ->
-            // Handle item click to show donor details if available
+        requestsAdapter = RequestsAdapter(requestsList) { requestItem ->
+            // Show donor details dialog only if status is Accepted and donor is assigned
             if (requestItem.status == "Accepted" && requestItem.donor != null) {
                 showDonorDetailsDialog(requestItem.requestId, requestItem.donor)
             } else {
                 Toast.makeText(requireContext(), "Status: ${requestItem.status}", Toast.LENGTH_SHORT).show()
             }
         }
+        requestsRecyclerView.adapter = requestsAdapter
+
+        fetchUserRequests()
     }
 
-    // UPDATED: Dialog now uses requestId for status updates
+    private fun fetchUserRequests() {
+        val currentUid = auth.currentUser?.uid ?: return
+
+        database.getReference("BloodRequests")
+            .orderByChild("requesterUid").equalTo(currentUid)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    requestsList.clear()
+                    for (requestSnapshot in snapshot.children) {
+                        val request = requestSnapshot.getValue(BloodRequest::class.java)
+                        if (request != null) {
+                            val dateString = request.timestamp?.let { dateFormatter.format(Date(it)) } ?: "N/A"
+
+                            val requestItem = RequestItem(
+                                requestId = request.requestId ?: "",
+                                date = dateString,
+                                hospital = request.hospitalName ?: "Unknown Hospital",
+                                status = request.status ?: "Unknown",
+                                donor = request.donorDetails
+                            )
+                            requestsList.add(requestItem)
+                        }
+                    }
+                    requestsList.sortByDescending { it.requestId }
+                    requestsAdapter.notifyDataSetChanged()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Toast.makeText(context, "Failed to load requests: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            })
+    }
+
     private fun showDonorDetailsDialog(requestId: String, donor: DonorDetails) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_donor_details, null)
         val builder = AlertDialog.Builder(context)
@@ -98,19 +125,18 @@ class RequestsFragment : Fragment() {
         }
 
         cancelButton.setOnClickListener {
-            updateRequestStatus(requestId, "Cancelled by Recipient") // Recipient cancels
+            updateRequestStatus(requestId, "Cancelled by Recipient")
             alertDialog.dismiss()
         }
 
         completeButton.setOnClickListener {
-            updateRequestStatus(requestId, "Completed") // Recipient marks as completed
+            updateRequestStatus(requestId, "Completed")
             alertDialog.dismiss()
         }
 
         alertDialog.show()
     }
 
-    // NEW: Function to update the request status in Firebase
     private fun updateRequestStatus(requestId: String?, newStatus: String) {
         if (requestId.isNullOrEmpty()) {
             Toast.makeText(context, "Cannot update request: ID not found.", Toast.LENGTH_SHORT).show()
@@ -121,50 +147,33 @@ class RequestsFragment : Fragment() {
             "status" to newStatus
         )
 
-        database.getReference("BloodRequests").child(requestId).updateChildren(updates)
-            .addOnSuccessListener {
-                Toast.makeText(context, "Request status updated to: $newStatus", Toast.LENGTH_SHORT).show()
-                // In a real app, you would manually trigger a list reload here (e.g., call a ViewModel method)
-            }
-            .addOnFailureListener {
-                Toast.makeText(context, "Failed to update status: ${it.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    /**
-     * SIMULATED DONOR ACCEPTANCE LOGIC: This method demonstrates how a DONOR would save their details.
-     * This logic would typically be triggered by an 'Accept' button in the Donor's Dashboard or IncomingRequests view.
-     */
-    fun assignDonorToRequest(requestId: String, donor: User) {
-        val donorDetails = DonorDetails(donor.fullName, donor.phoneNumber, donor.bloodGroup)
-
-        val updates = mapOf<String, Any>(
-            "status" to "Accepted",
-            "assignedDonorUid" to donor.uid,
-            "donorDetails" to donorDetails
-        )
-
-        database.getReference("BloodRequests").child(requestId).updateChildren(updates)
-            .addOnSuccessListener {
-                Toast.makeText(context, "Request $requestId accepted! Requester notified.", Toast.LENGTH_LONG).show()
-                // The database change here would trigger the Cloud Function
-                // to send the notification to the Requester.
-            }
-            .addOnFailureListener {
-                Toast.makeText(context, "Failed to accept request: ${it.message}", Toast.LENGTH_LONG).show()
-            }
+        if (newStatus == "Completed" || newStatus == "Cancelled by Recipient") {
+            val completionUpdates = updates.toMutableMap()
+            completionUpdates["assignedDonorUid"] = ServerValue.TIMESTAMP // Firebase null equivalent
+            completionUpdates["donorDetails"] = ServerValue.TIMESTAMP // Firebase null equivalent
+            database.getReference("BloodRequests").child(requestId).updateChildren(completionUpdates)
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Request status updated to: $newStatus", Toast.LENGTH_LONG).show()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(context, "Failed to update status: ${it.message}", Toast.LENGTH_LONG).show()
+                }
+        } else {
+            database.getReference("BloodRequests").child(requestId).updateChildren(updates)
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Request status updated to: $newStatus", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(context, "Failed to update status: ${it.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
     }
 }
 
 
-// UPDATED DATA MODEL: Now includes requestId to uniquely identify the request in the database
-data class RequestItem(val requestId: String, val date: String, val hospital: String, val status: String, val donor: DonorDetails?)
-data class DonorDetails(val name: String, val phone: String, val bloodGroup: String)
-
-
 class RequestsAdapter(private val requests: List<RequestItem>, private val onItemClick: (RequestItem) -> Unit) :
     RecyclerView.Adapter<RequestsAdapter.RequestViewHolder>() {
-    // ... (Adapter remains the same, using the updated RequestItem model)
+
     class RequestViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val date: TextView = view.findViewById(R.id.request_date)
         val hospital: TextView = view.findViewById(R.id.request_hospital)
@@ -182,6 +191,14 @@ class RequestsAdapter(private val requests: List<RequestItem>, private val onIte
         holder.date.text = request.date
         holder.hospital.text = request.hospital
         holder.status.text = request.status
+
+        val color = when (request.status) {
+            "Completed" -> holder.itemView.context.getColor(R.color.green_status)
+            "Cancelled by Recipient" -> holder.itemView.context.getColor(R.color.red_status)
+            "Accepted" -> holder.itemView.context.getColor(R.color.blue_button)
+            else -> holder.itemView.context.getColor(R.color.black)
+        }
+        holder.status.setTextColor(color)
 
         holder.itemView.setOnClickListener {
             onItemClick(request)

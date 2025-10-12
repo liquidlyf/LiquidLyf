@@ -3,8 +3,8 @@ package com.azminur.liquidlyf
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.media.Image
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +18,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
+import com.google.firebase.database.*
+import com.google.gson.Gson
 
 class DashboardFragment : Fragment() {
 
@@ -29,16 +34,27 @@ class DashboardFragment : Fragment() {
     private lateinit var recentActivityRecyclerView: RecyclerView
     private lateinit var requestMaterialButton: MaterialButton
 
+    private lateinit var auth: FirebaseAuth
+    private lateinit var database: FirebaseDatabase
+    private var currentUser: User? = null
+    private val incomingRequestsList = mutableListOf<IncomingRequest>()
+    private lateinit var incomingRequestsAdapter: IncomingRequestsAdapter
+
+    private val USER_DETAILS_PREFS = "user_details_prefs"
+    private val KEY_USER_OBJECT = "user_object_json"
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_dashboard, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        auth = Firebase.auth
+        database = Firebase.database
 
         profileImage = view.findViewById(R.id.profile_image)
         notification = view.findViewById(R.id.notification_bell)
@@ -48,76 +64,187 @@ class DashboardFragment : Fragment() {
         recentActivityRecyclerView = view.findViewById(R.id.recent_activity_recycler_view)
         requestMaterialButton = view.findViewById(R.id.request_blood_fab)
 
+        incomingRequestsAdapter = IncomingRequestsAdapter(requireContext(), incomingRequestsList, ::showRequestDetailsDialog)
+        incomingRequestsRecyclerView.layoutManager = LinearLayoutManager(context)
+        incomingRequestsRecyclerView.adapter = incomingRequestsAdapter
+
+        recentActivityRecyclerView.layoutManager = LinearLayoutManager(context)
+        recentActivityRecyclerView.adapter = RecentActivityAdapter(emptyList())
+
         profileImage.setOnClickListener {
             val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation_bar)
             bottomNav.selectedItemId = R.id.nav_profile
         }
-
-        notification.setOnClickListener {
-            Toast.makeText(requireContext(), "Notification clicked!", Toast.LENGTH_SHORT).show()
-        }
-
-        setupIncomingRequestsRecyclerView()
-        setupRecentActivityRecyclerView()
-        setupAvailabilitySwitch()
-
         requestMaterialButton.setOnClickListener {
             val intent = Intent(requireActivity(), RequestBloodActivity::class.java)
             startActivity(intent)
         }
+
+        loadAndSetupUserAvailability()
     }
 
-    private fun setupAvailabilitySwitch() {
-        if (availabilitySwitch.isChecked) {
-            availabilityText.text = "Ready to donate (Available)"
+    private fun loadAndSetupUserAvailability() {
+        val userJson = requireActivity().getSharedPreferences(USER_DETAILS_PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_USER_OBJECT, null)
+
+        if (userJson != null) {
+            currentUser = Gson().fromJson(userJson, User::class.java)
+        }
+
+        val userRef = auth.currentUser?.uid?.let { database.getReference("Users").child(it) }
+
+        if (userRef != null) {
+            userRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val isAvailable = snapshot.child("isAvailable").getValue(Boolean::class.java) ?: false
+                    availabilitySwitch.isChecked = isAvailable
+                    updateAvailabilityText(isAvailable)
+
+                    if (isAvailable) {
+                        fetchIncomingRequests(currentUser?.bloodGroup ?: "")
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Dashboard", "Failed to read availability.", error.toException())
+                }
+            })
+
+            availabilitySwitch.setOnCheckedChangeListener { _, isChecked ->
+                userRef.child("isAvailable").setValue(isChecked)
+                    .addOnSuccessListener {
+                        updateAvailabilityText(isChecked)
+                        currentUser = currentUser?.copy(isAvailable = isChecked)
+
+                        if (isChecked) {
+                            fetchIncomingRequests(currentUser?.bloodGroup ?: "")
+                        } else {
+                            incomingRequestsList.clear()
+                            incomingRequestsAdapter.notifyDataSetChanged()
+                        }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(context, "Failed to update availability.", Toast.LENGTH_SHORT).show()
+                        availabilitySwitch.isChecked = !isChecked // Revert UI on failure
+                    }
+            }
+        }
+    }
+
+    private fun updateAvailabilityText(isAvailable: Boolean) {
+        if (isAvailable) {
+            availabilityText.text = getString(R.string.ready_to_donate_available)
             availabilityText.setTextColor(resources.getColor(R.color.green_status, null))
         } else {
             availabilityText.text = "Not Ready to donate (Unavailable)"
             availabilityText.setTextColor(resources.getColor(R.color.red_status, null))
         }
+    }
 
-        availabilitySwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                availabilityText.setTextColor(resources.getColor(R.color.green_status, null))
-                availabilityText.text = "Ready to donate (Available)"
-                Toast.makeText(requireContext(), "Availability set to Available", Toast.LENGTH_SHORT).show()
-            } else {
-                availabilityText.setTextColor(resources.getColor(R.color.red_status, null))
-                availabilityText.text = "Not Ready to donate (Unavailable)"
-                Toast.makeText(requireContext(), "Availability set to Not Available", Toast.LENGTH_SHORT).show()
-            }
+    private fun fetchIncomingRequests(bloodGroup: String) {
+        if (bloodGroup.isBlank() || auth.currentUser?.uid == null) {
+            incomingRequestsList.clear()
+            incomingRequestsAdapter.notifyDataSetChanged()
+            return
         }
+
+        database.getReference("BloodRequests")
+            .orderByChild("bloodGroup").equalTo(bloodGroup)
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    incomingRequestsList.clear()
+
+                    for (requestSnapshot in snapshot.children) {
+                        val request = requestSnapshot.getValue(BloodRequest::class.java)
+
+                        if (request != null && request.status == "Pending" && request.requesterUid != auth.currentUser!!.uid) {
+                            val incomingRequest = IncomingRequest(
+                                requestId = request.requestId ?: "",
+                                bloodGroup = request.bloodGroup ?: "",
+                                distance = request.hospitalName ?: "Unknown Location"
+                            )
+                            incomingRequestsList.add(incomingRequest)
+                        }
+                    }
+                    incomingRequestsAdapter.notifyDataSetChanged()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Dashboard", "Failed to fetch requests.", error.toException())
+                    incomingRequestsList.clear()
+                    incomingRequestsAdapter.notifyDataSetChanged()
+                }
+            })
     }
 
-    private fun setupIncomingRequestsRecyclerView() {
-        val incomingRequests = listOf(
-            IncomingRequest("Urgent: Blood Type O-", "10 miles away"),
-            IncomingRequest("Urgent: Blood Type A+", "12 miles away")
-        )
-        incomingRequestsRecyclerView.layoutManager = LinearLayoutManager(context)
-        incomingRequestsRecyclerView.adapter = IncomingRequestsAdapter(requireContext(), incomingRequests)
+    private fun showRequestDetailsDialog(request: IncomingRequest) {
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_donor_details, null)
+        val builder = AlertDialog.Builder(context).setView(dialogView)
+        val alertDialog = builder.create()
+
+        dialogView.findViewById<Button>(R.id.cancel_button)?.visibility = View.GONE
+        dialogView.findViewById<Button>(R.id.complete_button)?.visibility = View.GONE
+
+        val dialogTitle = dialogView.findViewById<TextView>(R.id.dialog_title)
+        val donorNameTextView = dialogView.findViewById<TextView>(R.id.donor_name)
+        val donorPhoneTextView = dialogView.findViewById<TextView>(R.id.donor_phone)
+        val donorBloodGroupTextView = dialogView.findViewById<TextView>(R.id.donor_blood_group)
+        val callButton = dialogView.findViewById<Button>(R.id.call_button)
+
+        dialogTitle.text = "Blood Request Details"
+        donorNameTextView.text = "Blood Group: ${request.bloodGroup}"
+        donorPhoneTextView.text = "Location: ${request.distance}"
+        donorBloodGroupTextView.text = "Status: Pending"
+
+        callButton.text = "ACCEPT"
+        callButton.setBackgroundColor(context?.getColor(R.color.green_status) ?: 0)
+
+        callButton.setOnClickListener {
+            val currentDonor = currentUser
+            if (currentDonor != null && request.requestId.isNotBlank()) {
+                assignDonorToRequest(request.requestId, currentDonor)
+            } else {
+                Toast.makeText(context, "Cannot accept: User/Request details missing.", Toast.LENGTH_SHORT).show()
+            }
+            alertDialog.dismiss()
+        }
+
+        builder.setNegativeButton("Reject") { dialog, _ ->
+            Toast.makeText(context, "Request rejected.", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+
+        alertDialog.show()
     }
 
-    private fun setupRecentActivityRecyclerView() {
-        val recentActivities = listOf(
-            RecentActivity("Blood Donation", "Donated to local hospital", "2 weeks ago", R.drawable.ic_check_circle),
-            RecentActivity("Blood Request", "Request from local hospital", "1 month ago", R.drawable.ic_request_blood)
+    private fun assignDonorToRequest(requestId: String, donor: User) {
+        val donorDetails = DonorDetails(donor.fullName, donor.phoneNumber, donor.bloodGroup)
+
+        val updates = mapOf<String, Any>(
+            "status" to "Accepted",
+            "assignedDonorUid" to donor.uid,
+            "donorDetails" to donorDetails
         )
-        recentActivityRecyclerView.layoutManager = LinearLayoutManager(context)
-        recentActivityRecyclerView.adapter = RecentActivityAdapter(recentActivities)
+
+        database.getReference("BloodRequests").child(requestId).updateChildren(updates)
+            .addOnSuccessListener {
+                Toast.makeText(context, "Request accepted! Requester will be notified.", Toast.LENGTH_LONG).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Failed to accept request: ${it.message}", Toast.LENGTH_LONG).show()
+            }
     }
+
+    private fun setupRecentActivityRecyclerView() {}
+
 }
 
-// Data Classes
-data class IncomingRequest(val title: String, val distance: String)
-data class RecentActivity(val title: String, val subtitle: String, val time: String, val iconResId: Int)
-
-// Adapters
-class IncomingRequestsAdapter(private val context: Context, private val requests: List<IncomingRequest>) :
-    RecyclerView.Adapter<IncomingRequestsAdapter.RequestViewHolder>() {
+class IncomingRequestsAdapter(
+    private val context: Context,
+    private val requests: List<IncomingRequest>,
+    private val onItemClick: (IncomingRequest) -> Unit
+) : RecyclerView.Adapter<IncomingRequestsAdapter.RequestViewHolder>() {
 
     class RequestViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val profileImage: ImageView = view.findViewById(R.id.request_profile_image)
         val requestInfo: TextView = view.findViewById(R.id.request_info_text)
         val actionButton: Button = view.findViewById(R.id.action_button)
     }
@@ -130,23 +257,11 @@ class IncomingRequestsAdapter(private val context: Context, private val requests
 
     override fun onBindViewHolder(holder: RequestViewHolder, position: Int) {
         val request = requests[position]
-        holder.requestInfo.text = "${request.title}\n${request.distance}"
+        holder.requestInfo.text = "Required: ${request.bloodGroup}\nLocation: ${request.distance}"
 
+        holder.actionButton.text = "Action"
         holder.actionButton.setOnClickListener {
-            // Show the request details modal window
-            val dialogBuilder = AlertDialog.Builder(context)
-            dialogBuilder.setTitle("Request Details")
-            dialogBuilder.setMessage("Details for ${request.title}")
-            dialogBuilder.setPositiveButton("Accept") { dialog, _ ->
-                Toast.makeText(context, "Accepted request for ${request.title}", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            }
-            dialogBuilder.setNegativeButton("Reject") { dialog, _ ->
-                Toast.makeText(context, "Rejected request for ${request.title}", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            }
-            val dialog = dialogBuilder.create()
-            dialog.show()
+            onItemClick(request)
         }
     }
 

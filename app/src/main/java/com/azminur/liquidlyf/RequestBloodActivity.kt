@@ -54,7 +54,6 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_request_blood)
 
-        // Initialize Firebase
         auth = Firebase.auth
         database = Firebase.database
 
@@ -128,7 +127,6 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val currentUid = auth.currentUser?.uid
 
-        // 1. Validation
         if (currentUid == null) {
             Toast.makeText(this, "Authentication failed. Please log in again.", Toast.LENGTH_LONG).show()
             return
@@ -144,7 +142,6 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
 
         progressBar.visibility = View.VISIBLE
 
-        // 2. Create Request Object
         val newRequest = BloodRequest(
             requesterUid = currentUid,
             patientName = patientName,
@@ -155,7 +152,6 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
             status = "Pending"
         )
 
-        // 3. Push to Firebase
         val requestsRef = database.getReference("BloodRequests")
         val newRequestRef = requestsRef.push()
         newRequest.requestId = newRequestRef.key
@@ -182,7 +178,7 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-        val defaultLocation = LatLng(23.8103, 90.4125) // Coordinates for Dhaka
+        val defaultLocation = LatLng(23.8103, 90.4125)
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
     }
 
@@ -225,10 +221,8 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 }
 
-// Data class for a search result
 data class SearchResult(val name: String, val location: LatLng)
 
-// Adapter for the search results RecyclerView (unchanged)
 class SearchResultsAdapter(
     private val results: List<SearchResult>,
     private val onResultClick: (SearchResult) -> Unit
@@ -252,18 +246,3 @@ class SearchResultsAdapter(
 
     override fun getItemCount() = results.size
 }
-
-// NEW DATA CLASS: Represents a Blood Request saved in the database
-data class BloodRequest(
-    var requestId: String? = null,
-    var requesterUid: String? = null,
-    var patientName: String? = null,
-    var hospitalName: String? = null,
-    var hospitalLocation: String? = null,
-    var bloodGroup: String? = null,
-    var quantity: String? = null,
-    var status: String = "Pending",
-    var assignedDonorUid: String? = null,
-    var donorDetails: DonorDetails? = null,
-    var timestamp: Long = System.currentTimeMillis()
-)
