@@ -2,6 +2,7 @@ package com.azminur.liquidlyf
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Patterns
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -88,9 +89,24 @@ class RegisterActivity : AppCompatActivity() {
         val pass = password.text.toString()
         val confirmPass = confirmPassword.text.toString()
 
-        // Basic validation
-        if (emailAddress.isEmpty() || pass.isEmpty() || pass != confirmPass || phone.isEmpty() || name.isEmpty()) {
-            Toast.makeText(this, "Please fill all required fields and ensure passwords match.", Toast.LENGTH_LONG).show()
+        if (name.isEmpty() || phone.isEmpty() || emailAddress.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
+            Toast.makeText(this, "Please fill all required fields.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(emailAddress).matches()) {
+            Toast.makeText(this, "Please enter a valid email address.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        if (pass != confirmPass) {
+            Toast.makeText(this, "Passwords do not match.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        if (pass.length < 6) {
+            Toast.makeText(this, "Password must be at least 6 characters long.", Toast.LENGTH_LONG)
+                .show()
             return
         }
 
@@ -101,18 +117,20 @@ class RegisterActivity : AppCompatActivity() {
 
         progressBar.visibility = View.VISIBLE
 
-        // 1. Create user in Firebase Authentication (Email/Password)
         auth.createUserWithEmailAndPassword(emailAddress, pass)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     val firebaseUser = auth.currentUser
                     val uid = firebaseUser?.uid ?: run {
                         progressBar.visibility = View.GONE
-                        Toast.makeText(this, "Authentication succeeded but UID is null.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this,
+                            "Authentication succeeded but UID is null.",
+                            Toast.LENGTH_LONG
+                        ).show()
                         return@addOnCompleteListener
                     }
 
-                    // 2. Save additional user data to Realtime Database using UID
                     val user = User(
                         uid = uid,
                         fullName = name,
@@ -123,95 +141,45 @@ class RegisterActivity : AppCompatActivity() {
 
                     database.getReference("Users").child(uid).setValue(user)
                         .addOnSuccessListener {
-                            // 3. Send email verification after successful database save
                             firebaseUser.sendEmailVerification()
                                 .addOnCompleteListener { emailTask ->
                                     progressBar.visibility = View.GONE
                                     if (emailTask.isSuccessful) {
-                                        Toast.makeText(this, "Registration successful! Please check your email to verify your account.", Toast.LENGTH_LONG).show()
-
-                                        // Navigate to LoginActivity
-                                        val intent = Intent(this, LoginActivity::class.java)
-                                        startActivity(intent)
-                                        finish()
+                                        Toast.makeText(
+                                            this,
+                                            "Registration successful! Please check your email to verify your account.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
                                     } else {
-                                        Toast.makeText(this, "Registration successful, but verification email failed to send: ${emailTask.exception?.message}", Toast.LENGTH_LONG).show()
-                                        // Navigate to LoginActivity even if email failed, user can retry from login
-                                        val intent = Intent(this, LoginActivity::class.java)
-                                        startActivity(intent)
-                                        finish()
+                                        Toast.makeText(
+                                            this,
+                                            "Registration successful, but verification email failed to send: ${emailTask.exception?.message}",
+                                            Toast.LENGTH_LONG
+                                        ).show()
                                     }
+                                    val intent = Intent(this, RegisterVerifyActivity::class.java)
+                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                    startActivity(intent)
+                                    finish()
                                 }
                         }
                         .addOnFailureListener {
                             progressBar.visibility = View.GONE
-                            Toast.makeText(this, "Failed to save user data: ${it.message}", Toast.LENGTH_LONG).show()
-                            // Delete the Firebase Auth user if DB save fails
+                            Toast.makeText(
+                                this,
+                                "Failed to save user data: ${it.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
                             firebaseUser?.delete()
                         }
                 } else {
-                    // If sign in fails, display a message to the user.
                     progressBar.visibility = View.GONE
-                    Toast.makeText(this, "Registration failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        "Registration failed: ${task.exception?.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
     }
-
-//    private fun registerUser() {
-//        val name = fullName.text.toString().trim()
-//        val phone = phoneNumber.text.toString().trim()
-//        val emailAddress = email.text.toString().trim()
-//        val bloodGroup = bloodGroupSpinner.selectedItem.toString()
-//        val pass = password.text.toString()
-//        val confirmPass = confirmPassword.text.toString()
-//
-//        if (emailAddress.isEmpty() || pass.isEmpty() || pass != confirmPass || phone.isEmpty() || name.isEmpty()) {
-//            Toast.makeText(this, "Please fill all required fields and ensure passwords match.", Toast.LENGTH_LONG).show()
-//            return
-//        }
-//
-//        if (bloodGroup == resources.getStringArray(R.array.blood_groups).first()) {
-//            Toast.makeText(this, "Please select a valid blood group.", Toast.LENGTH_LONG).show()
-//            return
-//        }
-//
-//        progressBar.visibility = View.VISIBLE
-//
-//        auth.createUserWithEmailAndPassword(emailAddress, pass)
-//            .addOnCompleteListener(this) { task ->
-//                if (task.isSuccessful) {
-//                    val firebaseUser = auth.currentUser
-//                    val uid = firebaseUser?.uid ?: run {
-//                        progressBar.visibility = View.GONE
-//                        Toast.makeText(this, "Authentication succeeded but UID is null.", Toast.LENGTH_LONG).show()
-//                        return@addOnCompleteListener
-//                    }
-//
-//                    val user = User(
-//                        uid = uid,
-//                        fullName = name,
-//                        phoneNumber = phone,
-//                        email = emailAddress,
-//                        bloodGroup = bloodGroup
-//                    )
-//
-//                    database.getReference("Users").child(uid).setValue(user)
-//                        .addOnSuccessListener {
-//                            progressBar.visibility = View.GONE
-//                            Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
-////                            val intent = Intent(this, RegisterVerifyActivity::class.java)
-////                            startActivity(intent)
-////                            finish()
-//                        }
-//                        .addOnFailureListener {
-//                            progressBar.visibility = View.GONE
-//                            Toast.makeText(this, "Failed to save user data: ${it.message}", Toast.LENGTH_LONG).show()
-//                            firebaseUser?.delete()
-//                        }
-//                } else {
-//                    progressBar.visibility = View.GONE
-//                    Toast.makeText(this, "Registration failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-//                }
-//            }
-//    }
 }

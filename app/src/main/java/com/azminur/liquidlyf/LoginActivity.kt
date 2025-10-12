@@ -38,7 +38,7 @@ class LoginActivity : AppCompatActivity() {
 //            insets
 //        }
 
-        emailInput = findViewById(R.id.phone_number_input)
+        emailInput = findViewById(R.id.email_input)
         password = findViewById(R.id.password_input)
         forgotPasswordLink = findViewById(R.id.forgot_password_link)
         loginButton = findViewById(R.id.login_button)
@@ -73,7 +73,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         forgotPasswordLink.setOnClickListener {
-            val intent = Intent(this, ForgotPasswordPhoneActivity::class.java)
+            val intent = Intent(this, ForgotPasswordActivity::class.java)
             startActivity(intent)
         }
 
