@@ -88,6 +88,8 @@ class SettingsFragment : Fragment() {
             Toast.makeText(requireContext(), "Logged out!", Toast.LENGTH_SHORT).show()
             val sharedPref = requireActivity().getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
             sharedPref.edit().putBoolean("is_logged_in", false).apply()
+            val userDetailsPref = requireActivity().getSharedPreferences("user_details_prefs", Context.MODE_PRIVATE)
+            userDetailsPref.edit().clear().apply()
             val intent = Intent(requireContext(), LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)

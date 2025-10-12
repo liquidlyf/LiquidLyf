@@ -16,6 +16,12 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.database
+import com.google.gson.Gson
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var emailInput: EditText
@@ -25,8 +31,12 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var rememberCheckbox: CheckBox
     private lateinit var progressBar: ProgressBar
     private lateinit var auth: FirebaseAuth
+    private lateinit var database: FirebaseDatabase
     private val PREFS_NAME = "login_prefs"
     private val KEY_CREDENTIAL = "saved_credential"
+    private val USER_DETAILS_PREFS = "user_details_prefs"
+    private val KEY_USER_OBJECT = "user_object_json"
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +55,7 @@ class LoginActivity : AppCompatActivity() {
         rememberCheckbox = findViewById(R.id.remember_checkbox)
         progressBar = findViewById(R.id.progress_bar)
         auth = Firebase.auth
+        database = Firebase.database
 
 
         val resetMessage = intent.getStringExtra("reset_message")
@@ -68,7 +79,12 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Call the new login method
+            if (rememberCheckbox.isChecked) {
+                val editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                editor.putString(KEY_CREDENTIAL, email)
+                editor.apply()
+            }
+
             loginUser(email, pass)
         }
 
@@ -85,11 +101,11 @@ class LoginActivity : AppCompatActivity() {
                 val credential = emailInput.text.toString()
                 editor.putString(KEY_CREDENTIAL, credential)
                 editor.apply()
-                Toast.makeText(this, "Email/Phone saved!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Email saved!", Toast.LENGTH_SHORT).show()
             } else {
                 editor.remove(KEY_CREDENTIAL)
                 editor.apply()
-                Toast.makeText(this, "Email/Phone removed!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Email removed!", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -99,64 +115,68 @@ class LoginActivity : AppCompatActivity() {
 
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
-                progressBar.visibility = View.GONE
                 if (task.isSuccessful) {
                     val user = auth.currentUser
+                    val uid = user?.uid
 
-                    // START: ADDED EMAIL VERIFICATION CHECK
-                    if (user != null && user.isEmailVerified) {
-                        Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()
-
-                        // Save login state
-                        val sharedPref = getSharedPreferences("auth_prefs", MODE_PRIVATE)
-                        sharedPref.edit()
-                            .putBoolean("is_logged_in", true)
-                            .apply()
-
-                        val intent = Intent(this, AfterLoginActivity::class.java)
-                        startActivity(intent)
-                        finish()
+                    if (user != null && user.isEmailVerified && uid != null) {
+                        fetchUserDetails(uid)
                     } else {
-                        // User is signed in but email is not verified
+                        progressBar.visibility = View.GONE
                         Toast.makeText(this, "Please verify your email address to log in.", Toast.LENGTH_LONG).show()
 
-                        // Optionally, sign out the user after the check and offer to resend the verification email
                         user?.sendEmailVerification()
                         Toast.makeText(this, "Verification email resent.", Toast.LENGTH_SHORT).show()
-
                         auth.signOut()
                     }
-                    // END: ADDED EMAIL VERIFICATION CHECK
 
                 } else {
-                    // If sign in fails, display a message to the user.
+                    progressBar.visibility = View.GONE
                     Toast.makeText(this, "Authentication failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }
     }
 
-//    private fun loginUser(email: String, password: String) {
-//        progressBar.visibility = View.VISIBLE
-//
-//        auth.signInWithEmailAndPassword(email, password)
-//            .addOnCompleteListener(this) { task ->
-//                progressBar.visibility = View.GONE
-//                if (task.isSuccessful) {
-//                    Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()
-//
-//                    // Save login state
-//                    val sharedPref = getSharedPreferences("auth_prefs", MODE_PRIVATE)
-//                    sharedPref.edit()
-//                        .putBoolean("is_logged_in", true)
-//                        .apply()
-//
-//                    val intent = Intent(this, AfterLoginActivity::class.java)
-//                    startActivity(intent)
-//                    finish() // Prevent going back to LoginActivity
-//                } else {
-//                    // If sign in fails, display a message to the user.
-//                    Toast.makeText(this, "Authentication failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
-//                }
-//            }
-//    }
+    private fun fetchUserDetails(uid: String) {
+        database.getReference("Users").child(uid).addListenerForSingleValueEvent(object :
+            ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                progressBar.visibility = View.GONE
+                if (snapshot.exists()) {
+                    val userDetails = snapshot.getValue(User::class.java)
+                    if (userDetails != null) {
+                        val sharedPref = getSharedPreferences(USER_DETAILS_PREFS, MODE_PRIVATE)
+                        val userJson = Gson().toJson(userDetails)
+                        sharedPref.edit().putString(KEY_USER_OBJECT, userJson).apply()
+
+                        // 2. Save login track (is_logged_in state)
+                        getSharedPreferences("auth_prefs", MODE_PRIVATE).edit()
+                            .putBoolean("is_logged_in", true)
+                            .apply()
+
+                        Toast.makeText(this@LoginActivity, "Login successful!", Toast.LENGTH_SHORT).show()
+
+                        // 3. Start AfterLoginActivity and save user UID in Intent
+                        val intent = Intent(this@LoginActivity, AfterLoginActivity::class.java).apply {
+                            putExtra("USER_UID", uid)
+                        }
+                        startActivity(intent)
+                        finish()
+                    } else {
+                        Toast.makeText(this@LoginActivity, "Login failed: User data is incomplete.", Toast.LENGTH_LONG).show()
+                        auth.signOut()
+                    }
+                } else {
+                    Toast.makeText(this@LoginActivity, "Login failed: User data not found.", Toast.LENGTH_LONG).show()
+                    auth.signOut()
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                progressBar.visibility = View.GONE
+                Toast.makeText(this@LoginActivity, "Failed to load user data: ${error.message}", Toast.LENGTH_LONG).show()
+                auth.signOut()
+            }
+        })
+    }
 }
