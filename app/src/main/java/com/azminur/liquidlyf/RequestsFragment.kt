@@ -54,7 +54,6 @@ class RequestsFragment : Fragment() {
 
         requestsRecyclerView.layoutManager = LinearLayoutManager(context)
         requestsAdapter = RequestsAdapter(requestsList) { requestItem ->
-            // Show donor details dialog only if status is Accepted and donor is assigned
             if (requestItem.status == "Accepted" && requestItem.donor != null) {
                 showDonorDetailsDialog(requestItem.requestId, requestItem.donor)
             } else {
@@ -143,15 +142,14 @@ class RequestsFragment : Fragment() {
             return
         }
 
-        val updates = mapOf<String, Any>(
-            "status" to newStatus
-        )
-
         if (newStatus == "Completed" || newStatus == "Cancelled by Recipient") {
-            val completionUpdates = updates.toMutableMap()
-            completionUpdates["assignedDonorUid"] = ServerValue.TIMESTAMP // Firebase null equivalent
-            completionUpdates["donorDetails"] = ServerValue.TIMESTAMP // Firebase null equivalent
-            database.getReference("BloodRequests").child(requestId).updateChildren(completionUpdates)
+            val completionUpdates = hashMapOf<String, Any?>(
+                "status" to newStatus,
+                "assignedDonorUid" to null,
+                "donorDetails" to null
+            )
+
+            database.getReference("BloodRequests").child(requestId).updateChildren(completionUpdates as Map<String, Any>)
                 .addOnSuccessListener {
                     Toast.makeText(context, "Request status updated to: $newStatus", Toast.LENGTH_LONG).show()
                 }
@@ -159,6 +157,9 @@ class RequestsFragment : Fragment() {
                     Toast.makeText(context, "Failed to update status: ${it.message}", Toast.LENGTH_LONG).show()
                 }
         } else {
+            val updates = mapOf<String, Any>(
+                "status" to newStatus
+            )
             database.getReference("BloodRequests").child(requestId).updateChildren(updates)
                 .addOnSuccessListener {
                     Toast.makeText(context, "Request status updated to: $newStatus", Toast.LENGTH_SHORT).show()

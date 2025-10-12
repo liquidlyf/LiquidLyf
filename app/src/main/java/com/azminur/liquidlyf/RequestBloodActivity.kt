@@ -33,11 +33,8 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var submitRequestButton: Button
     private lateinit var bloodGroupSpinner: Spinner
     private lateinit var progressBar: ProgressBar
-
     private lateinit var patientNameInput: EditText
     private lateinit var quantityInput: EditText
-
-    // Firebase and Location
     private lateinit var auth: FirebaseAuth
     private lateinit var database: FirebaseDatabase
     private lateinit var map: GoogleMap

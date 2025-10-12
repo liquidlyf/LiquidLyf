@@ -176,6 +176,24 @@ class DashboardFragment : Fragment() {
             })
     }
 
+    private fun saveRejectionStatus(requestId: String) {
+        val currentUid = auth.currentUser?.uid ?: return
+        if (requestId.isBlank()) return
+
+        // Save the rejected request ID under the user's profile
+        val userRef = database.getReference("Users").child(currentUid).child("rejectedRequests").child(requestId)
+        userRef.setValue(true)
+            .addOnSuccessListener {
+                Toast.makeText(context, "Request rejected and won't reappear.", Toast.LENGTH_SHORT).show()
+                // Manually remove from local list to update UI immediately
+                incomingRequestsList.removeAll { it.requestId == requestId }
+                incomingRequestsAdapter.notifyDataSetChanged()
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Failed to save rejection status.", Toast.LENGTH_SHORT).show()
+            }
+    }
+
     private fun showRequestDetailsDialog(request: IncomingRequest) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_donor_details, null)
         val builder = AlertDialog.Builder(context).setView(dialogView)
@@ -209,10 +227,9 @@ class DashboardFragment : Fragment() {
         }
 
         builder.setNegativeButton("Reject") { dialog, _ ->
-            Toast.makeText(context, "Request rejected.", Toast.LENGTH_SHORT).show()
+            saveRejectionStatus(request.requestId)
             dialog.dismiss()
         }
-
         alertDialog.show()
     }
 

@@ -6,7 +6,8 @@ data class User(
     var phoneNumber: String = "",
     var email: String = "",
     var bloodGroup: String = "",
-    var isAvailable: Boolean = false
+    var isAvailable: Boolean = false,
+    var rejectedRequests: Map<String, Boolean> = emptyMap()
 )
 
 data class DonorDetails(
