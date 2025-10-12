@@ -18,7 +18,11 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.database
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.util.*
@@ -30,6 +34,12 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var bloodGroupSpinner: Spinner
     private lateinit var progressBar: ProgressBar
 
+    private lateinit var patientNameInput: EditText
+    private lateinit var quantityInput: EditText
+
+    // Firebase and Location
+    private lateinit var auth: FirebaseAuth
+    private lateinit var database: FirebaseDatabase
     private lateinit var map: GoogleMap
     private lateinit var searchView: SearchView
     private lateinit var searchResultsRecyclerView: RecyclerView
@@ -37,19 +47,31 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
     private val searchResultsList = mutableListOf<SearchResult>()
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
+    private var selectedHospitalName: String? = null
+    private var selectedHospitalLocation: LatLng? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_request_blood)
+
+        // Initialize Firebase
+        auth = Firebase.auth
+        database = Firebase.database
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         searchView = findViewById(R.id.search_bar)
         searchResultsRecyclerView = findViewById(R.id.search_results_recycler_view)
+        patientNameInput = findViewById(R.id.patient_name_input)
+        quantityInput = findViewById(R.id.quantity_input)
 
         searchResultsRecyclerView.layoutManager = LinearLayoutManager(this)
         searchResultsAdapter = SearchResultsAdapter(searchResultsList) { selectedResult ->
             updateMapWithMarker(selectedResult.location, selectedResult.name)
+            selectedHospitalName = selectedResult.name
+            selectedHospitalLocation = selectedResult.location
+
             searchResultsRecyclerView.visibility = View.GONE
             searchView.setQuery(selectedResult.name, false)
             searchView.clearFocus()
@@ -92,19 +114,71 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         submitRequestButton.setOnClickListener {
-            // TODO: Implement logic to handle the blood request submission.
-            Toast.makeText(this, "Request submitted!", Toast.LENGTH_SHORT).show()
-
-            progressBar.visibility = View.VISIBLE
-
-            android.os.Handler().postDelayed({
-                progressBar.visibility = View.GONE
-//                val intent = Intent(this, AfterLoginActivity::class.java)
-//                startActivity(intent)
-                finish()
-            }, 1000)
+            submitBloodRequest()
         }
     }
+
+    private fun submitBloodRequest() {
+        val patientName = patientNameInput.text.toString().trim()
+        val quantity = quantityInput.text.toString().trim()
+        val bloodGroup = bloodGroupSpinner.selectedItem.toString()
+        val hospitalName = selectedHospitalName
+        val hospitalLat = selectedHospitalLocation?.latitude
+        val hospitalLng = selectedHospitalLocation?.longitude
+
+        val currentUid = auth.currentUser?.uid
+
+        // 1. Validation
+        if (currentUid == null) {
+            Toast.makeText(this, "Authentication failed. Please log in again.", Toast.LENGTH_LONG).show()
+            return
+        }
+        if (patientName.isEmpty() || quantity.isEmpty() || hospitalName.isNullOrEmpty()) {
+            Toast.makeText(this, "Please fill all fields and select a hospital.", Toast.LENGTH_LONG).show()
+            return
+        }
+        if (bloodGroup == resources.getStringArray(R.array.blood_groups).first()) {
+            Toast.makeText(this, "Please select the required blood group.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        progressBar.visibility = View.VISIBLE
+
+        // 2. Create Request Object
+        val newRequest = BloodRequest(
+            requesterUid = currentUid,
+            patientName = patientName,
+            hospitalLocation = "$hospitalLat,$hospitalLng",
+            hospitalName = hospitalName,
+            bloodGroup = bloodGroup,
+            quantity = quantity,
+            status = "Pending"
+        )
+
+        // 3. Push to Firebase
+        val requestsRef = database.getReference("BloodRequests")
+        val newRequestRef = requestsRef.push()
+        newRequest.requestId = newRequestRef.key
+
+        newRequestRef.setValue(newRequest)
+            .addOnSuccessListener {
+                progressBar.visibility = View.GONE
+                Toast.makeText(this, "Blood request submitted successfully! Searching for donors...", Toast.LENGTH_LONG).show()
+
+                // IMPORTANT NOTE FOR PUSH NOTIFICATIONS:
+                // To send push notifications to users with the matching blood type (Blood Group: $bloodGroup, Status: Available)
+                // you MUST implement a Firebase Cloud Function (server-side code).
+                // This function would be triggered by this new database entry, query the list of users with the same blood group,
+                // and send a Firebase Cloud Messaging (FCM) notification to their devices.
+
+                finish()
+            }
+            .addOnFailureListener {
+                progressBar.visibility = View.GONE
+                Toast.makeText(this, "Failed to submit request: ${it.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
@@ -119,12 +193,13 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
         withContext(Dispatchers.IO) {
             val geocoder = Geocoder(this@RequestBloodActivity, Locale.getDefault())
             try {
-                val addresses: List<Address>? = geocoder.getFromLocationName("hospitals in $query, Bangladesh", 10)
+                val search = if(query.length > 3) "$query, Bangladesh" else "hospitals in $query, Bangladesh"
+                val addresses: List<Address>? = geocoder.getFromLocationName(search, 10)
 
                 withContext(Dispatchers.Main) {
                     if (!addresses.isNullOrEmpty()) {
                         addresses.forEach { address ->
-                            val name = address.featureName ?: "Unknown Location"
+                            val name = address.featureName ?: address.getAddressLine(0) ?: "Unknown Location"
                             val latLng = LatLng(address.latitude, address.longitude)
                             val result = SearchResult(name, latLng)
                             searchResultsList.add(result)
@@ -153,7 +228,7 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
 // Data class for a search result
 data class SearchResult(val name: String, val location: LatLng)
 
-// Adapter for the search results RecyclerView
+// Adapter for the search results RecyclerView (unchanged)
 class SearchResultsAdapter(
     private val results: List<SearchResult>,
     private val onResultClick: (SearchResult) -> Unit
@@ -177,3 +252,18 @@ class SearchResultsAdapter(
 
     override fun getItemCount() = results.size
 }
+
+// NEW DATA CLASS: Represents a Blood Request saved in the database
+data class BloodRequest(
+    var requestId: String? = null,
+    var requesterUid: String? = null,
+    var patientName: String? = null,
+    var hospitalName: String? = null,
+    var hospitalLocation: String? = null,
+    var bloodGroup: String? = null,
+    var quantity: String? = null,
+    var status: String = "Pending",
+    var assignedDonorUid: String? = null,
+    var donorDetails: DonorDetails? = null,
+    var timestamp: Long = System.currentTimeMillis()
+)
