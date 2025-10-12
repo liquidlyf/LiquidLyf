@@ -135,7 +135,9 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/email_label"
-                android:inputType="textEmailAddress" />
+                android:inputType="textEmailAddress"
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
 
             <TextView
                 android:id="@+id/phone_label"
@@ -160,7 +162,9 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/phone_label"
-                android:inputType="phone" />
+                android:inputType="phone"
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
 
             <TextView
                 android:id="@+id/blood_group_label"
