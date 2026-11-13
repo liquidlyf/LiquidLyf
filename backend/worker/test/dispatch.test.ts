@@ -4,7 +4,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import worker from "../src/index";
 import {
-  appCheckToken, fakeGoogle, idToken, keys, makeEnv, post, requestRest, resetCaches,
+  APP_ID, appCheckToken, fakeGoogle, idToken, keys, makeEnv, post, requestRest, resetCaches,
 } from "./helpers";
 
 const RID = "req123";
@@ -172,6 +172,13 @@ describe("App Check", () => {
     expect((await call(await bearer("alice"), enforce)).status).toBe(401);
     expect((await call({ ...(await bearer("alice")), "x-firebase-appcheck": await appCheckToken({}, keys.rogue.privateKey) }, enforce)).status).toBe(401);
     expect((await call({ ...(await bearer("alice")), "x-firebase-appcheck": await appCheckToken() }, enforce)).status).toBe(202);
+  });
+
+  test("enforced: ANDROID_APP_ID may list several apps; a token from any other app gets 401", async () => {
+    await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest() } });
+    const listed = { ENFORCE_APP_CHECK: "true", ANDROID_APP_ID: `1:123456789:android:devbuild , ${APP_ID}` };
+    expect((await call({ ...(await bearer("alice")), "x-firebase-appcheck": await appCheckToken({ sub: "1:123456789:android:stranger" }) }, listed)).status).toBe(401);
+    expect((await call({ ...(await bearer("alice")), "x-firebase-appcheck": await appCheckToken() }, listed)).status).toBe(202);
   });
 });
 

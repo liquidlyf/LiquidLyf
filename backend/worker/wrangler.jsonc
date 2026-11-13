@@ -24,7 +24,8 @@
   "vars": {
     "FIREBASE_PROJECT_ID": "liquidlyf-app",
     "FIREBASE_PROJECT_NUMBER": "400334033235",
-    "ANDROID_APP_ID": "",
+    // Firebase App IDs allowed to call (comma-separated). Prod app io.github.liquidlyf (A4, 14 Nov).
+    "ANDROID_APP_ID": "1:400334033235:android:880810095c3d0d3b7fd1a6",
     "ENFORCE_APP_CHECK": "false",
     // Keep in sync with Remote Config escalation_minutes_* (Phase 2.1).
     "ESCALATION_MINUTES": { "CRITICAL": 15, "URGENT": 30, "PLANNED": 120 }

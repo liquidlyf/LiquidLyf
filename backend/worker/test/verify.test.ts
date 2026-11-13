@@ -58,7 +58,16 @@ describe("Firebase ID token", () => {
 describe("App Check token", () => {
   test("a valid token verifies", async () => {
     await fakeGoogle();
-    await expect(verifyAppCheck(await appCheckToken(), PROJECT_NUMBER, APP_ID)).resolves.toBeUndefined();
+    await expect(verifyAppCheck(await appCheckToken(), PROJECT_NUMBER, [APP_ID])).resolves.toBeUndefined();
+  });
+
+  test("a list of allowed apps accepts any of them, and an empty list accepts any app", async () => {
+    await fakeGoogle();
+    const other = "1:123456789:android:devbuild";
+    await expect(verifyAppCheck(await appCheckToken(), PROJECT_NUMBER, [other, APP_ID])).resolves.toBeUndefined();
+    await expect(verifyAppCheck(await appCheckToken({ sub: other }), PROJECT_NUMBER, [other, APP_ID])).resolves.toBeUndefined();
+    await expect(verifyAppCheck(await appCheckToken({ sub: other }), PROJECT_NUMBER, [APP_ID])).rejects.toThrow("sub");
+    await expect(verifyAppCheck(await appCheckToken({ sub: other }), PROJECT_NUMBER, [])).resolves.toBeUndefined();
   });
 
   test.each([
@@ -68,12 +77,12 @@ describe("App Check token", () => {
     ["expired", { exp: Math.floor(Date.now() / 1000) - 3600 }],
   ])("rejected: %s", async (_name, claims) => {
     await fakeGoogle();
-    await expect(verifyAppCheck(await appCheckToken(claims), PROJECT_NUMBER, APP_ID)).rejects.toThrow();
+    await expect(verifyAppCheck(await appCheckToken(claims), PROJECT_NUMBER, [APP_ID])).rejects.toThrow();
   });
 
   test("a forged token is rejected", async () => {
     await fakeGoogle();
-    await expect(verifyAppCheck(await appCheckToken({}, keys.rogue.privateKey), PROJECT_NUMBER, APP_ID)).rejects.toThrow();
+    await expect(verifyAppCheck(await appCheckToken({}, keys.rogue.privateKey), PROJECT_NUMBER, [APP_ID])).rejects.toThrow();
   });
 });
 

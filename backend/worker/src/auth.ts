@@ -30,7 +30,9 @@ async function checkAppCheck(req: Request, env: Env): Promise<void> {
     return;
   }
   try {
-    await verifyAppCheck(token, env.FIREBASE_PROJECT_NUMBER, env.ANDROID_APP_ID || undefined);
+    // ANDROID_APP_ID: one Firebase App ID, or a comma-separated list (prod, later dev).
+    const appIds = (env.ANDROID_APP_ID ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    await verifyAppCheck(token, env.FIREBASE_PROJECT_NUMBER, appIds);
   } catch (e) {
     if (enforce) throw new HttpError(401, "bad app check token");
     // Monitor mode (until Phase 9): record it, let the call through.

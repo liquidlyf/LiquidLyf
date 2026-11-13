@@ -85,7 +85,8 @@ export function decodeEmulatorIdToken(token: string, projectId: string): Firebas
   return checkIdClaims(decodePart(parts[1]), projectId);
 }
 
-export async function verifyAppCheck(token: string, projectNumber: string, appId?: string): Promise<void> {
+/** appIds: the Firebase App IDs allowed to call (empty = any app of this project). */
+export async function verifyAppCheck(token: string, projectNumber: string, appIds: string[] = []): Promise<void> {
   const { header, claims: c } = await verifyRs256(token, APP_CHECK_JWKS);
   if (header.typ !== "JWT") throw new Error("typ");
   const now = Date.now() / 1000;
@@ -93,5 +94,5 @@ export async function verifyAppCheck(token: string, projectNumber: string, appId
   const aud: string[] = Array.isArray(c.aud) ? c.aud : [c.aud];
   if (!aud.includes(`projects/${projectNumber}`)) throw new Error("aud");
   if (!(c.exp > now - LEEWAY)) throw new Error("expired");
-  if (appId && c.sub !== appId) throw new Error("sub");
+  if (appIds.length > 0 && !appIds.includes(c.sub)) throw new Error("sub");
 }
