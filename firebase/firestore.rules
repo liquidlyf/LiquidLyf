@@ -134,14 +134,17 @@ service cloud.firestore {
     function validUser(d) {
       return d.keys().hasOnly(userKeys())
           && str(d.fullName, 2, 60) && d.email is string && bdPhone(d.phone)
-          && d.bloodGroup in groups() && d.gender in ['MALE','FEMALE','OTHER']
+          // Blood group may be unknown (P1, 14 Nov 2026): the field is absent or null, never
+          // a made-up value. Without one you can't be listed or offer, but you can post requests.
+          && optIn(d, 'bloodGroup', groups()) && d.gender in ['MALE','FEMALE','OTHER']
           && d.birthYear is int
           && d.birthYear >= request.time.year() - 100 && d.birthYear <= request.time.year() - 18
           && d.weightOk is bool
           && isCode(d.division) && isCode(d.district) && isCode(d.upazila)
           && d.available is bool && d.showInDonorSearch is bool
-          // PDPA: being listed needs an explicit, recorded opt-in.
-          && (d.showInDonorSearch == false || d.get('consentAt', null) is timestamp)
+          // PDPA: being listed needs an explicit, recorded opt-in, and a known blood group.
+          && (d.showInDonorSearch == false
+              || (d.get('consentAt', null) is timestamp && d.get('bloodGroup', null) in groups()))
           && d.locale in ['en','bn']
           && str(d.termsVersion, 1, 20) && d.termsAcceptedAt is timestamp
           && d.donationCount is int && d.donationCount >= 0
@@ -563,7 +566,8 @@ service cloud.firestore {
           && offerCounted(rid, rq);
     }
     function offerGroupOk(rq, o) {
-      let g = get(userPath(me())).data.bloodGroup;
+      // get(..., null): a donor without a known group is refused cleanly, not by an error.
+      let g = get(userPath(me())).data.get('bloodGroup', null);
       return g in rq.acceptedGroups && o.donorBloodGroup == g;
     }
     // The same batch must add me to the request's responders (offerUpdate).

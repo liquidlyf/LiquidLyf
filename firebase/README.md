@@ -62,6 +62,7 @@ General:
 ### Profile
 1. **Profile setup:**
    - `users/{uid}`: all required fields, with `donationCount: 0`, `verifiedDonations: 0`. Email = the auth email. No `phoneVerified`, no `role`;
+   - **`bloodGroup` may be unknown (P1)**. Leave the field out, or set it to `null`; never use a made-up value such as `"UNKNOWN"`. Without a group you can post requests, but you can't be listed (`showInDonorSearch` needs a group) and you can't offer. Adding the group later is a normal profile edit;
    - `userStats/{uid}` = `{openRequests: 0, totalRequests: 0}` (it must exist before the first request);
    - if `showInDonorSearch`: `consentAt` on the profile, plus `donors/{uid}`.
 2. **Profile edit:** `users/{uid}`. If listed and a mirrored field changes (`bloodGroup`, area codes, `available`, `lastDonationAt`, counters, `lastActiveAt`), update `donors/{uid}` in the same batch with equal values.

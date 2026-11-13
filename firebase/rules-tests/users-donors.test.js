@@ -8,7 +8,7 @@ import {
 } from 'firebase/firestore';
 import {
   setupEnv, teardownEnv, getEnv, as, anon, seed, seedUsers, cast, userDoc, newUserDoc, donorCard,
-  ts, DAY, EPOCH,
+  ts, DAY, EPOCH, seedRequest, createRequest, offer,
 } from './helpers.js';
 
 let users;
@@ -318,5 +318,62 @@ describe('unused paths are closed', () => {
 
   test('deleteField on a required field is rejected', async () => {
     await assertFails(updateProfile(as('alice'), 'alice', { phone: deleteField() }));
+  });
+});
+
+describe('unknown blood group (P1): absent or null, never a made-up value', () => {
+  /** A stored profile without a blood group. */
+  const noGroup = (uid, o = {}) => { const u = userDoc(uid, o); delete u.bloodGroup; return u; };
+
+  test('profile setup without a group is allowed (field absent, or null)', async () => {
+    const u = newUserDoc('zed');
+    delete u.bloodGroup;
+    await assertSucceeds(profileSetup(as('zed'), 'zed', u));
+    await assertSucceeds(profileSetup(as('yan'), 'yan', newUserDoc('yan', { bloodGroup: null })));
+  });
+
+  test('a made-up group such as "UNKNOWN" is refused', async () => {
+    await assertFails(profileSetup(as('zed'), 'zed', newUserDoc('zed', { bloodGroup: 'UNKNOWN' })));
+  });
+
+  test('listing is refused without a group: at setup, and later', async () => {
+    const u = newUserDoc('zed', { showInDonorSearch: true, consentAt: serverTimestamp() });
+    delete u.bloodGroup;
+    await assertFails(profileSetup(as('zed'), 'zed', u, donorCard(userDoc('zed'))));
+
+    await seedUsers({ yan: noGroup('yan') });
+    const db = as('yan');
+    const b = writeBatch(db);
+    b.update(doc(db, 'users', 'yan'), { showInDonorSearch: true, consentAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    b.set(doc(db, 'donors', 'yan'), donorCard(userDoc('yan')));
+    await assertFails(b.commit());
+  });
+
+  test('adding the group later is a normal edit, and then listing works', async () => {
+    const stored = noGroup('yan');
+    await seedUsers({ yan: stored });
+    await assertSucceeds(updateProfile(as('yan'), 'yan', { bloodGroup: 'A_POS' }));
+    const db = as('yan');
+    const b = writeBatch(db);
+    b.update(doc(db, 'users', 'yan'), { showInDonorSearch: true, consentAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    b.set(doc(db, 'donors', 'yan'), donorCard({ ...stored, bloodGroup: 'A_POS' }));
+    await assertSucceeds(b.commit());
+  });
+
+  test('a listed donor cannot drop their group without unlisting', async () => {
+    await assertFails(updateProfile(as('bob'), 'bob', { bloodGroup: deleteField() }));
+    await assertFails(updateProfile(as('bob'), 'bob', { bloodGroup: null }, { bloodGroup: null }));
+  });
+
+  test('offering is refused without a group, even if the offer claims one', async () => {
+    const zed = noGroup('zed');
+    await seedUsers({ zed });
+    await seedRequest('r1', 'alice');
+    await assertFails(offer(as('zed'), 'zed', 'r1', 'alice', { ...zed, bloodGroup: 'B_POS' }));
+  });
+
+  test('posting a request is allowed without a group (it carries the patient\'s group)', async () => {
+    await seedUsers({ zed: noGroup('zed') });
+    await assertSucceeds(createRequest(as('zed'), 'zed', 'r1'));
   });
 });
