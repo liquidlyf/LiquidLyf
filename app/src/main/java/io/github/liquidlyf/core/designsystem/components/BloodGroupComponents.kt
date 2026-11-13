@@ -7,11 +7,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,7 +38,10 @@ import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.spokenLabelRes
 import io.github.liquidlyf.core.model.BloodGroup
 
-/** One selectable blood group. TalkBack reads "A negative", not "A minus". */
+/**
+ * One selectable blood group. TalkBack reads "A negative", not "A minus". The check mark sits in
+ * the corner, not before the label: on a 360 dp phone a leading icon wrapped "AB−" onto two lines.
+ */
 @Composable
 fun BloodGroupChip(
     group: BloodGroup,
@@ -47,30 +50,41 @@ fun BloodGroupChip(
     modifier: Modifier = Modifier,
 ) {
     val spoken = stringResource(group.spokenLabelRes)
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = {
-            Text(
-                text = stringResource(group.labelRes),
-                style = LiquidLyfTheme.extendedTypography.bloodGroupBadge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        leadingIcon = if (selected) {
-            { Icon(painterResource(LLIcons.Check), contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
-        } else {
-            null
-        },
-        modifier = modifier
-            .heightIn(min = Spacing.minTouchTarget)
-            .semantics {
-                contentDescription = spoken
-                role = Role.RadioButton
-                this.selected = selected
+    Box(modifier) {
+        FilterChip(
+            selected = selected,
+            onClick = onClick,
+            label = {
+                Text(
+                    text = stringResource(group.labelRes),
+                    style = LiquidLyfTheme.extendedTypography.bloodGroupBadge,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             },
-    )
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = Spacing.minTouchTarget)
+                .semantics {
+                    contentDescription = spoken
+                    role = Role.RadioButton
+                    this.selected = selected
+                },
+        )
+        if (selected) {
+            Icon(
+                painterResource(LLIcons.Check),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 6.dp, end = 6.dp)
+                    .size(14.dp),
+            )
+        }
+    }
 }
 
 /**
