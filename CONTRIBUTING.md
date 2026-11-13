@@ -25,7 +25,7 @@ made-up sample data. You don't need a Firebase account, and you can't reach the 
 
 **You need:**
 - [Android Studio](https://developer.android.com/studio) (latest stable). It includes Java 21.
-- [Node.js](https://nodejs.org) (current LTS) and the Firebase CLI: `npm install -g firebase-tools`.
+- [Node.js](https://nodejs.org) 22.12 or newer. The Firebase CLI comes with the project; you don't install it separately.
 - Git.
 - An Android phone with USB debugging on, or an Android emulator.
 
@@ -37,9 +37,11 @@ cd LiquidLyf
 git switch rebuild                              # until v1.0, the new app lives here
 
 # 1. Start the local backend with sample data (leave this terminal open)
-firebase emulators:start --import=firebase/seed
+cd firebase
+npm ci
+npm run emulators
 
-# 2. In a second terminal: let the phone or emulator reach the local backend
+# 2. In a second terminal, from the repo root: let the phone or emulator reach the local backend
 adb reverse tcp:8080 tcp:8080                   # Firestore
 adb reverse tcp:9099 tcp:9099                   # Auth
 
@@ -66,9 +68,10 @@ Run the checks for the parts you changed:
 
 ```bash
 ./gradlew lintDemoDebug testDemoDebugUnitTest   # Android app
+(cd firebase && npm run test:rules)             # if you changed firebase/
 ```
 
-If you changed `firebase/` or `backend/`, run the tests described in the README of that folder.
+If you changed `backend/`, run the tests described in the README of that folder.
 CI runs all of them again on your pull request.
 
 ## Rules for the code

@@ -33,8 +33,8 @@ You can run the app on your own computer in about 15 minutes, **without a Fireba
 ```bash
 git clone https://github.com/liquidlyf/LiquidLyf.git && cd LiquidLyf
 git switch rebuild
-firebase emulators:start --import=firebase/seed     # terminal 1
-./gradlew installDemoDebug                          # terminal 2
+cd firebase && npm ci && npm run emulators          # terminal 1: local backend
+./gradlew installDemoDebug                          # terminal 2, from the repo root
 ```
 
 The full steps, the code rules and how to send a pull request are in [CONTRIBUTING.md](CONTRIBUTING.md).

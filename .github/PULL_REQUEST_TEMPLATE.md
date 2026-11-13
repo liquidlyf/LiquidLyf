@@ -8,7 +8,8 @@ Closes #
 
 - [ ] `./gradlew lintDemoDebug testDemoDebugUnitTest` passes
 - [ ] I ran the `demoDebug` build on a phone or emulator (screenshots below use **fake data only**)
-- [ ] I ran the tests in `firebase/` or `backend/` (only if I changed them)
+- [ ] `npm run test:rules` in `firebase/` passes (only if I changed `firebase/`)
+- [ ] The tests in `backend/` pass (only if I changed `backend/`)
 
 <!-- Screenshots or a short screen recording for UI changes: light and dark mode if you can. -->
 
