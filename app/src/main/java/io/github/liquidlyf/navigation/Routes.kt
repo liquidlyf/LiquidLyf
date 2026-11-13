@@ -51,6 +51,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object ComponentGallery
 
 // Full-screen destinations above the tabs
-@Serializable data class RequestDetail(val id: String)
+/** [notice]: a [io.github.liquidlyf.feature.request.create.PostNotice] name, shown once after posting. */
+@Serializable data class RequestDetail(val id: String, val notice: String? = null)
 @Serializable data object CreateRequest
 @Serializable data object Notifications

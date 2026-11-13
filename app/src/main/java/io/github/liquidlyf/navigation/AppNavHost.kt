@@ -45,6 +45,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
+import androidx.navigation.navDeepLink
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.core.content.ContextCompat
@@ -72,10 +73,15 @@ import io.github.liquidlyf.feature.gallery.ComponentGalleryScreen
 import io.github.liquidlyf.feature.placeholder.PlaceholderLink
 import io.github.liquidlyf.feature.profile.BloodGroupReminder
 import io.github.liquidlyf.feature.placeholder.PlaceholderScreen
+import io.github.liquidlyf.feature.request.create.CreateRequestRoute
+import io.github.liquidlyf.feature.request.detail.RequestDetailRoute
 import io.github.liquidlyf.feature.settings.SettingsScreen
 
 /** Used by the Phase 1 placeholders until real requests exist (Phase 4). */
 private const val SAMPLE_REQUEST_ID = "sample-request"
+
+/** liquidlyf://request/{id} (the manifest declares the scheme and host). */
+const val REQUEST_DEEP_LINK = "liquidlyf://request"
 
 /**
  * The whole app UI: one NavHost with the auth graph and the main graph. The main graph's
@@ -351,20 +357,23 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                 ComponentGalleryScreen(onBack = { navController.popBackStack() })
             }
         }
-        composable<RequestDetail> { entry ->
-            val route = entry.toRoute<RequestDetail>()
-            PlaceholderScreen(
-                title = stringResource(R.string.title_request_detail),
-                phase = 4,
-                onBack = { navController.popBackStack() },
-                detail = stringResource(R.string.placeholder_request_id, route.id),
-            )
+        composable<RequestDetail>(deepLinks = listOf(navDeepLink<RequestDetail>(basePath = REQUEST_DEEP_LINK))) {
+            RequestDetailRoute(onBack = { navController.popBackStack() })
         }
         composable<CreateRequest> {
-            PlaceholderScreen(
-                title = stringResource(R.string.title_create_request),
-                phase = 4,
-                onBack = { navController.popBackStack() },
+            CreateRequestRoute(
+                onClose = { navController.popBackStack() },
+                onPosted = { id, notice ->
+                    navController.navigate(RequestDetail(id = id, notice = notice?.name)) {
+                        popUpTo<CreateRequest> { inclusive = true }
+                    }
+                },
+                onOpenMyRequests = {
+                    navController.navigate(RequestsGraph) {
+                        popUpTo<CreateRequest> { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
             )
         }
         composable<Notifications> {

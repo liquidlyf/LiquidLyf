@@ -29,6 +29,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- liquidlyf://request/{id}: opens a request (Phase 4; notification taps in Phase 5). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="liquidlyf" android:host="request" />
+            </intent-filter>
         </activity>
 
         <!-- The Worker's topic alerts (doc 10 §6). Not exported: only Firebase delivers to it. -->
