@@ -27,6 +27,8 @@ data class SetupDraft(
     val uid: String,
     val step: Int = 0,
     val bloodGroup: String? = null,
+    /** "I don't know my blood group" → skipped (P1). Picking a group clears it. */
+    val bloodGroupUnknown: Boolean = false,
     val fullName: String = "",
     val gender: String? = null,
     val birthYear: String = "",

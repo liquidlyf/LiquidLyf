@@ -82,6 +82,12 @@ class ProfileSetupViewModel @Inject constructor(
     fun edit(change: SetupDraft.() -> SetupDraft) =
         state.update { it.copy(draft = it.draft.change(), errors = emptySet(), formError = null) }
 
+    /** "I don't know my blood group" → "Skip for now": on to the next step without a group (P1). */
+    fun skipBloodGroup(locale: AppLocale) {
+        edit { copy(bloodGroup = null, bloodGroupUnknown = true) }
+        next(locale)
+    }
+
     fun onDivision(code: String) = edit { copy(division = code, district = null, upazila = null) }
 
     fun onDistrict(code: String) = edit { copy(district = code, upazila = null) }
@@ -116,7 +122,7 @@ class ProfileSetupViewModel @Inject constructor(
 
     internal fun validate(d: SetupDraft, geo: BdGeo?): Set<SetupField> = buildSet {
         when (d.step) {
-            0 -> if (BloodGroup.fromCode(d.bloodGroup) == null) add(SetupField.BLOOD_GROUP)
+            0 -> if (BloodGroup.fromCode(d.bloodGroup) == null && !d.bloodGroupUnknown) add(SetupField.BLOOD_GROUP)
             1 -> {
                 if (!Validators.isValidName(d.fullName)) add(SetupField.NAME)
                 if (Gender.fromCode(d.gender) == null) add(SetupField.GENDER)
@@ -134,7 +140,8 @@ class ProfileSetupViewModel @Inject constructor(
                 val today = clock.now().atOffset(ZoneOffset.UTC).toLocalDate().toEpochDay()
                 val donationOk = d.neverDonated == true || (d.neverDonated == false && pickedDay != null && pickedDay <= today)
                 if (!donationOk) add(SetupField.LAST_DONATION)
-                if (d.listed == null) add(SetupField.CONSENT)
+                // Without a known group there is no listing question (P1).
+                if (d.listed == null && BloodGroup.fromCode(d.bloodGroup) != null) add(SetupField.CONSENT)
                 if (state.value.needsTerms && !d.termsAccepted) add(SetupField.TERMS)
             }
         }
@@ -142,11 +149,12 @@ class ProfileSetupViewModel @Inject constructor(
 
     private fun finish(d: SetupDraft, locale: AppLocale) {
         val uid = user?.uid ?: return
-        val listed = d.listed == true
+        val group = BloodGroup.fromCode(d.bloodGroup)
+        val listed = d.listed == true && group != null
         val draft = ProfileDraft(
             fullName = Validators.normalizeName(d.fullName),
             phone = Validators.normalizePhone(d.phone)!!,
-            bloodGroup = BloodGroup.fromCode(d.bloodGroup)!!,
+            bloodGroup = group,
             gender = Gender.fromCode(d.gender)!!,
             birthYear = d.birthYear.trim().toInt(),
             weightOk = d.weightOk == true,

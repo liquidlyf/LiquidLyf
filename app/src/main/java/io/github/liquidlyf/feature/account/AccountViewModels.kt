@@ -294,7 +294,8 @@ class EditProfileViewModel @Inject constructor(
             state.value = errors
             return
         }
-        if (s.bloodGroup != before.bloodGroup && !s.confirmBloodGroup) {
+        // Changing a known group asks first; adding one for the first time (P1) doesn't.
+        if (before.bloodGroup != null && s.bloodGroup != before.bloodGroup && !s.confirmBloodGroup) {
             state.update { it.copy(confirmBloodGroup = true) }
             return
         }

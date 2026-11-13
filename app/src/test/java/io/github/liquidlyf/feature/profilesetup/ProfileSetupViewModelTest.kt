@@ -168,6 +168,39 @@ class ProfileSetupViewModelTest {
     }
 
     @Test
+    fun `I don't know my blood group skips step 1 and never lists (P1)`() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.skipBloodGroup(AppLocale.EN)
+        assertEquals(1, vm.uiState.value.step)
+        vm.edit { copy(fullName = "Nasrin Akter", gender = Gender.FEMALE.code, birthYear = "1998", weightOk = true) }
+        vm.next(AppLocale.EN)
+        vm.onDivision("BD30")
+        vm.onDistrict("BD3026")
+        vm.edit { copy(upazila = "BD30262000") }
+        vm.next(AppLocale.EN)
+        // No listing question without a group: phone and last donation are enough.
+        vm.edit { copy(phone = "01812345678", neverDonated = true) }
+        vm.next(AppLocale.EN)
+        advanceUntilIdle()
+        val draft = profiles.created.single().second
+        assertNull(draft.bloodGroup)
+        assertFalse(draft.showInDonorSearch)
+        assertFalse(draft.available)
+    }
+
+    @Test
+    fun `picking a group after skipping clears the skip`() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.skipBloodGroup(AppLocale.EN)
+        assertTrue(vm.back())
+        vm.edit { copy(bloodGroup = "A_NEG", bloodGroupUnknown = false) }
+        assertFalse(vm.uiState.value.draft.bloodGroupUnknown)
+        assertEquals("A_NEG", vm.uiState.value.draft.bloodGroup)
+    }
+
+    @Test
     fun `a Google account must accept the Terms in the last step, an email account already did`() = runTest(dispatcher) {
         val google = FakeSessionManager(SessionState.NeedsProfile(user.copy(providers = setOf("google.com"))))
         val vm = ProfileSetupViewModel(google, profiles, geoRepo, store, Clock { TestData.NOW })

@@ -79,6 +79,11 @@ class PushTopicManagerTest {
     }
 
     @Test
+    fun `without a blood group only the personal topic is wanted (P1)`() {
+        assertEquals(setOf("usr_u1"), manager.desiredTopics(donor.copy(bloodGroup = null)))
+    }
+
+    @Test
     fun `sync subscribes what's missing and unsubscribes what's no longer wanted`() = runTest {
         assertEquals(AppResult.Success(Unit), manager.sync(donor))
         assertEquals(setOf("usr_u1") + areaTopics, fcm.subscribed)

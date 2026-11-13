@@ -181,6 +181,20 @@ class AccountViewModelsTest {
     }
 
     @Test
+    fun `adding a first blood group needs no confirmation (P1)`() = test {
+        val noGroup = TestData.profile().copy(bloodGroup = null, showInDonorSearch = false)
+        val profiles = FakeProfileRepository().apply { profiles["uid-1"] = noGroup }
+        val vm = editVm(profiles, FakeSessionManager(SessionState.Ready(TestData.user(), noGroup)))
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.bloodGroup)
+        vm.edit { copy(bloodGroup = BloodGroup.AB_NEG) }
+        vm.save()
+        assertFalse(vm.uiState.value.confirmBloodGroup)
+        advanceUntilIdle()
+        assertEquals(BloodGroup.AB_NEG, profiles.profiles.getValue("uid-1").bloodGroup)
+    }
+
+    @Test
     fun `edit profile validates and a district change clears the area`() = test {
         val profiles = FakeProfileRepository().apply { profiles["uid-1"] = TestData.profile() }
         val vm = editVm(profiles, FakeSessionManager(SessionState.Ready(TestData.user(), TestData.profile())))

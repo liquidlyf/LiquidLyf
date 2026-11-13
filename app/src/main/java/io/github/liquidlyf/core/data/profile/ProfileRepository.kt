@@ -226,7 +226,9 @@ class FirestoreProfileRepository @Inject constructor(
         Validators.isValidName(d.fullName) && Validators.isBdPhone(d.phone) &&
             Validators.isValidBirthYear(d.birthYear, clock.now()) &&
             Validators.isCode(d.area.division) && Validators.isCode(d.area.district) && Validators.isCode(d.area.upazila) &&
-            (d.lastDonationAt == null || !d.lastDonationAt.isAfter(clock.now())) && d.termsVersion.isNotBlank()
+            (d.lastDonationAt == null || !d.lastDonationAt.isAfter(clock.now())) && d.termsVersion.isNotBlank() &&
+            // Being listed needs a known blood group (P1; the rules check it too).
+            (!d.showInDonorSearch || d.bloodGroup != null)
 
     private companion object {
         val LAST_ACTIVE_EVERY: Duration = Duration.ofDays(3).plusHours(1)

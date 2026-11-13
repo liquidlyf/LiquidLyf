@@ -43,8 +43,9 @@ class PushTopicManager @Inject constructor(
     fun desiredTopics(profile: UserProfile?): Set<String> {
         if (profile == null) return emptySet()
         val topics = linkedSetOf(Tiers.userTopic(profile.uid))
-        if (isMatchable(profile)) {
-            topics += Tiers.donorTopics(profile.bloodGroup, profile.area.division, profile.area.district, profile.area.upazila)
+        val group = profile.bloodGroup
+        if (group != null && isMatchable(profile)) {
+            topics += Tiers.donorTopics(group, profile.area.division, profile.area.district, profile.area.upazila)
         }
         return topics
     }

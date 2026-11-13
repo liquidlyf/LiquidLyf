@@ -70,6 +70,7 @@ import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.windowWidth
 import io.github.liquidlyf.feature.gallery.ComponentGalleryScreen
 import io.github.liquidlyf.feature.placeholder.PlaceholderLink
+import io.github.liquidlyf.feature.profile.BloodGroupReminder
 import io.github.liquidlyf.feature.placeholder.PlaceholderScreen
 import io.github.liquidlyf.feature.settings.SettingsScreen
 
@@ -165,7 +166,7 @@ fun AppNavHost(
                     onboarding(navController, onOnboardingFinished)
                     authGraph(navController)
                     sessionScreens(navController, session, onRetrySession, onSignOut)
-                    mainGraph(navController, onSignOut)
+                    mainGraph(navController, session, onSignOut)
                 }
             }
         }
@@ -270,7 +271,7 @@ private fun NavGraphBuilder.sessionScreens(
     }
 }
 
-private fun NavGraphBuilder.mainGraph(navController: NavController, onSignOut: () -> Unit) {
+private fun NavGraphBuilder.mainGraph(navController: NavController, session: SessionState, onSignOut: () -> Unit) {
     navigation<MainGraph>(startDestination = HomeGraph) {
         navigation<HomeGraph>(startDestination = Home) {
             composable<Home> {
@@ -320,6 +321,12 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, onSignOut: (
                 PlaceholderScreen(
                     title = stringResource(R.string.nav_profile),
                     phase = 6,
+                    header = {
+                        // P1: no blood group yet → not a donor; remind and point to Edit profile.
+                        if (session is SessionState.Ready && session.profile.bloodGroup == null) {
+                            BloodGroupReminder(onAdd = dropUnlessResumed { navController.navigate(EditProfile) { launchSingleTop = true } })
+                        }
+                    },
                     topBarActions = {
                         IconButton(onClick = dropUnlessResumed { navController.navigate(Settings) { launchSingleTop = true } }) {
                             Icon(painterResource(LLIcons.Settings), contentDescription = stringResource(R.string.action_open_settings))

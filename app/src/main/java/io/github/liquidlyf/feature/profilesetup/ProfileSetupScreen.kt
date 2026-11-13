@@ -85,6 +85,7 @@ fun ProfileSetupRoute(viewModel: ProfileSetupViewModel = hiltViewModel()) {
         onDistrict = viewModel::onDistrict,
         onNext = { viewModel.next(locale) },
         onBack = { viewModel.back() },
+        onSkipBloodGroup = { viewModel.skipBloodGroup(locale) },
     )
 }
 
@@ -98,6 +99,7 @@ fun ProfileSetupScreen(
     onDistrict: (String) -> Unit,
     onNext: () -> Unit,
     onBack: () -> Unit,
+    onSkipBloodGroup: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -155,7 +157,7 @@ fun ProfileSetupScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 when (state.step) {
-                    0 -> BloodGroupStep(state, onEdit)
+                    0 -> BloodGroupStep(state, onEdit, onSkipBloodGroup)
                     1 -> AboutStep(state, onEdit)
                     2 -> LocationStep(state, locale, onEdit, onDivision, onDistrict)
                     else -> ContactStep(state, onEdit)
@@ -172,19 +174,25 @@ private fun StepTitle(text: String) = Text(text, style = MaterialTheme.typograph
 // ---- Step 1: blood group ----
 
 @Composable
-private fun BloodGroupStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> SetupDraft) -> Unit) {
+private fun BloodGroupStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> SetupDraft) -> Unit, onSkip: () -> Unit) {
     var showHelp by rememberSaveable { mutableStateOf(false) }
     StepTitle(stringResource(R.string.setup_blood_title))
     BloodGroupPicker(
         selected = BloodGroup.fromCode(state.draft.bloodGroup),
-        onSelect = { group -> onEdit { copy(bloodGroup = group.code) } },
+        onSelect = { group -> onEdit { copy(bloodGroup = group.code, bloodGroupUnknown = false) } },
         errorText = if (SetupField.BLOOD_GROUP in state.errors) stringResource(R.string.error_blood_group_required) else null,
     )
     TextButton(onClick = { showHelp = true }) { Text(stringResource(R.string.setup_blood_unknown)) }
     if (showHelp) {
         AlertDialog(
             onDismissRequest = { showHelp = false },
-            confirmButton = { TextButton(onClick = { showHelp = false }) { Text(stringResource(R.string.action_ok)) } },
+            confirmButton = {
+                TextButton(onClick = {
+                    showHelp = false
+                    onSkip()
+                }) { Text(stringResource(R.string.setup_blood_skip)) }
+            },
+            dismissButton = { TextButton(onClick = { showHelp = false }) { Text(stringResource(R.string.action_cancel)) } },
             title = { Text(stringResource(R.string.setup_blood_unknown)) },
             text = { Text(stringResource(R.string.setup_blood_unknown_body)) },
         )
@@ -312,7 +320,12 @@ private fun ContactStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Se
         ) { DatePicker(state = dateState) }
     }
 
-    val group = BloodGroup.fromCode(d.bloodGroup)?.let { stringResource(it.labelRes) }.orEmpty()
+    val knownGroup = BloodGroup.fromCode(d.bloodGroup)
+    if (knownGroup == null) {
+        // No group yet (P1): nothing to list; the profile reminds them later.
+        Text(stringResource(R.string.setup_no_group_listing), style = MaterialTheme.typography.bodyMedium)
+    } else {
+    val group = stringResource(knownGroup.labelRes)
     Text(stringResource(R.string.setup_consent_question, group), style = MaterialTheme.typography.titleMedium)
     Text(stringResource(R.string.setup_consent_info), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     // No answer is pre-selected: being listed is an explicit choice (PDPA 2026).
@@ -322,6 +335,7 @@ private fun ContactStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Se
         onSelect = { v -> onEdit { copy(listed = v == "yes") } },
     )
     FieldError(SetupField.CONSENT in state.errors, stringResource(R.string.error_consent_choice))
+    }
     if (state.needsTerms) {
         val links = rememberSafeIntentLauncher()
         val locale = currentAppLocale()

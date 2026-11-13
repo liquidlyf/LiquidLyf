@@ -130,6 +130,18 @@ class FirestoreDocsTest {
     }
 
     @Test
+    fun `an unknown blood group is left out of the profile, and reads back as null (P1)`() {
+        val m = UserDoc.createMap(profileDraft.copy(bloodGroup = null, showInDonorSearch = false), "a@b.test")
+        assertFalse(UserDoc.BLOOD_GROUP in m)
+        assertTrue(RulesKeys.inFunction("userKeys").containsAll(m.keys))
+        val p = UserDoc.fromMap(uid, resolve(m))!!
+        assertNull(p.bloodGroup)
+        // Adding it later is a normal edit of one field.
+        val withGroup = UserDoc.applyDraft(p, profileDraft.copy(showInDonorSearch = false), serverNow)
+        assertEquals("B_POS", UserDoc.updateMap(p, withGroup)[UserDoc.BLOOD_GROUP])
+    }
+
+    @Test
     fun `profile round-trips through Firestore values`() {
         val p = UserDoc.fromMap(uid, resolve(UserDoc.createMap(profileDraft, "rahim@example.test")))!!
         assertEquals(BloodGroup.B_POS, p.bloodGroup)

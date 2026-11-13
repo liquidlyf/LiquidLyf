@@ -41,6 +41,7 @@ import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -126,6 +127,34 @@ class EmulatorBatchesTest {
         assertEquals(DonationSource.SELF, donation.source)
         profiles.deleteSelfDonation(me, donation).ok()
         assertEquals(0, profiles.profile(uid, refresh = true).ok()!!.donationCount)
+    }
+
+    @Test
+    fun unknownBloodGroupCanRequestButNotOfferUntilAdded() = runBlocking {
+        // P1: a profile without a group (B's 52e9ece rules).
+        val requesterEmail = newVerifiedUser("needs")
+        val requesterUid = auth.uid!!
+        profiles.create(requesterUid, requesterEmail, profileDraft(BloodGroup.B_POS, listed = false).copy(bloodGroup = null)).ok()
+        val requester = profiles.profile(requesterUid, refresh = true).ok()!!
+        assertNull(requester.bloodGroup)
+        val rid = requests.create(requester, requestDraft()).ok()
+
+        val noGroupEmail = newVerifiedUser("nogroup")
+        val noGroupUid = auth.uid!!
+        profiles.create(noGroupUid, noGroupEmail, profileDraft(BloodGroup.B_POS, listed = false).copy(bloodGroup = null)).ok()
+        var me = profiles.profile(noGroupUid, refresh = true).ok()!!
+        assertEquals(AppResult.Failure(AppError.InvalidInput), offers.offer(serverRequest(rid), me, null))
+        // Listing without a group is refused before it reaches the server.
+        assertEquals(AppResult.Failure(AppError.InvalidInput), profiles.update(me, profileDraft(BloodGroup.B_POS, listed = true).copy(bloodGroup = null)))
+
+        // Adding the group later, and listing, works; then an offer goes through.
+        profiles.update(me, profileDraft(BloodGroup.B_POS, listed = true)).ok()
+        me = profiles.profile(noGroupUid, refresh = true).ok()!!
+        assertEquals(BloodGroup.B_POS, me.bloodGroup)
+        offers.offer(serverRequest(rid), me, null).ok()
+
+        signIn(requesterEmail)
+        requests.close(serverRequest(rid), RequestStatus.CANCELLED, null).ok()
     }
 
     // ---- requests (contract 6–8) ----

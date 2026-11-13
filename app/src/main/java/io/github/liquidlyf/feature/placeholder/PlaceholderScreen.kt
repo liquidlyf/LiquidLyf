@@ -2,6 +2,7 @@ package io.github.liquidlyf.feature.placeholder
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -48,6 +49,8 @@ fun PlaceholderScreen(
     links: List<PlaceholderLink> = emptyList(),
     topBarActions: @Composable RowScope.() -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
+    /** Real content shown above the placeholder (e.g. the blood-group reminder on Profile). */
+    header: @Composable ColumnScope.() -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -69,6 +72,7 @@ fun PlaceholderScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = screenGutter(), vertical = Spacing.lg),
         ) {
+            header()
             EmptyState(
                 icon = LLIcons.BloodDrop,
                 title = title,

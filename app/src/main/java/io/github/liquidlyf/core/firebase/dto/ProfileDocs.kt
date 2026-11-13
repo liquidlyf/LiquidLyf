@@ -52,7 +52,7 @@ object UserDoc {
         email = m.str(EMAIL) ?: return null,
         phone = m.str(PHONE) ?: return null,
         phoneVerified = m.bool(PHONE_VERIFIED) ?: false,
-        bloodGroup = BloodGroup.fromCode(m.str(BLOOD_GROUP)) ?: return null,
+        bloodGroup = BloodGroup.fromCode(m.str(BLOOD_GROUP)),
         gender = Gender.fromCode(m.str(GENDER)) ?: return null,
         birthYear = m.int(BIRTH_YEAR) ?: return null,
         weightOk = m.bool(WEIGHT_OK) ?: return null,
@@ -89,7 +89,7 @@ object UserDoc {
         FULL_NAME to Validators.normalizeName(draft.fullName),
         EMAIL to email,
         PHONE to draft.phone,
-        BLOOD_GROUP to draft.bloodGroup.code,
+        BLOOD_GROUP to draft.bloodGroup?.code,
         GENDER to draft.gender.code,
         BIRTH_YEAR to draft.birthYear,
         WEIGHT_OK to draft.weightOk,
@@ -115,7 +115,7 @@ object UserDoc {
         FULL_NAME to p.fullName,
         PHONE to p.phone,
         PHONE_VERIFIED to p.phoneVerified,
-        BLOOD_GROUP to p.bloodGroup.code,
+        BLOOD_GROUP to p.bloodGroup?.code,
         GENDER to p.gender.code,
         BIRTH_YEAR to p.birthYear,
         WEIGHT_OK to p.weightOk,
@@ -223,7 +223,8 @@ object DonorDoc {
      */
     fun map(profile: UserProfile, eligibleFrom: Instant, lastActiveAtIsServerTime: Boolean): Map<String, Any?> = fields(
         DISPLAY_NAME to Validators.displayName(profile.fullName),
-        BLOOD_GROUP to profile.bloodGroup.code,
+        // Only listed donors have a card, and listing needs a known group (rules + ProfileRepository).
+        BLOOD_GROUP to requireNotNull(profile.bloodGroup) { "a donor card needs a blood group" }.code,
         DIVISION to profile.area.division,
         DISTRICT to profile.area.district,
         UPAZILA to profile.area.upazila,

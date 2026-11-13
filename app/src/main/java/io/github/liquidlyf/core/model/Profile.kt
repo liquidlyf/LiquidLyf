@@ -14,7 +14,8 @@ data class UserProfile(
     val email: String,
     val phone: String,
     val phoneVerified: Boolean,
-    val bloodGroup: BloodGroup,
+    /** Null while the user doesn't know it (P1): they can't be listed or offer until they add it. */
+    val bloodGroup: BloodGroup?,
     val gender: Gender,
     val birthYear: Int,
     val weightOk: Boolean,
@@ -64,7 +65,8 @@ enum class AppLocale(val code: String) {
 data class ProfileDraft(
     val fullName: String,
     val phone: String,
-    val bloodGroup: BloodGroup,
+    /** Null while the user doesn't know it (P1): they can't be listed or offer until they add it. */
+    val bloodGroup: BloodGroup?,
     val gender: Gender,
     val birthYear: Int,
     val weightOk: Boolean,

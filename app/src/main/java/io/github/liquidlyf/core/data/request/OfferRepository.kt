@@ -84,10 +84,11 @@ class FirestoreOfferRepository @Inject constructor(
     }
 
     override suspend fun offer(request: BloodRequest, donor: UserProfile, message: String?): AppResult<Unit> {
+        val group = donor.bloodGroup ?: return AppResult.Failure(AppError.InvalidInput) // unknown group: can't offer (P1)
         val canOffer = request.isActive(clock.now()) &&
             request.requesterUid != donor.uid &&
             donor.uid !in request.responders &&
-            donor.bloodGroup in request.acceptedGroups &&
+            group in request.acceptedGroups &&
             Validators.fitsOptional(message?.trim(), Validators.OFFER_MESSAGE_MAX)
         if (!canOffer) return AppResult.Failure(AppError.InvalidInput)
         val name = Validators.displayName(donor.fullName)
@@ -95,12 +96,12 @@ class FirestoreOfferRepository @Inject constructor(
             val batch = db.batch()
             batch.set(
                 db.responseRef(request.id, donor.uid),
-                ResponseDoc.offerMap(request.id, request.requesterUid, donor.uid, name, donor.bloodGroup, donor.phone, message),
+                ResponseDoc.offerMap(request.id, request.requesterUid, donor.uid, name, group, donor.phone, message),
             )
             batch.update(
                 db.requestRef(request.id),
                 mapOf(
-                    Responders.path(donor.uid) to Responders.entry(Responder(name, donor.bloodGroup, ResponseStatus.OFFERED)),
+                    Responders.path(donor.uid) to Responders.entry(Responder(name, group, ResponseStatus.OFFERED)),
                     RequestDoc.RESPONSE_COUNT to FieldValue.increment(1),
                     RequestDoc.LAST_RESPONDER_UID to donor.uid,
                     RequestDoc.UPDATED_AT to FieldValue.serverTimestamp(),
