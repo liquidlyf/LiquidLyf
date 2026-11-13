@@ -48,6 +48,8 @@ android {
             applicationIdSuffix = ".demo"
             buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "true")
             manifestPlaceholders["crashlyticsCollectionEnabled"] = "false"
+            // No FCM on the emulators: don't fetch a push token with the dummy config.
+            manifestPlaceholders["fcmAutoInitEnabled"] = "false"
         }
         create("dev") {
             // Maintainers' free Spark project liquidlyf-dev. Config is git-ignored:
@@ -56,12 +58,14 @@ android {
             applicationIdSuffix = ".dev"
             buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
             manifestPlaceholders["crashlyticsCollectionEnabled"] = "false"
+            manifestPlaceholders["fcmAutoInitEnabled"] = "true"
         }
         create("prod") {
             // Release only. CI writes src/prod/google-services.json.
             dimension = "env"
             buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
             manifestPlaceholders["crashlyticsCollectionEnabled"] = "true"
+            manifestPlaceholders["fcmAutoInitEnabled"] = "true"
         }
     }
 
@@ -198,6 +202,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.messaging)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.appcheck.playintegrity)
     debugImplementation(libs.firebase.appcheck.debug)

@@ -39,6 +39,11 @@
                 android:value="true" />
         </service>
 
+        <!-- Push token only where FCM exists (dev, prod); the demo flavor has none. -->
+        <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="${fcmAutoInitEnabled}" />
+
         <!-- Crash reports only from prod builds; demo and dev keep collection off. -->
         <meta-data
             android:name="firebase_crashlytics_collection_enabled"
