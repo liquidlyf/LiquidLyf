@@ -52,16 +52,21 @@ sponsor.
 ## Evidence: day-1 tests (Phase 2.0)
 
 Tests 1 and 4 ran on 2026-11-13 with `backend/worker/scripts/spike.mjs`, against the production project
-`liquidlyf-app`. Test 3 ran on 2026-11-14 with the first deploy of the Worker.
+`liquidlyf-app`. Test 3 started on 2026-11-14 with the first deploy of the Worker.
+
+Later on 2026-11-14, one real request was posted in production through the security rules. The live
+Worker sent the alert, and it arrived on a test phone (a realme RMX2101 with Android 11, running a
+production build). That gave the phone part of test 1 and the results of tests 2 and 3. **It is one
+sample on one phone:** other phone makers, such as Xiaomi and Samsung, and mobile data are untested.
 
 | # | Test | Result |
 |---|---|---|
-| 1 | FCM HTTP v1 from outside Google, on a Spark project | **Server side passes.** From a PC, using the same code as the Worker: Google sign-in token in 282 ms; an FCM topic message accepted (validate-only) in 427 ms; a Firestore read allowed in 661 ms. **Pending:** a real message on a test phone, once the app subscribes to topics |
-| 2 | Topic delivery time, send to display on 2 phones (target under 30 s) | **Pending:** needs the app's topic subscription |
-| 3 | The Worker on Cloudflare's free plan: deploy, CPU and subrequest use, no card asked for | **Deploy passes.** The project's Cloudflare account is on the Free plan, and no card was asked for (the dashboard shows 100,000 requests a day). The Worker deployed at 7.02 KB gzipped, with a 1 ms startup time. Its KV store and the rate limit (10 calls per user per 60 s) both work on the Free plan. Checked live from Bangladesh: `/health` answers in 0.22 s, and an unauthenticated alert request is refused (401) in 0.08 s, before any Firestore read. **Pending:** CPU time and subrequests for a real alert, which needs sign-in set up and a production build of the app |
+| 1 | FCM HTTP v1 from outside Google, on a Spark project | **Passes on one phone.** Server side, from a PC using the same code as the Worker: Google sign-in token in 282 ms; an FCM topic message accepted (validate-only) in 427 ms; a Firestore read allowed in 661 ms. On the phone: a data-only, high-priority message to an area and blood-group topic arrived after Android had stopped the app. The message started the app, and the notification showed. Other phone makers are untested |
+| 2 | Topic delivery time, from posting to the notification (target under 30 s) | **Passes on one phone: about 4 s.** The request was written through the rules in 134 ms. The alert call to the Worker, which had to start up, took 2.7 s. FCM began sending about 0.5 s after the Worker answered, and the phone received the message 543 ms later. The phone's, Cloudflare's and Google's clocks agree; the test PC's clock was about 1.2 s slow, and was corrected for. **To repeat in the beta,** on mobile data and on more phones |
+| 3 | The Worker on Cloudflare's free plan: deploy, CPU and subrequest use, no card asked for | **Passes, with a margin to watch.** Deploy: the project's Cloudflare account is on the Free plan, and no card was asked for (the dashboard shows 100,000 requests a day). The Worker deployed at 7.02 KB gzipped, with a 1 ms startup time. Its KV store and the rate limit (10 calls per user per 60 s) both work on the Free plan. Checked live from Bangladesh: `/health` answers in 0.22 s, and an unauthenticated alert request is refused (401) in 0.08 s, before any Firestore read. A real alert, on a cold start: **7 ms of CPU time, of the 10 ms limit**, and **5 of 50 subrequests** (Google token, Google's sign-in keys, a Firestore read, a Firestore write, FCM), 2.7 s in total. **Not measured yet:** a warm alert, and an alert that carries an App Check token |
 | 4 | Project checks | **Pass.** `liquidlyf-app` is on Spark. Authentication isn't upgraded to Identity Platform. The Firestore `(default)` database is in `asia-south1` (Mumbai), Standard edition, production mode ([0008](0008-firestore-region.md)) |
 | 5 | App Check debug provider and token lifetime | **Pending** |
-| 6 | App Check for an app outside Google Play, with a release-signed APK on a real phone | **Pending** |
+| 6 | App Check for an app outside Google Play, with a release-signed APK on a real phone | **Pending.** The live test sent no App Check token (for now the Worker only logs a missing token), so the result will come from the app's first real calls |
 
 **Lesson from test 1:** the role named "Firebase Cloud Messaging **Admin**"
 (`roles/firebasenotifications.admin`) looks right but can't send messages: it fails with
@@ -70,6 +75,11 @@ Tests 1 and 4 ran on 2026-11-13 with `backend/worker/scripts/spike.mjs`, against
 
 **Lesson from test 4:** when Authentication is set up, enable only Email/Password and Google, and never
 press "Upgrade" to Identity Platform. That upgrade limits the free plan to 3,000 daily active users.
+
+**Margin to watch from test 3:** a cold start uses the most CPU, because it creates the Worker's Google
+token and fetches Google's keys to check the user's sign-in token. Warm calls skip both, so they should
+use much less, but that isn't measured yet. An App Check token adds one more signature check to the
+cold start. If that brings a cold alert close to the 10 ms limit, record it here as a risk.
 
 ## Consequences
 
@@ -83,7 +93,8 @@ press "Upgrade" to Identity Platform. That upgrade limits the free plan to 3,000
   - The Worker's service-account key bypasses the security rules. Only 1–2 maintainers hold it, with
     two-step verification, and it is rotated yearly.
 - **Follow-ups:**
-  - finish test 1 (a real phone) and test 2 once the app subscribes to topics, and test 3 (CPU and
-    subrequests) with the first real alert; then tests 5 and 6 when App Check is set up. Update this
-    record with the results;
+  - measure CPU time for a warm alert and for one with an App Check token (test 3) once the app's
+    screens send alerts; run tests 5 and 6 when App Check is set up. Update this record with the
+    results;
+  - repeat tests 1 and 2 in the beta, on mobile data and on phones from other makers;
   - if test 1 or 3 fails, write a new record before building more on this design.
