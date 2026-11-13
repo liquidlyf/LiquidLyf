@@ -31,6 +31,15 @@
             </intent-filter>
         </activity>
 
+        <!-- The Worker's topic alerts (doc 10 §6). Not exported: only Firebase delivers to it. -->
+        <service
+            android:name=".notifications.LiquidLyfMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <!-- Per-app language on Android 12 and older (AppCompat stores the choice). -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

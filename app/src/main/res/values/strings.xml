@@ -273,4 +273,9 @@
     <string name="auth_or">or</string>
     <string name="error_google_no_account">There\'s no Google account on this phone. Add one in Settings, or use your email.</string>
     <string name="error_google_failed">Couldn\'t sign in with Google. Try again, or use your email.</string>
+
+    <!-- Request alerts (Phase 2 live test; Phase 5 adds the area name and urgency) -->
+    <string name="notification_new_request_title">%1$s blood needed near you</string>
+    <string name="notification_new_request_title_any">Blood needed near you</string>
+    <string name="notification_new_request_body">Someone near you needs your blood group. Open LiquidLyf to see the request.</string>
 </resources>
