@@ -1,7 +1,8 @@
 // POST /v1/requests/{rid}/dispatch: send the first tier of a new request (doc 10 §6.4).
-// Cost: 1 Firestore read + 1 write. Escalation to later tiers is the 5-minute cron (Phase 5).
+// Cost: 1 Firestore read + 1 write. Later tiers are the 5-minute sweep's job (sweep.ts).
 import type { Env } from "./env";
 import { sendToCondition } from "./fcm";
+import { addMinutes, escalationMinutes, fanoutWrite, requestPushData } from "./fanout";
 import { Firestore, FirestoreError, fieldsOf } from "./firestore";
 import { getAccessToken } from "./google-auth";
 import { HttpError, json } from "./http";
@@ -10,26 +11,10 @@ import type { FirebaseUser } from "./verify";
 
 /** The app calls dispatch right after creating the request; later ones are the sweep's job. */
 export const DISPATCH_WINDOW_MS = 10 * 60 * 1000;
-const DEFAULT_ESCALATION_MINUTES = 30;
 const MASK = ["requesterUid", "status", "fanoutTier", "createdAt", "bloodGroup", "component",
   "acceptCompatible", "acceptedGroups", "division", "district", "upazila", "urgency"];
 
 const alreadyDispatched = () => json({ accepted: true, alreadyDispatched: true }, 202);
-
-function fanoutWrite(fs: Firestore, rid: string, tier: number, nextTierAt: Date, updateTime: string) {
-  return {
-    update: {
-      name: fs.docName(`requests/${rid}`),
-      fields: {
-        fanoutTier: { integerValue: String(tier) },
-        nextTierAt: { timestampValue: nextTierAt.toISOString() },
-      },
-    },
-    // Only these two fields. updatedAt stays: fan-out isn't a change the feed must re-download.
-    updateMask: { fieldPaths: ["fanoutTier", "nextTierAt"] },
-    currentDocument: { updateTime },
-  };
-}
 
 export async function dispatch(env: Env, user: FirebaseUser, rid: string): Promise<Response> {
   const token = await getAccessToken(env);
@@ -57,8 +42,7 @@ export async function dispatch(env: Env, user: FirebaseUser, rid: string): Promi
   }
   if (tier === null || conditions.length === 0) throw new HttpError(422, "nothing to send");
 
-  const minutes = env.ESCALATION_MINUTES?.[r.urgency] ?? DEFAULT_ESCALATION_MINUTES;
-  const nextTierAt = new Date(now.getTime() + minutes * 60_000);
+  const nextTierAt = addMinutes(now, escalationMinutes(env.ESCALATION_MINUTES, r.urgency));
 
   // Claim the tier first: the updateTime precondition makes a concurrent or repeated
   // dispatch lose cleanly, so donors are never alerted twice for the same tier.
@@ -71,11 +55,7 @@ export async function dispatch(env: Env, user: FirebaseUser, rid: string): Promi
     throw e;
   }
 
-  // Public data only: anyone can subscribe to a topic (doc 10 §6.3).
-  const data = {
-    type: "NEW_REQUEST", requestId: rid, bloodGroup: r.bloodGroup,
-    district: r.district, urgency: r.urgency, tier: String(tier),
-  };
+  const data = requestPushData(rid, r, tier);
   for (const condition of conditions) {
     const result = await sendToCondition(env, token, { condition, data, collapseKey: rid });
     if (result !== "ok") {

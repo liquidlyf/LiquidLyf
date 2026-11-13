@@ -8,8 +8,8 @@ Design: `project-plan` doc 10 §6.
 
 | Phase | What |
 |---|---|
-| **2 (now)** | `GET /health`, and `POST /v1/requests/{id}/dispatch`, which sends the first tier |
-| 5 | `/notify`, plus crons: the 5-minute escalation sweep, hourly expiry and daily retention |
+| **2 (live)** | `GET /health`, and `POST /v1/requests/{id}/dispatch`, which sends the first tier |
+| **5 (built, tested, not deployed yet)** | the two `notify` endpoints, plus crons: the 5-minute escalation sweep, hourly expiry and the daily retention clean-up |
 
 ## How dispatch works
 The checks run cheapest first, so junk traffic never costs a Firestore read:
@@ -23,8 +23,11 @@ The checks run cheapest first, so junk traffic never costs a Firestore read:
 
 Tiers (`src/tiers.ts`, doc 06 §4.3). Topics are `up_{upazila}_{GROUP}`, `di_{district}_{GROUP}` and `dv_{division}_{GROUP}`.
 - **Tier 1:** the exact group in the hospital's upazila.
+- **Tier 2:** the other accepted groups in the upazila, only if the requester accepts compatible blood.
 - **Tier 3:** the district. Rh-negative requests, and requests without an upazila, start here.
-- Tiers 2 and 4 come with the Phase 5 sweep.
+- **Tier 4:** the neighbouring districts. For Rh-negative requests, it's the whole division instead.
+  - The neighbours come from `backend/shared/district-neighbours.json`, generated from the app's `bd-geo.json` by `npm run gen:neighbours`.
+  - A test fails if the two files drift apart.
 
 `backend/shared/tier-vectors.json` pins the exact conditions. The Android `Tiers.kt` must pass the same vectors.
 
@@ -47,11 +50,44 @@ Call it right after the request-create batch commits. It doesn't change the requ
 | 429 | `{error}` | Back off |
 | 500 / 503 | `{error}` | Retry with backoff, up to 3 times; the sweep covers the rest |
 
+**Personal pushes (Phase 5).** Call these after the batch that changed the state, and after writing the inbox item:
+
+```
+POST {worker_base_url}/v1/requests/{requestId}/responses/{donorUid}/notify
+POST {worker_base_url}/v1/requests/{requestId}/notify-responders
+```
+
+The Worker re-reads the doc (1 read) and checks the caller's role against the **current** state. Then it sends `{type, requestId}` to the other person's `usr_{uid}` topic.
+
+| Caller | State | Push |
+|---|---|---|
+| The donor | response `OFFERED` | `NEW_OFFER` → requester |
+| The requester | response `CONFIRMED` / `DECLINED` / `DONATED` | `OFFER_CONFIRMED` / `OFFER_DECLINED` / `DONATION_RECORDED` → donor |
+| The requester | request `FULFILLED` / `CANCELLED` | `REQUEST_FULFILLED` / `REQUEST_CANCELLED` → donors still `OFFERED` or `CONFIRMED` |
+
+Responses: 202 `{accepted, type}`. 403 means it isn't your request or offer; 409 means there's nothing to announce in this state. Other codes are as in the table above.
+
 **The push the donor's phone receives:**
 - data-only, high priority, collapse key = `requestId`;
 - data: `{type: "NEW_REQUEST", requestId, bloodGroup, district, urgency, tier}`.
 
 Public fields only, because anyone can subscribe to a topic. The app renders the text.
+
+## Crons (Phase 5; `wrangler.jsonc` → `triggers`, times in UTC)
+| Cron | Job | Cost per run |
+|---|---|---|
+| `*/5 * * * *` | **Escalation sweep** (`sweep.ts`): up to 25 OPEN requests with `nextTierAt <= now`. If active offers (`OFFERED`/`CONFIRMED`) cover the units still needed, it waits an hour. Otherwise it sends the next tier. A request the app never dispatched gets tier 1. When all tiers are sent, or the request has expired, it's parked in 2100. | 1 read per request (≥ 1) + 1 batch write |
+| `7 * * * *` | **Expiry** (`expiry.ts`): OPEN past `expiresAt` → `EXPIRED` + `userStats.openRequests −1`, in one commit. | 1 read + 1 commit per request |
+| `0 3 * * *` (09:00 Dhaka) | **Retention** (`retention.ts`, decision B6): see below. Old requests are walked from a cursor in KV. | small |
+
+**What the retention job removes:**
+- **90 days after a request closes:** `private/contact`, the donor phone and message in its responses, and the request's notes and closing reason. Short names stay.
+- **Inbox items:** after 60 days.
+- **Reports:** after 1 year.
+
+**Safety:**
+- **Idempotent.** Every claim carries the doc's `updateTime`, so two overlapping sweeps (or the Apps Script backup) alert once.
+- **Within the free plan's limits.** Every run stays under 50 subrequests. The sweep sends at most 40 messages, and the rest wait for the next run.
 
 ## Run it
 You need Node 22.12+. For the end-to-end tests, also Java 21 (`JAVA_HOME` = Android Studio's `jbr`).

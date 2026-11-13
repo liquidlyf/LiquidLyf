@@ -1,0 +1,626 @@
+{
+ "note": "Generated from app/src/main/assets/bd-geo.json by backend/worker/scripts/gen-neighbours.mjs. Don't edit by hand.",
+ "geoVersion": 1,
+ "districts": {
+  "BD1004": {
+   "division": "BD10",
+   "neighbours": [
+    "BD1006",
+    "BD1042",
+    "BD1078",
+    "BD1079",
+    "BD4001"
+   ]
+  },
+  "BD1006": {
+   "division": "BD10",
+   "neighbours": [
+    "BD1004",
+    "BD1009",
+    "BD1042",
+    "BD1078",
+    "BD1079",
+    "BD2013",
+    "BD2051",
+    "BD3035",
+    "BD3054",
+    "BD3086"
+   ]
+  },
+  "BD1009": {
+   "division": "BD10",
+   "neighbours": [
+    "BD1006",
+    "BD1078",
+    "BD2051",
+    "BD2075"
+   ]
+  },
+  "BD1042": {
+   "division": "BD10",
+   "neighbours": [
+    "BD1004",
+    "BD1006",
+    "BD1079"
+   ]
+  },
+  "BD1078": {
+   "division": "BD10",
+   "neighbours": [
+    "BD1004",
+    "BD1006",
+    "BD1009"
+   ]
+  },
+  "BD1079": {
+   "division": "BD10",
+   "neighbours": [
+    "BD1004",
+    "BD1006",
+    "BD1042",
+    "BD3035",
+    "BD4001"
+   ]
+  },
+  "BD2003": {
+   "division": "BD20",
+   "neighbours": [
+    "BD2015",
+    "BD2022",
+    "BD2084"
+   ]
+  },
+  "BD2012": {
+   "division": "BD20",
+   "neighbours": [
+    "BD2019",
+    "BD3048",
+    "BD3067",
+    "BD3068",
+    "BD6036"
+   ]
+  },
+  "BD2013": {
+   "division": "BD20",
+   "neighbours": [
+    "BD1006",
+    "BD2019",
+    "BD2051",
+    "BD2075",
+    "BD3059",
+    "BD3086"
+   ]
+  },
+  "BD2015": {
+   "division": "BD20",
+   "neighbours": [
+    "BD2003",
+    "BD2022",
+    "BD2030",
+    "BD2046",
+    "BD2075",
+    "BD2084"
+   ]
+  },
+  "BD2019": {
+   "division": "BD20",
+   "neighbours": [
+    "BD2012",
+    "BD2013",
+    "BD2030",
+    "BD2075",
+    "BD3059",
+    "BD3067"
+   ]
+  },
+  "BD2022": {
+   "division": "BD20",
+   "neighbours": [
+    "BD2003",
+    "BD2015"
+   ]
+  },
+  "BD2030": {
+   "division": "BD20",
+   "neighbours": [
+    "BD2015",
+    "BD2019",
+    "BD2075"
+   ]
+  },
+  "BD2046": {
+   "division": "BD20",
+   "neighbours": [
+    "BD2015",
+    "BD2084"
+   ]
+  },
+  "BD2051": {
+   "division": "BD20",
+   "neighbours": [
+    "BD1006",
+    "BD1009",
+    "BD2013",
+    "BD2075"
+   ]
+  },
+  "BD2075": {
+   "division": "BD20",
+   "neighbours": [
+    "BD1009",
+    "BD2013",
+    "BD2015",
+    "BD2019",
+    "BD2030",
+    "BD2051"
+   ]
+  },
+  "BD2084": {
+   "division": "BD20",
+   "neighbours": [
+    "BD2003",
+    "BD2015",
+    "BD2046"
+   ]
+  },
+  "BD3026": {
+   "division": "BD30",
+   "neighbours": [
+    "BD3029",
+    "BD3033",
+    "BD3056",
+    "BD3059",
+    "BD3067",
+    "BD3093"
+   ]
+  },
+  "BD3029": {
+   "division": "BD30",
+   "neighbours": [
+    "BD3026",
+    "BD3035",
+    "BD3054",
+    "BD3056",
+    "BD3059",
+    "BD3082",
+    "BD4055",
+    "BD4065"
+   ]
+  },
+  "BD3033": {
+   "division": "BD30",
+   "neighbours": [
+    "BD3026",
+    "BD3048",
+    "BD3067",
+    "BD3068",
+    "BD3093",
+    "BD4561"
+   ]
+  },
+  "BD3035": {
+   "division": "BD30",
+   "neighbours": [
+    "BD1006",
+    "BD1079",
+    "BD3029",
+    "BD3054",
+    "BD4001",
+    "BD4065"
+   ]
+  },
+  "BD3048": {
+   "division": "BD30",
+   "neighbours": [
+    "BD2012",
+    "BD3033",
+    "BD3068",
+    "BD4561",
+    "BD4572",
+    "BD6036",
+    "BD6090"
+   ]
+  },
+  "BD3054": {
+   "division": "BD30",
+   "neighbours": [
+    "BD1006",
+    "BD3029",
+    "BD3035",
+    "BD3059",
+    "BD3086"
+   ]
+  },
+  "BD3056": {
+   "division": "BD30",
+   "neighbours": [
+    "BD3026",
+    "BD3029",
+    "BD3082",
+    "BD3093",
+    "BD5076",
+    "BD5088"
+   ]
+  },
+  "BD3059": {
+   "division": "BD30",
+   "neighbours": [
+    "BD2013",
+    "BD2019",
+    "BD3026",
+    "BD3029",
+    "BD3054",
+    "BD3067",
+    "BD3086"
+   ]
+  },
+  "BD3067": {
+   "division": "BD30",
+   "neighbours": [
+    "BD2012",
+    "BD2019",
+    "BD3026",
+    "BD3033",
+    "BD3059",
+    "BD3068"
+   ]
+  },
+  "BD3068": {
+   "division": "BD30",
+   "neighbours": [
+    "BD2012",
+    "BD3033",
+    "BD3048",
+    "BD3067"
+   ]
+  },
+  "BD3082": {
+   "division": "BD30",
+   "neighbours": [
+    "BD3029",
+    "BD3056",
+    "BD4044",
+    "BD4050",
+    "BD4055",
+    "BD5076"
+   ]
+  },
+  "BD3086": {
+   "division": "BD30",
+   "neighbours": [
+    "BD1006",
+    "BD2013",
+    "BD3054",
+    "BD3059"
+   ]
+  },
+  "BD3093": {
+   "division": "BD30",
+   "neighbours": [
+    "BD3026",
+    "BD3033",
+    "BD3056",
+    "BD4539",
+    "BD4561",
+    "BD5088"
+   ]
+  },
+  "BD4001": {
+   "division": "BD40",
+   "neighbours": [
+    "BD1004",
+    "BD1079",
+    "BD3035",
+    "BD4047",
+    "BD4065"
+   ]
+  },
+  "BD4018": {
+   "division": "BD40",
+   "neighbours": [
+    "BD4044",
+    "BD4050",
+    "BD4057"
+   ]
+  },
+  "BD4041": {
+   "division": "BD40",
+   "neighbours": [
+    "BD4044",
+    "BD4047",
+    "BD4055",
+    "BD4065",
+    "BD4087"
+   ]
+  },
+  "BD4044": {
+   "division": "BD40",
+   "neighbours": [
+    "BD3082",
+    "BD4018",
+    "BD4041",
+    "BD4050",
+    "BD4055"
+   ]
+  },
+  "BD4047": {
+   "division": "BD40",
+   "neighbours": [
+    "BD4001",
+    "BD4041",
+    "BD4065",
+    "BD4087"
+   ]
+  },
+  "BD4050": {
+   "division": "BD40",
+   "neighbours": [
+    "BD3082",
+    "BD4018",
+    "BD4044",
+    "BD4057",
+    "BD5069",
+    "BD5076",
+    "BD5081"
+   ]
+  },
+  "BD4055": {
+   "division": "BD40",
+   "neighbours": [
+    "BD3029",
+    "BD3082",
+    "BD4041",
+    "BD4044",
+    "BD4065"
+   ]
+  },
+  "BD4057": {
+   "division": "BD40",
+   "neighbours": [
+    "BD4018",
+    "BD4050"
+   ]
+  },
+  "BD4065": {
+   "division": "BD40",
+   "neighbours": [
+    "BD3029",
+    "BD3035",
+    "BD4001",
+    "BD4041",
+    "BD4047",
+    "BD4055"
+   ]
+  },
+  "BD4087": {
+   "division": "BD40",
+   "neighbours": [
+    "BD4041",
+    "BD4047"
+   ]
+  },
+  "BD4539": {
+   "division": "BD45",
+   "neighbours": [
+    "BD3093",
+    "BD4561",
+    "BD4589",
+    "BD5010",
+    "BD5088",
+    "BD5532",
+    "BD5549"
+   ]
+  },
+  "BD4561": {
+   "division": "BD45",
+   "neighbours": [
+    "BD3033",
+    "BD3048",
+    "BD3093",
+    "BD4539",
+    "BD4572",
+    "BD4589"
+   ]
+  },
+  "BD4572": {
+   "division": "BD45",
+   "neighbours": [
+    "BD3048",
+    "BD4561",
+    "BD6090"
+   ]
+  },
+  "BD4589": {
+   "division": "BD45",
+   "neighbours": [
+    "BD4539",
+    "BD4561"
+   ]
+  },
+  "BD5010": {
+   "division": "BD50",
+   "neighbours": [
+    "BD4539",
+    "BD5038",
+    "BD5064",
+    "BD5069",
+    "BD5088",
+    "BD5532"
+   ]
+  },
+  "BD5038": {
+   "division": "BD50",
+   "neighbours": [
+    "BD5010",
+    "BD5064",
+    "BD5527",
+    "BD5532"
+   ]
+  },
+  "BD5064": {
+   "division": "BD50",
+   "neighbours": [
+    "BD5010",
+    "BD5038",
+    "BD5069",
+    "BD5070",
+    "BD5081"
+   ]
+  },
+  "BD5069": {
+   "division": "BD50",
+   "neighbours": [
+    "BD4050",
+    "BD5010",
+    "BD5064",
+    "BD5076",
+    "BD5081",
+    "BD5088"
+   ]
+  },
+  "BD5070": {
+   "division": "BD50",
+   "neighbours": [
+    "BD5064",
+    "BD5081"
+   ]
+  },
+  "BD5076": {
+   "division": "BD50",
+   "neighbours": [
+    "BD3056",
+    "BD3082",
+    "BD4050",
+    "BD5069",
+    "BD5088"
+   ]
+  },
+  "BD5081": {
+   "division": "BD50",
+   "neighbours": [
+    "BD4050",
+    "BD5064",
+    "BD5069",
+    "BD5070"
+   ]
+  },
+  "BD5088": {
+   "division": "BD50",
+   "neighbours": [
+    "BD3056",
+    "BD3093",
+    "BD4539",
+    "BD5010",
+    "BD5069",
+    "BD5076"
+   ]
+  },
+  "BD5527": {
+   "division": "BD55",
+   "neighbours": [
+    "BD5038",
+    "BD5532",
+    "BD5573",
+    "BD5577",
+    "BD5585",
+    "BD5594"
+   ]
+  },
+  "BD5532": {
+   "division": "BD55",
+   "neighbours": [
+    "BD4539",
+    "BD5010",
+    "BD5038",
+    "BD5527",
+    "BD5549",
+    "BD5585"
+   ]
+  },
+  "BD5549": {
+   "division": "BD55",
+   "neighbours": [
+    "BD4539",
+    "BD5532",
+    "BD5552",
+    "BD5585"
+   ]
+  },
+  "BD5552": {
+   "division": "BD55",
+   "neighbours": [
+    "BD5549",
+    "BD5573",
+    "BD5585"
+   ]
+  },
+  "BD5573": {
+   "division": "BD55",
+   "neighbours": [
+    "BD5527",
+    "BD5552",
+    "BD5577",
+    "BD5585"
+   ]
+  },
+  "BD5577": {
+   "division": "BD55",
+   "neighbours": [
+    "BD5527",
+    "BD5573",
+    "BD5594"
+   ]
+  },
+  "BD5585": {
+   "division": "BD55",
+   "neighbours": [
+    "BD5527",
+    "BD5532",
+    "BD5549",
+    "BD5552",
+    "BD5573"
+   ]
+  },
+  "BD5594": {
+   "division": "BD55",
+   "neighbours": [
+    "BD5527",
+    "BD5577"
+   ]
+  },
+  "BD6036": {
+   "division": "BD60",
+   "neighbours": [
+    "BD2012",
+    "BD3048",
+    "BD6058",
+    "BD6090",
+    "BD6091"
+   ]
+  },
+  "BD6058": {
+   "division": "BD60",
+   "neighbours": [
+    "BD6036",
+    "BD6091"
+   ]
+  },
+  "BD6090": {
+   "division": "BD60",
+   "neighbours": [
+    "BD3048",
+    "BD4572",
+    "BD6036",
+    "BD6091"
+   ]
+  },
+  "BD6091": {
+   "division": "BD60",
+   "neighbours": [
+    "BD6036",
+    "BD6058",
+    "BD6090"
+   ]
+  }
+ }
+}

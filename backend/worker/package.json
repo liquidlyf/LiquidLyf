@@ -13,6 +13,7 @@
     "test:e2e": "cd ../../firebase && npx firebase emulators:exec --only auth,firestore --project demo-liquidlyf \"npm --prefix ../backend/worker run test:e2e:inner\"",
     "test:e2e:inner": "vitest run --config vitest.e2e.config.js",
     "build": "wrangler deploy --dry-run --env=\"\" --outdir dist",
+    "gen:neighbours": "node scripts/gen-neighbours.mjs",
     "deploy": "wrangler deploy --env=\"\""
   },
   "devDependencies": {

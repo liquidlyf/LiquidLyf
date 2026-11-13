@@ -90,17 +90,29 @@ export async function makeEnv(o: Partial<Env> = {}): Promise<Env> {
 export interface Calls {
   token: number; idJwks: number; appCheckJwks: number;
   reads: string[]; writes: any[][]; fcm: any[]; other: string[];
+  queries: any[]; batches: any[][];
 }
 
 export interface GoogleOpts {
   docs?: Record<string, any>;            // path -> Firestore REST doc (fields + updateTime)
   fcmStatus?: number[];                  // successive FCM response codes (default 200)
   commitError?: { status: number; grpc: string } | null;
+  /** Successive commit outcomes (null = success); falls back to commitError when used up. */
+  commitErrors?: ({ status: number; grpc: string } | null)[];
+  /** runQuery: returns REST docs for a structuredQuery (default: none). */
+  query?: (q: any) => any[];
+  /** Successive batchWrite calls: per-write status codes (default all 0 = OK). */
+  batchCodes?: number[][];
 }
+
+/** A full document name in the fake project. */
+export const docName = (path: string) => `projects/${PROJECT}/databases/(default)/documents/${path}`;
 
 /** Install a fetch mock; returns the live call log. */
 export async function fakeGoogle(opts: GoogleOpts = {}): Promise<Calls> {
-  const calls: Calls = { token: 0, idJwks: 0, appCheckJwks: 0, reads: [], writes: [], fcm: [], other: [] };
+  const calls: Calls = { token: 0, idJwks: 0, appCheckJwks: 0, reads: [], writes: [], fcm: [], other: [], queries: [], batches: [] };
+  const commitErrors = [...(opts.commitErrors ?? [])];
+  const batchCodes = [...(opts.batchCodes ?? [])];
   const idKeys = { keys: [await jwk(keys.id, "id-1")] };
   const acKeys = { keys: [await jwk(keys.appCheck, "ac-1")] };
   const fcmStatus = [...(opts.fcmStatus ?? [])];
@@ -138,8 +150,25 @@ export async function fakeGoogle(opts: GoogleOpts = {}): Promise<Calls> {
     if (url === `${base.slice(0, -1)}:commit`) {
       const { writes } = JSON.parse(String(init?.body));
       calls.writes.push(writes);
-      if (opts.commitError) return json({ error: { status: opts.commitError.grpc } }, opts.commitError.status);
+      const error = commitErrors.length ? commitErrors.shift() : opts.commitError;
+      if (error) return json({ error: { status: error.grpc } }, error.status);
       return json({ writeResults: writes.map(() => ({ updateTime: new Date().toISOString() })), commitTime: new Date().toISOString() });
+    }
+    if (url === `${base.slice(0, -1)}:runQuery`) {
+      const { structuredQuery } = JSON.parse(String(init?.body));
+      calls.queries.push(structuredQuery);
+      const docs = opts.query?.(structuredQuery) ?? [];
+      const readTime = new Date().toISOString();
+      return json(docs.length ? docs.map((document) => ({ document, readTime })) : [{ readTime }]);
+    }
+    if (url === `${base.slice(0, -1)}:batchWrite`) {
+      const { writes } = JSON.parse(String(init?.body));
+      calls.batches.push(writes);
+      const codes = batchCodes.shift() ?? [];
+      return json({
+        writeResults: writes.map((_: unknown, i: number) => (codes[i] ?? 0) === 0 ? { updateTime: new Date().toISOString() } : {}),
+        status: writes.map((_: unknown, i: number) => ({ code: codes[i] ?? 0 })),
+      });
     }
     if (url.startsWith(base) && (!init?.method || init.method === "GET")) {
       const path = decodeURIComponent(url.slice(base.length).split("?")[0]);
@@ -171,7 +200,9 @@ export function requestRest(o: Record<string, unknown> = {}) {
     : Array.isArray(x) ? { arrayValue: { values: x.map(enc) } }
     : typeof x === "number" ? { integerValue: String(x) }
     : typeof x === "boolean" ? { booleanValue: x }
-    : x === null ? { nullValue: null } : { stringValue: String(x) };
+    : x === null ? { nullValue: null }
+    : typeof x === "object" ? { mapValue: { fields: Object.fromEntries(Object.entries(x as object).map(([k, y]) => [k, enc(y)])) } }
+    : { stringValue: String(x) };
   return {
     fields: Object.fromEntries(Object.entries(v).filter(([, x]) => x !== undefined).map(([k, x]) => [k, enc(x)])),
     updateTime: "2026-11-13T10:00:00.123456Z",

@@ -18,10 +18,13 @@ export class FirestoreError extends Error {
   constructor(public httpStatus: number, public grpcStatus: string, message: string) {
     super(message);
   }
-  /** A precondition (updateTime / exists) didn't hold: someone else changed the doc first. */
+  /**
+   * A precondition didn't hold: someone else changed the doc first (FAILED_PRECONDITION, ABORTED),
+   * exists:false met a doc (ALREADY_EXISTS), or exists:true met none (NOT_FOUND, seen on commit).
+   */
   get preconditionFailed() {
     return this.grpcStatus === "FAILED_PRECONDITION" || this.grpcStatus === "ABORTED"
-      || this.grpcStatus === "ALREADY_EXISTS";
+      || this.grpcStatus === "ALREADY_EXISTS" || this.grpcStatus === "NOT_FOUND";
   }
 }
 
@@ -96,7 +99,89 @@ export class Firestore {
     return this.call(`${this.base}:commit`, { method: "POST", body: JSON.stringify({ writes }) });
   }
 
+  /**
+   * Non-atomic batch (max 500 writes, one subrequest): each write succeeds or fails on its
+   * own, so one stale precondition doesn't sink the others. Returns per-write results.
+   */
+  async batchWrite(writes: unknown[]): Promise<{ ok: boolean; updateTime?: string; code: number }[]> {
+    if (writes.length === 0) return [];
+    const res = await this.call<{ writeResults?: { updateTime?: string }[]; status?: { code?: number }[] }>(
+      `${this.base}:batchWrite`, { method: "POST", body: JSON.stringify({ writes }) });
+    return writes.map((_, i) => {
+      const code = res.status?.[i]?.code ?? 0;
+      return { ok: code === 0, code, updateTime: res.writeResults?.[i]?.updateTime };
+    });
+  }
+
+  /**
+   * A structured query on one collection (or every collection with that ID when allDescendants).
+   * Each returned document costs 1 read; an empty result costs 1 read.
+   */
+  async runQuery(q: StructuredQuery): Promise<FsDoc[]> {
+    const { collection, allDescendants = false, where = [], orderBy = [], limit, select, startAfter } = q;
+    const filters = where.map(([field, op, value]) => ({ fieldFilter: { field: { fieldPath: field }, op, value: encode(value) } }));
+    const structuredQuery: Record<string, unknown> = {
+      from: [{ collectionId: collection, allDescendants }],
+      ...(filters.length === 1 ? { where: filters[0] }
+        : filters.length > 1 ? { where: { compositeFilter: { op: "AND", filters } } } : {}),
+      orderBy: orderBy.map(([field, dir]) => ({ field: { fieldPath: field }, direction: dir === "desc" ? "DESCENDING" : "ASCENDING" })),
+      ...(select ? { select: { fields: select.map((f) => ({ fieldPath: f })) } } : {}),
+      ...(startAfter ? { startAt: { values: startAfter.map(encodeCursor), before: false } } : {}),
+      ...(limit ? { limit } : {}),
+    };
+    // Collection-group queries run from the database root.
+    const rows = await this.call<{ document?: FsDoc }[]>(`${this.base}:runQuery`, {
+      method: "POST", body: JSON.stringify({ structuredQuery }),
+    });
+    return rows.filter((r) => r.document).map((r) => r.document!);
+  }
+
   docName(path: string) {
     return `${this.root}/${path}`;
   }
+
+  /** "requests/abc" from a full document name. */
+  pathOf(name: string) {
+    return name.slice(this.root.length + 1);
+  }
 }
+
+export type FilterOp = "EQUAL" | "LESS_THAN" | "LESS_THAN_OR_EQUAL" | "GREATER_THAN" | "IN";
+export interface StructuredQuery {
+  collection: string;
+  allDescendants?: boolean;
+  where?: [string, FilterOp, unknown][];
+  orderBy?: [string, "asc" | "desc"][];
+  limit?: number;
+  select?: string[];
+  /** Cursor values matching orderBy; use { ref: fullDocName } for __name__. */
+  startAfter?: unknown[];
+}
+
+function encodeCursor(v: unknown): FsValue {
+  if (v && typeof v === "object" && "ref" in (v as object)) return { referenceValue: (v as { ref: string }).ref } as unknown as FsValue;
+  return encode(v);
+}
+
+// ---- write builders (Firestore REST "Write" objects) ----
+
+/** Update only `fields` (a key missing from `values` but listed in `mask` is deleted). */
+export function updateWrite(name: string, mask: string[], values: Record<string, unknown>,
+  pre?: { updateTime?: string; exists?: boolean }, serverTimeFields: string[] = []) {
+  return {
+    update: { name, fields: Object.fromEntries(Object.entries(values).map(([k, v]) => [k, encode(v)])) },
+    updateMask: { fieldPaths: mask },
+    ...(serverTimeFields.length
+      ? { updateTransforms: serverTimeFields.map((f) => ({ fieldPath: f, setToServerValue: "REQUEST_TIME" })) } : {}),
+    ...(pre ? { currentDocument: pre } : {}),
+  };
+}
+
+export function incrementWrite(name: string, field: string, by: number, pre?: { exists?: boolean }) {
+  return {
+    transform: { document: name, fieldTransforms: [{ fieldPath: field, increment: { integerValue: String(by) } }] },
+    ...(pre ? { currentDocument: pre } : {}),
+  };
+}
+
+export const deleteWrite = (name: string) => ({ delete: name });
