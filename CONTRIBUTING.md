@@ -76,7 +76,8 @@ CI runs all of them again on your pull request.
 
 ## Rules for the code
 
-These keep the app safe, fast and free to run. The full list is in `CLAUDE.md` at the repo root.
+These keep the app safe, fast and free to run. The full list, with where each kind of code goes, is in
+[docs/architecture.md](docs/architecture.md).
 
 - **Layers:** UI → ViewModel (`StateFlow`) → Repository → Firebase. **No Firebase calls in composables.**
 - **Strings:** every user-facing text goes in `res/values/strings.xml`, never hard-coded in Kotlin.

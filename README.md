@@ -54,7 +54,7 @@ Firebase Cloud Messaging · a Cloudflare Worker (TypeScript) for alerts and time
 | `app/` | The Android app |
 | `firebase/` | Firestore security rules, rules tests and sample data for the emulators |
 | `backend/` | The Cloudflare Worker and helper scripts |
-| `docs/` | Contributor docs and [decision records](docs/adr/) |
+| `docs/` | [How the app is built](docs/architecture.md) and [decision records](docs/adr/) |
 | `branding/` | The logo (not open-licensed; see [TRADEMARKS.md](TRADEMARKS.md)) |
 
 ## Community
