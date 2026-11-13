@@ -1,61 +1,85 @@
 # LiquidLyf
 
-LiquidLyf is a modern, youthful, and user-friendly **blood donation mobile application** designed to connect **donors** and **recipients** in real time.  
-With a clean interface, smart matching system, and location-based search, LiquidLyf makes it easier than ever to **request blood** or **volunteer as a donor**.
+**A free, privacy-first app that connects blood donors with people who need blood in Bangladesh.**
 
----
+> 🚧 **Rebuild in progress.** LiquidLyf is being rebuilt from the ground up on the `rebuild` branch.
+> There is no release of the new app yet. Follow along, or [help build it](CONTRIBUTING.md).
 
-## 📱 App Screenshots
+> 🩸 **Need blood urgently?** Contact your hospital or a licensed blood bank now. GitHub is not an
+> emergency channel.
 
-### Main Activities
-<p align="center">
-  <img src="images/MainActivity.jpg" alt="Main Activity" width="30%"/>
-  <img src="images/LoginActivity.jpg" alt="Login Activity" width="30%"/>
-  <img src="images/RegisterActivity.jpg" alt="Register Activity" width="30%"/>
-</p>
+## What it will do
 
-<p align="center">
-  <img src="images/RequestBloodActivity.jpg" alt="Request Blood Activity" width="30%"/>
-  <img src="images/UpdateProfileActivity.jpg" alt="Update Profile Activity" width="30%"/>
-  <img src="images/ChangePasswordActivity.jpg" alt="Change Password Activity" width="30%"/>
-</p>
+- **Alerts the right donors:** a request reaches donors who are eligible, available and have a
+  compatible blood group near the hospital. If nobody responds, the search area widens step by step.
+- **Protects phone numbers:** numbers are never listed publicly. They are shared only when a donor
+  offers to help, and only with that requester.
+- **Knows when you can donate:** it counts the rest period after each donation for you.
+- **Fights scams:** a clear "never pay for blood" rule, plus report, block and moderation tools.
+- **Speaks Bangla:** full Bangla and English.
+- **Costs nothing:** free for everyone, with no ads. It runs on free plans of Firebase and Cloudflare.
 
-<p align="center">
-  <img src="images/ForgotPasswordPhoneActivity.jpg" alt="Forgot Password Phone Activity" width="30%"/>
-  <img src="images/ForgotPasswordVerifyActivity.jpg" alt="Forgot Password Verify Activity" width="30%"/>
-  <img src="images/ForgotPasswordNewActivity.jpg" alt="Forgot Password New Activity" width="30%"/>
-</p>
+## Download
 
----
+Not available yet. When v1.0 is ready, the signed APK will be on
+[GitHub Releases](https://github.com/liquidlyf/LiquidLyf/releases) and at
+[liquidlyf.github.io](https://liquidlyf.github.io), with a Bangla install guide.
 
-### Fragments
-<p align="center">
-  <img src="images/DashboardFragment.jpg" alt="Dashboard Fragment" width="30%"/>
-  <img src="images/RequestsFragment.jpg" alt="Requests Fragment" width="30%"/>
-  <img src="images/ProfileFragment.jpg" alt="Profile Fragment" width="30%"/>
-</p>
+## For developers
 
-<p align="center">
-  <img src="images/SettingsFragment.jpg" alt="Settings Fragment" width="30%"/>
-</p>
+You can run the app on your own computer in about 15 minutes, **without a Firebase account**: the
+`demo` build uses the local Firebase emulators with made-up sample data.
 
----
+```bash
+git clone https://github.com/liquidlyf/LiquidLyf.git && cd LiquidLyf
+git switch rebuild
+firebase emulators:start --import=firebase/seed     # terminal 1
+./gradlew installDemoDebug                          # terminal 2
+```
 
-## 🚀 Features
-- 📍 **Location-based donor matching** – Find donors near you quickly.
-- 🔔 **Real-time notifications** – Instant alerts for urgent requests.
-- 📅 **Donation history tracking** – Keep track of your past donations.
-- 🧾 **Request management** – Create, accept, and respond to blood requests.
-- 🌍 **Community impact stats** – See the lives saved together.
+The full steps, the code rules and how to send a pull request are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
----
+**Built with:** Kotlin, Jetpack Compose and Material 3 · Cloud Firestore with tested security rules ·
+Firebase Cloud Messaging · a Cloudflare Worker (TypeScript) for alerts and timed jobs · GitHub Actions.
 
-## 📱 Tech Stack
-- **Frontend (Mobile App)**: Kotlin (Android)
+| Folder | What's inside |
+|---|---|
+| `app/` | The Android app |
+| `firebase/` | Firestore security rules, rules tests and sample data for the emulators |
+| `backend/` | The Cloudflare Worker and helper scripts |
+| `docs/` | Contributor docs and [decision records](docs/adr/) |
+| `branding/` | The logo (not open-licensed; see [TRADEMARKS.md](TRADEMARKS.md)) |
 
----
+## Community
 
-## 🛠️ Installation
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/azminur2856/LiquidLyf.git
+- **Questions and ideas:** [Discussions](../../discussions)
+- **Bugs and tasks:** [Issues](../../issues). Look for `good first issue`.
+- **Help with the app, or your account:** [SUPPORT.md](SUPPORT.md)
+- **Security problems:** please report privately, as in [SECURITY.md](SECURITY.md)
+- **How the project is run:** [GOVERNANCE.md](GOVERNANCE.md) · [MAINTAINERS.md](MAINTAINERS.md)
+- Everyone follows our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Contact: **liquidlyf@gmail.com**
+
+## Licence
+
+LiquidLyf is free software under the **GNU Affero General Public License v3.0 or later**
+([LICENSE](LICENSE)), with an additional permission for Google Play services and Firebase libraries.
+Documentation in `docs/` is CC BY 4.0. The details are in [LICENSING.md](LICENSING.md).
+
+Copyright (C) 2025-2026 The LiquidLyf contributors.
+
+## Trademark
+
+LiquidLyf™ and the LiquidLyf logo are not covered by the licence. If you publish a fork, please give it
+your own name, logo and app ID. See [TRADEMARKS.md](TRADEMARKS.md).
+
+## History: university project (v0)
+
+LiquidLyf started in 2025 as a university project: an Android app (Kotlin, XML layouts, Firebase Realtime
+Database) for registering donors and posting blood requests. That version is preserved, unchanged, at the
+tag [`v0-university`](../../tree/v0-university), with its screenshots and its original MIT licence. It is
+no longer maintained, and its app ID `com.azminur.liquidlyf` isn't used by the new app.
+
+The rebuild keeps the name, the idea and the heart-and-drop logo, and starts the code again with a new
+design, a new data model and a focus on privacy and safety.
