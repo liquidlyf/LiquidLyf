@@ -42,7 +42,7 @@ npm ci
 npm run emulators
 
 # 2. In a second terminal, from the repo root: let the phone or emulator reach the local backend
-adb reverse tcp:8080 tcp:8080                   # Firestore
+adb reverse tcp:8085 tcp:8085                   # Firestore
 adb reverse tcp:9099 tcp:9099                   # Auth
 
 # 3. Build and install the demo app

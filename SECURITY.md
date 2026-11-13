@@ -5,12 +5,12 @@ every security report seriously, and we're grateful for each one.
 
 ## Supported versions
 
-| Version | Supported |
-|---|---|
-| The latest release on [GitHub Releases](https://github.com/liquidlyf/LiquidLyf/releases) | ✅ |
-| The `main` branch (and `rebuild` until v1.0) | ✅ |
-| Older releases | ❌ Please update first and check the problem still exists |
-| The university version (tag `v0-university`, app ID `com.azminur.liquidlyf`) | ❌ No longer maintained |
+| Version                                                                                  | Supported                                                 |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| The latest release on [GitHub Releases](https://github.com/liquidlyf/LiquidLyf/releases) | ✅                                                        |
+| The `main` branch (and `rebuild` until v1.0)                                             | ✅                                                        |
+| Older releases                                                                           | ❌ Please update first and check the problem still exists |
+| The university version (tag `v0-university`, app ID `com.azminur.liquidlyf`)             | ❌ No longer maintained                                   |
 
 ## Reporting a vulnerability
 
@@ -21,6 +21,7 @@ every security report seriously, and we're grateful for each one.
 - **Or email** **liquidlyf@gmail.com** with "SECURITY" in the subject.
 
 Please include:
+
 - what is affected: the app (version and build), the Firestore security rules, the Cloudflare Worker,
   the website or a CI workflow;
 - the steps to reproduce it;
@@ -30,6 +31,7 @@ Please include:
 ## Scope
 
 **In scope:**
+
 - the Android app;
 - the Firestore security rules and indexes in `firebase/`;
 - the Cloudflare Worker in `backend/`;
@@ -37,6 +39,7 @@ Please include:
 - the GitHub Actions workflows in this repository.
 
 **Out of scope:**
+
 - bugs in Google, Firebase, Cloudflare or GitHub themselves (please report those to the vendor);
 - social engineering, phishing or physical attacks on maintainers or users;
 - denial-of-service or load tests against the live service, and spam or message-flooding tests;
@@ -46,6 +49,7 @@ Please include:
 ## Rules for testing (safe harbour)
 
 We won't take legal action against good-faith research that follows these rules:
+
 - Test against **your own accounts**, or better, against the local emulator setup (the `demo` build; see
   [CONTRIBUTING.md](CONTRIBUTING.md)). Never access, change or delete other people's data.
 - If you come across someone's personal data, **stop**. Don't keep, copy or share it, and tell us right away.
