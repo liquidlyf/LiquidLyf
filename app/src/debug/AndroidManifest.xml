@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- Host for instrumented Compose tests that need Hilt. Not exported. -->
+        <activity
+            android:name=".HiltTestActivity"
+            android:exported="false"
+            android:theme="@style/Theme.LiquidLyf" />
+    </application>
+
+</manifest>

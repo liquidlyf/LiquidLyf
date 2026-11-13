@@ -1,6 +1,5 @@
 package io.github.liquidlyf.navigation
 
-import androidx.activity.ComponentActivity
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -16,10 +15,14 @@ import androidx.compose.ui.test.performClick
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import io.github.liquidlyf.HiltTestActivity
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,11 +32,18 @@ import org.junit.runner.RunWith
  * root, then to Home, then closes the app; sign-in screens never stack (BUG-031, BUG-032).
  * Run: ./gradlew connectedDemoDebugAndroidTest (phone unlocked).
  */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class AppNavHostTest {
 
-    @get:Rule
-    val compose = createAndroidComposeRule<ComponentActivity>()
+    @get:Rule(order = 0)
+    val hilt = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val compose = createAndroidComposeRule<HiltTestActivity>()
+
+    @Before
+    fun setUp() = hilt.inject()
 
     private val selectedTabs = mutableListOf<TopLevelDestination>()
     private var onboardingFinished = false

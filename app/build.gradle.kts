@@ -23,7 +23,8 @@ android {
         versionCode = 1
         versionName = "1.0.0-alpha01"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Starts HiltTestApplication, so instrumented tests can use Hilt (src/androidTest).
+        testInstrumentationRunner = "io.github.liquidlyf.HiltTestRunner"
 
         val emulatorHost = providers.gradleProperty("liquidlyf.emulatorHost").getOrElse("127.0.0.1")
         buildConfigField("String", "EMULATOR_HOST", "\"$emulatorHost\"")
@@ -183,4 +184,6 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
 }
