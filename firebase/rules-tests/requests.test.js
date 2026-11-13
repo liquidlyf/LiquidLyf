@@ -183,6 +183,24 @@ describe('requests: money words (Spark test 9)', () => {
   });
 });
 
+// The app's Validators use Kotlin String.length (UTF-16 code units). These pin that the
+// rules' size() counts the same way, not UTF-8 bytes (a Bangla letter is 3 bytes).
+describe('requests: text limits count UTF-16 code units, like Kotlin String.length', () => {
+  test('500 Bangla letters fit the 500 limit; 501 do not', async () => {
+    await assertSucceeds(createRequest(as('alice'), 'alice', 'r1', { notes: 'ক'.repeat(500), flagged: false }));
+    await getEnv().clearFirestore();
+    await seedUsers(users);
+    await assertFails(createRequest(as('alice'), 'alice', 'r1', { notes: 'ক'.repeat(501), flagged: false }));
+  });
+
+  test('an emoji counts as 2: 250 fit, 251 do not', async () => {
+    await assertSucceeds(createRequest(as('alice'), 'alice', 'r1', { notes: '🩸'.repeat(250), flagged: false }));
+    await getEnv().clearFirestore();
+    await seedUsers(users);
+    await assertFails(createRequest(as('alice'), 'alice', 'r1', { notes: '🩸'.repeat(251), flagged: false }));
+  });
+});
+
 describe('userStats: open-request counter (Spark test 2)', () => {
   test('a request without the userStats +1 is rejected', async () => {
     await assertFails(createRequest(as('alice'), 'alice', 'r1', {}, { stats: false }));
