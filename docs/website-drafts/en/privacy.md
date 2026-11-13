@@ -153,7 +153,7 @@ serious harm.
 |---|---|
 | Your account and profile | Until you delete your account |
 | An open request | Until it is fulfilled, cancelled or expires (one day after the "needed by" time) |
-| Closed requests and offers | Visible to the people involved for 90 days. Then the contact details are deleted and the request is anonymised |
+| Closed requests and offers | Visible to the people involved for 90 days. Then all contact details, donors' phone numbers, messages, notes and the reason for closing are deleted. What stays is the short names (such as "Rahim K."), blood group, area, date and outcome |
 | Your donation history | Until you delete your account |
 | Your past requests and offers, after you delete your account | Kept as history without your name, phone number, notes or messages, so other people's records stay complete ([details](/delete-account)) |
 | In-app notifications | 60 days |
@@ -161,11 +161,10 @@ serious harm.
 | Crash reports | 90 days |
 
 <!-- CHECK: whether any backups exist. The free Spark plan has no scheduled Firestore backups.
-     CHECK (session B, item B6): the Worker's cleanup job (Phase 5) that deletes reports after 1 year and
-     cleans closed requests after 90 days doesn't exist yet. B6 also decides whether closed requests lose
-     the name after 90 days ("LiquidLyf user") or keep "Alice T." with only phones and free text removed.
-     Reword the "Closed requests and offers" row (both languages) to match, and publish only once the
-     job runs. -->
+     B6 answered 13 Nov 2026 (a): after 90 days closed requests keep short names, blood group, area,
+     date and outcome; contact details, donor phones, messages, notes and the closing reason are deleted.
+     CHECK: the Worker's cleanup job (Phase 5) that does this, and deletes inbox items after 60 days and
+     reports and the admin log after 1 year, doesn't exist yet. Publish only once it runs. -->
 
 
 ## 7. Your choices and rights
@@ -175,7 +174,8 @@ serious harm.
   stop getting request alerts.
 - **Pause alerts:** turn off "Available to donate", or turn off notifications in Android settings.
 - **Withdraw an offer** at any time before you donate. The requester can still see the number you
-  shared with that offer until the request is anonymised (section 6), and may have written it down.
+  shared with that offer until it is deleted, 90 days after the request closes (section 6), and may
+  have written it down.
 - **Block someone:** you stop seeing their requests, and they can't ask you to donate.
 - **Delete your account:** in the app under Settings → Delete account, or without the app at
   [liquidlyf.github.io/delete-account](/delete-account).
