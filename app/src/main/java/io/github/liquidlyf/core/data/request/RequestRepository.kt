@@ -1,5 +1,6 @@
 package io.github.liquidlyf.core.data.request
 
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -50,6 +51,9 @@ interface RequestRepository {
 
     /** The request being viewed, live. Null if it doesn't exist. */
     fun observe(requestId: String): Flow<BloodRequest?>
+
+    /** Several requests by id (My offers), in any status; missing ones are left out. */
+    suspend fun byIds(ids: List<String>): AppResult<List<BloodRequest>>
 
     /** My requests, newest first, one page at a time ([after] = last item of the previous page). */
     suspend fun mine(uid: String, after: BloodRequest? = null, limit: Long = PAGE_SIZE): AppResult<List<BloodRequest>>
@@ -104,6 +108,14 @@ class FirestoreRequestRepository @Inject constructor(
 
     override fun observe(requestId: String): Flow<BloodRequest?> =
         db.requestRef(requestId).snapshots { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
+
+    override suspend fun byIds(ids: List<String>): AppResult<List<BloodRequest>> = appResultOf {
+        // whereIn takes at most 30 values; a page of offers is 20.
+        ids.distinct().chunked(30).flatMap { chunk ->
+            db.requests().whereIn(FieldPath.documentId(), chunk).get().await().documents
+                .mapNotNull { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
+        }
+    }
 
     override suspend fun mine(uid: String, after: BloodRequest?, limit: Long): AppResult<List<BloodRequest>> = appResultOf {
         var query = db.requests()

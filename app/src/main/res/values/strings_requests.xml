@@ -194,5 +194,37 @@
         <item quantity="one">%d unit</item>
         <item quantity="other">%d units</item>
     </plurals>
+    <!-- Home -->
+    <string name="offline_banner">You\'re offline. Showing saved data.</string>
+    <string name="home_urgent_near_you">Urgent near you</string>
+    <string name="home_no_group_title">Add your blood group</string>
+    <string name="home_no_group_body">Then you\'ll see requests near you that you can answer.</string>
+    <string name="home_empty_title">No one near you needs %1$s right now</string>
+    <string name="home_empty_body">We\'ll notify you when someone does.</string>
+    <string name="home_change_area">Change area</string>
+    <string name="home_not_listed_title">You\'re not listed as a donor</string>
+    <string name="home_not_listed_body">List yourself so people nearby who need your blood group can find you and alert you.</string>
+    <string name="home_list_me">List me as a donor</string>
+    <string name="home_ready_to_donate">Ready to donate</string>
+    <string name="home_ready_on">People nearby can find you and alert you.</string>
+    <string name="home_ready_off">You won\'t get alerts or appear in donor search.</string>
+    <string name="home_eligible_now">You can donate now</string>
+    <plurals name="home_eligible_in">
+        <item quantity="one">You can donate again in %d day</item>
+        <item quantity="other">You can donate again in %d days</item>
+    </plurals>
+
+    <!-- Requests tab -->
+    <string name="requests_tab_nearby">Nearby</string>
+    <string name="requests_tab_mine">Mine</string>
+    <string name="requests_tab_offers">My offers</string>
+    <string name="requests_nearby_empty_title">No open requests in your district</string>
+    <string name="requests_nearby_empty_body">Pull down to check again.</string>
+    <string name="requests_mine_empty_title">You haven\'t asked for blood</string>
+    <string name="requests_mine_empty_body">If someone needs blood, post a request and matching donors nearby are alerted.</string>
+    <string name="requests_offers_empty_title">You haven\'t offered yet</string>
+    <string name="requests_offers_empty_body">When you offer to donate, you\'ll find the request here.</string>
+    <string name="requests_see_nearby">See requests near you</string>
+
     <string name="detail_share_text">%1$s blood needed: %2$s of %3$s at %4$s, %5$s. Needed by %6$s. Can you help? Shared from LiquidLyf, the free blood donation app.</string>
 </resources>

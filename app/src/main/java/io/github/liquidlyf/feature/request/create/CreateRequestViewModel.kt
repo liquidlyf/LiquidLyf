@@ -153,8 +153,12 @@ class CreateRequestViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val geo = geoRepository.geo()
+            state.update { it.copy(geo = geo, loaded = true) }
+        }
+        // In parallel: a slow network mustn't hold the form; at the limit it's swapped for the reason.
+        viewModelScope.launch {
             val limit = me?.let { openRequestLimitReached(it) }
-            state.update { it.copy(geo = geo, limit = limit, loaded = true) }
+            if (limit != null) state.update { it.copy(limit = limit) }
         }
         // Hospital suggestions 300 ms after typing stops; a newer query cancels the older search.
         viewModelScope.launch {

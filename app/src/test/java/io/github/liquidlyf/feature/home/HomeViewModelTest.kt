@@ -1,0 +1,144 @@
+package io.github.liquidlyf.feature.home
+
+import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.geo.BdGeo
+import io.github.liquidlyf.core.data.geo.BdGeoParser
+import io.github.liquidlyf.core.data.geo.GeoRepository
+import io.github.liquidlyf.core.data.session.SessionState
+import io.github.liquidlyf.core.domain.EligibilityCalculator
+import io.github.liquidlyf.core.domain.IneligibleReason
+import io.github.liquidlyf.core.model.BloodGroup
+import io.github.liquidlyf.core.model.RequestStatus
+import io.github.liquidlyf.core.model.Urgency
+import io.github.liquidlyf.core.util.AppError
+import io.github.liquidlyf.core.util.Clock
+import io.github.liquidlyf.testing.FakeNetworkMonitor
+import io.github.liquidlyf.testing.FakeProfileRepository
+import io.github.liquidlyf.testing.FakeRequestRepository
+import io.github.liquidlyf.testing.FakeSessionManager
+import io.github.liquidlyf.testing.TestData
+import io.github.liquidlyf.testing.request
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import java.io.File
+import java.time.Duration
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class HomeViewModelTest {
+
+    private val dispatcher = StandardTestDispatcher()
+    private val me = TestData.profile(uid = "me") // B+, Dhaka South, listed, available
+    private val session = FakeSessionManager(SessionState.Ready(TestData.user(uid = "me"), me))
+    private val requests = FakeRequestRepository()
+    private val profiles = FakeProfileRepository().apply { profiles["me"] = me }
+    private val geo = BdGeoParser.parse(File("src/main/assets/bd-geo.json").readText())
+    private val geoRepo = object : GeoRepository {
+        override suspend fun geo(): BdGeo = geo
+    }
+
+    @Before
+    fun setUp() = Dispatchers.setMain(dispatcher)
+
+    @After
+    fun tearDown() = Dispatchers.resetMain()
+
+    private fun TestScope.vm() = HomeViewModel(
+        session, requests, profiles, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, FakeNetworkMonitor(),
+    ).also { vm -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} } }
+
+    @Test
+    fun `the feed shows what I can answer, most urgent first`() = runTest(dispatcher) {
+        val soon = TestData.NOW.plus(Duration.ofHours(2))
+        requests.put(
+            TestData.request(id = "planned", neededBy = soon).copy(urgency = Urgency.PLANNED),
+            TestData.request(id = "urgent-late", neededBy = soon.plusSeconds(3600)).copy(urgency = Urgency.URGENT),
+            TestData.request(id = "urgent-early", neededBy = soon).copy(urgency = Urgency.URGENT),
+            TestData.request(id = "critical", neededBy = soon.plusSeconds(7200)),
+            TestData.request(id = "hidden"),
+            TestData.request(id = "blocked", requesterUid = "troll"),
+            TestData.request(id = "mine", requesterUid = "me"),
+            TestData.request(id = "other-group", group = BloodGroup.O_NEG),
+            TestData.request(id = "other-district", district = "BD4041"),
+            TestData.request(id = "closed", status = RequestStatus.FULFILLED),
+            TestData.request(id = "expired").copy(expiresAt = TestData.NOW.minusSeconds(1)),
+        )
+        session.state.value = SessionState.Ready(
+            TestData.user(uid = "me"),
+            me.copy(hiddenRequestIds = listOf("hidden"), blockedUids = listOf("troll")),
+        )
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(listOf("critical", "urgent-early", "urgent-late", "planned"), vm.uiState.value.requests?.map { it.id })
+    }
+
+    @Test
+    fun `without a blood group there's no feed to show`() = runTest(dispatcher) {
+        requests.put(TestData.request(id = "r1"))
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(bloodGroup = null))
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(emptyList<Any>(), vm.uiState.value.requests)
+    }
+
+    @Test
+    fun `the availability switch moves at once and stays when saved`() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.available)
+
+        vm.onAvailableToggled(false)
+        runCurrent()
+        assertFalse(vm.uiState.value.available) // optimistic
+        assertTrue(vm.uiState.value.savingAvailability)
+        vm.onAvailableToggled(true) // ignored while saving
+        runCurrent()
+        assertEquals(listOf(false), profiles.availabilityWrites)
+        assertEquals(1, session.refreshes)
+        assertFalse(vm.uiState.value.available) // still shown while the profile refreshes
+
+        // The refreshed profile arrives: the switch keeps its place and is free again.
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(available = false))
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.available)
+        assertFalse(vm.uiState.value.savingAvailability)
+    }
+
+    @Test
+    fun `a failed availability write moves the switch back and says why`() = runTest(dispatcher) {
+        val vm = vm()
+        val events = mutableListOf<HomeEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { events += it } }
+        advanceUntilIdle()
+        profiles.failNext = AppError.Network
+        vm.onAvailableToggled(false)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.available)
+        assertFalse(vm.uiState.value.savingAvailability)
+        assertEquals(listOf<HomeEvent>(HomeEvent.Message(R.string.error_network)), events)
+    }
+
+    @Test
+    fun `eligibility counts down the rest period`() = runTest(dispatcher) {
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(lastDonationAt = TestData.NOW.minus(Duration.ofDays(100))))
+        val vm = vm()
+        advanceUntilIdle()
+        val e = vm.uiState.value.eligibility!!
+        assertEquals(setOf(IneligibleReason.REST_PERIOD), e.reasons)
+        assertEquals(TestData.NOW.plus(Duration.ofDays(20)), e.eligibleFrom)
+    }
+}

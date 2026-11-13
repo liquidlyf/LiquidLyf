@@ -55,6 +55,9 @@ interface ProfileRepository {
     /** "Seen" for the whole inbox: one timestamp instead of a flag per item. */
     suspend fun markInboxSeen(profile: UserProfile): AppResult<Unit>
 
+    /** The Home "Ready to donate" switch: `available`, mirrored to the donor card while listed. */
+    suspend fun setAvailable(profile: UserProfile, available: Boolean): AppResult<Unit>
+
     /**
      * "Not for me" (Phase 4.5): hides a request from Home on every device. The list lives on the
      * user doc (rules: at most 200), so the oldest entries drop off.
@@ -138,6 +141,9 @@ class FirestoreProfileRepository @Inject constructor(
 
     override suspend fun markInboxSeen(profile: UserProfile): AppResult<Unit> =
         writeProfile(profile, profile, setOf(UserDoc.INBOX_SEEN_AT))
+
+    override suspend fun setAvailable(profile: UserProfile, available: Boolean): AppResult<Unit> =
+        if (profile.available == available) AppResult.Success(Unit) else writeProfile(profile, profile.copy(available = available))
 
     override suspend fun hideRequest(profile: UserProfile, requestId: String): AppResult<Unit> {
         if (requestId in profile.hiddenRequestIds) return AppResult.Success(Unit)

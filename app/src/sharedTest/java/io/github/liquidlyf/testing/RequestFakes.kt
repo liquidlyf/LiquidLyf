@@ -25,6 +25,7 @@ import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
+import io.github.liquidlyf.core.util.NetworkMonitor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,6 +63,8 @@ class FakeRequestRepository(private val now: Instant = TestData.NOW) : RequestRe
     }
 
     override fun observe(requestId: String): Flow<BloodRequest?> = requests.map { it[requestId] }
+
+    override suspend fun byIds(ids: List<String>) = result { AppResult.Success(ids.mapNotNull { requests.value[it] }) }
 
     override suspend fun mine(uid: String, after: BloodRequest?, limit: Long) = result {
         val all = requests.value.values.filter { it.requesterUid == uid }.sortedByDescending { it.createdAt }
@@ -213,6 +216,10 @@ class FakeHospitalRepository(private val all: List<Hospital> = emptyList()) : Ho
         queries += query
         return HospitalSearch.search(all, district, query, limit)
     }
+}
+
+class FakeNetworkMonitor(online: Boolean = true) : NetworkMonitor {
+    override val isOnline = MutableStateFlow(online)
 }
 
 /** A plain OPEN request; override what a test cares about with copy(). */

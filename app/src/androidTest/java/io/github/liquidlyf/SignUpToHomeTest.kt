@@ -176,7 +176,7 @@ class SignUpToHomeTest {
         tap(R.string.action_finish)
 
         // Home (Android 11 has no notification permission screen)
-        waitFor(str(R.string.placeholder_open_sample_request), timeoutMs = 15_000)
+        waitFor(str(R.string.home_urgent_near_you), timeoutMs = 15_000)
 
         val uid = auth.currentUser!!.uid
         val user = db.userRef(uid).get(Source.SERVER).await()

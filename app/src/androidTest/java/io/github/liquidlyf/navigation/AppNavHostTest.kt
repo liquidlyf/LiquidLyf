@@ -3,6 +3,7 @@ package io.github.liquidlyf.navigation
 import androidx.annotation.StringRes
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
@@ -213,17 +214,15 @@ class AppNavHostTest {
     }
 
     @Test
-    fun detailScreenOpensAboveTheTabsAndBackReturns() {
+    fun fullScreenDestinationOpensAboveTheTabsAndBackReturns() {
         launch(GateZone.MAIN, ready)
-        tab(R.string.nav_requests).performClick()
-        clickButton(R.string.placeholder_open_sample_request)
-        assertOnScreen(R.string.title_request_detail)
-        assertOnScreen(R.string.placeholder_request_id, "sample-request")
+        clickButton(R.string.action_request_blood) // Home's button opens Create request, without tabs
+        assertOnScreen(R.string.create_patient_title)
+        compose.onAllNodes(isSelectable() and hasText(str(R.string.nav_requests))).assertCountEquals(0)
 
         pressBack()
-        assertOnScreen(R.string.nav_requests)
-        pressBack()
-        assertOnScreen(R.string.nav_home)
+        assertOnScreen(R.string.home_urgent_near_you)
+        tab(R.string.nav_home).assertIsSelected()
     }
 
     @Test

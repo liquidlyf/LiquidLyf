@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
@@ -47,7 +46,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.navDeepLink
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import androidx.core.content.ContextCompat
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.session.SessionState
@@ -70,16 +68,15 @@ import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.windowWidth
 import io.github.liquidlyf.feature.gallery.ComponentGalleryScreen
-import io.github.liquidlyf.feature.placeholder.PlaceholderLink
 import io.github.liquidlyf.feature.profile.BloodGroupReminder
 import io.github.liquidlyf.feature.placeholder.PlaceholderScreen
+import io.github.liquidlyf.feature.home.HomeRoute
 import io.github.liquidlyf.feature.request.create.CreateRequestRoute
+import io.github.liquidlyf.feature.request.list.RequestsRoute
 import io.github.liquidlyf.feature.request.detail.RequestDetailRoute
 import io.github.liquidlyf.feature.settings.SettingsScreen
 
 /** Used by the Phase 1 placeholders until real requests exist (Phase 4). */
-private const val SAMPLE_REQUEST_ID = "sample-request"
-
 /** liquidlyf://request/{id} (the manifest declares the scheme and host). */
 const val REQUEST_DEEP_LINK = "liquidlyf://request"
 
@@ -281,39 +278,19 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
     navigation<MainGraph>(startDestination = HomeGraph) {
         navigation<HomeGraph>(startDestination = Home) {
             composable<Home> {
-                PlaceholderScreen(
-                    title = stringResource(R.string.nav_home),
-                    phase = 4,
-                    links = listOf(
-                        PlaceholderLink(stringResource(R.string.placeholder_open_sample_request)) {
-                            navController.navigate(RequestDetail(id = SAMPLE_REQUEST_ID)) { launchSingleTop = true }
-                        },
-                    ),
-                    topBarActions = {
-                        IconButton(onClick = dropUnlessResumed { navController.navigate(Notifications) { launchSingleTop = true } }) {
-                            Icon(painterResource(LLIcons.Notifications), contentDescription = stringResource(R.string.action_open_notifications))
-                        }
-                    },
-                    floatingActionButton = {
-                        ExtendedFloatingActionButton(
-                            onClick = dropUnlessResumed { navController.navigate(CreateRequest) { launchSingleTop = true } },
-                            icon = { Icon(painterResource(LLIcons.Add), contentDescription = null) },
-                            text = { Text(stringResource(R.string.action_request_blood)) },
-                        )
-                    },
+                HomeRoute(
+                    onOpenRequest = { id -> navController.navigate(RequestDetail(id = id)) { launchSingleTop = true } },
+                    onCreateRequest = dropUnlessResumed { navController.navigate(CreateRequest) { launchSingleTop = true } },
+                    onOpenNotifications = dropUnlessResumed { navController.navigate(Notifications) { launchSingleTop = true } },
+                    onEditProfile = dropUnlessResumed { navController.navigate(EditProfile) { launchSingleTop = true } },
                 )
             }
         }
         navigation<RequestsGraph>(startDestination = Requests) {
             composable<Requests> {
-                PlaceholderScreen(
-                    title = stringResource(R.string.nav_requests),
-                    phase = 4,
-                    links = listOf(
-                        PlaceholderLink(stringResource(R.string.placeholder_open_sample_request)) {
-                            navController.navigate(RequestDetail(id = SAMPLE_REQUEST_ID)) { launchSingleTop = true }
-                        },
-                    ),
+                RequestsRoute(
+                    onOpenRequest = { id -> navController.navigate(RequestDetail(id = id)) { launchSingleTop = true } },
+                    onCreateRequest = dropUnlessResumed { navController.navigate(CreateRequest) { launchSingleTop = true } },
                 )
             }
         }

@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The offline banner (NetworkMonitor). A normal permission: no prompt. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Android 13+: asked in context after profile setup, never at start (Phase 3.9). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 

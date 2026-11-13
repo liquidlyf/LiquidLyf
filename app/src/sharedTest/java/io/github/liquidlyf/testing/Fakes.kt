@@ -202,6 +202,14 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
 
     override suspend fun markInboxSeen(profile: UserProfile) = result { AppResult.Success(Unit) }
 
+    val availabilityWrites = mutableListOf<Boolean>()
+
+    override suspend fun setAvailable(profile: UserProfile, available: Boolean) = result {
+        availabilityWrites += available
+        profiles[profile.uid] = (profiles[profile.uid] ?: profile).copy(available = available)
+        AppResult.Success(Unit)
+    }
+
     override suspend fun hideRequest(profile: UserProfile, requestId: String) = result {
         val current = profiles[profile.uid] ?: profile
         profiles[profile.uid] = current.copy(hiddenRequestIds = (current.hiddenRequestIds - requestId) + requestId)
