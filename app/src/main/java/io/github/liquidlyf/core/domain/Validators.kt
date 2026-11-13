@@ -7,7 +7,8 @@ import java.util.Locale
 /**
  * Input checks that match firestore.rules, so a form never sends a write the rules reject.
  * Every limit here has the same number in the rules (`str(v, min, max)`, `bdPhone`, `isCode`…).
- * Lengths count UTF-16 chars, which is never fewer than the characters the rules count.
+ * Lengths are String.length (UTF-16 units), exactly what size() counts in the rules: 500 Bangla
+ * letters pass, an emoji counts as 2 (pinned by rules tests). Don't switch to code points.
  */
 object Validators {
 
@@ -80,8 +81,14 @@ object Validators {
      * "Mst." or "মোঃ" are skipped, or half the cards would read "Md. K.".
      */
     fun displayName(fullName: String): String {
-        val words = normalizeName(fullName).split(' ').filter { it.isNotEmpty() }.toMutableList()
-        while (words.size > 1 && isNamePrefix(words.first())) words.removeAt(0)
+        val words = normalizeName(fullName).split(' ').filter { it.isNotEmpty() }
+        val withoutPrefixes = words.dropWhile(::isNamePrefix).ifEmpty { words.takeLast(1) }
+        val short = shortName(withoutPrefixes)
+        // "Md. X" would leave just "X"; the rules need at least 2 chars.
+        return if (short.length >= NAME_MIN) short else shortName(words)
+    }
+
+    private fun shortName(words: List<String>): String {
         if (words.isEmpty()) return ""
         val first = words.first()
         if (words.size == 1) return first.take(DISPLAY_NAME_MAX)

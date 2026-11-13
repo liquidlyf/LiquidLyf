@@ -87,6 +87,9 @@ class ValidatorsTest {
         assertEquals("রহিম উ.", Validators.displayName("মোঃ রহিম উদ্দিন"))
         assertEquals("Karim", Validators.displayName("Dr. Karim"))
         assertEquals("Md.", Validators.displayName("Md."))
+        // Never shorter than the rules' 2 chars.
+        assertEquals("Md. X.", Validators.displayName("Md. X"))
+        assertEquals("Dr. X.", Validators.displayName("Dr. X"))
     }
 
     @Test

@@ -14,6 +14,9 @@ plugins {
 // Blood compatibility and fan-out test vectors, shared with firebase/ and backend/worker/.
 val sharedVectorsDir: File = rootDir.resolve("backend/shared")
 
+// The Firestore DTO tests read the allowed field names straight from the rules.
+val firestoreRulesFile: File = rootDir.resolve("firebase/firestore.rules")
+
 android {
     namespace = "io.github.liquidlyf"
     compileSdk = 37
@@ -117,6 +120,10 @@ android {
             test.systemProperty("liquidlyf.sharedDir", sharedVectorsDir.absolutePath)
             test.inputs.dir(sharedVectorsDir)
                 .withPropertyName("sharedVectors")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+            test.systemProperty("liquidlyf.rulesFile", firestoreRulesFile.absolutePath)
+            test.inputs.file(firestoreRulesFile)
+                .withPropertyName("firestoreRules")
                 .withPathSensitivity(PathSensitivity.RELATIVE)
         }
     }
