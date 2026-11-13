@@ -8,7 +8,7 @@ They follow [ADR 0001](0001-record-architecture-decisions.md). To add one, copy
 |---|---|---|
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
 | [0002](0002-licence-agpl-3.0-or-later.md) | Licence: AGPL-3.0-or-later, plus a permission for Google's libraries | Accepted |
-| 0003 | Free backend: Firebase Spark plan + a Cloudflare Worker, no Cloud Functions | To be written after the Phase 2 tests |
+| [0003](0003-free-backend.md) | Free backend: Firebase Spark plan + a Cloudflare Worker, no Cloud Functions | Accepted (some tests pending) |
 | [0004](0004-jetpack-compose.md) | Jetpack Compose and Material 3 for the new app | Accepted |
 | [0005](0005-cloud-firestore.md) | Cloud Firestore instead of the Realtime Database | Accepted |
 | [0006](0006-no-embedded-map.md) | No embedded map in v1 | Accepted |
