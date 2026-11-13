@@ -1,0 +1,54 @@
+name: 🩺 Medical or eligibility content
+description: Eligibility rules, blood compatibility or medical and safety wording that may be wrong or needs a medical reviewer.
+title: "[Medical]: "
+labels: ["needs-medical-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Wrong medical guidance is the main way this app could cause harm, so we take these reports seriously.
+        A maintainer will ask our medical advisor to check it.
+
+        **Not medical advice:** LiquidLyf only connects people. Decisions about a donation are made by doctors and blood banks.
+  - type: dropdown
+    id: area
+    attributes:
+      label: What is it about?
+      options:
+        - Who can donate (age, weight, health conditions)
+        - Waiting time between donations
+        - Blood group or component compatibility
+        - Safety advice or warnings
+        - Other medical wording
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: What does the app say or do now?
+      description: Where in the app, and the exact text or behaviour.
+    validations:
+      required: true
+  - type: textarea
+    id: correct
+    attributes:
+      label: What should it be?
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source
+      description: A guideline that supports the change, such as WHO, Bangladesh's Safe Blood Transfusion Programme or a national blood service. A link or document name is fine.
+    validations:
+      required: true
+  - type: dropdown
+    id: reporter
+    attributes:
+      label: Your background (optional)
+      options:
+        - Doctor
+        - Medical student
+        - Nurse or other health worker
+        - Blood bank or donor-club volunteer
+        - Other

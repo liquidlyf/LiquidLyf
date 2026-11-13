@@ -1,0 +1,23 @@
+name: 📝 Documentation
+description: Something in the docs, the README or the setup steps is missing, wrong or confusing.
+title: "[Docs]: "
+labels: ["docs", "area:docs"]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Which page or file?
+      placeholder: "CONTRIBUTING.md → Run the app in 15 minutes"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's wrong or missing?
+      description: If a setup step failed, paste the command and its error (without personal data).
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix

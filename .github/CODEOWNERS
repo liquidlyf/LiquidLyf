@@ -1,0 +1,27 @@
+# Code owners: who must review changes to which paths.
+# The last matching line wins. Owners need write access to the repository.
+#
+# These teams belong to the GitHub organization `liquidlyf`, so this file
+# takes effect once the repository lives at github.com/liquidlyf/LiquidLyf.
+
+# Everything, by default
+*                               @liquidlyf/maintainers
+
+# Security-sensitive: the data rules, the backend and CI/CD
+/firebase/                      @liquidlyf/maintainers
+/backend/                       @liquidlyf/maintainers
+/.github/                       @liquidlyf/maintainers
+
+# Medical logic: eligibility, compatibility, status changes
+**/core/domain/                 @liquidlyf/maintainers
+
+# Licence and trademark files
+/LICENSE                        @liquidlyf/maintainers
+/LICENSING.md                   @liquidlyf/maintainers
+/TRADEMARKS.md                  @liquidlyf/maintainers
+
+# Add these teams when they have members, then uncomment:
+# /firebase/                    @liquidlyf/backend @liquidlyf/maintainers
+# /backend/                     @liquidlyf/backend @liquidlyf/maintainers
+# **/core/domain/               @liquidlyf/medical-review @liquidlyf/maintainers
+# **/values-bn/                 @liquidlyf/translators-bn

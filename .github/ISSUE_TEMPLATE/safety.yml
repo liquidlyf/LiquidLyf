@@ -1,0 +1,41 @@
+name: 🛡️ Safety or abuse risk
+description: A way the app could be misused to scam, harass or endanger people. Not for reporting a specific person.
+title: "[Safety]: "
+labels: ["safety", "area:safety", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Please read before you continue:**
+
+        - **Someone is in danger right now?** Call **999** (Bangladesh national emergency service).
+        - **A specific person** is scamming, harassing or threatening you? **Report them in the app** (open their request or profile → Report) and block them. Don't name them here: this page is public.
+        - **A security vulnerability** (a way to read or change other people's data)? **Don't use this form.** Report it privately: https://github.com/liquidlyf/LiquidLyf/security/advisories/new
+
+        Use this form for a **pattern** the app should guard against, for example "fake requests asking donors to pay a travel fee" or "the report button is hard to find on small screens".
+  - type: textarea
+    id: risk
+    attributes:
+      label: What could go wrong?
+      description: Describe how the app could be misused, without names, phone numbers or other personal data.
+    validations:
+      required: true
+  - type: textarea
+    id: who
+    attributes:
+      label: Who could be harmed, and how badly?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Ideas to prevent it
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Before you submit
+      options:
+        - label: This is not about a specific person, and it contains no personal data.
+          required: true
+        - label: This is not a security vulnerability (those go to private reporting).
+          required: true

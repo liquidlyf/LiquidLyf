@@ -1,0 +1,52 @@
+name: 🧩 Build-plan task (maintainers)
+description: A task from the build plan, ready for someone to pick up.
+title: "Phase N · "
+labels: ["task", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For maintainers turning build-plan tasks into issues. Add the matching `phase:N` and `area:*` labels after creating it.
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      options:
+        - "0 · Emergency fixes"
+        - "1 · Foundation"
+        - "2 · Backend"
+        - "3 · Auth and onboarding"
+        - "4 · Core request loop"
+        - "5 · Notifications"
+        - "6 · Donors, profile, history"
+        - "7 · Trust and safety"
+        - "8 · Settings, Bangla, accessibility, legal"
+        - "9 · Quality and hardening"
+        - "10 · GitHub launch"
+        - "After v1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What this task achieves, in one or two sentences.
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Files to touch
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: Acceptance criteria, as a checklist.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: test
+    attributes:
+      label: How to test

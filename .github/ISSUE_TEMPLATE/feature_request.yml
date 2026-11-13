@@ -1,0 +1,47 @@
+name: 💡 Feature request
+description: Suggest a new feature or an improvement.
+title: "[Feature]: "
+labels: ["feature", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! Bigger ideas are often best discussed first in **Discussions → Ideas**.
+        Please check the existing issues to avoid duplicates.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the situation, not the solution yet. For example, "When I need O− blood at night, I can't tell which donors are…"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who benefits most?
+      multiple: true
+      options:
+        - Donors
+        - People requesting blood
+        - Moderators
+        - Partner organizations or blood-donor clubs
+        - Contributors and maintainers
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Privacy and safety impact
+      description: Would this show, collect or share any new personal data? Could a scammer or harasser misuse it? "None" is a fine answer.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Other options you considered

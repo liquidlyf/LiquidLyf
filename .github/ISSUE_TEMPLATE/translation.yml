@@ -1,0 +1,41 @@
+name: 🇧🇩 Translation
+description: Bangla (or English) text that is wrong, unclear or missing.
+title: "[Translation]: "
+labels: ["translation", "area:i18n"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping make LiquidLyf clear for everyone! You don't need to know Git to use this form.
+        Wording about **eligibility, medical topics or safety** also needs a medical reviewer, so a maintainer may add `needs-medical-review`.
+  - type: input
+    id: where
+    attributes:
+      label: Where in the app?
+      placeholder: "Create request → step 2, the 'Units needed' field"
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current text
+      description: Copy it exactly, or attach a screenshot without personal data.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested text
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is this better?
+      description: For example, the current text is wrong, too formal, too long for the button, or uses an unusual word.
+  - type: input
+    id: key
+    attributes:
+      label: String key (optional)
+      description: If you know it, the name in strings.xml.
+      placeholder: "request_units_label"

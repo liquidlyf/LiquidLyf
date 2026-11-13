@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🩸 I need blood urgently
+    url: https://liquidlyf.github.io/
+    about: GitHub is not an emergency channel. Contact your hospital or a licensed blood bank now.
+  - name: 🙋 I use the app and need help (account, deletion, reporting a user)
+    url: https://liquidlyf.github.io/
+    about: GitHub is for building the app. App users, please contact support at liquidlyf@gmail.com.
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/liquidlyf/LiquidLyf/security/advisories/new
+    about: Please report security problems privately, never as a public issue.
+  - name: 💬 Ask a question or suggest an idea
+    url: https://github.com/liquidlyf/LiquidLyf/discussions
+    about: Questions, ideas and help with setting up the project.
