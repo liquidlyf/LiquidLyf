@@ -1,0 +1,152 @@
+# Deploys the backend to production (Firebase project liquidlyf-app + the Cloudflare Worker):
+#   - Firestore rules and indexes, with the Firebase CLI pinned in firebase/package.json;
+#   - the Worker, with the wrangler pinned in backend/worker/package.json.
+# No Hosting: the website is on GitHub Pages.
+#
+# Safety:
+#   - Runs only for pushes to main (or by hand), after the backend tests pass.
+#   - The deploy jobs use the `production-backend` environment: main only, required reviewer.
+#     Its secrets: FIREBASE_DEPLOY_SA_JSON (ci-firebase-deployer: rules + index admin only, no data
+#     access) and CLOUDFLARE_API_TOKEN ("Edit Cloudflare Workers", this account only); variables:
+#     CLOUDFLARE_ACCOUNT_ID and, optionally, WORKER_BASE_URL for the health check.
+#   - The Worker's runtime secret (GCP_SA_JSON) is set by hand with `wrangler secret put`, never here.
+#   - Actions are pinned to full commit SHAs; Dependabot keeps them current.
+name: deploy-backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'firebase/**'
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: backend tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The Firebase emulators need Java 21.
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            firebase/package-lock.json
+            backend/worker/package-lock.json
+
+      - name: Firestore rules tests (emulator)
+        working-directory: firebase
+        run: |
+          npm ci
+          npm run test:rules
+
+      - name: Worker unit tests, end-to-end tests (workerd + emulators) and bundle check
+        working-directory: backend/worker
+        run: |
+          npm ci
+          npm test
+          npm run test:e2e
+          npm run build
+
+  firebase:
+    name: deploy Firestore rules and indexes
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production-backend
+    defaults:
+      run:
+        working-directory: firebase
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: firebase/package-lock.json
+
+      - run: npm ci
+
+      - name: Deploy rules and indexes to liquidlyf-app
+        env:
+          FIREBASE_DEPLOY_SA_JSON: ${{ secrets.FIREBASE_DEPLOY_SA_JSON }}
+        run: |
+          if [ -z "$FIREBASE_DEPLOY_SA_JSON" ]; then
+            echo "::error::FIREBASE_DEPLOY_SA_JSON is not set in the production-backend environment"
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$FIREBASE_DEPLOY_SA_JSON" > "$RUNNER_TEMP/firebase-deployer.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-deployer.json"
+          npx firebase deploy --project prod --only firestore:rules,firestore:indexes --non-interactive
+
+      - name: Remove the key file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/firebase-deployer.json"
+
+  worker:
+    name: deploy the Worker
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production-backend
+    defaults:
+      run:
+        working-directory: backend/worker
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/worker/package-lock.json
+
+      - run: npm ci
+
+      - name: Refuse placeholder settings
+        run: |
+          if grep -n 'REPLACE_WITH_' wrangler.jsonc; then
+            echo "::error::wrangler.jsonc still has placeholders: create the KV namespace and set FIREBASE_PROJECT_NUMBER first (backend/worker/README.md)"
+            exit 1
+          fi
+
+      - name: Deploy to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy
+
+      - name: Health check
+        env:
+          WORKER_BASE_URL: ${{ vars.WORKER_BASE_URL }}
+        run: |
+          if [ -z "$WORKER_BASE_URL" ]; then
+            echo "WORKER_BASE_URL is not set: skipping the health check"
+            exit 0
+          fi
+          curl -fsS --retry 3 --retry-delay 5 "$WORKER_BASE_URL/health"

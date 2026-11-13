@@ -82,6 +82,14 @@ npm run dev           # local Worker on :8787 against running emulators (cd ../.
   - set `FIREBASE_PROJECT_NUMBER`.
 - **Deploy** with `npm run deploy`.
 - **Rotate the key** yearly, and whenever a maintainer leaves (doc 10 §6.5).
+- **CI deploys** (`.github/workflows/deploy-backend.yml`) start once the first manual deploy works:
+  - It runs for merges to `main` that touch `firebase/` or `backend/`, or by hand.
+  - It reruns the backend tests. Then a maintainer approves the `production-backend` environment, and it deploys the rules, the indexes and the Worker.
+  - It never touches `GCP_SA_JSON`.
+  - Its own credentials:
+    - a `ci-firebase-deployer` service account with Firebase Rules Admin + Cloud Datastore Index Admin (+ Service Usage Consumer only if the CLI asks), and no data access;
+    - a Cloudflare API token from the "Edit Cloudflare Workers" template.
+  - It refuses to deploy while `wrangler.jsonc` still has `REPLACE_WITH_` placeholders.
 
 ## Day-1 spike
 `node scripts/spike.mjs <key.json>` checks the service account against the real project:
