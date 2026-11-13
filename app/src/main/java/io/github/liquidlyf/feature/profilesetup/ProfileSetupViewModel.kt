@@ -78,9 +78,14 @@ class ProfileSetupViewModel @Inject constructor(
         }
     }
 
-    /** Any answer: clears the errors so the user sees fresh feedback on Next. */
-    fun edit(change: SetupDraft.() -> SetupDraft) =
+    /**
+     * Any answer: clears the errors so the user sees fresh feedback on Next, and is saved at once,
+     * so a kill mid-step (or Android closing the app in the background) keeps it.
+     */
+    fun edit(change: SetupDraft.() -> SetupDraft) {
         state.update { it.copy(draft = it.draft.change(), errors = emptySet(), formError = null) }
+        saveDraft()
+    }
 
     /** "I don't know my blood group" → "Skip for now": on to the next step without a group (P1). */
     fun skipBloodGroup(locale: AppLocale) {
@@ -117,7 +122,14 @@ class ProfileSetupViewModel @Inject constructor(
 
     private fun moveTo(step: Int) {
         state.update { it.copy(draft = it.draft.copy(step = step), errors = emptySet()) }
-        viewModelScope.launch { store.save(state.value.draft) }
+        saveDraft()
+    }
+
+    /** Not before the saved draft is loaded (it would be overwritten), nor once the profile is being written. */
+    private fun saveDraft() {
+        val s = state.value
+        if (!s.loaded || s.saving) return
+        viewModelScope.launch { store.save(s.draft) }
     }
 
     internal fun validate(d: SetupDraft, geo: BdGeo?): Set<SetupField> = buildSet {

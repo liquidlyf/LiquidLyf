@@ -146,6 +146,29 @@ class ProfileSetupViewModelTest {
     }
 
     @Test
+    fun `an answer is saved at once, so a kill mid-step keeps it`() = runTest(dispatcher) {
+        val first = vm()
+        advanceUntilIdle()
+        first.edit { copy(bloodGroup = "O_POS") }
+        advanceUntilIdle()
+
+        val relaunched = vm()
+        advanceUntilIdle()
+        assertEquals(0, relaunched.uiState.value.step)
+        assertEquals("O_POS", relaunched.uiState.value.draft.bloodGroup)
+    }
+
+    @Test
+    fun `nothing is saved before the old draft is loaded`() = runTest(dispatcher) {
+        store.saved = SetupDraft(uid = "u1", step = 2, bloodGroup = "B_NEG", fullName = "Rahim Uddin")
+        val vm = vm()
+        vm.edit { copy(phone = "0") } // before init has loaded the draft
+        advanceUntilIdle()
+        assertEquals(2, store.saved?.step)
+        assertEquals(2, vm.uiState.value.step)
+    }
+
+    @Test
     fun `finish writes the profile once, then clears the draft and refreshes the session`() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()
@@ -164,6 +187,7 @@ class ProfileSetupViewModelTest {
         assertTrue(draft.showInDonorSearch)
         assertEquals(LocalDate.parse("2026-06-01"), draft.lastDonationAt?.atOffset(java.time.ZoneOffset.UTC)?.toLocalDate())
         assertTrue(store.cleared)
+        assertNull(store.saved)
         assertEquals(1, session.refreshes)
     }
 
