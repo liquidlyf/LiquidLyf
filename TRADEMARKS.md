@@ -38,6 +38,10 @@ app ID `io.github.liquidlyf`.
   LiquidLyf backend or at our `update.json`.
 - Use **your own** support contact, privacy policy and website.
 - Point the app's **About → Source code** link at your own source code (the AGPL requires this).
+- Keep the line **"Based on LiquidLyf — https://github.com/liquidlyf/LiquidLyf"** on your About screen,
+  or wherever your version shows its legal notices. The licence requires it (AGPL section 7(b), see
+  [LICENSING.md](LICENSING.md)). This credit is the one place you must name LiquidLyf; it gives you no
+  other right to use the name or logo.
 - Never suggest that your app is official, endorsed by, or connected with LiquidLyf unless we have
   agreed in writing.
 

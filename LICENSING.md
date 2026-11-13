@@ -34,6 +34,21 @@ so we add this permission, as section 7 of the AGPL allows:
 
 You may remove this permission from your own modified copies, as section 7 allows.
 
+## Credit in modified versions (AGPL section 7(b))
+
+> Additional terms under GNU AGPL version 3 section 7:
+>
+> (b) If you convey a modified version of this Program, or make one available to users over a network,
+> it must keep the attribution "Based on LiquidLyf — https://github.com/liquidlyf/LiquidLyf" in the
+> Appropriate Legal Notices it displays, in legible form. In the LiquidLyf Android app, the Appropriate
+> Legal Notices are on the About screen.
+>
+> (e) This attribution requirement gives no right to use the LiquidLyf name, logo or other trademarks,
+> except to show the attribution itself. See TRADEMARKS.md.
+
+Unlike the permission for Google libraries, these terms stay with every modified version: you can't
+remove them.
+
 ## What the AGPL means here, in short
 
 - You may use, study, change and share LiquidLyf, including for an NGO or a blood-donor club.
@@ -41,6 +56,8 @@ You may remove this permission from your own modified copies, as section 7 allow
 - If you run a changed version of the backend (the Cloudflare Worker) for other people, you must offer
   them its source code too (AGPL section 13). The app's **About → Source code** link does this for
   the official app. A fork must point that link to its own source.
+- A changed version must keep the line "Based on LiquidLyf — https://github.com/liquidlyf/LiquidLyf"
+  on its About screen. It still needs its own name and logo.
 - Nobody, including the maintainers, can take the project closed-source later.
 
 This summary isn't legal advice. The licence text decides.
@@ -66,7 +83,7 @@ Libraries and data from other projects keep their own licences. The app lists th
 ## Contributions
 
 Contributions are accepted under the same terms: AGPL-3.0-or-later with the additional permission
-above (documentation under CC BY 4.0). You keep the copyright in your work. Every commit needs a
+and the additional terms above (documentation under CC BY 4.0). You keep the copyright in your work. Every commit needs a
 [Developer Certificate of Origin](https://developercertificate.org) sign-off (`git commit -s`).
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -77,7 +94,11 @@ The original university project, kept at the git tag `v0-university`, was releas
 
 ## Adding a licence header to new files (optional)
 
+[LICENSE](LICENSE) and this file cover the whole repository, so a header isn't required. If you add one,
+keep the third line: it says that the additional permission and terms above apply.
+
 ```kotlin
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 The LiquidLyf contributors
+// Additional permission and terms under AGPL section 7 apply: see LICENSING.md.
 ```

@@ -35,6 +35,10 @@ Integrity and other Google libraries under the Android SDK or Google APIs terms.
 
 - [LICENSE](../../LICENSE) holds the verbatim AGPL-3.0 text, so GitHub detects it.
 - [LICENSING.md](../../LICENSING.md) holds the additional permission and the other details.
+- An **additional term under section 7(b)**: modified versions must keep the credit "Based on LiquidLyf —
+  https://github.com/liquidlyf/LiquidLyf" in their Appropriate Legal Notices (the app's About screen).
+  Under section 7(e), that credit gives no right to use the name or logo. Added the same day, with the
+  maintainer's approval, so that forks stay traceable to this project without looking official.
 - Contributions are accepted under the same licence, with a DCO sign-off, not a CLA. Contributors keep
   their copyright.
 - Everything up to the tag `v0-university` stays under MIT.
@@ -51,6 +55,7 @@ Bitwarden and Mastodon (GPL-3.0).
   Firebase and Play services (true under any licence). The section 7 permission should be checked by
   someone with legal training.
 - **Follow-ups:**
-  - the app's **About** screen links to the source code, to meet section 13;
+  - the app's **About** screen links to the source code, to meet section 13, and shows the
+    "Based on LiquidLyf" credit;
   - the README has a licence section;
   - turn on the DCO check on pull requests.

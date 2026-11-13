@@ -72,7 +72,9 @@ Contact: **liquidlyf@gmail.com**
 
 LiquidLyf is free software under the **GNU Affero General Public License v3.0 or later**
 ([LICENSE](LICENSE)), with an additional permission for Google Play services and Firebase libraries.
-Documentation in `docs/` is CC BY 4.0. The details are in [LICENSING.md](LICENSING.md).
+Modified versions must keep the credit "Based on LiquidLyf — https://github.com/liquidlyf/LiquidLyf"
+on their About screen (AGPL section 7(b)). Documentation in `docs/` is CC BY 4.0. The details are in
+[LICENSING.md](LICENSING.md).
 
 Copyright (C) 2025-2026 The LiquidLyf contributors.
 
