@@ -21,7 +21,7 @@ The **escalation backup** (phase-05 task 5.8, doc 10 §6.4). It's a Google Apps 
 
 **Its own key:** a `liquidlyf-backup` service account with the same two roles as the Worker's, **Cloud Datastore User** + **Firebase Cloud Messaging API Admin**. The key lives only in the script property `GCP_SA_JSON`, never in git.
 
-**No public endpoint.** The plan allowed a `doPost` emergency endpoint, but it isn't built: Apps Script web apps can't read request headers or set HTTP status codes, so the app would need a second API contract. The automatic backup already covers a dead Worker within 20 minutes.
+**No public endpoint** (decided 14 Nov 2026, B11). The plan allowed a `doPost` emergency endpoint, but it isn't built: Apps Script web apps can't read request headers or set HTTP status codes, so the app would need a second API contract. The automatic backup already covers a dead Worker within 20 minutes.
 
 ## Set it up (once, maintainer)
 1. **The key.** console.cloud.google.com → project `liquidlyf-app` → IAM & Admin → Service accounts → **Create service account** `liquidlyf-backup`.
