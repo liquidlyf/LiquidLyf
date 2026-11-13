@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "demo-liquidlyf",
+    "prod": "liquidlyf-app"
+  }
+}

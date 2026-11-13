@@ -1,0 +1,137 @@
+# firebase/
+
+LiquidLyf's Firestore security rules, indexes, rules tests and emulator seed data.
+LiquidLyf runs on the free **Spark** plan with **no Cloud Functions**, so the rules do the server's job:
+- a counter moves only by +1/−1, in the same batch as the write that justifies it;
+- the public donor card must equal the private profile after every batch.
+
+Design: `project-plan` doc 07 §5 + §9 and doc 10 §4. Where this folder and the plan differ, see [Design notes](#design-notes).
+
+| File | What |
+|---|---|
+| `firestore.rules` | The rules. Every rule has a test |
+| `firestore.indexes.json` | Composite indexes (doc 07 §6 + §9.4) |
+| `rules-tests/` | vitest + `@firebase/rules-unit-testing`, run on the Firestore emulator |
+| `seed/seed.mjs` | Synthetic demo data (source of truth) |
+| `seed/emulator-data/` | The committed emulator snapshot, generated from `seed.mjs` |
+| `../backend/shared/blood-compatibility.json` | Compatibility test vectors, shared with the Worker and the Android app |
+
+## Run it
+
+You need **Node 22.12+** and **Java 21**. Android Studio's bundled JBR works:
+
+```bash
+export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"   # Git Bash on Windows
+```
+
+```bash
+cd firebase
+npm ci                      # pinned firebase-tools, rules-unit-testing, vitest
+npm run test:rules          # starts the Firestore emulator, runs every rules test, stops it
+npm run emulators           # Auth + Firestore + UI, loaded with the demo data
+npm run seed                # (second terminal) refresh the demo data, requests dated from now
+npm run seed:export         # regenerate seed/emulator-data/ after changing seed.mjs
+```
+
+The project ID is `demo-liquidlyf`. A `demo-` project has no live resources, so nothing here can reach production, and you need no Firebase login.
+
+### Ports
+
+| Emulator | Port |
+|---|---|
+| Firestore | **8085** (not the default 8080, which Oracle XE, Tomcat and Jenkins often hold) |
+| Auth | 9099 |
+| Emulator UI | 4000 |
+
+For the `demo` app on a USB phone: `adb reverse tcp:8085 tcp:8085` and `adb reverse tcp:9099 tcp:9099`.
+
+### Demo accounts
+
+All passwords are `password123`. All emails are verified.
+
+| Email | Who |
+|---|---|
+| `demo-requester@example.test` | Requester, B+, Dhaka; 2 open requests (one with a confirmed and an offered donor) |
+| `demo-donor-bpos@example.test` | Listed B+ donor, Dhaka |
+| `demo-donor-oneg@example.test` | Listed O− donor, Dhaka |
+| `demo-donor-apos@example.test` | Listed A+ donor, Mirpur; donated 40 days ago (not eligible yet); owns an AB+ request |
+| `demo-donor-abpos@example.test` | Listed AB+ donor, unavailable |
+| `demo-donor-ctg@example.test` | Listed B+ donor, Chattogram |
+| `demo-new@example.test` | 2-day-old account (limit: 1 open request), with one flagged request |
+| `demo-admin@example.test` | Has the `admin` custom claim |
+
+Requests in the snapshot carry the date they were generated, so they expire after a few days. Run `npm run seed` for fresh ones. Area codes are placeholders until `bd-geo.json` (Phase 2.4) fixes the code scheme.
+
+## The write contract (for the app)
+
+The rules accept only these shapes. **Each numbered item is one `WriteBatch`.**
+
+General:
+- `createdAt` and `updatedAt` are `FieldValue.serverTimestamp()`. `updatedAt` is required on **every** `users` and `requests` write.
+- Optional fields may be absent or `null`. IDs and area codes match `[A-Za-z0-9_-]`.
+- Phones are E.164 `+8801[3-9]XXXXXXXX`.
+- `neededBy` uses whole seconds, and `expiresAt` = `neededBy` + 24 h exactly.
+
+### Profile
+1. **Profile setup:**
+   - `users/{uid}`: all required fields, with `donationCount: 0`, `verifiedDonations: 0`. Email = the auth email. No `phoneVerified`, no `role`;
+   - `userStats/{uid}` = `{openRequests: 0, totalRequests: 0}` (it must exist before the first request);
+   - if `showInDonorSearch`: `consentAt` on the profile, plus `donors/{uid}`.
+2. **Profile edit:** `users/{uid}`. If listed and a mirrored field changes (`bloodGroup`, area codes, `available`, `lastDonationAt`, counters, `lastActiveAt`), update `donors/{uid}` in the same batch with equal values.
+3. **Unlist:** `users.showInDonorSearch = false` + **delete** `donors/{uid}`.
+4. **`lastActiveAt`:** at most once every 3 days, = server time; mirror it to the card if listed.
+5. **Donor card:** `eligibleFrom` is never null. Use `Timestamp(0)` (1970) for "eligible now", otherwise ≥ `lastDonationAt` + 120 days.
+
+### Requests
+6. **Create:**
+   - `requests/{rid}`: `status OPEN`, all counters 0, `responders: {}`, `fanoutTier: 0`, `nextTierAt` = server time, `flagged` = notes contain a money word;
+   - `userStats/{uid}`: `openRequests +1`, `totalRequests +1`, `lastRequestId: rid`;
+   - `requests/{rid}/private/contact` with `requesterUid`.
+
+   Limit: 1 open request for accounts under 7 days old, 3 after that. `acceptedGroups` = `[bloodGroup]`, or a subset of the compatible list when `acceptCompatible`.
+7. **Close:** `status → CANCELLED | FULFILLED` (+ `closedReason`) + `userStats.openRequests −1` with `lastRequestId: rid`.
+8. **Edit:** `notes` (recompute `flagged`), `unitsNeeded`, `neededBy` + `expiresAt` together.
+
+### Offers and responses (one response per batch)
+9. **Offer (donor):**
+   - `requests/{rid}/responses/{myUid}` with `status OFFERED`;
+   - on the request: `responders.{myUid} = {name, group, status: 'OFFERED'}` (copied from the response), `responseCount +1`, `lastResponderUid: myUid`;
+   - optionally the inbox item `users/{requester}/notifications/NEW_OFFER_{rid}_{myUid}`.
+10. **Withdraw (donor):** response `→ WITHDRAWN` + `responders.{myUid}.status = 'WITHDRAWN'` + `lastResponderUid: myUid`.
+11. **Confirm / decline / mark donated (requester):**
+    - response `status` (OFFERED → CONFIRMED|DECLINED, CONFIRMED → DONATED|DECLINED);
+    - `responders.{donorUid}.status` = the same, `lastResponderUid: donorUid`;
+    - DONATED also does `unitsFulfilled +1`. When it reaches `unitsNeeded`, the same batch may set `FULFILLED` with the userStats −1;
+    - optionally the inbox item `users/{donor}/notifications/{OFFER_CONFIRMED|OFFER_DECLINED|DONATION_RECORDED}_{rid}`.
+12. **Verified donation (donor, after seeing DONATED):**
+    - `users/{uid}/donations/{rid}` with `source REQUEST`, `verified true`, `requestId: rid`;
+    - the profile: `donationCount +1`, `verifiedDonations +1`, `lastDonationId: rid`, `lastDonationAt`;
+    - the card, if listed.
+13. **Self-reported donation:** `donations/{id}` with `source SELF`, `verified false` + `donationCount +1`, `lastDonationId: id`. Deleting it needs `donationCount −1` with `lastDonationId: id`.
+
+### Trust and safety
+14. **Ask to donate (requester):** `users/{donor}/notifications/ask_{rid}` + request `askCount +1` (max 10), `lastAskedUid: donor`. The donor must be listed, in `acceptedGroups`, and must not have blocked you.
+15. **Report a request:** `reports/{myUid}_{rid}` + request `reportCount +1`. When the new count is ≥ 3, the same batch may set `status: REMOVED`. A user report (`targetType USER`) is the report doc alone.
+16. **Account deletion:**
+    1. close open requests;
+    2. delete `donors/{uid}` with or before `users/{uid}`;
+    3. delete `userStats` only at `openRequests == 0`;
+    4. verified donations can be deleted only once `users/{uid}` is gone.
+
+### Queries the rules allow
+- **Feed:** `requests` where `status == OPEN`, `district == X`, `acceptedGroups array-contains G`, ordered by `neededBy`. Delta sync: `district`, `acceptedGroups`, `updatedAt > lastSync`.
+- **Responders (requester):** `requests/{rid}/responses` **must** filter `where('requesterUid', '==', myUid)`.
+- **My offers:** `collectionGroup('responses')` **must** filter `where('donorUid', '==', myUid)`.
+- **Inbox:** `users/{me}/notifications` (owner only). Items are immutable; "seen" is `users.inboxSeenAt`.
+
+## Design notes
+
+Decisions made while turning doc 07's draft into tested rules:
+- **Requests are readable in every status** by verified users. The delta-sync feed (doc 10 §5.2) has no status filter, and it must see closed and REMOVED requests to drop them. The app shows only OPEN, unexpired ones.
+- **`responders` is a map keyed by uid**, not an array. The rules can only address one entry by key. `lastResponderUid` and `lastAskedUid` name the entry that a batch changes, so one counter move can't cover two docs (the same idea as `userStats.lastRequestId`).
+- **Inbox items carry no free text:** `{type, fromUid, requestId, createdAt}`. The app renders the localized message, so nobody can write a scam message into someone else's inbox.
+- **Donation counters live on `users`** (mirrored to the card). They move by +1/−1 only with a donation doc created or deleted in the same batch, so `verifiedDonations` can't be faked.
+- **Removed:** the `devices`, `hiddenRequests` and `blocked` subcollections (replaced by topics and the `users` arrays) and `config/public` (Remote Config).
+- **`acceptedGroups` is checked against the compatibility table** in the rules (`backend/shared/blood-compatibility.json`, needs medical review). This means a request can never list an incompatible group.
+- **A new phone number resets `phoneVerified`.** The account `birthYear` must make the user 18–100.
+- **Left to the Worker** (service account, bypasses the rules): `fanoutTier`, `nextTierAt`, `EXPIRED`. When it expires a request it must also do `userStats.openRequests −1` in the same commit. A REMOVED request keeps counting toward its owner's limit until an admin acts.

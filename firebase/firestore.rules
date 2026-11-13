@@ -1,0 +1,633 @@
+rules_version = '2';
+
+// LiquidLyf Firestore security rules: Firebase Spark plan, no Cloud Functions.
+//
+// Source of truth: project-plan doc 07 §5 with every §9 "Spark adjustment" applied,
+// and doc 10 §4. With no server code, these rules do the server's job:
+//   * a counter moves only by +1/-1, in the same batch as the write that justifies it
+//     (getAfter / existsAfter);
+//   * a mirror (donors/{uid}) must equal its source (users/{uid}) after the batch;
+//   * fan-out fields (fanoutTier, nextTierAt) and EXPIRED belong to the Worker, which
+//     uses a service account and bypasses these rules.
+//
+// The batches that clients must send are listed in firebase/README.md.
+// Every rule has a test in rules-tests/. Change both together.
+// The 120-day interval and the 3/1 open-request limits also live in Remote Config:
+// keep them in sync.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ================================================================
+    // Helpers
+    // ================================================================
+    function signedIn()   { return request.auth != null; }
+    function verified()   { return signedIn() && request.auth.token.email_verified == true; }
+    function me()         { return request.auth.uid; }
+    function isOwner(uid) { return signedIn() && me() == uid; }
+    function isAdmin()    { return signedIn() && request.auth.token.get('admin', false) == true; }
+    function notBanned()  { return request.auth.token.get('banned', false) != true; }
+    function data()       { return request.resource.data; }
+    function changed()    { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    function str(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
+    // IDs and codes go into document paths and FCM topic names: no slashes, no dots.
+    function isId(v)      { return v is string && v.matches('^[A-Za-z0-9_-]{1,128}$'); }
+    function isCode(v)    { return v is string && v.matches('^[A-Za-z0-9_-]{1,40}$'); }
+    function bdPhone(v)   { return v is string && v.matches('^\\+8801[3-9][0-9]{8}$'); }
+
+    // Optional fields may be absent or null (Kotlin DTOs write null for empty fields).
+    function absent(d, k)        { return d.get(k, null) == null; }
+    function optStr(d, k, max)   { return absent(d, k) || str(d[k], 0, max); }
+    function optId(d, k)         { return absent(d, k) || isId(d[k]); }
+    function optCode(d, k)       { return absent(d, k) || isCode(d[k]); }
+    function optTs(d, k)         { return absent(d, k) || d[k] is timestamp; }
+    function optPastTs(d, k)     { return absent(d, k) || (d[k] is timestamp && d[k] <= request.time); }
+    function optList(d, k, max)  { return absent(d, k) || (d[k] is list && d[k].size() <= max); }
+    function optIn(d, k, values) { return absent(d, k) || d[k] in values; }
+    function listOrEmpty(d, k)   { return absent(d, k) ? [] : d[k]; }
+
+    // Paths
+    function userPath(uid)        { return /databases/$(database)/documents/users/$(uid); }
+    function donorPath(uid)       { return /databases/$(database)/documents/donors/$(uid); }
+    function statsPath(uid)       { return /databases/$(database)/documents/userStats/$(uid); }
+    function requestPath(rid)     { return /databases/$(database)/documents/requests/$(rid); }
+    function responsePath(rid, u) { return /databases/$(database)/documents/requests/$(rid)/responses/$(u); }
+    function donationPath(uid, d) { return /databases/$(database)/documents/users/$(uid)/donations/$(d); }
+    function reportPath(id)       { return /databases/$(database)/documents/reports/$(id); }
+
+    // ================================================================
+    // Enums (doc 07 §1)
+    // ================================================================
+    function groups()     { return ['A_POS','A_NEG','B_POS','B_NEG','AB_POS','AB_NEG','O_POS','O_NEG']; }
+    function components() { return ['WHOLE_BLOOD','RED_CELLS','PLATELETS','PLASMA']; }
+    function conditions() { return ['SURGERY','ACCIDENT','THALASSEMIA','DENGUE','DELIVERY','CANCER','ANEMIA','OTHER']; }
+    function reasons()    { return ['FAKE_REQUEST','ASKING_MONEY','ABUSIVE','SPAM','WRONG_INFO','OTHER']; }
+
+    // ================================================================
+    // Blood compatibility (doc 07 §3): the patient can receive from these donor groups.
+    // Mirrors backend/shared/blood-compatibility.json, and rules-tests/compatibility.test.js
+    // checks every entry against that file. NEEDS MEDICAL REVIEW before launch.
+    // ================================================================
+    function redCellDonors() {
+      return {
+        'O_NEG':  ['O_NEG'],
+        'O_POS':  ['O_POS','O_NEG'],
+        'A_NEG':  ['A_NEG','O_NEG'],
+        'A_POS':  ['A_POS','A_NEG','O_POS','O_NEG'],
+        'B_NEG':  ['B_NEG','O_NEG'],
+        'B_POS':  ['B_POS','B_NEG','O_POS','O_NEG'],
+        'AB_NEG': ['AB_NEG','A_NEG','B_NEG','O_NEG'],
+        'AB_POS': ['A_POS','A_NEG','B_POS','B_NEG','AB_POS','AB_NEG','O_POS','O_NEG']
+      };
+    }
+    // Plasma: ABO reversed, Rh not considered.
+    function plasmaDonors() {
+      return {
+        'O_NEG':  ['A_POS','A_NEG','B_POS','B_NEG','AB_POS','AB_NEG','O_POS','O_NEG'],
+        'O_POS':  ['A_POS','A_NEG','B_POS','B_NEG','AB_POS','AB_NEG','O_POS','O_NEG'],
+        'A_NEG':  ['A_POS','A_NEG','AB_POS','AB_NEG'],
+        'A_POS':  ['A_POS','A_NEG','AB_POS','AB_NEG'],
+        'B_NEG':  ['B_POS','B_NEG','AB_POS','AB_NEG'],
+        'B_POS':  ['B_POS','B_NEG','AB_POS','AB_NEG'],
+        'AB_NEG': ['AB_POS','AB_NEG'],
+        'AB_POS': ['AB_POS','AB_NEG']
+      };
+    }
+    // Platelets with "compatible OK": the plasma ABO rule, and Rh-negative patients
+    // get Rh-negative donors only.
+    function plateletDonors() {
+      return {
+        'O_NEG':  ['A_NEG','B_NEG','AB_NEG','O_NEG'],
+        'O_POS':  ['A_POS','A_NEG','B_POS','B_NEG','AB_POS','AB_NEG','O_POS','O_NEG'],
+        'A_NEG':  ['A_NEG','AB_NEG'],
+        'A_POS':  ['A_POS','A_NEG','AB_POS','AB_NEG'],
+        'B_NEG':  ['B_NEG','AB_NEG'],
+        'B_POS':  ['B_POS','B_NEG','AB_POS','AB_NEG'],
+        'AB_NEG': ['AB_NEG'],
+        'AB_POS': ['AB_POS','AB_NEG']
+      };
+    }
+    function compatibleDonors(component, g) {
+      return component == 'PLASMA'    ? plasmaDonors()[g]
+           : component == 'PLATELETS' ? plateletDonors()[g]
+           : redCellDonors()[g];
+    }
+
+    // Money words in notes: the request must carry flagged == true (doc 07 §9.2).
+    // (?s) lets .* cross line breaks.
+    function moneyWords(s) {
+      return s.lower().matches('(?s).*(bkash|bikash|nagad|rocket|taka|payment|টাকা|বিকাশ|নগদ|রকেট).*');
+    }
+    function notesOf(d) { return absent(d, 'notes') ? '' : d.notes; }
+
+    // ================================================================
+    // users/{uid}: private profile (owner and admin only)
+    // ================================================================
+    function userKeys() {
+      return ['fullName','email','phone','phoneVerified','bloodGroup','gender','birthYear','weightOk',
+              'division','district','upazila','available','lastDonationAt','showInDonorSearch','consentAt',
+              'locale','termsVersion','termsAcceptedAt','createdAt','updatedAt','role',
+              'hiddenRequestIds','blockedUids','inboxSeenAt','lastRequestAt','lastActiveAt',
+              'donationCount','verifiedDonations','lastDonationId'];
+    }
+    function validUser(d) {
+      return d.keys().hasOnly(userKeys())
+          && str(d.fullName, 2, 60) && d.email is string && bdPhone(d.phone)
+          && d.bloodGroup in groups() && d.gender in ['MALE','FEMALE','OTHER']
+          && d.birthYear is int
+          && d.birthYear >= request.time.year() - 100 && d.birthYear <= request.time.year() - 18
+          && d.weightOk is bool
+          && isCode(d.division) && isCode(d.district) && isCode(d.upazila)
+          && d.available is bool && d.showInDonorSearch is bool
+          // PDPA: being listed needs an explicit, recorded opt-in.
+          && (d.showInDonorSearch == false || d.get('consentAt', null) is timestamp)
+          && d.locale in ['en','bn']
+          && str(d.termsVersion, 1, 20) && d.termsAcceptedAt is timestamp
+          && d.donationCount is int && d.donationCount >= 0
+          && d.verifiedDonations is int && d.verifiedDonations >= 0
+          && d.verifiedDonations <= d.donationCount
+          && optPastTs(d, 'lastDonationAt') && optTs(d, 'consentAt') && optTs(d, 'inboxSeenAt')
+          && optTs(d, 'lastRequestAt') && optTs(d, 'lastActiveAt')
+          && optList(d, 'hiddenRequestIds', 200) && optList(d, 'blockedUids', 200)
+          && optId(d, 'lastDonationId');
+    }
+    // Fields copied to the public donor card. Changing one while listed means the
+    // same batch must update donors/{uid}.
+    function mirroredUserFields() {
+      return ['bloodGroup','division','district','upazila','available','showInDonorSearch',
+              'lastDonationAt','donationCount','verifiedDonations','phoneVerified','lastActiveAt'];
+    }
+    // phoneVerified is written by the Worker only (v1.1). The owner may only reset it
+    // to false, and only together with a phone-number change; a new number must reset it.
+    function phoneVerifiedOk() {
+      return (!('phoneVerified' in changed())
+              || (data().get('phoneVerified', false) == false
+                  && (resource.data.get('phoneVerified', false) == false || 'phone' in changed())))
+          && (!('phone' in changed()) || data().get('phoneVerified', false) == false);
+    }
+    // lastActiveAt: at most once every 3 days (doc 10 §5.1 rule 9).
+    function lastActiveOk() {
+      return !('lastActiveAt' in changed())
+          || (data().lastActiveAt == request.time
+              && (absent(resource.data, 'lastActiveAt')
+                  || request.time > resource.data.lastActiveAt + duration.value(3, 'd')));
+    }
+    // donationCount / verifiedDonations: +1 only with a donation doc created in this
+    // batch (verifiedDonations only if that doc is verified); -1 only with a SELF
+    // donation deleted in this batch. lastDonationId names that donation doc.
+    function donationCountersOk(uid) {
+      return !changed().hasAny(['donationCount','verifiedDonations','lastDonationId'])
+          || (isId(data().lastDonationId) && donationCounterMove(uid, data(), resource.data));
+    }
+    function donationCounterMove(uid, d, r) {
+      let p = donationPath(uid, d.lastDonationId);
+      let dc = d.donationCount - r.donationCount;
+      let vc = d.verifiedDonations - r.verifiedDonations;
+      return (dc == 1 && existsAfter(p) && !exists(p)
+                && vc == (getAfter(p).data.verified == true ? 1 : 0))
+          || (dc == -1 && vc == 0 && exists(p) && !existsAfter(p));
+    }
+    // The donor card must exist and match while listed, and be gone while unlisted.
+    function donorCardSynced(uid, u) {
+      return u.showInDonorSearch == true
+           ? donorMatches(getAfter(donorPath(uid)).data, u)
+           : !existsAfter(donorPath(uid));
+    }
+    function donorMatches(dn, u) {
+      return dn.bloodGroup == u.bloodGroup
+          && dn.division == u.division && dn.district == u.district && dn.upazila == u.upazila
+          && dn.available == u.available
+          && dn.donationCount == u.donationCount
+          && dn.verifiedDonations == u.verifiedDonations
+          && dn.get('phoneVerified', false) == u.get('phoneVerified', false)
+          && dn.get('lastActiveAt', null) == u.get('lastActiveAt', null)
+          // Never null: 1970-01-01 means "eligible now" (range filters skip nulls).
+          && dn.eligibleFrom is timestamp
+          && (absent(u, 'lastDonationAt')
+              || dn.eligibleFrom >= u.lastDonationAt + duration.value(120, 'd'));
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) && verified() && validUser(data())
+                    && data().email == request.auth.token.email
+                    && data().createdAt == request.time && data().updatedAt == request.time
+                    && data().get('phoneVerified', false) == false
+                    && absent(data(), 'role')
+                    && data().donationCount == 0 && data().verifiedDonations == 0
+                    && absent(data(), 'lastDonationId')
+                    && (absent(data(), 'lastActiveAt') || data().lastActiveAt == request.time)
+                    && donorCardSynced(uid, data());
+      allow update: if isOwner(uid) && verified() && validUser(data())
+                    && data().updatedAt == request.time
+                    && !changed().hasAny(['createdAt','email','role'])
+                    && phoneVerifiedOk()
+                    && lastActiveOk()
+                    && donationCountersOk(uid)
+                    && (!changed().hasAny(mirroredUserFields()) || donorCardSynced(uid, data()));
+      // In-app account deletion (doc 10 §4): the donor card must go first or in the same batch.
+      allow delete: if isOwner(uid) && !existsAfter(donorPath(uid));
+
+      // ---- personal inbox (doc 07 §9.2). Immutable; "seen" is users.inboxSeenAt. ----
+      match /notifications/{nid} {
+        allow read, delete: if isOwner(uid);
+        allow create: if verified() && uid != me() && validInboxItem(uid, nid, data());
+        allow update: if false;
+      }
+
+      // ---- donation history ----
+      match /donations/{did} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && validDonation(data()) && data().createdAt == request.time && (
+            (data().source == 'SELF' && data().verified == false && absent(data(), 'requestId'))
+            // Verified: only after the requester marked this donor's response DONATED.
+         || (data().source == 'REQUEST' && data().verified == true && data().requestId == did
+             && get(responsePath(did, uid)).data.status == 'DONATED'));
+        allow update: if isOwner(uid) && resource.data.source == 'SELF'
+                      && validDonation(data()) && data().source == 'SELF' && data().verified == false
+                      && !changed().hasAny(['createdAt','source','verified','requestId']);
+        // A SELF entry leaves the count with it. Verified entries go only with the account.
+        allow delete: if isOwner(uid) && (
+            (resource.data.source == 'SELF' && selfDonationUncounted(uid, did))
+         || !existsAfter(userPath(uid)));
+      }
+    }
+
+    function validDonation(d) {
+      return d.keys().hasOnly(['donatedAt','component','hospitalName','requestId','verified','source','createdAt'])
+          && d.donatedAt is timestamp && d.donatedAt <= request.time
+          && d.component in components()
+          && optStr(d, 'hospitalName', 120)
+          && d.verified is bool && d.source in ['SELF','REQUEST'];
+    }
+    function selfDonationUncounted(uid, did) {
+      let before = get(userPath(uid)).data;
+      let after = getAfter(userPath(uid)).data;
+      return after.donationCount == before.donationCount - 1 && after.lastDonationId == did;
+    }
+
+    // Cross-user inbox writes: whitelisted per type and tied to the real state change.
+    // No free text: the app renders the message from type + requestId.
+    function validInboxItem(uid, nid, n) {
+      return n.keys().hasOnly(['type','fromUid','requestId','createdAt'])
+          && n.fromUid == me() && n.createdAt == request.time && isId(n.requestId)
+          && ((n.type == 'NEW_OFFER' && nid == 'NEW_OFFER_' + n.requestId + '_' + me()
+                 && newOfferState(uid, n))
+           || (n.type in ['OFFER_CONFIRMED','OFFER_DECLINED','DONATION_RECORDED']
+                 && nid == n.type + '_' + n.requestId && decisionState(uid, n))
+           || (n.type == 'ASKED_TO_DONATE' && nid == 'ask_' + n.requestId
+                 && askState(uid, n)));
+    }
+    // Donor -> requester: my response exists and is OFFERED, and uid owns the request.
+    function newOfferState(uid, n) {
+      let resp = getAfter(responsePath(n.requestId, me())).data;
+      return resp.status == 'OFFERED' && resp.requesterUid == uid;
+    }
+    // Requester -> donor: the donor's response is in the state this type announces.
+    function decisionState(uid, n) {
+      let resp = getAfter(responsePath(n.requestId, uid)).data;
+      return resp.requesterUid == me()
+          && resp.status == {'OFFER_CONFIRMED': 'CONFIRMED',
+                             'OFFER_DECLINED': 'DECLINED',
+                             'DONATION_RECORDED': 'DONATED'}[n.type];
+    }
+    // Requester -> listed donor: my OPEN request, a compatible group, not blocked by
+    // them, and askCount +1 (max 10) in the same batch with lastAskedUid == uid.
+    function askState(uid, n) {
+      let rq = get(requestPath(n.requestId)).data;
+      let rqAfter = getAfter(requestPath(n.requestId)).data;
+      return rq.requesterUid == me() && rq.status == 'OPEN'
+          && rqAfter.askCount == rq.askCount + 1 && rqAfter.askCount <= 10
+          && rqAfter.get('lastAskedUid', '') == uid
+          && get(donorPath(uid)).data.bloodGroup in rq.acceptedGroups
+          && !(me() in listOrEmpty(get(userPath(uid)).data, 'blockedUids'));
+    }
+
+    // ================================================================
+    // donors/{uid}: public donor card, written by the owner in the same batch as
+    // users/{uid}; it must equal the users doc after the batch (doc 07 §9.2).
+    // ================================================================
+    function validDonorCard(uid, dn) {
+      let u = getAfter(userPath(uid)).data;
+      return dn.keys().hasOnly(['displayName','bloodGroup','division','district','upazila','available',
+                                'eligibleFrom','donationCount','verifiedDonations','phoneVerified','lastActiveAt'])
+          && str(dn.displayName, 2, 40)
+          && u.showInDonorSearch == true
+          && donorMatches(dn, u);
+    }
+    match /donors/{uid} {
+      allow read: if verified();
+      allow create, update: if isOwner(uid) && verified() && validDonorCard(uid, data());
+      allow delete: if isOwner(uid)
+                    && (!existsAfter(userPath(uid)) || getAfter(userPath(uid)).data.showInDonorSearch == false);
+    }
+
+    // ================================================================
+    // userStats/{uid}: owner-written; openRequests moves only by +1 with a request
+    // created in the same batch, or -1 with one of my OPEN requests closing in it.
+    // Must exist before the first request (create it in the profile-setup batch).
+    // ================================================================
+    match /userStats/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid)
+                    && data().keys().hasOnly(['openRequests','totalRequests','lastRequestId'])
+                    && data().openRequests == 0 && data().totalRequests == 0
+                    && absent(data(), 'lastRequestId');
+      allow update: if isOwner(uid)
+                    && data().keys().hasOnly(['openRequests','totalRequests','lastRequestId'])
+                    && isId(data().lastRequestId)
+                    && (requestOpened() || requestClosed(uid));
+      // Only at zero: deleting and re-creating must not reset the open-request count.
+      allow delete: if isOwner(uid) && resource.data.openRequests == 0;
+    }
+    function requestOpened() {
+      let d = request.resource.data;
+      let r = resource.data;
+      let p = requestPath(d.lastRequestId);
+      return changed().hasOnly(['openRequests','totalRequests','lastRequestId'])
+          && d.openRequests == r.openRequests + 1 && d.totalRequests == r.totalRequests + 1
+          && existsAfter(p) && !exists(p);
+    }
+    function requestClosed(uid) {
+      let d = request.resource.data;
+      let r = resource.data;
+      let p = requestPath(d.lastRequestId);
+      return changed().hasOnly(['openRequests','lastRequestId'])
+          && d.openRequests == r.openRequests - 1 && d.openRequests >= 0
+          && closedInThisBatch(p, uid);
+    }
+    function closedInThisBatch(p, uid) {
+      let was = get(p).data;
+      return was.requesterUid == uid && was.status == 'OPEN'
+          && getAfter(p).data.status in ['CANCELLED','FULFILLED'];
+    }
+
+    // ================================================================
+    // requests/{rid}: public blood request (read by verified users)
+    // ================================================================
+    function requestKeys() {
+      return ['requesterUid','requesterDisplayName','bloodGroup','component','acceptCompatible',
+              'acceptedGroups','unitsNeeded','unitsFulfilled','condition','hospitalId','hospitalName',
+              'hospitalAddress','division','district','upazila','location','urgency','neededBy','notes',
+              'flagged','status','closedReason','responseCount','reportCount','askCount','responders',
+              'fanoutTier','nextTierAt','createdAt','updatedAt','expiresAt','lastResponderUid','lastAskedUid'];
+    }
+    function acceptedGroupsOk(d) {
+      return d.acceptedGroups is list && d.acceptedGroups.size() >= 1
+          && d.acceptedGroups.toSet().size() == d.acceptedGroups.size()
+          && d.bloodGroup in d.acceptedGroups
+          && (d.acceptCompatible == true
+                ? compatibleDonors(d.component, d.bloodGroup).hasAll(d.acceptedGroups)
+                : d.acceptedGroups == [d.bloodGroup]);
+    }
+    function locationOk(d) {
+      return absent(d, 'location')
+          || (d.location is map && d.location.keys().hasOnly(['lat','lng','geohash'])
+              && d.location.lat is number && d.location.lat >= -90 && d.location.lat <= 90
+              && d.location.lng is number && d.location.lng >= -180 && d.location.lng <= 180
+              && str(d.location.geohash, 1, 12));
+    }
+    function validNewRequest(d) {
+      return d.keys().hasOnly(requestKeys())
+          && d.requesterUid == me() && str(d.requesterDisplayName, 2, 40)
+          && d.status == 'OPEN'
+          && d.bloodGroup in groups() && d.component in components()
+          && d.acceptCompatible is bool && acceptedGroupsOk(d)
+          && d.unitsNeeded is int && d.unitsNeeded >= 1 && d.unitsNeeded <= 10
+          && d.unitsFulfilled == 0 && d.responseCount == 0 && d.reportCount == 0 && d.askCount == 0
+          && d.responders == {}
+          // Worker-owned fan-out fields start fixed, so a missed dispatch is picked up
+          // by the 5-minute sweep (doc 10 §6.4).
+          && d.fanoutTier == 0 && d.nextTierAt == request.time
+          && optIn(d, 'condition', conditions())
+          && optId(d, 'hospitalId') && str(d.hospitalName, 2, 120) && optStr(d, 'hospitalAddress', 200)
+          && isCode(d.division) && isCode(d.district) && optCode(d, 'upazila')
+          && locationOk(d)
+          && d.urgency in ['CRITICAL','URGENT','PLANNED']
+          && d.neededBy is timestamp && d.neededBy > request.time
+          && d.neededBy < request.time + duration.value(30, 'd')
+          && d.expiresAt == d.neededBy + duration.value(24, 'h')
+          && optStr(d, 'notes', 500)
+          && d.flagged == moneyWords(notesOf(d))
+          && d.createdAt == request.time && d.updatedAt == request.time
+          && absent(d, 'closedReason') && absent(d, 'lastResponderUid') && absent(d, 'lastAskedUid');
+    }
+    // The same batch must bump my userStats.openRequests by exactly 1, name this
+    // request in lastRequestId (so one +1 can't cover two requests), and stay within
+    // the limit: 1 open request for accounts under 7 days old, 3 after that.
+    function openRequestSlot(rid) {
+      let s = getAfter(statsPath(me())).data;
+      return s.openRequests == get(statsPath(me())).data.openRequests + 1
+          && s.get('lastRequestId', '') == rid
+          && s.openRequests <= maxOpen();
+    }
+    function maxOpen() {
+      return get(userPath(me())).data.createdAt < request.time - duration.value(7, 'd') ? 3 : 1;
+    }
+
+    // ---- owner (requester) edits ----
+    function ownerUpdate(rid) {
+      let d = request.resource.data;
+      let r = resource.data;
+      return isOwner(r.requesterUid) && verified() && notBanned()
+          && changed().hasOnly(['status','closedReason','notes','flagged','neededBy','expiresAt',
+                                'unitsNeeded','updatedAt','responders','unitsFulfilled',
+                                'lastResponderUid','askCount','lastAskedUid'])
+          && d.updatedAt == request.time
+          && (d.status == r.status || (r.status == 'OPEN' && d.status in ['CANCELLED','FULFILLED']))
+          && d.unitsNeeded is int && d.unitsNeeded >= 1 && d.unitsNeeded <= 10
+          && (!('closedReason' in changed()) || (d.status != 'OPEN' && str(d.closedReason, 0, 200)))
+          && optStr(d, 'notes', 500) && d.flagged == moneyWords(notesOf(d))
+          && (!changed().hasAny(['neededBy','expiresAt'])
+              || (r.status == 'OPEN' && d.neededBy is timestamp && d.neededBy > request.time
+                  && d.neededBy < r.createdAt + duration.value(30, 'd')
+                  && d.expiresAt == d.neededBy + duration.value(24, 'h')))
+          && (!changed().hasAny(['askCount','lastAskedUid'])
+              || (d.askCount == r.askCount + 1 && d.askCount <= 10 && isId(d.lastAskedUid)))
+          && (!changed().hasAny(['responders','unitsFulfilled','lastResponderUid'])
+              || ownerResponderChange(rid, d, r));
+    }
+    // The requester confirms / declines / marks donated one response per batch:
+    // responders[k].status must equal that response's new status, and DONATED adds
+    // exactly 1 to unitsFulfilled. The response rule checks the transition itself.
+    function ownerResponderChange(rid, d, r) {
+      let k = d.lastResponderUid;
+      let was = get(responsePath(rid, k)).data;
+      let now = getAfter(responsePath(rid, k)).data;
+      return d.responders.diff(r.responders).affectedKeys().hasOnly([k])
+          && d.responders[k] == {'name': r.responders[k].name, 'group': r.responders[k].group,
+                                 'status': now.status}
+          && was.status != now.status
+          && d.unitsFulfilled == r.unitsFulfilled + (now.status == 'DONATED' ? 1 : 0);
+    }
+
+    // ---- non-owner counter moves (doc 07 §9.2) ----
+    // (a) a donor offering: responseCount +1 and responders gains exactly my entry,
+    //     copied from my response doc created in this batch.
+    function offerUpdate(rid) {
+      let d = request.resource.data;
+      let r = resource.data;
+      return verified() && notBanned() && r.requesterUid != me()
+          && changed().hasOnly(['responders','responseCount','lastResponderUid','updatedAt'])
+          && d.updatedAt == request.time && d.lastResponderUid == me()
+          && r.status == 'OPEN' && r.responseCount < 50
+          && d.responseCount == r.responseCount + 1
+          && !(me() in r.responders)
+          && d.responders.diff(r.responders).affectedKeys().hasOnly([me()])
+          && offerEntryOk(rid, d);
+    }
+    function offerEntryOk(rid, d) {
+      let resp = getAfter(responsePath(rid, me())).data;
+      return !exists(responsePath(rid, me()))
+          && d.responders[me()] == {'name': resp.donorDisplayName, 'group': resp.donorBloodGroup,
+                                    'status': 'OFFERED'};
+    }
+    // (b) a donor withdrawing: only my entry's status, to WITHDRAWN, with my response.
+    function withdrawUpdate(rid) {
+      let d = request.resource.data;
+      let r = resource.data;
+      return signedIn() && (me() in r.responders)
+          && changed().hasOnly(['responders','lastResponderUid','updatedAt'])
+          && d.updatedAt == request.time && d.lastResponderUid == me()
+          && d.responders.diff(r.responders).affectedKeys().hasOnly([me()])
+          && d.responders[me()] == {'name': r.responders[me()].name, 'group': r.responders[me()].group,
+                                    'status': 'WITHDRAWN'}
+          && getAfter(responsePath(rid, me())).data.status == 'WITHDRAWN';
+    }
+    // (c) a reporter: reportCount +1 with a new report doc {me}_{rid}; the same batch
+    //     may hide the request (REMOVED) once reportCount reaches 3.
+    function reportUpdate(rid) {
+      let d = request.resource.data;
+      let r = resource.data;
+      return verified() && r.requesterUid != me()
+          && changed().hasOnly(['reportCount','status','updatedAt'])
+          && d.updatedAt == request.time
+          && d.reportCount == r.reportCount + 1
+          && (d.status == r.status || (r.status == 'OPEN' && d.status == 'REMOVED' && d.reportCount >= 3))
+          && !exists(reportPath(me() + '_' + rid))
+          && getAfter(reportPath(me() + '_' + rid)).data.targetType == 'REQUEST';
+    }
+    // (d) an admin (custom claim) hiding or restoring a request.
+    function adminUpdate() {
+      return isAdmin()
+          && changed().hasOnly(['status','updatedAt'])
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.status in ['OPEN','REMOVED','CANCELLED'];
+    }
+
+    function validContact(rid, c) {
+      return c.keys().hasOnly(['requesterUid','contactName','contactPhone','patientName','wardOrBed'])
+          && c.requesterUid == me()
+          && str(c.contactName, 2, 60) && bdPhone(c.contactPhone)
+          && optStr(c, 'patientName', 60) && optStr(c, 'wardOrBed', 40)
+          // getAfter: the contact is usually written in the request-create batch.
+          && getAfter(requestPath(rid)).data.requesterUid == me();
+    }
+
+    function validOffer(rid, o) {
+      let rq = get(requestPath(rid)).data;
+      return o.keys().hasOnly(['donorUid','requestId','requesterUid','status','donorDisplayName',
+                               'donorBloodGroup','donorPhone','message','createdAt','updatedAt'])
+          && o.donorUid == me() && o.requestId == rid && o.status == 'OFFERED'
+          && rq.status == 'OPEN' && rq.requesterUid != me() && request.time < rq.expiresAt
+          && o.requesterUid == rq.requesterUid
+          && str(o.donorDisplayName, 2, 40) && bdPhone(o.donorPhone) && optStr(o, 'message', 300)
+          && o.createdAt == request.time && o.updatedAt == request.time
+          && offerGroupOk(rq, o)
+          && offerCounted(rid, rq);
+    }
+    function offerGroupOk(rq, o) {
+      let g = get(userPath(me())).data.bloodGroup;
+      return g in rq.acceptedGroups && o.donorBloodGroup == g;
+    }
+    // The same batch must add me to the request's responders (offerUpdate).
+    function offerCounted(rid, rq) {
+      let rqAfter = getAfter(requestPath(rid)).data;
+      return rqAfter.responseCount == rq.responseCount + 1 && rqAfter.lastResponderUid == me();
+    }
+    // donor: OFFERED|CONFIRMED -> WITHDRAWN
+    function donorWithdraw(rid, donorUid) {
+      return isOwner(donorUid)
+          && changed().hasOnly(['status','updatedAt']) && data().updatedAt == request.time
+          && resource.data.status in ['OFFERED','CONFIRMED'] && data().status == 'WITHDRAWN'
+          && getAfter(requestPath(rid)).data.responders[donorUid].status == 'WITHDRAWN';
+    }
+    // requester: OFFERED -> CONFIRMED|DECLINED, CONFIRMED -> DONATED|DECLINED
+    function requesterDecision(rid, donorUid) {
+      return signedIn() && resource.data.requesterUid == me()
+          && changed().hasOnly(['status','updatedAt']) && data().updatedAt == request.time
+          && ((resource.data.status == 'OFFERED'   && data().status in ['CONFIRMED','DECLINED'])
+           || (resource.data.status == 'CONFIRMED' && data().status in ['DONATED','DECLINED']))
+          && decisionMirrored(rid, donorUid);
+    }
+    function decisionMirrored(rid, donorUid) {
+      let rqAfter = getAfter(requestPath(rid)).data;
+      return rqAfter.lastResponderUid == donorUid
+          && rqAfter.responders[donorUid].status == data().status;
+    }
+
+    match /requests/{rid} {
+      // Every status is readable, so the delta-sync feed (doc 10 §5.2) learns about
+      // closed and REMOVED requests. The app shows only OPEN, unexpired ones.
+      allow read: if verified();
+      allow create: if verified() && notBanned() && validNewRequest(data()) && openRequestSlot(rid);
+      allow update: if ownerUpdate(rid) || offerUpdate(rid) || withdrawUpdate(rid)
+                    || reportUpdate(rid) || adminUpdate();
+      allow delete: if false;   // history is kept (BUG-019)
+
+      // requesterUid is denormalized here, so the requester path needs no billed get().
+      match /private/contact {
+        allow read: if signedIn() && (resource.data.requesterUid == me()
+                     || exists(responsePath(rid, me()))
+                     || isAdmin());
+        allow create, update: if signedIn() && validContact(rid, data());
+        allow delete: if signedIn() && resource.data.requesterUid == me();
+      }
+
+      // Doc ID = donor uid, so a donor can offer only once per request.
+      // The requester's list query must filter where('requesterUid', '==', uid).
+      match /responses/{donorUid} {
+        allow read: if isOwner(donorUid) || (signedIn() && resource.data.requesterUid == me()) || isAdmin();
+        allow create: if isOwner(donorUid) && verified() && notBanned() && validOffer(rid, data());
+        allow update: if donorWithdraw(rid, donorUid) || requesterDecision(rid, donorUid);
+        allow delete: if false;
+      }
+    }
+
+    // Collection-group query "my offers": where('donorUid', '==', me).
+    match /{path=**}/responses/{donorUid} {
+      allow read: if signedIn() && resource.data.donorUid == me();
+    }
+
+    // ================================================================
+    // reports/{reporterUid}_{targetId}: create by verified users; admin reads and handles.
+    // One report per reporter per target, so auto-hide needs 3 different reporters.
+    // ================================================================
+    function validReport(reportId, r) {
+      return r.keys().hasOnly(['reporterUid','targetType','targetId','reason','note','createdAt','status'])
+          && r.reporterUid == me()
+          && r.targetType in ['REQUEST','USER'] && isId(r.targetId) && r.targetId != me()
+          && reportId == me() + '_' + r.targetId
+          && r.reason in reasons()
+          && optStr(r, 'note', 500)
+          && r.status == 'OPEN' && r.createdAt == request.time;
+    }
+    match /reports/{reportId} {
+      allow create: if verified() && validReport(reportId, data());
+      allow read, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ================================================================
+    // Reference data. The app reads hospitals from the bundled JSON; this collection
+    // is the admin source of truth. config/public moved to Remote Config (doc 07 §9.1).
+    // ================================================================
+    match /hospitals/{hid} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Everything else is denied.
+  }
+}

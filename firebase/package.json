@@ -1,0 +1,22 @@
+{
+  "name": "liquidlyf-firebase",
+  "private": true,
+  "description": "LiquidLyf Firestore rules, indexes, rules tests and emulator seed data",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "emulators": "firebase emulators:start --project demo-liquidlyf --import=seed/emulator-data --export-on-exit=.emulator-data-local",
+    "seed": "node seed/seed.mjs",
+    "seed:export": "firebase emulators:exec --only auth,firestore --project demo-liquidlyf --export-on-exit=seed/emulator-data \"node seed/seed.mjs\"",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-liquidlyf \"vitest run\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "firebase": "12.19.0",
+    "firebase-tools": "15.34.2",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,322 @@
+// users/{uid}, donors/{uid}, userStats/{uid} create, donations.
+// Doc 07 §5 tests 1 (users part) and 3; Spark tests 1 and 8; verified-donation counters.
+import { describe, test, beforeAll, afterAll, beforeEach } from 'vitest';
+import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
+import {
+  doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, increment, deleteField,
+  Timestamp,
+} from 'firebase/firestore';
+import {
+  setupEnv, teardownEnv, getEnv, as, anon, seed, seedUsers, cast, userDoc, newUserDoc, donorCard,
+  ts, DAY, EPOCH,
+} from './helpers.js';
+
+let users;
+beforeAll(setupEnv);
+afterAll(teardownEnv);
+beforeEach(async () => {
+  await getEnv().clearFirestore();
+  users = cast();
+  await seedUsers(users);
+});
+
+/** The profile-setup batch: users + userStats (+ donor card when listed). */
+function profileSetup(db, uid, u, card) {
+  const b = writeBatch(db);
+  b.set(doc(db, 'users', uid), u);
+  b.set(doc(db, 'userStats', uid), { openRequests: 0, totalRequests: 0 });
+  if (card) b.set(doc(db, 'donors', uid), card);
+  return b.commit();
+}
+
+/** A users update (+ optional donor-card update) in one batch. */
+function updateProfile(db, uid, userFields, cardFields) {
+  const b = writeBatch(db);
+  b.update(doc(db, 'users', uid), { ...userFields, updatedAt: serverTimestamp() });
+  if (cardFields) b.update(doc(db, 'donors', uid), cardFields);
+  return b.commit();
+}
+
+describe('users: read (doc 07 test 1)', () => {
+  test('the owner can read their profile', async () => {
+    await assertSucceeds(getDoc(doc(as('alice'), 'users/alice')));
+  });
+  test('a stranger cannot read someone else\'s profile', async () => {
+    await assertFails(getDoc(doc(as('eve'), 'users/alice')));
+  });
+  test('signed-out users cannot read profiles', async () => {
+    await assertFails(getDoc(doc(anon(), 'users/alice')));
+  });
+  test('an admin can read profiles', async () => {
+    await assertSucceeds(getDoc(doc(as('mod', { admin: true }), 'users/alice')));
+  });
+});
+
+describe('users: profile setup', () => {
+  test('an unlisted user can create their profile and userStats', async () => {
+    await assertSucceeds(profileSetup(as('zed'), 'zed', newUserDoc('zed')));
+  });
+
+  test('a listed user must create the donor card in the same batch', async () => {
+    const u = newUserDoc('zed', { showInDonorSearch: true, consentAt: serverTimestamp() });
+    await assertFails(profileSetup(as('zed'), 'zed', u));
+    const card = donorCard(userDoc('zed'), {});
+    await assertSucceeds(profileSetup(as('zed'), 'zed', u, card));
+  });
+
+  test('listing needs a recorded consent (consentAt)', async () => {
+    const u = newUserDoc('zed', { showInDonorSearch: true });
+    await assertFails(profileSetup(as('zed'), 'zed', u, donorCard(userDoc('zed'))));
+  });
+
+  test('an unverified email cannot create a profile', async () => {
+    await assertFails(profileSetup(as('zed', { email_verified: false }), 'zed', newUserDoc('zed')));
+  });
+
+  test('the email must be the signed-in account\'s email', async () => {
+    await assertFails(profileSetup(as('zed'), 'zed', newUserDoc('zed', { email: 'other@example.test' })));
+  });
+
+  test('createdAt must be the server time', async () => {
+    await assertFails(profileSetup(as('zed'), 'zed', newUserDoc('zed', { createdAt: ts(-30 * DAY) })));
+  });
+
+  test('a user cannot create a profile for someone else', async () => {
+    await assertFails(setDoc(doc(as('eve'), 'users/zed'), newUserDoc('zed', { email: 'eve@example.test' })));
+  });
+
+  test('bad phone, blood group, age or extra fields are rejected', async () => {
+    const db = as('zed');
+    await assertFails(profileSetup(db, 'zed', newUserDoc('zed', { phone: '01700000011' })));
+    await assertFails(profileSetup(db, 'zed', newUserDoc('zed', { bloodGroup: 'B+' })));
+    await assertFails(profileSetup(db, 'zed', newUserDoc('zed', { birthYear: new Date().getFullYear() - 10 })));
+    await assertFails(profileSetup(db, 'zed', newUserDoc('zed', { district: 'Dhaka/North' })));
+    await assertFails(profileSetup(db, 'zed', newUserDoc('zed', { isAdmin: true })));
+  });
+
+  test('userStats can only start at zero', async () => {
+    const db = as('zed');
+    await assertFails(setDoc(doc(db, 'userStats/zed'), { openRequests: -3, totalRequests: 0 }));
+    await assertSucceeds(setDoc(doc(db, 'userStats/zed'), { openRequests: 0, totalRequests: 0 }));
+  });
+
+  test('optional fields may be written as null (Kotlin DTOs)', async () => {
+    const u = newUserDoc('zed', { lastDonationAt: null, inboxSeenAt: null, hiddenRequestIds: null, lastActiveAt: null });
+    await assertSucceeds(profileSetup(as('zed'), 'zed', u));
+  });
+});
+
+describe('users: protected fields (doc 07 test 3)', () => {
+  test('a user cannot set their own phoneVerified', async () => {
+    await assertFails(profileSetup(as('zed'), 'zed', newUserDoc('zed', { phoneVerified: true })));
+    await assertFails(updateProfile(as('alice'), 'alice', { phoneVerified: true }));
+  });
+
+  test('phoneVerified can only drop to false together with a phone change', async () => {
+    await seed(async (db) => updateDoc(doc(db, 'users/alice'), { phoneVerified: true }));
+    await assertFails(updateProfile(as('alice'), 'alice', { phoneVerified: false }));
+    await assertFails(updateProfile(as('alice'), 'alice', { phone: '+8801800000001' }));
+    await assertSucceeds(updateProfile(as('alice'), 'alice', { phone: '+8801800000001', phoneVerified: false }));
+  });
+
+  test('a user cannot set their own role', async () => {
+    await assertFails(profileSetup(as('zed'), 'zed', newUserDoc('zed', { role: 'admin' })));
+    await assertFails(updateProfile(as('alice'), 'alice', { role: 'admin' }));
+  });
+
+  test('a user cannot set their own donationCount or verifiedDonations', async () => {
+    await assertFails(profileSetup(as('zed'), 'zed', newUserDoc('zed', { donationCount: 5 })));
+    await assertFails(updateProfile(as('alice'), 'alice', { donationCount: 5 }));
+    await assertFails(updateProfile(as('alice'), 'alice', { donationCount: 1, verifiedDonations: 1, lastDonationId: 'x' }));
+  });
+
+  test('createdAt and email cannot change', async () => {
+    await assertFails(updateProfile(as('alice'), 'alice', { createdAt: ts(-400 * DAY) }));
+    await assertFails(updateProfile(as('alice'), 'alice', { email: 'new@example.test' }));
+  });
+
+  test('a normal profile edit works', async () => {
+    await assertSucceeds(updateProfile(as('alice'), 'alice', { fullName: 'Alice Renamed', locale: 'bn' }));
+  });
+
+  test('updatedAt must be the server time', async () => {
+    await assertFails(updateDoc(doc(as('alice'), 'users/alice'), { fullName: 'X Y', updatedAt: ts(0) }));
+  });
+});
+
+describe('donors: owner-written mirror (Spark test 1)', () => {
+  test('signed-in verified users can read donor cards; unverified cannot', async () => {
+    await assertSucceeds(getDoc(doc(as('eve'), 'donors/bob')));
+    await assertFails(getDoc(doc(as('eve', { email_verified: false }), 'donors/bob')));
+  });
+
+  test('a donor-card write alone fails unless it equals the users doc', async () => {
+    await assertFails(updateDoc(doc(as('bob'), 'donors/bob'), { bloodGroup: 'AB_NEG' }));
+    await assertFails(updateDoc(doc(as('bob'), 'donors/bob'), { donationCount: 50 }));
+    await assertFails(updateDoc(doc(as('bob'), 'donors/bob'), { verifiedDonations: 9 }));
+    await assertSucceeds(updateDoc(doc(as('bob'), 'donors/bob'), { displayName: 'Bobby T.' }));
+  });
+
+  test('users + donors in one batch with matching fields succeeds', async () => {
+    await assertSucceeds(updateProfile(as('bob'), 'bob',
+      { district: '3027', upazila: '302701' }, { district: '3027', upazila: '302701' }));
+  });
+
+  test('a mismatching card in the batch fails', async () => {
+    await assertFails(updateProfile(as('bob'), 'bob', { district: '3027', upazila: '302701' }, { district: '3027' }));
+    await assertFails(updateProfile(as('bob'), 'bob', { available: false }, { available: true }));
+  });
+
+  test('a listed user cannot change a mirrored field without updating the card', async () => {
+    await assertFails(updateProfile(as('bob'), 'bob', { available: false }));
+    await assertSucceeds(updateProfile(as('bob'), 'bob', { available: false }, { available: false }));
+  });
+
+  test('a stranger cannot write someone else\'s card', async () => {
+    await assertFails(setDoc(doc(as('eve'), 'donors/bob'), donorCard(users.bob, { displayName: 'Hacked' })));
+  });
+
+  test('an unlisted user cannot create a donor card', async () => {
+    await assertFails(setDoc(doc(as('alice'), 'donors/alice'), donorCard(users.alice)));
+  });
+
+  test('unlisting must delete the card in the same batch', async () => {
+    await assertFails(updateProfile(as('bob'), 'bob', { showInDonorSearch: false }));
+    const db = as('bob');
+    const b = writeBatch(db);
+    b.update(doc(db, 'users/bob'), { showInDonorSearch: false, updatedAt: serverTimestamp() });
+    b.delete(doc(db, 'donors/bob'));
+    await assertSucceeds(b.commit());
+  });
+
+  test('a listed user cannot delete only the card', async () => {
+    await assertFails(deleteDoc(doc(as('bob'), 'donors/bob')));
+  });
+
+  test('eligibleFrom must be at least 120 days after lastDonationAt, and never null', async () => {
+    const last = ts(-10 * DAY);
+    const early = Timestamp.fromMillis(last.toMillis() + 90 * DAY);
+    const right = Timestamp.fromMillis(last.toMillis() + 120 * DAY);
+    await assertFails(updateProfile(as('bob'), 'bob', { lastDonationAt: last }, { eligibleFrom: early }));
+    await assertFails(updateProfile(as('bob'), 'bob', { lastDonationAt: last }, { eligibleFrom: null }));
+    await assertSucceeds(updateProfile(as('bob'), 'bob', { lastDonationAt: last }, { eligibleFrom: right }));
+  });
+
+  test('the 1970 sentinel means "eligible now" when there is no donation', async () => {
+    await assertSucceeds(updateDoc(doc(as('bob'), 'donors/bob'), { eligibleFrom: EPOCH }));
+  });
+
+  test('the card holds no phone, email, birth year or gender', async () => {
+    await assertFails(updateDoc(doc(as('bob'), 'donors/bob'), { phone: users.bob.phone }));
+    await assertFails(updateDoc(doc(as('bob'), 'donors/bob'), { gender: 'MALE' }));
+  });
+});
+
+describe('users: lastActiveAt throttle (Spark test 8)', () => {
+  test('a lastActiveAt write within 3 days of the last one fails', async () => {
+    await seed(async (db) => updateDoc(doc(db, 'users/alice'), { lastActiveAt: ts(-1 * DAY) }));
+    await assertFails(updateProfile(as('alice'), 'alice', { lastActiveAt: serverTimestamp() }));
+  });
+
+  test('after 3 days it succeeds', async () => {
+    await seed(async (db) => updateDoc(doc(db, 'users/alice'), { lastActiveAt: ts(-4 * DAY) }));
+    await assertSucceeds(updateProfile(as('alice'), 'alice', { lastActiveAt: serverTimestamp() }));
+  });
+
+  test('the first lastActiveAt write succeeds; it must be the server time', async () => {
+    await assertFails(updateProfile(as('alice'), 'alice', { lastActiveAt: ts(-5 * DAY) }));
+    await assertSucceeds(updateProfile(as('alice'), 'alice', { lastActiveAt: serverTimestamp() }));
+  });
+
+  test('a listed donor must mirror lastActiveAt to the card', async () => {
+    await assertFails(updateProfile(as('bob'), 'bob', { lastActiveAt: serverTimestamp() }));
+    await assertSucceeds(updateProfile(as('bob'), 'bob',
+      { lastActiveAt: serverTimestamp() }, { lastActiveAt: serverTimestamp() }));
+  });
+});
+
+describe('donations: SELF entries and counters', () => {
+  function selfDonation(o = {}) {
+    return {
+      donatedAt: ts(-20 * DAY), component: 'WHOLE_BLOOD', hospitalName: 'Test Hospital',
+      verified: false, source: 'SELF', createdAt: serverTimestamp(), ...o,
+    };
+  }
+
+  test('the owner can add a SELF donation and count it (+1, same batch)', async () => {
+    const db = as('alice');
+    const b = writeBatch(db);
+    b.set(doc(db, 'users/alice/donations/d1'), selfDonation());
+    b.update(doc(db, 'users/alice'), {
+      donationCount: increment(1), lastDonationId: 'd1', lastDonationAt: ts(-20 * DAY), updatedAt: serverTimestamp(),
+    });
+    await assertSucceeds(b.commit());
+  });
+
+  test('a SELF donation cannot raise verifiedDonations', async () => {
+    const db = as('alice');
+    const b = writeBatch(db);
+    b.set(doc(db, 'users/alice/donations/d1'), selfDonation());
+    b.update(doc(db, 'users/alice'), {
+      donationCount: increment(1), verifiedDonations: increment(1), lastDonationId: 'd1', updatedAt: serverTimestamp(),
+    });
+    await assertFails(b.commit());
+  });
+
+  test('a SELF donation cannot claim to be verified, or be in the future', async () => {
+    await assertFails(setDoc(doc(as('alice'), 'users/alice/donations/d1'), selfDonation({ verified: true })));
+    await assertFails(setDoc(doc(as('alice'), 'users/alice/donations/d1'), selfDonation({ donatedAt: ts(2 * DAY) })));
+  });
+
+  test('deleting a SELF donation must take it out of the count', async () => {
+    await seed(async (db) => {
+      await setDoc(doc(db, 'users/alice/donations/d1'), selfDonation({ createdAt: ts(-DAY) }));
+      await updateDoc(doc(db, 'users/alice'), { donationCount: 1, lastDonationId: 'd1' });
+    });
+    await assertFails(deleteDoc(doc(as('alice'), 'users/alice/donations/d1')));
+    const db = as('alice');
+    const b = writeBatch(db);
+    b.delete(doc(db, 'users/alice/donations/d1'));
+    b.update(doc(db, 'users/alice'), { donationCount: increment(-1), lastDonationId: 'd1', updatedAt: serverTimestamp() });
+    await assertSucceeds(b.commit());
+  });
+
+  test('others cannot read or write my donations', async () => {
+    await assertFails(getDoc(doc(as('eve'), 'users/alice/donations/d1')));
+    await assertFails(setDoc(doc(as('eve'), 'users/alice/donations/d1'), selfDonation()));
+  });
+});
+
+describe('account deletion', () => {
+  test('a listed user deletes the card and profile together', async () => {
+    const db = as('bob');
+    await assertFails(deleteDoc(doc(db, 'users/bob')));
+    const b = writeBatch(db);
+    b.delete(doc(db, 'donors/bob'));
+    b.delete(doc(db, 'users/bob'));
+    b.delete(doc(db, 'userStats/bob'));
+    await assertSucceeds(b.commit());
+  });
+
+  test('userStats cannot be deleted while requests are open (no count reset)', async () => {
+    await seed(async (db) => setDoc(doc(db, 'userStats/alice'), { openRequests: 2, totalRequests: 2, lastRequestId: 'r1' }));
+    await assertFails(deleteDoc(doc(as('alice'), 'userStats/alice')));
+  });
+
+  test('a stranger cannot delete a profile', async () => {
+    await assertFails(deleteDoc(doc(as('eve'), 'users/alice')));
+  });
+});
+
+describe('unused paths are closed', () => {
+  test('the old subcollections and config docs are denied', async () => {
+    await assertFails(setDoc(doc(as('alice'), 'users/alice/devices/x'), { token: 't' }));
+    await assertFails(setDoc(doc(as('alice'), 'users/alice/hiddenRequests/x'), { createdAt: serverTimestamp() }));
+    await assertFails(getDoc(doc(as('alice'), 'config/public')));
+    await assertFails(setDoc(doc(as('alice'), 'anything/x'), { a: 1 }));
+  });
+
+  test('deleteField on a required field is rejected', async () => {
+    await assertFails(updateProfile(as('alice'), 'alice', { phone: deleteField() }));
+  });
+});

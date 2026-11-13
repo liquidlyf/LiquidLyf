@@ -1,0 +1,4 @@
+# Local emulator state (the committed seed lives in seed/emulator-data/)
+.emulator-data-local/
+node_modules/
+*-debug.log
