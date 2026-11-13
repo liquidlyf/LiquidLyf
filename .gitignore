@@ -84,7 +84,3 @@ firestore-debug*.log
 database-debug*.log
 ui-debug*.log
 pubsub-debug*.log
-
-# ---------- 7. Private notes and personal tool settings ----------
-CLAUDE.local.md
-.claude/settings.local.json
