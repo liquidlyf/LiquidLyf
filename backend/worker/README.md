@@ -69,7 +69,7 @@ npm run dev           # local Worker on :8787 against running emulators (cd ../.
 - It is refused for any project that isn't `demo-*`, so production can never accept unsigned tokens.
 
 ## Secrets and deployment (maintainers only)
-- **The only secret is `GCP_SA_JSON`**, the `liquidlyf-worker` service-account key. Its only roles are `roles/datastore.user` and `roles/firebasecloudmessaging.admin`.
+- **The only secret is `GCP_SA_JSON`**, the `liquidlyf-worker` service-account key. Its only roles are **Cloud Datastore User** (`roles/datastore.user`) and **Firebase Cloud Messaging API Admin** (`roles/firebasecloudmessaging.admin`). Don't confuse the second with "Firebase Cloud Messaging Admin" (`roles/firebasenotifications.admin`), which can't send messages.
 - **The key bypasses the security rules.** Store it only as a Cloudflare secret, then delete the downloaded file. Never commit it, and never paste it anywhere.
 - **Load it with:**
 

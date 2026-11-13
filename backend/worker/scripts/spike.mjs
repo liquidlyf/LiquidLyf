@@ -73,7 +73,14 @@ const errText = async (res) => { const b = await res.json().catch(() => ({})); r
     }),
   });
   if (res.ok) ok(send ? "FCM send" : "FCM (validate only)", `accepted in ${ms(t)}${send ? " (sent to topic spike_test)" : ""}`);
-  else bad("FCM", `${await errText(res)}  -> 403: check the 'Firebase Cloud Messaging Admin' role and that the FCM API is enabled`);
+  else {
+    const text = await errText(res);
+    const hint = /SERVICE_DISABLED|has not been used|is disabled/i.test(text)
+      ? "enable the 'Firebase Cloud Messaging API' in the Cloud console (APIs & Services)"
+      : "the account needs the role 'Firebase Cloud Messaging API Admin' (roles/firebasecloudmessaging.admin); " +
+        "the similar 'Firebase Cloud Messaging Admin' (roles/firebasenotifications.admin) can't send. New roles can take a few minutes";
+    bad("FCM", `${text}  -> ${hint}`);
+  }
 }
 
 // ---- 3. Firestore: database metadata (location) and a read
@@ -92,12 +99,18 @@ const errText = async (res) => { const b = await res.json().catch(() => ({})); r
   }
 }
 {
+  // A normal ID that is never written (IDs matching __.*__ are reserved and rejected with 400).
   const t = performance.now();
-  const res = await fetch(`https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents/requests/__spike_missing__`, { headers: auth });
-  const text = await errText(res);
-  if (res.status === 404 && !/database/i.test(text)) ok("Firestore read", `allowed (doc not found, as expected) in ${ms(t)}`);
-  else if (res.ok) ok("Firestore read", `allowed in ${ms(t)}`);
-  else bad("Firestore read", text);
+  const res = await fetch(`https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents/requests/spike-missing-doc`, { headers: auth });
+  if (res.ok) ok("Firestore read", `allowed in ${ms(t)}`);
+  else {
+    const b = await res.json().catch(() => ({}));
+    const msg = b.error?.message ?? "";
+    // A missing doc is 404 'Document "projects/.../documents/requests/spike-missing-doc" not found.'
+    // (a missing database is also 404, but says the database does not exist).
+    if (res.status === 404 && /^Document\b.*not found/i.test(msg)) ok("Firestore read", `allowed (doc not found, as expected) in ${ms(t)}`);
+    else bad("Firestore read", `${res.status} ${b.error?.status ?? ""} ${msg}`.trim() + (res.status === 403 ? "  -> check the 'Cloud Datastore User' role" : ""));
+  }
 }
 
 const failed = results.filter((r) => r[0] === "FAIL").length;
