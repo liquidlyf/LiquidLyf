@@ -17,21 +17,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SelectableDates
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -46,8 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.error
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -57,6 +47,9 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
+import io.github.liquidlyf.core.designsystem.components.ChoiceRow
+import io.github.liquidlyf.core.designsystem.components.DropdownField
+import io.github.liquidlyf.core.designsystem.components.FieldError
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
@@ -66,7 +59,6 @@ import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.Gender
-import io.github.liquidlyf.core.model.PlaceName
 import io.github.liquidlyf.feature.auth.FormError
 import io.github.liquidlyf.feature.auth.currentAppLocale
 import java.time.LocalDate
@@ -172,18 +164,6 @@ fun ProfileSetupScreen(
 @Composable
 private fun StepTitle(text: String) = Text(text, style = MaterialTheme.typography.headlineSmall)
 
-@Composable
-private fun FieldError(show: Boolean, text: String) {
-    if (show) {
-        Text(
-            text,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.semantics { error(text) },
-        )
-    }
-}
-
 // ---- Step 1: blood group ----
 
 @Composable
@@ -221,7 +201,7 @@ private fun AboutStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Setu
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
     )
     Text(stringResource(R.string.label_gender), style = MaterialTheme.typography.labelLarge)
-    Choice(
+    ChoiceRow(
         options = Gender.entries.map { it.code to stringResource(it.labelRes) },
         selected = d.gender,
         onSelect = { code -> onEdit { copy(gender = code) } },
@@ -235,7 +215,7 @@ private fun AboutStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Setu
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
     )
     Text(stringResource(R.string.setup_weight_question), style = MaterialTheme.typography.labelLarge)
-    Choice(
+    ChoiceRow(
         options = listOf("yes" to stringResource(R.string.answer_yes), "no" to stringResource(R.string.answer_no)),
         selected = d.weightOk?.let { if (it) "yes" else "no" },
         onSelect = { v -> onEdit { copy(weightOk = v == "yes") } },
@@ -257,60 +237,17 @@ private fun LocationStep(
     val d = state.draft
     StepTitle(stringResource(R.string.setup_location_title))
     Text(stringResource(R.string.setup_location_body), style = MaterialTheme.typography.bodyMedium)
-    val divisions = geo.divisions.map { it.code to it.name }.sortedBy { it.second.localized(locale) }
-    PlacePicker(stringResource(R.string.label_division), divisions, d.division, locale, onDivision)
-    val districts = d.division?.let(geo::division)?.districts.orEmpty().map { it.code to it.name }
-        .sortedBy { it.second.localized(locale) }
-    PlacePicker(stringResource(R.string.label_district), districts, d.district, locale, onDistrict, enabled = d.division != null)
-    val areas = d.district?.let(geo::district)?.areas.orEmpty().map { it.code to it.name }
-        .sortedBy { it.second.localized(locale) }
-    PlacePicker(
-        stringResource(R.string.label_upazila),
-        areas,
-        d.upazila,
-        locale,
-        onSelect = { code -> onEdit { copy(upazila = code) } },
-        enabled = d.district != null,
+    AreaPickers(
+        geo = geo,
+        locale = locale,
+        division = d.division,
+        district = d.district,
+        upazila = d.upazila,
+        onDivision = onDivision,
+        onDistrict = onDistrict,
+        onUpazila = { code -> onEdit { copy(upazila = code) } },
     )
     FieldError(SetupField.LOCATION in state.errors, stringResource(R.string.error_location_required))
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PlacePicker(
-    label: String,
-    options: List<Pair<String, PlaceName>>,
-    selected: String?,
-    locale: AppLocale,
-    onSelect: (String) -> Unit,
-    enabled: Boolean = true,
-) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    val selectedName = options.firstOrNull { it.first == selected }?.second?.localized(locale).orEmpty()
-    ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { if (enabled) expanded = it }) {
-        OutlinedTextField(
-            value = selectedName,
-            onValueChange = {},
-            readOnly = true,
-            enabled = enabled,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled),
-        )
-        ExposedDropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }) {
-            options.forEach { (code, name) ->
-                DropdownMenuItem(
-                    text = { Text(name.localized(locale)) },
-                    onClick = {
-                        onSelect(code)
-                        expanded = false
-                    },
-                )
-            }
-        }
-    }
 }
 
 // ---- Step 4: phone, last donation, listing consent ----
@@ -335,7 +272,7 @@ private fun ContactStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Se
     val pickedLabel = d.lastDonationEpochDay?.takeIf { d.neverDonated == false }?.let {
         stringResource(R.string.last_donation_on, LocalDate.ofEpochDay(it).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)))
     }
-    Choice(
+    ChoiceRow(
         options = listOf("never" to stringResource(R.string.last_donation_never), "date" to (pickedLabel ?: stringResource(R.string.last_donation_pick))),
         selected = when (d.neverDonated) {
             true -> "never"
@@ -374,7 +311,7 @@ private fun ContactStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Se
     Text(stringResource(R.string.setup_consent_question, group), style = MaterialTheme.typography.titleMedium)
     Text(stringResource(R.string.setup_consent_info), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     // No answer is pre-selected: being listed is an explicit choice (PDPA 2026).
-    Choice(
+    ChoiceRow(
         options = listOf("yes" to stringResource(R.string.consent_yes), "no" to stringResource(R.string.consent_not_now)),
         selected = d.listed?.let { if (it) "yes" else "no" },
         onSelect = { v -> onEdit { copy(listed = v == "yes") } },
@@ -388,19 +325,24 @@ private fun ContactStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Se
     }
 }
 
-/** A row of mutually exclusive answers, none selected until the user picks. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun Choice(options: List<Pair<String, String>>, selected: String?, onSelect: (String) -> Unit) {
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        options.forEachIndexed { index, (key, label) ->
-            SegmentedButton(
-                selected = key == selected,
-                onClick = { onSelect(key) },
-                shape = SegmentedButtonDefaults.itemShape(index, options.size),
-            ) { Text(label) }
-        }
-    }
-}
-
 private const val DAY_MILLIS = 86_400_000L
+
+/** Division → district → upazila or city corporation, each list narrowed by the one above. */
+@Composable
+internal fun AreaPickers(
+    geo: BdGeo,
+    locale: AppLocale,
+    division: String?,
+    district: String?,
+    upazila: String?,
+    onDivision: (String) -> Unit,
+    onDistrict: (String) -> Unit,
+    onUpazila: (String) -> Unit,
+) {
+    val divisions = geo.divisions.map { it.code to it.name.localized(locale) }.sortedBy { it.second }
+    DropdownField(stringResource(R.string.label_division), divisions, division, onDivision)
+    val districts = division?.let(geo::division)?.districts.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
+    DropdownField(stringResource(R.string.label_district), districts, district, onDistrict, enabled = division != null)
+    val areas = district?.let(geo::district)?.areas.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
+    DropdownField(stringResource(R.string.label_upazila), areas, upazila, onUpazila, enabled = district != null)
+}
