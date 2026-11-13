@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Colours for the XML window and splash themes only (they show before Compose draws).
+    Compose UI colours live in core/designsystem/Color.kt. Keep these two in sync with it.
+-->
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="red_button">#FF5252</color>
-    <color name="blue_button">#3F51B5</color>
-    <color name="textColorHint">#9E9E9E</color>
-    <color name="gray">#A9A9A9</color>
-    <color name="red_status">#F44336</color>
-    <color name="green_status">#4CAF50</color>
-    <color name="switch_thumb_color">#FFFFFF</color>
-    <color name="switch_track_color_on">#4CAF50</color>
-    <color name="switch_track_color_off">#CCCCCC</color>
+    <color name="ll_window_background">#FFF8F7</color>
+    <color name="ll_primary">#A4161A</color>
 </resources>

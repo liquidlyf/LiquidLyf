@@ -1,87 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    All user-facing text lives here (never in Kotlin). Every new string also needs a Bangla
+    entry in values-bn/strings.xml, or a translation later through Weblate (Phase 8).
+    Sentence case everywhere; no all-caps.
+-->
 <resources>
-    <string name="app_name">LiquidLyf</string>
-    <string name="give_the_gift_of_life">Give the gift of life</string>
-    <string name="quotation">Your blood donation can save lives. Join us in making a difference.</string>
-    <string name="register">Register</string>
-    <string name="login">Login</string>
-    <string name="full_name">Full name</string>
-    <string name="enter_your_full_name">Enter your full name</string>
-    <string name="phone_number">Phone number</string>
-    <string name="enter_your_phone_number">Enter your phone number</string>
-    <string name="enter_your_email">Enter your email</string>
-    <string name="blood_group">Blood group</string>
-    <string name="password">Password</string>
-    <string name="enter_your_password">Enter your password</string>
-    <string name="confirm_password">Confirm password</string>
-    <string name="confirm_your_password">Confirm your password</string>
-    <string name="create_account">Create account</string>
-    <string name="already_have_an_account_sign_in">Already have an account? Sign in</string>
-    <string name="welcome_back">Welcome back</string>
-    <string name="forgot_password">Forgot password?</string>
-    <string name="remember_email">Remember email</string>
-    <string name="log_in">Log in</string>
-    <string name="reset_password">Reset Password</string>
-    <string name="send_link">Send Reset Link</string>
-    <string name="enter_the_code_we_sent_to_your_phone">Enter the code we sent to your phone</string>
-    <string name="resend_code">Resend code</string>
-    <string name="verify_code">Verify Code</string>
-    <string name="set_a_new_password">Set a new password</string>
-    <string name="new_password">New password</string>
-    <string name="confirm_new_password">Confirm new password</string>
-    <string name="dashboard">Dashboard</string>
-    <string name="availability">Availability</string>
-    <string name="ready_to_donate_available">Ready to donate (Available)</string>
-    <string name="incoming_requests">Incoming Requests</string>
-    <string name="recent_activity">Recent Activity</string>
-    <string name="request_blood">Request Blood</string>
-    <string name="requests">Requests</string>
-    <string name="profile">Profile</string>
-    <string name="settings">Settings</string>
-    <string name="patient_name">Patient Name</string>
-    <string name="enter_patient_name">Enter patient name</string>
-    <string name="quantity">Quantity</string>
-    <string name="enter_quantity">Enter quantity</string>
-    <string name="submit_request">Submit Request</string>
-    <string name="past_requests">Past Requests</string>
-    <string name="edit_profile">Edit Profile</string>
-    <string name="update_profile">Update Profile</string>
-    <string name="change_password">Change Password</string>
-    <string name="name">Name</string>
-    <string name="email">Email</string>
-    <string name="phone">Phone</string>
-    <string name="save">Save</string>
-    <string name="current_password">Current Password</string>
-    <string name="enter_current_password">Enter current password</string>
-    <string name="enter_new_password">Enter new password</string>
-    <string name="save_changes">Save Changes</string>
-    <string name="app_settings">App Settings</string>
-    <string name="language">Language</string>
-    <string name="theme">Theme</string>
-    <string name="notifications">Notifications</string>
-    <string name="push_notifications">Push Notifications</string>
-    <string name="email_notifications">Email Notifications</string>
-    <string name="privacy">Privacy</string>
-    <string name="data_sharing">Data Sharing</string>
-    <string name="location_services">Location Services</string>
-    <string name="legal">Legal</string>
-    <string name="terms_of_service">Terms of Service</string>
-    <string name="privacy_policy">Privacy Policy</string>
-    <string name="logout">Logout</string>
-    <string name="registration_complete_message">Your account has been successfully created. Please check your email to verify your account before logging in.</string>
-    <string name="password_reset_sent_message">A password reset link has been sent to your registered email address.</string>
-    <string name="go_to_email_app">Open Email App</string>
-    <!--Blood Groups Array-->
-    <string-array name="blood_groups">
-        <item>Select your blood group</item>
-        <item>A+</item>
-        <item>A-</item>
-        <item>B+</item>
-        <item>B-</item>
-        <item>AB+</item>
-        <item>AB-</item>
-        <item>O+</item>
-        <item>O-</item>
-    </string-array>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="app_name" translatable="false">LiquidLyf</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_requests">Requests</string>
+    <string name="nav_donors">Find donors</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Screen titles -->
+    <string name="title_onboarding">Welcome to LiquidLyf</string>
+    <string name="title_sign_in">Sign in</string>
+    <string name="title_sign_up">Create account</string>
+    <string name="title_verify_email">Verify your email</string>
+    <string name="title_forgot_password">Reset your password</string>
+    <string name="title_phone_verify">Verify your phone</string>
+    <string name="title_profile_setup">Set up your profile</string>
+    <string name="title_request_detail">Request details</string>
+    <string name="title_create_request">Request blood</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_component_gallery">Component gallery</string>
+
+    <!-- Common actions -->
+    <string name="action_back">Back</string>
+    <string name="action_get_started">Get started</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_request_blood">Request blood</string>
+    <string name="action_open_notifications">Open notifications</string>
+    <string name="action_open_settings">Open settings</string>
+    <string name="action_show_password">Show password</string>
+    <string name="action_hide_password">Hide password</string>
+    <string name="state_loading">Loading…</string>
+
+    <!-- Placeholder screens (Phase 1 only; each phase replaces its screens) -->
+    <string name="placeholder_body">This screen arrives in Phase %1$d.</string>
+    <string name="placeholder_open_sample_request">Open a sample request</string>
+    <string name="placeholder_request_id">Request ID: %1$s</string>
+    <string name="placeholder_continue_to_app">Continue to the app</string>
+    <string name="placeholder_go_to_sign_up">Go to create account</string>
+    <string name="placeholder_go_to_forgot_password">Go to forgot password</string>
+    <string name="placeholder_go_to_verify_email">Go to verify email</string>
+    <string name="placeholder_go_to_profile_setup">Go to profile setup</string>
+    <string name="placeholder_go_to_sign_in">Go to sign in</string>
+
+    <!-- Settings (the full screen arrives in Phase 8) -->
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_developer">Developer</string>
+    <string name="settings_component_gallery">Component gallery</string>
+    <string name="settings_component_gallery_summary">Every design-system component in both themes. Debug builds only.</string>
+
+    <!-- Errors (AppError) -->
+    <string name="error_network">No internet connection. Check your connection and try again.</string>
+    <string name="error_permission_denied">You don\'t have permission to do that.</string>
+    <string name="error_not_found">We couldn\'t find that. It may have been removed.</string>
+    <string name="error_invalid_input">Some details aren\'t valid. Check the highlighted fields.</string>
+    <string name="error_rate_limited">Too many tries. Wait a moment and try again.</string>
+    <string name="error_unknown">Something went wrong. Please try again.</string>
+
+    <!-- SafeIntents: shown in a snackbar when no app can handle the action -->
+    <string name="intent_no_dialer">No phone app found to make this call.</string>
+    <string name="intent_no_maps">No maps app or browser found.</string>
+    <string name="intent_no_browser">No browser found to open this link.</string>
+    <string name="intent_no_email_app">No email app found.</string>
+    <string name="intent_no_share_target">No app found to share with.</string>
+    <string name="intent_share_chooser_title">Share with</string>
+
+    <!-- Blood groups: the symbol is the same in every language; the spoken form is for TalkBack -->
+    <string name="blood_group_a_pos" translatable="false">A+</string>
+    <string name="blood_group_a_neg" translatable="false">A−</string>
+    <string name="blood_group_b_pos" translatable="false">B+</string>
+    <string name="blood_group_b_neg" translatable="false">B−</string>
+    <string name="blood_group_ab_pos" translatable="false">AB+</string>
+    <string name="blood_group_ab_neg" translatable="false">AB−</string>
+    <string name="blood_group_o_pos" translatable="false">O+</string>
+    <string name="blood_group_o_neg" translatable="false">O−</string>
+    <string name="blood_group_a_pos_spoken">A positive</string>
+    <string name="blood_group_a_neg_spoken">A negative</string>
+    <string name="blood_group_b_pos_spoken">B positive</string>
+    <string name="blood_group_b_neg_spoken">B negative</string>
+    <string name="blood_group_ab_pos_spoken">AB positive</string>
+    <string name="blood_group_ab_neg_spoken">AB negative</string>
+    <string name="blood_group_o_pos_spoken">O positive</string>
+    <string name="blood_group_o_neg_spoken">O negative</string>
+    <string name="blood_group_picker_label">Blood group</string>
+
+    <!-- Urgency -->
+    <string name="urgency_critical">Critical</string>
+    <string name="urgency_urgent">Urgent</string>
+    <string name="urgency_planned">Planned</string>
+
+    <!-- Request status -->
+    <string name="request_status_open">Open</string>
+    <string name="request_status_fulfilled">Fulfilled</string>
+    <string name="request_status_cancelled">Cancelled</string>
+    <string name="request_status_expired">Expired</string>
+    <string name="request_status_removed">Removed</string>
+
+    <!-- Response (offer) status -->
+    <string name="response_status_offered">Offered</string>
+    <string name="response_status_confirmed">Confirmed</string>
+    <string name="response_status_declined">Declined</string>
+    <string name="response_status_withdrawn">Withdrawn</string>
+    <string name="response_status_donated">Donated</string>
+
+    <!-- Notification channels (Phase 5 sends to them) -->
+    <string name="channel_urgent_requests_name">Urgent blood requests</string>
+    <string name="channel_urgent_requests_description">Alerts when someone near you needs your blood group.</string>
+    <string name="channel_request_updates_name">Request updates</string>
+    <string name="channel_request_updates_description">Offers, confirmations and changes to requests you are part of.</string>
+    <string name="channel_reminders_name">Reminders</string>
+    <string name="channel_reminders_description">When you can donate again, and requests about to expire.</string>
+    <string name="channel_general_name">General</string>
+    <string name="channel_general_description">Other messages from LiquidLyf.</string>
+
+    <!-- Component gallery samples (debug builds only) -->
+    <string name="gallery_section_buttons">Buttons</string>
+    <string name="gallery_section_fields">Text fields</string>
+    <string name="gallery_section_blood_groups">Blood groups</string>
+    <string name="gallery_section_status">Status and urgency</string>
+    <string name="gallery_section_states">Screen states</string>
+    <string name="gallery_button_posting">Posting…</string>
+    <string name="gallery_field_supporting">We only show your phone to donors you accept.</string>
+    <string name="gallery_field_error">Enter an 11-digit number starting with 01.</string>
+    <string name="gallery_empty_title">No requests near you yet</string>
+    <string name="gallery_empty_body">When someone nearby needs blood, it shows up here.</string>
+    <string name="state_error_title">Couldn\'t load this</string>
 </resources>

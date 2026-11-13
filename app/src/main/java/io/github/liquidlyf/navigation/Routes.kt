@@ -1,0 +1,46 @@
+package io.github.liquidlyf.navigation
+
+import kotlinx.serialization.Serializable
+
+/*
+ * Type-safe navigation routes. A route's properties are its arguments.
+ *
+ * Graph layout:
+ *   Onboarding                      (first run only)
+ *   AuthGraph:  SignIn · SignUp · VerifyEmail · ForgotPassword · PhoneVerify · ProfileSetup
+ *   MainGraph:  HomeGraph(Home) · RequestsGraph(Requests) · DonorsGraph(Donors)
+ *               · ProfileGraph(Profile, Settings, ComponentGallery)   ← bottom navigation tabs
+ *               · RequestDetail · CreateRequest · Notifications        ← full screen, no tabs
+ */
+
+// Graphs
+@Serializable data object AuthGraph
+@Serializable data object MainGraph
+@Serializable data object HomeGraph
+@Serializable data object RequestsGraph
+@Serializable data object DonorsGraph
+@Serializable data object ProfileGraph
+
+// First run and sign-in (Phase 3)
+@Serializable data object Onboarding
+@Serializable data object SignIn
+@Serializable data object SignUp
+@Serializable data object VerifyEmail
+@Serializable data object ForgotPassword
+@Serializable data object PhoneVerify
+@Serializable data object ProfileSetup
+
+// Tab roots
+@Serializable data object Home
+@Serializable data object Requests
+@Serializable data object Donors
+@Serializable data object Profile
+
+// Inside the Profile tab
+@Serializable data object Settings
+@Serializable data object ComponentGallery
+
+// Full-screen destinations above the tabs
+@Serializable data class RequestDetail(val id: String)
+@Serializable data object CreateRequest
+@Serializable data object Notifications

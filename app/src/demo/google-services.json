@@ -1,0 +1,30 @@
+{
+  "_comment": "Emulator-only dummy config for the demo flavor. demo-liquidlyf is a Firebase demo project: it has no live resources, so this build can only talk to the local Firebase Emulator Suite. The API key is deliberately fake (not AIza...).",
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "demo-liquidlyf",
+    "storage_bucket": "demo-liquidlyf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000001",
+        "android_client_info": {
+          "package_name": "io.github.liquidlyf.demo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "Ademo-emulator-only-not-a-real-key00000"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

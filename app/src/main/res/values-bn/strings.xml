@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Bangla skeleton. NEEDS NATIVE REVIEW: these are first drafts, not checked by a native
+    speaker yet. Missing strings fall back to English. Full translation: Phase 8 (Weblate).
+-->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="bn">
+    <!-- Bottom navigation -->
+    <string name="nav_home">হোম</string>
+    <string name="nav_requests">অনুরোধ</string>
+    <string name="nav_donors">রক্তদাতা খুঁজুন</string>
+    <string name="nav_profile">প্রোফাইল</string>
+
+    <!-- Common -->
+    <string name="title_settings">সেটিংস</string>
+    <string name="title_notifications">নোটিফিকেশন</string>
+    <string name="title_create_request">রক্তের অনুরোধ</string>
+    <string name="action_back">পিছনে</string>
+    <string name="action_retry">আবার চেষ্টা করুন</string>
+    <string name="action_request_blood">রক্তের অনুরোধ করুন</string>
+    <string name="state_loading">লোড হচ্ছে…</string>
+
+    <!-- Settings -->
+    <string name="settings_theme">থিম</string>
+    <string name="theme_system">সিস্টেম</string>
+    <string name="theme_light">লাইট</string>
+    <string name="theme_dark">ডার্ক</string>
+
+    <!-- Urgency -->
+    <string name="urgency_critical">অতি জরুরি</string>
+    <string name="urgency_urgent">জরুরি</string>
+    <string name="urgency_planned">পরিকল্পিত</string>
+
+    <!-- Blood groups, spoken form for TalkBack -->
+    <string name="blood_group_a_pos_spoken">এ পজিটিভ</string>
+    <string name="blood_group_a_neg_spoken">এ নেগেটিভ</string>
+    <string name="blood_group_b_pos_spoken">বি পজিটিভ</string>
+    <string name="blood_group_b_neg_spoken">বি নেগেটিভ</string>
+    <string name="blood_group_ab_pos_spoken">এবি পজিটিভ</string>
+    <string name="blood_group_ab_neg_spoken">এবি নেগেটিভ</string>
+    <string name="blood_group_o_pos_spoken">ও পজিটিভ</string>
+    <string name="blood_group_o_neg_spoken">ও নেগেটিভ</string>
+    <string name="blood_group_picker_label">রক্তের গ্রুপ</string>
+</resources>

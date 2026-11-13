@@ -1,69 +1,183 @@
-import java.util.Properties
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.google.gms.google.services)
-}
-
-// Secrets stay out of git: read them from local.properties (git-ignored).
-val localProperties = Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) file.inputStream().use { load(it) }
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
-    namespace = "com.azminur.liquidlyf"
-    compileSdk = 36
+    namespace = "io.github.liquidlyf"
+    compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.azminur.liquidlyf"
+        // D9: never change this once people have installed the app.
+        applicationId = "io.github.liquidlyf"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0-alpha01"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Add MAPS_API_KEY=<restricted key> to local.properties to load map tiles.
-        // The non-empty fallback keeps the Maps SDK from crashing on start-up when no
-        // key is set; the map then stays blank.
-        manifestPlaceholders["MAPS_API_KEY"] =
-            localProperties.getProperty("MAPS_API_KEY")?.takeIf { it.isNotBlank() }
-                ?: "MAPS_API_KEY_NOT_SET"
+        val emulatorHost = providers.gradleProperty("liquidlyf.emulatorHost").getOrElse("127.0.0.1")
+        buildConfigField("String", "EMULATOR_HOST", "\"$emulatorHost\"")
+    }
+
+    // Three environments (doc 11 §2). A contributor's build has a different applicationId,
+    // so it can never reach the production Firebase project.
+    flavorDimensions += "env"
+    productFlavors {
+        create("demo") {
+            // Contributors' default: Firebase Emulator Suite only (project demo-liquidlyf),
+            // with the committed dummy config in src/demo/google-services.json.
+            dimension = "env"
+            isDefault = true
+            applicationIdSuffix = ".demo"
+            buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "true")
+            manifestPlaceholders["crashlyticsCollectionEnabled"] = "false"
+        }
+        create("dev") {
+            // Maintainers' free Spark project liquidlyf-dev. Config is git-ignored:
+            // src/dev/google-services.json
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
+            manifestPlaceholders["crashlyticsCollectionEnabled"] = "false"
+        }
+        create("prod") {
+            // Release only. CI writes src/prod/google-services.json.
+            dimension = "env"
+            buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
+            manifestPlaceholders["crashlyticsCollectionEnabled"] = "true"
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
+            // Only the real release job uploads R8 mappings. PR CI builds prodRelease with a
+            // dummy config, where an upload would fail.
+            configure<CrashlyticsExtension> {
+                mappingFileUploadEnabled = providers.environmentVariable("LIQUIDLYF_RELEASE").isPresent
+            }
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "11"
+
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+
+    androidResources {
+        // English and Bangla only: drops the other languages that libraries bring in.
+        localeFilters += listOf("en", "bn")
+    }
+
+    lint {
+        abortOnError = true
+        // English strings land before their Bangla translation; the release job checks
+        // Bangla coverage instead (doc 11 §6).
+        warning += "MissingTranslation"
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // .proto sources from Firestore's gRPC dependencies; protobuf-lite never reads them.
+            excludes += "**/*.proto"
+        }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
+
+androidComponents {
+    beforeVariants { variant ->
+        val flavor = variant.productFlavors.firstOrNull()?.second
+        when {
+            // No prod debug builds: a debug build can never use production.
+            flavor == "prod" && variant.buildType == "debug" -> variant.enable = false
+            // dev and prod need their own (git-ignored) Firebase config. Without it, skip the
+            // variant instead of failing the whole build.
+            flavor == "dev" || flavor == "prod" -> {
+                if (!file("src/$flavor/google-services.json").exists()) {
+                    logger.info("LiquidLyf: src/$flavor/google-services.json not found, skipping ${variant.name}")
+                    variant.enable = false
+                }
+            }
+        }
     }
 }
 
 dependencies {
+    // Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.activity.compose)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    implementation(libs.androidx.core.ktx)
+    // Navigation and lifecycle
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+
+    // App support
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.play.services.maps)
-    implementation(libs.firebase.database)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.kotlinx.serialization.json)
+
+    // Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.appcheck.playintegrity)
+    debugImplementation(libs.firebase.appcheck.debug)
+
+    // Unit tests
     testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
-    implementation("com.google.code.gson:gson:2.11.0")
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.mockk)
+
+    // Instrumented tests (run on the USB phone)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }
