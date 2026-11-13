@@ -64,7 +64,8 @@ jobs:
           path: app/build/outputs/apk/demo/debug/*.apk
           retention-days: 7
 
-  # Security rules tests (doc 07 §5 + the Spark tests). The Firestore emulator needs Java 21.
+  # Security rules tests (doc 07 §5 + the Spark tests), then the Worker end-to-end tests,
+  # both on the Firebase emulators, which need Java 21.
   firebase-rules:
     name: firebase-rules
     runs-on: ubuntu-latest
@@ -86,12 +87,21 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: firebase/package-lock.json
+          cache-dependency-path: |
+            firebase/package-lock.json
+            backend/worker/package-lock.json
 
       - run: npm ci
 
       - name: Rules tests on the Firestore emulator (project demo-liquidlyf, no account)
         run: npm run test:rules
+
+      # Runs the emulators from firebase/ and the tests from backend/worker/, so it needs both installed.
+      - name: Worker end-to-end tests (workerd + Auth/Firestore emulators, no account)
+        working-directory: backend/worker
+        run: |
+          npm ci
+          npm run test:e2e
 
   # Cloudflare Worker unit tests (mocked Google endpoints). Nothing is deployed.
   worker:
@@ -116,3 +126,6 @@ jobs:
 
       - name: Unit tests
         run: npm test
+
+      - name: Bundle check (wrangler dry run, no account)
+        run: npm run build
