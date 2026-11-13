@@ -216,7 +216,11 @@ class AppNavHostTest {
     @Test
     fun fullScreenDestinationOpensAboveTheTabsAndBackReturns() {
         launch(GateZone.MAIN, ready)
-        clickButton(R.string.action_request_blood) // Home's button opens Create request, without tabs
+        assertOnScreen(R.string.home_urgent_near_you)
+        // Home's button opens Create request, above the tabs. Found by its spoken label, so this
+        // also checks TalkBack can read it (Material's extended FAB alone announced just "Button").
+        compose.onNode(hasContentDescription(str(R.string.action_request_blood)) and hasClickAction()).performClick()
+        compose.waitForIdle()
         assertOnScreen(R.string.create_patient_title)
         compose.onAllNodes(isSelectable() and hasText(str(R.string.nav_requests))).assertCountEquals(0)
 

@@ -18,7 +18,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -46,6 +45,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.EmptyState
+import io.github.liquidlyf.core.designsystem.components.LLExtendedFab
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
@@ -107,11 +107,7 @@ internal fun HomeScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onCreateRequest,
-                icon = { Icon(painterResource(LLIcons.Add), contentDescription = null) },
-                text = { Text(stringResource(R.string.action_request_blood)) },
-            )
+            LLExtendedFab(text = stringResource(R.string.action_request_blood), icon = LLIcons.Add, onClick = onCreateRequest)
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
