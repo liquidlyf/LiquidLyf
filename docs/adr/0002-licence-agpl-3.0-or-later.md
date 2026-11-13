@@ -31,7 +31,7 @@ asking anyone else. Once outside contributions arrive, that becomes practically 
 We use **AGPL-3.0-or-later** for the whole repository (app, security rules, Worker, scripts), with an
 **additional permission under section 7** for linking with Google Play services, Firebase SDKs, Play
 Integrity and other Google libraries under the Android SDK or Google APIs terms. Documentation in
-`docs/` is CC BY 4.0. The name and logo are not covered by either (see [ADR 0014](README.md)).
+`docs/` is CC BY 4.0. The name and logo are not covered by either (see [ADR 0014](0014-logo-and-trademark.md)).
 
 - [LICENSE](../../LICENSE) holds the verbatim AGPL-3.0 text, so GitHub detects it.
 - [LICENSING.md](../../LICENSING.md) holds the additional permission and the other details.
