@@ -515,6 +515,31 @@ service cloud.firestore {
           && request.resource.data.updatedAt == request.time
           && request.resource.data.status in ['OPEN','REMOVED','CANCELLED'];
     }
+    // (e) account deletion (doc 06 §4.7, contract 16): fixed anonymizing edits only.
+    //     No verified()/notBanned(): a suspended user may still delete their account.
+    // The requester, any status: name -> 'Deleted user', notes and closedReason removed.
+    // An OPEN request is cancelled in the same write (userStats -1 in the same batch).
+    function ownerAnonymize() {
+      let d = request.resource.data;
+      let r = resource.data;
+      return isOwner(r.requesterUid)
+          && changed().hasOnly(['requesterDisplayName','notes','closedReason','flagged','status','updatedAt'])
+          && d.requesterDisplayName == 'Deleted user'
+          && absent(d, 'notes') && absent(d, 'closedReason') && d.flagged == false
+          && d.updatedAt == request.time
+          && d.status == (r.status == 'OPEN' ? 'CANCELLED' : r.status);
+    }
+    // A responder, any status: only my entry's name -> 'Deleted user'.
+    function responderAnonymize() {
+      let d = request.resource.data;
+      let r = resource.data;
+      return signedIn() && (me() in r.responders)
+          && changed().hasOnly(['responders','updatedAt'])
+          && d.updatedAt == request.time
+          && d.responders.diff(r.responders).affectedKeys().hasOnly([me()])
+          && d.responders[me()] == {'name': 'Deleted user', 'group': r.responders[me()].group,
+                                    'status': r.responders[me()].status};
+    }
 
     function validContact(rid, c) {
       return c.keys().hasOnly(['requesterUid','contactName','contactPhone','patientName','wardOrBed'])
@@ -561,6 +586,14 @@ service cloud.firestore {
            || (resource.data.status == 'CONFIRMED' && data().status in ['DONATED','DECLINED']))
           && decisionMirrored(rid, donorUid);
     }
+    // donor account deletion: name -> 'Deleted user', phone and message removed, status kept.
+    function donorAnonymize(donorUid) {
+      return isOwner(donorUid)
+          && changed().hasOnly(['donorDisplayName','donorPhone','message','updatedAt'])
+          && data().donorDisplayName == 'Deleted user'
+          && !('donorPhone' in data()) && !('message' in data())
+          && data().updatedAt == request.time;
+    }
     function decisionMirrored(rid, donorUid) {
       let rqAfter = getAfter(requestPath(rid)).data;
       return rqAfter.lastResponderUid == donorUid
@@ -573,7 +606,8 @@ service cloud.firestore {
       allow read: if verified();
       allow create: if verified() && notBanned() && validNewRequest(data()) && openRequestSlot(rid);
       allow update: if ownerUpdate(rid) || offerUpdate(rid) || withdrawUpdate(rid)
-                    || reportUpdate(rid) || adminUpdate();
+                    || reportUpdate(rid) || adminUpdate()
+                    || ownerAnonymize() || responderAnonymize();
       allow delete: if false;   // history is kept (BUG-019)
 
       // requesterUid is denormalized here, so the requester path needs no billed get().
@@ -582,7 +616,9 @@ service cloud.firestore {
                      || exists(responsePath(rid, me()))
                      || isAdmin());
         allow create, update: if signedIn() && validContact(rid, data());
-        allow delete: if signedIn() && resource.data.requesterUid == me();
+        // resource == null: re-deleting an already deleted contact is a harmless no-op, so a
+        // resumed account deletion doesn't get stuck on it.
+        allow delete: if signedIn() && (resource == null || resource.data.requesterUid == me());
       }
 
       // Doc ID = donor uid, so a donor can offer only once per request.
@@ -590,7 +626,8 @@ service cloud.firestore {
       match /responses/{donorUid} {
         allow read: if isOwner(donorUid) || (signedIn() && resource.data.requesterUid == me()) || isAdmin();
         allow create: if isOwner(donorUid) && verified() && notBanned() && validOffer(rid, data());
-        allow update: if donorWithdraw(rid, donorUid) || requesterDecision(rid, donorUid);
+        allow update: if donorWithdraw(rid, donorUid) || requesterDecision(rid, donorUid)
+                      || donorAnonymize(donorUid);
         allow delete: if false;
       }
     }

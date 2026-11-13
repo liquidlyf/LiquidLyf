@@ -99,11 +99,26 @@ General:
 ### Trust and safety
 14. **Ask to donate (requester):** `users/{donor}/notifications/ask_{rid}` + request `askCount +1` (max 10), `lastAskedUid: donor`. The donor must be listed, in `acceptedGroups`, and must not have blocked you.
 15. **Report a request:** `reports/{myUid}_{rid}` + request `reportCount +1`. When the new count is ≥ 3, the same batch may set `status: REMOVED`. A user report (`targetType USER`) is the report doc alone.
-16. **Account deletion:**
-    1. close open requests;
-    2. delete `donors/{uid}` with or before `users/{uid}`;
-    3. delete `userStats` only at `openRequests == 0`;
-    4. verified donations can be deleted only once `users/{uid}` is gone.
+16. **Account deletion** (doc 06 §4.7). These paths don't check `verified` or `banned`, so a suspended user can still delete their account. On resume, re-read the server state before each step: for example, only a request that is still OPEN gets the `userStats −1`.
+    1. **Withdraw my active offers:** batch 10 for each OFFERED or CONFIRMED response.
+    2. **Anonymize my requests**, in any status:
+       - `requesterDisplayName: 'Deleted user'` (exact string);
+       - delete `notes` and `closedReason`;
+       - `flagged: false`, plus `updatedAt`.
+
+       An OPEN request also gets `status: CANCELLED` in the same write, plus `userStats.openRequests −1` with `lastRequestId: rid` in the same batch, so one open request per batch. Closed requests can share a batch.
+    3. **Anonymize my offers**, in any status, one batch per request:
+       - on the request: `responders.{me} = {name: 'Deleted user', group, status}`, with group and status unchanged, plus `updatedAt`;
+       - on `responses/{me}`: `donorDisplayName: 'Deleted user'`, delete `donorPhone` and `message`, plus `updatedAt`. The status is unchanged.
+    4. **Delete** my `requests/*/private/contact` docs and `users/{uid}/notifications/*`. Re-deleting a contact that's already gone is allowed.
+    5. **Final batch:**
+       - `donors/{uid}`;
+       - `userStats/{uid}`, which needs `openRequests == 0`;
+       - every `users/{uid}/donations/*`. Verified donations can go only together with, or after, `users/{uid}`;
+       - `users/{uid}`, which needs the donor card gone in the same batch or before.
+    6. Unsubscribe from all topics, then call `user.delete()` last.
+
+    Reports the user filed stay with the admins, keyed by uid.
 
 ### Queries the rules allow
 - **Feed:** `requests` where `status == OPEN`, `district == X`, `acceptedGroups array-contains G`, ordered by `neededBy`. Delta sync: `district`, `acceptedGroups`, `updatedAt > lastSync`.
