@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="branding/logo-full-dark.svg">
+    <img src="branding/logo-full.svg" alt="LiquidLyf" width="260">
+  </picture>
+</p>
+
 # LiquidLyf
 
 **A free, privacy-first app that connects blood donors with people who need blood in Bangladesh.**

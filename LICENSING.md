@@ -53,7 +53,7 @@ unless a file says otherwise. Code samples inside the docs may also be used unde
 
 ## The name and the logo are not covered
 
-"LiquidLyf" and the LiquidLyf logo (the files in [`branding/`](branding/) and the app icon) are
+"LiquidLyf" and the LiquidLyf logo (the logo files in [`branding/`](branding/) and the app icon) are
 **not** licensed under the AGPL or CC BY 4.0. They identify the official app. If you distribute or
 host a fork, you must use your own name and logo. See [TRADEMARKS.md](TRADEMARKS.md).
 

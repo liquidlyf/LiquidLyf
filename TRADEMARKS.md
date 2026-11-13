@@ -13,7 +13,7 @@ with the official app, while the code stays free for everyone.
 ## What the marks are
 
 - the name **LiquidLyf™** (an unregistered trademark);
-- the LiquidLyf heart-and-drop logo, in every colour and size, including the files in
+- the LiquidLyf heart-and-drop logo, in every colour and size, including the logo files in
   [`branding/`](branding/) and the app's launcher icon.
 
 The official app is the one published by the LiquidLyf project at
