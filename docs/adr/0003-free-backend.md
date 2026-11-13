@@ -51,13 +51,14 @@ sponsor.
 
 ## Evidence: day-1 tests (Phase 2.0)
 
-Run on 2026-11-13 with `backend/worker/scripts/spike.mjs`, against the production project `liquidlyf-app`.
+Tests 1 and 4 ran on 2026-11-13 with `backend/worker/scripts/spike.mjs`, against the production project
+`liquidlyf-app`. Test 3 ran on 2026-11-14 with the first deploy of the Worker.
 
 | # | Test | Result |
 |---|---|---|
 | 1 | FCM HTTP v1 from outside Google, on a Spark project | **Server side passes.** From a PC, using the same code as the Worker: Google sign-in token in 282 ms; an FCM topic message accepted (validate-only) in 427 ms; a Firestore read allowed in 661 ms. **Pending:** a real message on a test phone, once the app subscribes to topics |
 | 2 | Topic delivery time, send to display on 2 phones (target under 30 s) | **Pending:** needs the app's topic subscription |
-| 3 | The Worker on Cloudflare's free plan: deploy, CPU and subrequest use, no card asked for | **Pending:** needs the project's Cloudflare account |
+| 3 | The Worker on Cloudflare's free plan: deploy, CPU and subrequest use, no card asked for | **Deploy passes.** The project's Cloudflare account is on the Free plan, and no card was asked for (the dashboard shows 100,000 requests a day). The Worker deployed at 7.02 KB gzipped, with a 1 ms startup time. Its KV store and the rate limit (10 calls per user per 60 s) both work on the Free plan. Checked live from Bangladesh: `/health` answers in 0.22 s, and an unauthenticated alert request is refused (401) in 0.08 s, before any Firestore read. **Pending:** CPU time and subrequests for a real alert, which needs sign-in set up and a production build of the app |
 | 4 | Project checks | **Pass.** `liquidlyf-app` is on Spark. Authentication isn't upgraded to Identity Platform. The Firestore `(default)` database is in `asia-south1` (Mumbai), Standard edition, production mode ([0008](0008-firestore-region.md)) |
 | 5 | App Check debug provider and token lifetime | **Pending** |
 | 6 | App Check for an app outside Google Play, with a release-signed APK on a real phone | **Pending** |
@@ -82,6 +83,7 @@ press "Upgrade" to Identity Platform. That upgrade limits the free plan to 3,000
   - The Worker's service-account key bypasses the security rules. Only 1–2 maintainers hold it, with
     two-step verification, and it is rotated yearly.
 - **Follow-ups:**
-  - finish tests 1 (device), 2 and 3 once the app subscribes to topics and the Cloudflare account
-    exists, then tests 5 and 6 when App Check is set up; update this record with the results;
+  - finish test 1 (a real phone) and test 2 once the app subscribes to topics, and test 3 (CPU and
+    subrequests) with the first real alert; then tests 5 and 6 when App Check is set up. Update this
+    record with the results;
   - if test 1 or 3 fails, write a new record before building more on this design.
