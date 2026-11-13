@@ -5,12 +5,14 @@ Drafts of the pages for the LiquidLyf website, **liquidlyf.github.io**. They mov
 
 | Page | English | Bangla | Final URL | Plan |
 |---|---|---|---|---|
+| Home page | [en/index.md](en/index.md) | [bn/index.md](bn/index.md) | `/`, `/bn/` | Phase 8.2 |
 | Privacy Policy | [en/privacy.md](en/privacy.md) | [bn/privacy.md](bn/privacy.md) | `/privacy`, `/bn/privacy` | Phase 8.2 |
 | Terms and Community Guidelines | [en/terms.md](en/terms.md) | [bn/terms.md](bn/terms.md) | `/terms`, `/bn/terms` | Phase 8.2 |
 | Delete your LiquidLyf account | [en/delete-account.md](en/delete-account.md) | [bn/delete-account.md](bn/delete-account.md) | `/delete-account`, `/bn/delete-account` | Phase 8.2 |
 | Download and install guide | [en/download.md](en/download.md) | [bn/download.md](bn/download.md) | `/download`, `/bn/download` | Phase 10.3 |
 
-The landing page (`/`) and the request share page (`/r/`, v1.1) come later.
+The request share page (`/r/`, v1.1) comes later. Until v1.0 is released, the home page shows
+"Coming soon" instead of the download button.
 
 **Status:** every page needs review before it goes live. The **Bangla pages need native review**: they
 were translated from the English drafts. The English text is the reference until the Bangla is
@@ -37,7 +39,7 @@ checked.
    Obtainium link.
 3. **Legal review:** Terms sections 9 (liability) and 11 (law), and the rights section of the privacy
    policy, by someone with legal training. Bangladesh's Personal Data Protection Act, 2026 applies.
-4. **Native Bangla review** of all four Bangla pages, including medical and safety wording. Remove the
+4. **Native Bangla review** of all five Bangla pages, including medical and safety wording. Remove the
    "needs native review" banner afterwards.
 5. **v1.1 features** (Telegram phone verification, approximate location) are in a hidden comment in the
    English privacy policy. Add them, in both languages, only when they ship.
