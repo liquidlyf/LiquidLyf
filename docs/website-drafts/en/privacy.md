@@ -155,6 +155,7 @@ serious harm.
 | An open request | Until it is fulfilled, cancelled or expires (one day after the "needed by" time) |
 | Closed requests and offers | Visible to the people involved for 90 days. Then the contact details are deleted and the request is anonymised |
 | Your donation history | Until you delete your account |
+| Your past requests and offers, after you delete your account | Kept as history without your name, phone number, notes or messages, so other people's records stay complete ([details](/delete-account)) |
 | In-app notifications | 60 days |
 | Reports and moderators' action log | 1 year, to prevent repeat abuse |
 | Crash reports | 90 days |

@@ -37,25 +37,40 @@ If you no longer have the app, or can't sign in:
 
 We confirm by email, and delete the account **within 30 days**, usually much sooner.
 
+<!-- Matches the in-app deletion rules in firebase/firestore.rules (session B, commit ebe56ec). -->
+
 ## What is deleted
 
-- Your sign-in account (email address, password, Google sign-in link).
-- Your profile: name, phone number, blood group, gender, birth year, area, availability and settings.
-- Your donor card, so you no longer appear in donor lists or get request alerts.
-- Your donation history, notifications, hidden requests and blocked list.
+- Your sign-in account (email address, password, Google sign-in link). This is deleted last.
+- Your profile: name, email, phone number, blood group, gender, birth year, area, availability and
+  settings, including your hidden requests and blocked list.
+- Your donor card, so you no longer appear in donor lists. Your phone also stops all request alerts.
+- Your donation history, your in-app notifications, and counters such as how many requests you posted.
+- The contact details of each request you posted: the contact name and phone number, the patient's
+  name, and the ward or bed.
 
 ## What is changed, not deleted
 
-- **Requests you posted and offers you made** stay in the records of the other people involved, so
-  they can see what happened. Your name is replaced with "Deleted user", and your phone number and the
-  request's contact details are removed.
+Other people's records depend on some of your activity, so it stays, but without anything that
+identifies you:
+
+- **Requests you posted** stay, with your name replaced by "Deleted user". Your notes and the reason you
+  closed them are removed. A request that is still open is cancelled.
+- **Offers you made** on other people's requests stay, with your name replaced by "Deleted user". Your
+  phone number and your message are removed. The offer's status (for example "donated") stays, because
+  the requester's record depends on it.
+- What remains is the blood group, blood component, hospital, area, dates and statuses, and a random
+  account ID that keeps these records linked together. It is no longer connected to your name, email or
+  phone number.
 
 ## What is kept, and for how long
 
 - **Reports** you sent, or that others sent about you, and the moderators' notes on them: kept for
-  **1 year**, to stop banned people from returning and repeating abuse. Then they are deleted.
+  **1 year** under your account ID, to stop repeated abuse. Then they are deleted.
 - **Crash reports:** kept up to **90 days**. They contain no name, phone number or blood group.
 - We can't delete information that other users saved themselves, for example if a requester wrote down
   your phone number.
+
+You can delete your account even if it has been suspended.
 
 More details are in our [Privacy Policy](/privacy). Questions? Email **liquidlyf@gmail.com**.
