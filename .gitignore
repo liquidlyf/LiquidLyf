@@ -54,6 +54,8 @@ captures/
 *.dex
 app/release/
 app/*/release/
+# ...but app/src/release/ is the release build's source set (code), not output.
+!app/src/release/
 output-metadata.json
 
 # ---------- 3. IDE and editor settings (machine-specific) ----------
