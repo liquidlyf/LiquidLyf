@@ -38,6 +38,22 @@ updates:
           - io.mockk*
           - app.cash.turbine*
 
+  # Dev-only tooling for the rules tests and the Worker (nothing here ships in the app).
+  - package-ecosystem: npm
+    directories:
+      - /firebase
+      - /backend/worker
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps
+    groups:
+      npm:
+        patterns:
+          - '*'
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

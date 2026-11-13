@@ -1,8 +1,8 @@
-# Lint, unit tests and builds for every pull request and push.
+# Lint, unit tests and builds for every pull request and push: the Android app,
+# the Firestore rules (on the emulator) and the Cloudflare Worker.
 # Fork-PR safe: `pull_request` only (never pull_request_target), read-only token, no secrets.
 # Actions are pinned to full commit SHAs; Dependabot keeps them current.
 # No path filters on purpose: a required check skipped by `paths:` would block PRs forever.
-# The Firebase rules and Worker jobs are added here when session B's packages land.
 name: ci
 
 on:
@@ -63,3 +63,56 @@ jobs:
           name: demo-debug-apk
           path: app/build/outputs/apk/demo/debug/*.apk
           retention-days: 7
+
+  # Security rules tests (doc 07 §5 + the Spark tests). The Firestore emulator needs Java 21.
+  firebase-rules:
+    name: firebase-rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: firebase
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: firebase/package-lock.json
+
+      - run: npm ci
+
+      - name: Rules tests on the Firestore emulator (project demo-liquidlyf, no account)
+        run: npm run test:rules
+
+  # Cloudflare Worker unit tests (mocked Google endpoints). Nothing is deployed.
+  worker:
+    name: worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend/worker
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/worker/package-lock.json
+
+      - run: npm ci
+
+      - name: Unit tests
+        run: npm test
