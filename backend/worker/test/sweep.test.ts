@@ -178,6 +178,21 @@ describe("sweep run", () => {
     expect(calls.counts).toHaveLength(0);
   });
 
+  test("a send that throws (network) is released like a failed one; the rest of the run goes on", async () => {
+    const calls = await fakeGoogle({ query: () => [due("r1", { fanoutTier: 1 }), due("r2", { fanoutTier: 1 })] });
+    const real = globalThis.fetch;
+    let first = true;
+    vi.stubGlobal("fetch", (u: RequestInfo | URL, i?: RequestInit) => {
+      if (String(u).includes("fcm.googleapis.com") && first) { first = false; return Promise.reject(new TypeError("network")); }
+      return real(u, i);
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const out = await sweep(await makeEnv(), NOW);
+    expect(out).toMatchObject({ sent: 1, failed: 1 });
+    expect(calls.batches[1]).toHaveLength(1);                       // r1's claim put back
+    expect(calls.batches[1][0].update.fields.fanoutTier).toEqual({ integerValue: "1" });
+  });
+
   test("nothing due: one query, no writes, no pushes", async () => {
     const calls = await fakeGoogle();
     const out = await sweep(await makeEnv(), NOW);

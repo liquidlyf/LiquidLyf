@@ -59,13 +59,56 @@ export function encode(v: unknown): FsValue {
 export const fieldsOf = (d: FsDoc): Record<string, any> =>
   Object.fromEntries(Object.entries(d.fields ?? {}).map(([k, v]) => [k, decode(v)]));
 
-export class Firestore {
+// ---- pure REST helpers, shared with the Apps Script backup (no fetch in here) ----
+
+export interface DocNames {
+  root: string;
+  /** "requests/abc" -> the full document name. */
+  docName(path: string): string;
+  /** The full document name -> "requests/abc". */
+  pathOf(name: string): string;
+}
+
+export function docNames(projectId: string): DocNames {
+  const root = `projects/${projectId}/databases/(default)/documents`;
+  return { root, docName: (path) => `${root}/${path}`, pathOf: (name) => name.slice(root.length + 1) };
+}
+
+export interface BatchResult { ok: boolean; updateTime?: string; code: number }
+type BatchResponse = { writeResults?: { updateTime?: string }[]; status?: { code?: number }[] };
+type CountRows = { result?: { aggregateFields?: Record<string, FsValue> } }[];
+
+export const queryBody = (q: StructuredQuery) => ({ structuredQuery: structuredQuery(q) });
+
+export const countBody = (q: StructuredQuery, upTo?: number) => ({
+  structuredAggregationQuery: {
+    structuredQuery: structuredQuery(q),
+    aggregations: [{ alias: "n", count: upTo ? { upTo: String(upTo) } : {} }],
+  },
+});
+
+export const parseQueryRows = (rows: { document?: FsDoc }[]): FsDoc[] =>
+  rows.filter((r) => r.document).map((r) => r.document!);
+
+export const parseCount = (rows: CountRows): number =>
+  Number(decode(rows.find((r) => r.result)?.result?.aggregateFields?.n) ?? 0);
+
+export function parseBatchWrite(res: BatchResponse, n: number): BatchResult[] {
+  return Array.from({ length: n }, (_, i) => {
+    const code = res.status?.[i]?.code ?? 0;
+    return { ok: code === 0, code, updateTime: res.writeResults?.[i]?.updateTime };
+  });
+}
+
+export class Firestore implements DocNames {
   readonly base: string;
-  private readonly root: string;
+  readonly root: string;
+  private readonly names: DocNames;
 
   constructor(env: Env, private token: string) {
     const host = emulatorMode(env) ? `http://${env.FIRESTORE_EMULATOR_HOST}` : "https://firestore.googleapis.com";
-    this.root = `projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+    this.names = docNames(env.FIREBASE_PROJECT_ID);
+    this.root = this.names.root;
     this.base = `${host}/v1/${this.root}`;
   }
 
@@ -103,14 +146,10 @@ export class Firestore {
    * Non-atomic batch (max 500 writes, one subrequest): each write succeeds or fails on its
    * own, so one stale precondition doesn't sink the others. Returns per-write results.
    */
-  async batchWrite(writes: unknown[]): Promise<{ ok: boolean; updateTime?: string; code: number }[]> {
+  async batchWrite(writes: unknown[]): Promise<BatchResult[]> {
     if (writes.length === 0) return [];
-    const res = await this.call<{ writeResults?: { updateTime?: string }[]; status?: { code?: number }[] }>(
-      `${this.base}:batchWrite`, { method: "POST", body: JSON.stringify({ writes }) });
-    return writes.map((_, i) => {
-      const code = res.status?.[i]?.code ?? 0;
-      return { ok: code === 0, code, updateTime: res.writeResults?.[i]?.updateTime };
-    });
+    const res = await this.call<BatchResponse>(`${this.base}:batchWrite`, { method: "POST", body: JSON.stringify({ writes }) });
+    return parseBatchWrite(res, writes.length);
   }
 
   /**
@@ -120,9 +159,9 @@ export class Firestore {
   async runQuery(q: StructuredQuery): Promise<FsDoc[]> {
     // Collection-group queries run from the database root.
     const rows = await this.call<{ document?: FsDoc }[]>(`${this.base}:runQuery`, {
-      method: "POST", body: JSON.stringify({ structuredQuery: structuredQuery(q) }),
+      method: "POST", body: JSON.stringify(queryBody(q)),
     });
-    return rows.filter((r) => r.document).map((r) => r.document!);
+    return parseQueryRows(rows);
   }
 
   /**
@@ -130,24 +169,19 @@ export class Firestore {
    * scanned (minimum 1); needs the same index as the query itself.
    */
   async count(q: StructuredQuery, upTo?: number): Promise<number> {
-    const rows = await this.call<{ result?: { aggregateFields?: Record<string, FsValue> } }[]>(
-      `${this.base}:runAggregationQuery`, {
-        method: "POST",
-        body: JSON.stringify({ structuredAggregationQuery: {
-          structuredQuery: structuredQuery(q),
-          aggregations: [{ alias: "n", count: upTo ? { upTo: String(upTo) } : {} }],
-        } }),
-      });
-    return Number(decode(rows.find((r) => r.result)?.result?.aggregateFields?.n) ?? 0);
+    const rows = await this.call<CountRows>(`${this.base}:runAggregationQuery`, {
+      method: "POST", body: JSON.stringify(countBody(q, upTo)),
+    });
+    return parseCount(rows);
   }
 
   docName(path: string) {
-    return `${this.root}/${path}`;
+    return this.names.docName(path);
   }
 
   /** "requests/abc" from a full document name. */
   pathOf(name: string) {
-    return name.slice(this.root.length + 1);
+    return this.names.pathOf(name);
   }
 }
 

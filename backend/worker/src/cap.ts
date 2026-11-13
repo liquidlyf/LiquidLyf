@@ -7,15 +7,31 @@
 // same answer for the same request. Uses the my-requests index (requesterUid ASC,
 // createdAt DESC). Cost: 1 read (a COUNT, stopped at the cap).
 import type { Env } from "./env";
-import type { Firestore } from "./firestore";
+import type { Firestore, StructuredQuery } from "./firestore";
 
 export const DEFAULT_DAILY_ALERT_CAP = 5;
 const DAY_MS = 86_400_000;
 
-export function dailyAlertCap(env: Env): number {
+export function dailyAlertCap(env: Pick<Env, "DAILY_ALERT_CAP">): number {
   const n = Number(env.DAILY_ALERT_CAP);
   return Number.isInteger(n) && n > 0 ? n : DEFAULT_DAILY_ALERT_CAP;
 }
+
+/** `uid`'s requests created in the 24 h before `createdAt`. Pure: shared with the Apps Script backup. */
+export function capQuery(uid: string, createdAt: Date): StructuredQuery {
+  return {
+    collection: "requests",
+    where: [
+      ["requesterUid", "EQUAL", uid],
+      ["createdAt", "GREATER_THAN_OR_EQUAL", new Date(createdAt.getTime() - DAY_MS)],
+      ["createdAt", "LESS_THAN", createdAt],
+    ],
+    orderBy: [["createdAt", "desc"]], // matches the index's direction
+  };
+}
+
+export const capCountFailed = (e: unknown) =>
+  console.error(JSON.stringify({ dailyCap: "count failed, allowing", error: String(e) }));
 
 /**
  * True when `uid` already had `cap` requests in the 24 h before `createdAt`.
@@ -24,18 +40,9 @@ export function dailyAlertCap(env: Env): number {
 export async function overDailyCap(fs: Firestore, env: Env, uid: string, createdAt: Date): Promise<boolean> {
   const cap = dailyAlertCap(env);
   try {
-    const n = await fs.count({
-      collection: "requests",
-      where: [
-        ["requesterUid", "EQUAL", uid],
-        ["createdAt", "GREATER_THAN_OR_EQUAL", new Date(createdAt.getTime() - DAY_MS)],
-        ["createdAt", "LESS_THAN", createdAt],
-      ],
-      orderBy: [["createdAt", "desc"]], // matches the index's direction
-    }, cap);
-    return n >= cap;
+    return await fs.count(capQuery(uid, createdAt), cap) >= cap;
   } catch (e) {
-    console.error(JSON.stringify({ dailyCap: "count failed, allowing", error: String(e) }));
+    capCountFailed(e);
     return false;
   }
 }

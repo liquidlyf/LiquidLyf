@@ -1,6 +1,7 @@
 // Mint a Google OAuth2 access token from the service-account key with WebCrypto.
 // One token covers Firestore and FCM. Cached in memory and in KV (~55 min).
 import { emulatorMode, type Env } from "./env";
+import { JWT_GRANT, jwtClaims, TOKEN_URL } from "./oauth";
 
 export interface ServiceAccount {
   client_email: string;
@@ -8,11 +9,7 @@ export interface ServiceAccount {
   project_id: string;
 }
 
-export const TOKEN_URL = "https://oauth2.googleapis.com/token";
-const SCOPES = [
-  "https://www.googleapis.com/auth/datastore",
-  "https://www.googleapis.com/auth/firebase.messaging",
-].join(" ");
+export { TOKEN_URL };
 const KV_KEY = "gcp_token";
 const enc = new TextEncoder();
 
@@ -36,13 +33,7 @@ export async function importPkcs8(pem: string): Promise<CryptoKey> {
 
 export async function signJwt(sa: ServiceAccount, key: CryptoKey, nowSec: number): Promise<string> {
   const header = { alg: "RS256", typ: "JWT" };
-  const claims = {
-    iss: sa.client_email,
-    scope: SCOPES,
-    aud: TOKEN_URL,
-    iat: nowSec - 30, // absorbs small clock skew
-    exp: nowSec + 3300, // must be <= iat + 3600
-  };
+  const claims = jwtClaims(sa.client_email, nowSec);
   const input = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(claims))}`;
   const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, enc.encode(input));
   return `${input}.${b64url(sig)}`;
@@ -73,7 +64,7 @@ export async function getAccessToken(env: Env): Promise<string> {
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion }),
+    body: new URLSearchParams({ grant_type: JWT_GRANT, assertion }),
   });
   if (!res.ok) throw new Error(`token endpoint ${res.status}`); // body may echo details; don't log it
   const { access_token, expires_in } = await res.json() as { access_token: string; expires_in: number };
