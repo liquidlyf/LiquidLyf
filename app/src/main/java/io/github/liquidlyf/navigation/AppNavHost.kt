@@ -51,6 +51,10 @@ import androidx.core.content.ContextCompat
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.util.AppError
+import io.github.liquidlyf.feature.account.ChangePasswordRoute
+import io.github.liquidlyf.feature.account.DeleteAccountRoute
+import io.github.liquidlyf.feature.account.DeletingAccountRoute
+import io.github.liquidlyf.feature.account.EditProfileRoute
 import io.github.liquidlyf.feature.auth.ForgotPasswordRoute
 import io.github.liquidlyf.feature.auth.SignInRoute
 import io.github.liquidlyf.feature.auth.SignUpRoute
@@ -256,6 +260,7 @@ private fun NavGraphBuilder.sessionScreens(
     composable<NotificationPermission> {
         NotificationPermissionScreen(onDone = dropUnlessResumed { navController.enterZone(GateZone.MAIN) })
     }
+    composable<DeletingAccount> { DeletingAccountRoute() }
     composable<SessionProblem> {
         SessionProblemScreen(
             error = (session as? SessionState.ProfileUnavailable)?.error ?: AppError.Unknown,
@@ -326,9 +331,15 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, onSignOut: (
                 SettingsScreen(
                     onBack = { navController.popBackStack() },
                     onOpenComponentGallery = { navController.navigate(ComponentGallery) { launchSingleTop = true } },
+                    onEditProfile = { navController.navigate(EditProfile) { launchSingleTop = true } },
+                    onChangePassword = { navController.navigate(ChangePassword) { launchSingleTop = true } },
+                    onDeleteAccount = { navController.navigate(DeleteAccount) { launchSingleTop = true } },
                     onSignOut = onSignOut,
                 )
             }
+            composable<EditProfile> { EditProfileRoute(onDone = { navController.popBackStack() }) }
+            composable<ChangePassword> { ChangePasswordRoute(onDone = { navController.popBackStack() }) }
+            composable<DeleteAccount> { DeleteAccountRoute(onBack = { navController.popBackStack() }) }
             composable<ComponentGallery> {
                 ComponentGalleryScreen(onBack = { navController.popBackStack() })
             }

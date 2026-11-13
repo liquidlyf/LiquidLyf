@@ -1,5 +1,6 @@
 package io.github.liquidlyf.core.data.session
 
+import io.github.liquidlyf.core.data.account.AccountDeleter
 import io.github.liquidlyf.core.data.auth.AuthRepository
 import io.github.liquidlyf.core.data.auth.AuthUser
 import io.github.liquidlyf.core.data.profile.ProfileRepository
@@ -38,6 +39,9 @@ sealed interface SessionState {
     data class ProfileUnavailable(val user: AuthUser, val error: AppError) : SessionState
 
     data class Ready(val user: AuthUser, val profile: UserProfile) : SessionState
+
+    /** An account deletion started on this phone and isn't finished: it resumes before anything else. */
+    data class DeletingAccount(val user: AuthUser) : SessionState
 }
 
 /**
@@ -59,6 +63,7 @@ class AppSessionManager @Inject constructor(
     private val auth: AuthRepository,
     private val profiles: ProfileRepository,
     private val push: PushTopicManager,
+    private val deleter: AccountDeleter,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) : SessionManager {
     private val refreshes = MutableStateFlow(0)
@@ -94,6 +99,7 @@ class AppSessionManager @Inject constructor(
 
     private suspend fun resolve(user: AuthUser?): SessionState = when {
         user == null -> SessionState.SignedOut
+        deleter.isPending(user.uid) -> SessionState.DeletingAccount(user)
         !user.emailVerified -> SessionState.Unverified(user)
         else -> when (val result = profiles.profile(user.uid)) {
             is AppResult.Success -> result.data?.let { SessionState.Ready(user, it) } ?: SessionState.NeedsProfile(user)

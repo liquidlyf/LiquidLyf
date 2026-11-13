@@ -55,6 +55,9 @@ interface AuthRepository {
 
     suspend fun changePassword(newPassword: String): AppResult<Unit>
 
+    /** Sends a link to [newEmail]; the email changes only when the user opens it. */
+    suspend fun changeEmail(newEmail: String): AppResult<Unit>
+
     fun signOut()
 
     /** The last step of account deletion, after the user's documents are gone. */
@@ -122,6 +125,14 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
     override suspend fun changePassword(newPassword: String): AppResult<Unit> {
         val user = auth.currentUser ?: return AppResult.Failure(AppError.PermissionDenied)
         return appResultOf { user.updatePassword(newPassword).await() }
+    }
+
+    override suspend fun changeEmail(newEmail: String): AppResult<Unit> {
+        val user = auth.currentUser ?: return AppResult.Failure(AppError.PermissionDenied)
+        return appResultOf {
+            user.verifyBeforeUpdateEmail(newEmail.trim()).await()
+            Unit
+        }
     }
 
     override fun signOut() {

@@ -134,6 +134,13 @@ class FakeAuthRepository : AuthRepository {
         AppResult.Success(Unit)
     }
 
+    val emailChanges = mutableListOf<String>()
+
+    override suspend fun changeEmail(newEmail: String) = result {
+        emailChanges += newEmail.trim()
+        AppResult.Success(Unit)
+    }
+
     override fun signOut() {
         current = null
         state.value = null
@@ -211,4 +218,24 @@ object TestData {
         hiddenRequestIds = emptyList(), blockedUids = emptyList(), inboxSeenAt = null, lastRequestAt = null,
         lastActiveAt = NOW, donationCount = 0, verifiedDonations = 0, lastDonationId = null,
     )
+}
+
+class FakeAccountDeleter : io.github.liquidlyf.core.data.account.AccountDeleter {
+    var pendingUid: String? = null
+    var runs = 0
+    var failWith: AppError? = null
+
+    override suspend fun start(uid: String) {
+        pendingUid = uid
+    }
+
+    override suspend fun isPending(uid: String) = pendingUid == uid
+
+    override suspend fun run(uid: String, onProgress: (io.github.liquidlyf.core.data.account.DeletionStep) -> Unit): AppResult<Unit> {
+        runs++
+        failWith?.let { return AppResult.Failure(it) }
+        io.github.liquidlyf.core.data.account.DeletionStep.entries.forEach(onProgress)
+        pendingUid = null
+        return AppResult.Success(Unit)
+    }
 }

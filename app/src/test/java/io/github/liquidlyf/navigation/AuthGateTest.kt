@@ -15,6 +15,7 @@ class AuthGateTest {
     private val needsProfile = SessionState.NeedsProfile(TestData.user())
     private val offline = SessionState.ProfileUnavailable(TestData.user(), AppError.Network)
     private val ready = SessionState.Ready(TestData.user(), TestData.profile())
+    private val deleting = SessionState.DeletingAccount(TestData.user())
 
     @Test
     fun `each state starts in its own zone`() {
@@ -61,6 +62,17 @@ class AuthGateTest {
     fun `an offline profile shows the problem screen, and retry recovers`() {
         assertEquals(GateZone.SESSION_PROBLEM, gateTarget(offline, GateZone.MAIN, false))
         assertEquals(GateZone.MAIN, gateTarget(ready, GateZone.SESSION_PROBLEM, false))
+    }
+
+    @Test
+    fun `an unfinished deletion takes over until it's done`() {
+        assertEquals(GateZone.DELETING_ACCOUNT, startZone(deleting, onboardingSeen = true))
+        GateZone.entries.filter { it != GateZone.DELETING_ACCOUNT }
+            .forEach { assertEquals(it.name, GateZone.DELETING_ACCOUNT, gateTarget(deleting, it, false)) }
+        assertNull(gateTarget(deleting, GateZone.DELETING_ACCOUNT, false))
+        // Done: the account is gone, so sign-in.
+        assertEquals(GateZone.SIGNED_OUT, gateTarget(signedOut, GateZone.DELETING_ACCOUNT, false))
+        assertEquals(DeletingAccount, GateZone.DELETING_ACCOUNT.route())
     }
 
     @Test

@@ -95,7 +95,8 @@ data class RequestDraft(
 
 /**
  * A donor's offer, `requests/{rid}/responses/{donorUid}`. [donorPhone] is here only because
- * the donor chose to offer: that is the consent point (doc 07 §2).
+ * the donor chose to offer: that is the consent point (doc 07 §2). It is null after the donor
+ * deleted their account (the name then reads "Deleted user").
  */
 data class DonorResponse(
     val donorUid: String,
@@ -104,7 +105,7 @@ data class DonorResponse(
     val status: ResponseStatus,
     val donorDisplayName: String,
     val donorBloodGroup: BloodGroup,
-    val donorPhone: String,
+    val donorPhone: String?,
     val message: String?,
     val createdAt: Instant?,
     val updatedAt: Instant?,

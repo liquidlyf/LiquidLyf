@@ -230,4 +230,36 @@
     <string name="action_saving">Saving…</string>
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
+
+    <!-- Phase 3: account (edit profile, change password, delete account) -->
+    <string name="title_edit_profile">Edit profile</string>
+    <string name="title_change_password">Change password</string>
+    <string name="title_delete_account">Delete your account</string>
+    <string name="action_save">Save</string>
+    <string name="profile_saved">Profile saved.</string>
+    <string name="label_current_password">Current password</string>
+    <string name="label_new_password">New password</string>
+    <string name="password_changed">Password changed.</string>
+    <string name="label_email_readonly">Email: %1$s</string>
+    <string name="action_change_email">Change email</string>
+    <string name="label_new_email">New email</string>
+    <string name="change_email_sent">We sent a link to %1$s. Your email changes when you open it.</string>
+    <string name="confirm_blood_group_title">Change your blood group?</string>
+    <string name="confirm_blood_group_body">This changes which requests you see and who can ask you to donate. Make sure it matches a test result.</string>
+    <string name="action_change">Change</string>
+    <string name="delete_account_body">This permanently deletes your profile, your donor card, your donation history and your messages. Your requests and offers stay for the people involved, but show \"Deleted user\" and no phone number. You can\'t undo this.</string>
+    <string name="delete_account_word">DELETE</string>
+    <string name="delete_account_type">Type %1$s to confirm</string>
+    <string name="error_confirm_word">Type %1$s exactly.</string>
+    <string name="delete_account_password_hint">Enter your password to confirm it\'s you.</string>
+    <string name="action_delete_account">Delete my account</string>
+    <string name="deleting_title">Deleting your account…</string>
+    <string name="deleting_body">Keep the app open. If it closes, the deletion carries on the next time you open LiquidLyf.</string>
+    <string name="deleting_step_offers">Withdrawing your offers</string>
+    <string name="deleting_step_requests">Removing your name from your requests</string>
+    <string name="deleting_step_offers_named">Removing your name and phone from your offers</string>
+    <string name="deleting_step_private">Deleting contacts and messages</string>
+    <string name="deleting_step_profile">Deleting your profile</string>
+    <string name="deleting_sign_in_again">For your safety, enter your password to finish deleting your account.</string>
+    <string name="action_continue">Continue</string>
 </resources>

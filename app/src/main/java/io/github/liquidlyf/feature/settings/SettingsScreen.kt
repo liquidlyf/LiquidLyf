@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -38,6 +39,9 @@ import io.github.liquidlyf.core.designsystem.screenGutter
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenComponentGallery: () -> Unit,
+    onEditProfile: () -> Unit,
+    onChangePassword: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -47,6 +51,9 @@ fun SettingsScreen(
         onBack = dropUnlessResumed(block = onBack),
         onThemeModeChange = viewModel::setThemeMode,
         onOpenComponentGallery = dropUnlessResumed(block = onOpenComponentGallery),
+        onEditProfile = dropUnlessResumed(block = onEditProfile),
+        onChangePassword = dropUnlessResumed(block = onChangePassword),
+        onDeleteAccount = dropUnlessResumed(block = onDeleteAccount),
         onSignOut = dropUnlessResumed(block = onSignOut),
         showDeveloperOptions = BuildConfig.DEBUG,
     )
@@ -59,6 +66,9 @@ internal fun SettingsContent(
     onBack: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onOpenComponentGallery: () -> Unit,
+    onEditProfile: () -> Unit,
+    onChangePassword: () -> Unit,
+    onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
     showDeveloperOptions: Boolean,
     modifier: Modifier = Modifier,
@@ -95,8 +105,22 @@ internal fun SettingsContent(
             // Logout (BUG-003): alerts stop, the session ends and the gate clears the back stack.
             SectionHeader(stringResource(R.string.settings_account), Modifier.padding(start = gutter, end = gutter, top = Spacing.md))
             ListItem(
+                headlineContent = { Text(stringResource(R.string.title_edit_profile)) },
+                modifier = Modifier.clickable(role = Role.Button, onClick = onEditProfile),
+            )
+            if (uiState.hasPassword) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.title_change_password)) },
+                    modifier = Modifier.clickable(role = Role.Button, onClick = onChangePassword),
+                )
+            }
+            ListItem(
                 headlineContent = { Text(stringResource(R.string.action_sign_out)) },
                 modifier = Modifier.clickable(role = Role.Button, onClick = onSignOut),
+            )
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.title_delete_account), color = MaterialTheme.colorScheme.error) },
+                modifier = Modifier.clickable(role = Role.Button, onClick = onDeleteAccount),
             )
 
             if (showDeveloperOptions) {

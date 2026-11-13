@@ -21,6 +21,9 @@ import java.time.temporal.ChronoUnit
 object RequestDoc {
     const val COLLECTION = "requests"
 
+    /** What a deleted account's name becomes on its requests and offers (exact; the rules check it). */
+    const val DELETED_NAME = "Deleted user"
+
     const val REQUESTER_UID = "requesterUid"
     const val REQUESTER_DISPLAY_NAME = "requesterDisplayName"
     const val BLOOD_GROUP = "bloodGroup"
@@ -217,7 +220,7 @@ object ResponseDoc {
         status = ResponseStatus.fromCode(m.str(STATUS)) ?: return null,
         donorDisplayName = m.str(DONOR_DISPLAY_NAME) ?: return null,
         donorBloodGroup = BloodGroup.fromCode(m.str(DONOR_BLOOD_GROUP)) ?: return null,
-        donorPhone = m.str(DONOR_PHONE) ?: return null,
+        donorPhone = m.str(DONOR_PHONE),
         message = m.str(MESSAGE),
         createdAt = m.instant(CREATED_AT),
         updatedAt = m.instant(UPDATED_AT),

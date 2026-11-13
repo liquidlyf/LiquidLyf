@@ -14,12 +14,13 @@ import io.github.liquidlyf.core.data.session.SessionState
  *   no profile yet  → profile setup → (Android 13+) the notification rationale
  *   profile offline → a "can't load your profile" screen with Retry
  *   ready           → the app
+ *   deleting        → the account deletion, resumed until it finishes
  *
  * When the session changes (sign-in, "I've verified", logout, a disabled account), the user is
  * moved and the back stack is cleared, so Back never returns to a screen they no longer belong on
  * (BUG-003).
  */
-enum class GateZone { ONBOARDING, SIGNED_OUT, VERIFY_EMAIL, PROFILE_SETUP, NOTIFICATION_PERMISSION, SESSION_PROBLEM, MAIN }
+enum class GateZone { ONBOARDING, SIGNED_OUT, VERIFY_EMAIL, PROFILE_SETUP, NOTIFICATION_PERMISSION, SESSION_PROBLEM, MAIN, DELETING_ACCOUNT }
 
 /** Where the app starts, decided once per launch while the splash screen is up. */
 fun startZone(session: SessionState, onboardingSeen: Boolean): GateZone = when (session) {
@@ -28,6 +29,7 @@ fun startZone(session: SessionState, onboardingSeen: Boolean): GateZone = when (
     is SessionState.NeedsProfile -> GateZone.PROFILE_SETUP
     is SessionState.ProfileUnavailable -> GateZone.SESSION_PROBLEM
     is SessionState.Ready -> GateZone.MAIN
+    is SessionState.DeletingAccount -> GateZone.DELETING_ACCOUNT
 }
 
 /**
@@ -43,6 +45,7 @@ fun gateTarget(session: SessionState, current: GateZone, askForNotifications: Bo
         is SessionState.ProfileUnavailable -> setOf(GateZone.SESSION_PROBLEM) to GateZone.SESSION_PROBLEM
         is SessionState.Ready -> setOf(GateZone.MAIN, GateZone.NOTIFICATION_PERMISSION) to
             if (current == GateZone.PROFILE_SETUP && askForNotifications) GateZone.NOTIFICATION_PERMISSION else GateZone.MAIN
+        is SessionState.DeletingAccount -> setOf(GateZone.DELETING_ACCOUNT) to GateZone.DELETING_ACCOUNT
     }
     return if (current in allowed) null else target
 }
@@ -56,6 +59,7 @@ fun GateZone.route(): Any = when (this) {
     GateZone.NOTIFICATION_PERMISSION -> NotificationPermission
     GateZone.SESSION_PROBLEM -> SessionProblem
     GateZone.MAIN -> MainGraph
+    GateZone.DELETING_ACCOUNT -> DeletingAccount
 }
 
 /** The zone a destination belongs to. */
@@ -65,6 +69,7 @@ fun NavDestination.zone(): GateZone = when {
     hasRoute(ProfileSetup::class) -> GateZone.PROFILE_SETUP
     hasRoute(NotificationPermission::class) -> GateZone.NOTIFICATION_PERMISSION
     hasRoute(SessionProblem::class) -> GateZone.SESSION_PROBLEM
+    hasRoute(DeletingAccount::class) -> GateZone.DELETING_ACCOUNT
     hierarchy.any { it.hasRoute(AuthGraph::class) } -> GateZone.SIGNED_OUT
     else -> GateZone.MAIN
 }
