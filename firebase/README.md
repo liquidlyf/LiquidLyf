@@ -47,20 +47,7 @@ For the `demo` app on a USB phone: `adb reverse tcp:8085 tcp:8085` and `adb reve
 
 ### Demo accounts
 
-All passwords are `password123`. All emails are verified.
-
-| Email | Who |
-|---|---|
-| `demo-requester@example.test` | Requester, B+, Dhaka; 2 open requests (one with a confirmed and an offered donor) |
-| `demo-donor-bpos@example.test` | Listed B+ donor, Dhaka |
-| `demo-donor-oneg@example.test` | Listed O− donor, Dhaka |
-| `demo-donor-apos@example.test` | Listed A+ donor, Mirpur; donated 40 days ago (not eligible yet); owns an AB+ request |
-| `demo-donor-abpos@example.test` | Listed AB+ donor, unavailable |
-| `demo-donor-ctg@example.test` | Listed B+ donor, Chattogram |
-| `demo-new@example.test` | 2-day-old account (limit: 1 open request), with one flagged request |
-| `demo-admin@example.test` | Has the `admin` custom claim |
-
-Requests in the snapshot carry the date they were generated, so they expire after a few days. Run `npm run seed` for fresh ones. Area codes are placeholders until `bd-geo.json` (Phase 2.4) fixes the code scheme.
+See [seed/README.md](seed/README.md). Every password is `password123`.
 
 ## The write contract (for the app)
 
