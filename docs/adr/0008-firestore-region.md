@@ -27,6 +27,7 @@ The production database `(default)` is created in **`asia-south1` (Mumbai)**.
 - **Bad, or trade-offs:** a single region, not a multi-region. Data is stored outside Bangladesh, so the
   privacy policy must say so, as Bangladesh's Personal Data Protection Act, 2026 expects.
 - **Follow-ups:**
-  - create the database in this region when the production project is set up (Phase 2);
+  - create the database in this region when the production project is set up (Phase 2). Done on
+    2026-11-13: `(default)` in `asia-south1`, production mode, Standard edition, Spark plan;
   - the privacy policy names the location ([website draft](../website-drafts/en/privacy.md), section 5);
   - moving later means a new database and a data migration.

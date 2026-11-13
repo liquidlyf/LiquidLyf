@@ -128,8 +128,8 @@ We use a few services to run LiquidLyf. They process data for us and only on our
 | Cloudflare Workers | Sends the request alerts to donors. It receives your user ID, the request ID and, like any web server, your IP address. It doesn't store them beyond short rate-limit counters | Cloudflare's worldwide network |
 | GitHub | Hosts the app download, this website and the source code. It sees your IP address when you visit | United States and worldwide |
 
-<!-- CHECK: Firestore region asia-south1 (Mumbai) once the database exists (B1). Cloudflare KV
-     holds only per-uid rate-limit counters with a short expiry; confirm with session B. -->
+<!-- Confirmed 13 Nov 2026: the production Firestore database is in asia-south1 (Mumbai).
+     CHECK: Cloudflare KV holds only per-uid rate-limit counters with a short expiry; confirm with session B. -->
 
 Their own privacy policies: [Google](https://policies.google.com/privacy) ·
 [Firebase](https://firebase.google.com/support/privacy) ·

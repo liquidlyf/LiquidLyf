@@ -34,8 +34,7 @@ checked.
    app at release (Phase 8). The data list in the privacy policy comes from `firebase/firestore.rules`
    and the retention table from the project plan. **If a pull request adds or changes stored data,
    update the privacy policy too.**
-2. **Resolve each `CHECK` comment** (HTML comments, invisible on the page): the Firestore region,
-   backups, what the Worker keeps, the PDPA 2026 rights and authority, the AppVerifier steps and the
+2. **Resolve each `CHECK` comment** (HTML comments, invisible on the page): backups, what the Worker keeps, the PDPA 2026 rights and authority, the AppVerifier steps and the
    Obtainium link.
 3. **Legal review:** Terms sections 9 (liability) and 11 (law), and the rights section of the privacy
    policy, by someone with legal training. Bangladesh's Personal Data Protection Act, 2026 applies.
