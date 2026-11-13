@@ -22,7 +22,9 @@ import javax.inject.Singleton
 object FirebaseModule {
 
     private const val AUTH_EMULATOR_PORT = 9099
-    private const val FIRESTORE_EMULATOR_PORT = 8080
+    // 8085 instead of the default 8080, which other software often holds.
+    // Must match the firestore port in firebase/firebase.json.
+    private const val FIRESTORE_EMULATOR_PORT = 8085
 
     @Provides
     @Singleton

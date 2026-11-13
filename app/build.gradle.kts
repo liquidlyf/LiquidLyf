@@ -98,6 +98,8 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+        // AGP's Compose Preview tasks need merged resources in unit tests.
+        unitTests.isIncludeAndroidResources = true
     }
 
     packaging {
@@ -179,5 +181,6 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.test.runner)
 }
