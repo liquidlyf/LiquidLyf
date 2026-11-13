@@ -121,6 +121,10 @@ android {
             test.inputs.dir(sharedVectorsDir)
                 .withPropertyName("sharedVectors")
                 .withPathSensitivity(PathSensitivity.RELATIVE)
+            // BdGeoTest checks the bundled area list itself.
+            test.inputs.file("src/main/assets/bd-geo.json")
+                .withPropertyName("bdGeo")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
             test.systemProperty("liquidlyf.rulesFile", firestoreRulesFile.absolutePath)
             test.inputs.file(firestoreRulesFile)
                 .withPropertyName("firestoreRules")
