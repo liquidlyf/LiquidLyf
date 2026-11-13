@@ -9,7 +9,8 @@ Design: `project-plan` doc 10 §6.
 | Phase | What |
 |---|---|
 | **2 (live)** | `GET /health`, and `POST /v1/requests/{id}/dispatch`, which sends the first tier |
-| **5 (built, tested, not deployed yet)** | the two `notify` endpoints, plus crons: the 5-minute escalation sweep, hourly expiry and the daily retention clean-up |
+| **5 (built, tested, not deployed yet)** | the two `notify` endpoints, plus crons: the 5-minute escalation sweep, hourly expiry and the daily retention clean-up; the per-uid daily alert cap |
+| **5 backup** | `backend/apps-script`: Google Apps Script runs the same escalation code if the sweep falls behind by more than 10 minutes |
 
 ## How dispatch works
 The checks run cheapest first, so junk traffic never costs a Firestore read:
@@ -78,7 +79,7 @@ Public fields only, because anyone can subscribe to a topic. The app renders the
 ## Crons (Phase 5; `wrangler.jsonc` → `triggers`, times in UTC)
 | Cron | Job | Cost per run |
 |---|---|---|
-| `*/5 * * * *` | **Escalation sweep** (`sweep.ts`): up to 25 OPEN requests with `nextTierAt <= now`. If active offers (`OFFERED`/`CONFIRMED`) cover the units still needed, it waits an hour. Otherwise it sends the next tier. A request the app never dispatched gets tier 1, after the same daily-cap check as dispatch. When all tiers are sent, or the request has expired or is over the cap, it's parked in 2100. | 1 read per request (≥ 1), +1 per first alert (cap count), + 1 batch write |
+| `*/5 * * * *` | **Escalation sweep** (`escalation.ts`, run by `sweep.ts`): up to 25 OPEN requests with `nextTierAt <= now`. If active offers (`OFFERED`/`CONFIRMED`) cover the units still needed, it waits an hour. Otherwise it sends the next tier. A request the app never dispatched gets tier 1, after the same daily-cap check as dispatch. When all tiers are sent, or the request has expired or is over the cap, it's parked in 2100. | 1 read per request (≥ 1), +1 per first alert (cap count), + 1 batch write |
 | `7 * * * *` | **Expiry** (`expiry.ts`): OPEN past `expiresAt` → `EXPIRED` + `userStats.openRequests −1`, in one commit. | 1 read + 1 commit per request |
 | `0 3 * * *` (09:00 Dhaka) | **Retention** (`retention.ts`, decision B6): see below. Old requests are walked from a cursor in KV. | small |
 
@@ -89,6 +90,7 @@ Public fields only, because anyone can subscribe to a topic. The app renders the
 
 **Safety:**
 - **Idempotent.** Every claim carries the doc's `updateTime`, so two overlapping sweeps (or the Apps Script backup) alert once.
+- **One escalation, two runners.** `escalation.ts` is a generator that yields each Firestore or FCM call it needs. `sweep.ts` answers with `fetch`; the Apps Script backup answers with `UrlFetchApp`, from the same code bundled into `backend/apps-script/Shared.js`. Keep `escalation.ts` and what it imports free of `fetch`, WebCrypto, `TextEncoder`, `btoa` and timers: Apps Script has none of them.
 - **Within the free plan's limits.** Every run stays under 50 subrequests. The sweep makes at most 40 FCM sends and cap counts together, and the rest wait for the next run.
 
 ## Run it
@@ -99,6 +101,7 @@ npm ci
 npm test              # unit tests: Google's token, JWKS, Firestore and FCM endpoints mocked
 npm run test:e2e      # the bundled Worker in workerd against the Auth + Firestore emulators
 npm run build         # bundle check (wrangler dry run), no Cloudflare account needed
+npm run build:apps-script  # rebuild backend/apps-script/Shared.js after changing the escalation code
 npm run dev           # local Worker on :8787 against running emulators (cd ../../firebase && npm run emulators)
 ```
 
