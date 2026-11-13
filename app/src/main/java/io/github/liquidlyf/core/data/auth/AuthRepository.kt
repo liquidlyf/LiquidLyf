@@ -28,7 +28,9 @@ data class AuthUser(
 }
 
 /**
- * Firebase Auth (doc 06 §4.1). [authState] is the only source of truth for "signed in"; there is
+ * Firebase Auth (doc 06 §4.1). Every email Firebase sends (verify, reset, change email) is in the
+ * app's language: useAppLanguage() before each send, so Bangla users get Bangla mails.
+ * [authState] is the only source of truth for "signed in"; there is
  * no "is_logged_in" preference (BUG-016). Errors come back as [AppError], never raw Firebase text
  * (BUG-028). No phone auth: the free Spark plan has no SMS.
  */
@@ -83,6 +85,7 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
     override suspend fun signUpEmail(name: String, email: String, password: String): AppResult<AuthUser> = appResultOf {
         val user = auth.createUserWithEmailAndPassword(email.trim(), password).await().user!!
         user.updateProfile(userProfileChangeRequest { displayName = name.trim() }).await()
+        auth.useAppLanguage()
         user.sendEmailVerification().await()
         publish()!!
     }
@@ -94,7 +97,10 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
 
     override suspend fun sendVerification(): AppResult<Unit> {
         val user = auth.currentUser ?: return AppResult.Failure(AppError.PermissionDenied)
-        return appResultOf { user.sendEmailVerification().await() }
+        return appResultOf {
+            auth.useAppLanguage()
+            user.sendEmailVerification().await()
+        }
     }
 
     override suspend fun reloadUser(): AppResult<AuthUser?> {
@@ -109,6 +115,7 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
 
     override suspend fun sendPasswordReset(email: String): AppResult<Unit> {
         val result: AppResult<Unit> = appResultOf {
+            auth.useAppLanguage()
             auth.sendPasswordResetEmail(email.trim()).await()
             Unit
         }
@@ -130,6 +137,7 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
     override suspend fun changeEmail(newEmail: String): AppResult<Unit> {
         val user = auth.currentUser ?: return AppResult.Failure(AppError.PermissionDenied)
         return appResultOf {
+            auth.useAppLanguage()
             user.verifyBeforeUpdateEmail(newEmail.trim()).await()
             Unit
         }

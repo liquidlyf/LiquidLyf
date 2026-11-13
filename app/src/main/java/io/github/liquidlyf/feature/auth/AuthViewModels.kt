@@ -33,6 +33,28 @@ private fun emailError(email: String): Int? = when {
     else -> null
 }
 
+/**
+ * What a Google sheet result means for a form: still signing in (null error, keep loading),
+ * cancelled (stop, say nothing) or a problem to show. Used by Sign in and Create account.
+ */
+private sealed interface GoogleOutcome {
+    data object SignedIn : GoogleOutcome
+
+    data object Cancelled : GoogleOutcome
+
+    data class Problem(@StringRes val message: Int) : GoogleOutcome
+}
+
+private suspend fun AuthRepository.finishGoogle(result: GoogleSignInResult): GoogleOutcome = when (result) {
+    is GoogleSignInResult.Token -> when (val signIn = signInWithGoogle(result.idToken)) {
+        is AppResult.Success -> GoogleOutcome.SignedIn // the gate moves on
+        is AppResult.Failure -> GoogleOutcome.Problem(signIn.error.messageRes)
+    }
+    GoogleSignInResult.Cancelled -> GoogleOutcome.Cancelled
+    GoogleSignInResult.NoAccount -> GoogleOutcome.Problem(R.string.error_google_no_account)
+    GoogleSignInResult.Failed -> GoogleOutcome.Problem(R.string.error_google_failed)
+}
+
 // ---- Sign in ----
 
 data class SignInUiState(
@@ -87,14 +109,12 @@ class SignInViewModel @Inject constructor(private val auth: AuthRepository) : Vi
 
     /** What Google's sheet returned. A token signs in to Firebase; the gate then moves on. */
     fun onGoogleResult(result: GoogleSignInResult) {
-        when (result) {
-            is GoogleSignInResult.Token -> viewModelScope.launch {
-                val signIn = auth.signInWithGoogle(result.idToken)
-                if (signIn is AppResult.Failure) state.update { it.copy(loading = false, formError = signIn.error.messageRes) }
+        viewModelScope.launch {
+            when (val outcome = auth.finishGoogle(result)) {
+                GoogleOutcome.SignedIn -> Unit
+                GoogleOutcome.Cancelled -> state.update { it.copy(loading = false) }
+                is GoogleOutcome.Problem -> state.update { it.copy(loading = false, formError = outcome.message) }
             }
-            GoogleSignInResult.Cancelled -> state.update { it.copy(loading = false) }
-            GoogleSignInResult.NoAccount -> state.update { it.copy(loading = false, formError = R.string.error_google_no_account) }
-            GoogleSignInResult.Failed -> state.update { it.copy(loading = false, formError = R.string.error_google_failed) }
         }
     }
 }
@@ -152,6 +172,24 @@ class SignUpViewModel @Inject constructor(private val auth: AuthRepository) : Vi
                         else -> it.copy(loading = false, formError = result.error.messageRes)
                     }
                 }
+            }
+        }
+    }
+
+    /** "Continue with Google" on Create account (P2): a new Google account skips this form. */
+    fun onGoogleStarted(): Boolean {
+        if (state.value.loading) return false
+        state.update { it.copy(loading = true, formError = null) }
+        return true
+    }
+
+    /** New Google accounts confirm 18+ and the Terms in profile setup instead. */
+    fun onGoogleResult(result: GoogleSignInResult) {
+        viewModelScope.launch {
+            when (val outcome = auth.finishGoogle(result)) {
+                GoogleOutcome.SignedIn -> Unit
+                GoogleOutcome.Cancelled -> state.update { it.copy(loading = false) }
+                is GoogleOutcome.Problem -> state.update { it.copy(loading = false, formError = outcome.message) }
             }
         }
     }

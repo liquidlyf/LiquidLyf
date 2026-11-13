@@ -47,6 +47,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.auth.GoogleSignInResult
 import io.github.liquidlyf.core.data.auth.googleWebClientId
 import io.github.liquidlyf.core.data.auth.requestGoogleIdToken
 import io.github.liquidlyf.core.designsystem.LLIcons
@@ -115,21 +116,41 @@ internal fun currentAppLocale(): AppLocale =
 @Composable
 fun SignInRoute(onCreateAccount: () -> Unit, onForgotPassword: () -> Unit, viewModel: SignInViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val onGoogle = rememberContinueWithGoogle(viewModel::onGoogleStarted, viewModel::onGoogleResult)
+    SignInScreen(state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, onCreateAccount, onForgotPassword, onGoogle)
+}
+
+/**
+ * The "Continue with Google" click, or null when this build can't offer it: only builds with a
+ * real Firebase config have a web client ID (the demo flavor has none).
+ */
+@Composable
+private fun rememberContinueWithGoogle(
+    onStarted: () -> Boolean,
+    onResult: (GoogleSignInResult) -> Unit,
+): (() -> Unit)? {
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
-    // Only builds with a real Firebase config have a web client ID; the demo flavor hides the button.
     val webClientId = remember(context) { googleWebClientId(context) }
     val scope = rememberCoroutineScope()
-    val onGoogle: (() -> Unit)? = if (activity != null && webClientId != null) {
-        {
-            if (viewModel.onGoogleStarted()) {
-                scope.launch { viewModel.onGoogleResult(requestGoogleIdToken(activity, webClientId)) }
-            }
-        }
-    } else {
-        null
+    if (activity == null || webClientId == null) return null
+    return {
+        if (onStarted()) scope.launch { onResult(requestGoogleIdToken(activity, webClientId)) }
     }
-    SignInScreen(state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, onCreateAccount, onForgotPassword, onGoogle)
+}
+
+/** "Continue with Google", then "or" above the email form. */
+@Composable
+private fun ColumnScope.GoogleOption(onClick: () -> Unit, enabled: Boolean) {
+    OutlinedButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.action_continue_with_google))
+    }
+    Text(
+        stringResource(R.string.auth_or),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.align(Alignment.CenterHorizontally),
+    )
 }
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
@@ -149,17 +170,7 @@ fun SignInScreen(
     onContinueWithGoogle: (() -> Unit)? = null,
 ) {
     AuthLayout(title = stringResource(R.string.title_sign_in), onBack = null) {
-        if (onContinueWithGoogle != null) {
-            OutlinedButton(onClick = onContinueWithGoogle, enabled = !state.loading, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.action_continue_with_google))
-            }
-            Text(
-                stringResource(R.string.auth_or),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-        }
+        if (onContinueWithGoogle != null) GoogleOption(onContinueWithGoogle, enabled = !state.loading)
         LLTextField(
             value = state.email,
             onValueChange = onEmailChange,
@@ -212,6 +223,7 @@ fun SignUpRoute(onBack: () -> Unit, viewModel: SignUpViewModel = hiltViewModel()
         onConsentChange = viewModel::onConsentChange,
         onSignUp = viewModel::signUp,
         onBack = onBack,
+        onContinueWithGoogle = rememberContinueWithGoogle(viewModel::onGoogleStarted, viewModel::onGoogleResult),
     )
 }
 
@@ -224,10 +236,13 @@ fun SignUpScreen(
     onConsentChange: (Boolean) -> Unit,
     onSignUp: () -> Unit,
     onBack: () -> Unit,
+    onContinueWithGoogle: (() -> Unit)? = null,
 ) {
     val links = rememberSafeIntentLauncher()
     val locale = currentAppLocale()
     AuthLayout(title = stringResource(R.string.title_sign_up), onBack = onBack) {
+        // P2: a new Google account skips this form and confirms 18+ and the Terms in setup.
+        if (onContinueWithGoogle != null) GoogleOption(onContinueWithGoogle, enabled = !state.loading)
         LLTextField(
             value = state.name,
             onValueChange = onNameChange,

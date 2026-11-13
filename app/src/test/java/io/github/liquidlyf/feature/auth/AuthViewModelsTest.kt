@@ -89,14 +89,17 @@ class AuthViewModelsTest {
         assertTrue(vm.onGoogleStarted())
         assertFalse(vm.onGoogleStarted()) // busy: a second tap is ignored
         vm.onGoogleResult(GoogleSignInResult.Cancelled)
+        advanceUntilIdle()
         assertFalse(vm.uiState.value.loading)
         assertNull(vm.uiState.value.formError)
 
         vm.onGoogleStarted()
         vm.onGoogleResult(GoogleSignInResult.NoAccount)
+        advanceUntilIdle()
         assertEquals(R.string.error_google_no_account, vm.uiState.value.formError)
         vm.onGoogleStarted()
         vm.onGoogleResult(GoogleSignInResult.Failed)
+        advanceUntilIdle()
         assertEquals(R.string.error_google_failed, vm.uiState.value.formError)
 
         vm.onGoogleStarted()
@@ -150,6 +153,21 @@ class AuthViewModelsTest {
         assertEquals("Rahim Uddin", auth.accounts.getValue("rahim@example.test").name)
         assertEquals(listOf("rahim@example.test"), auth.verificationEmails)
         assertEquals(false, auth.authState.value?.emailVerified)
+    }
+
+    @Test
+    fun `Continue with Google on Create account signs in a new Google account (P2)`() = test {
+        val vm = SignUpViewModel(auth)
+        assertTrue(vm.onGoogleStarted())
+        vm.onGoogleResult(GoogleSignInResult.Failed)
+        advanceUntilIdle()
+        assertEquals(R.string.error_google_failed, vm.uiState.value.formError)
+        assertFalse(vm.uiState.value.loading)
+        vm.onGoogleStarted()
+        vm.onGoogleResult(GoogleSignInResult.Token("new"))
+        advanceUntilIdle()
+        assertEquals("g-new", auth.authState.value?.uid)
+        assertEquals(false, auth.authState.value?.hasPassword) // so setup asks for the Terms
     }
 
     @Test
