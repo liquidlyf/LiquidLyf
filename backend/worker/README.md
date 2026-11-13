@@ -74,8 +74,10 @@ npm run dev           # local Worker on :8787 against running emulators (cd ../.
 - **Load it with:**
 
   ```powershell
-  Get-Content "$HOME\Downloads\<key>.json" -Raw | npx wrangler secret put GCP_SA_JSON
+  Get-Content "$HOME\Downloads\<key>.json" -Raw | npx.cmd wrangler secret put GCP_SA_JSON --env=""
   ```
+
+  `--env=""` picks the production (top-level) Worker without a warning. In Windows PowerShell, use `npx.cmd`, because the execution policy blocks `npx`. Check it with `npx.cmd wrangler secret list --env=""`, which lists names only.
 - **Everything in `wrangler.jsonc` is non-secret:** project ID and number, the KV namespace ID, and the escalation minutes. The minutes must match Remote Config.
 - **Before you deploy:**
   - `npx wrangler kv namespace create CACHE`, then put the ID in `wrangler.jsonc`;
