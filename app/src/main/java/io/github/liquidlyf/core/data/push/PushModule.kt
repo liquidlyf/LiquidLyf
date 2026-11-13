@@ -16,19 +16,38 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.liquidlyf.BuildConfig
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val TAG = "PushTopics"
+
 /** Real FCM topic calls (dev and prod). */
 class FcmTopicMessaging @Inject constructor() : TopicMessaging {
-    override suspend fun subscribe(topic: String) {
-        Firebase.messaging.subscribeToTopic(topic).await()
-    }
+    override suspend fun subscribe(topic: String) =
+        logged("subscribed to", topic) { Firebase.messaging.subscribeToTopic(topic).await() }
 
-    override suspend fun unsubscribe(topic: String) {
-        Firebase.messaging.unsubscribeFromTopic(topic).await()
+    override suspend fun unsubscribe(topic: String) =
+        logged("unsubscribed from", topic) { Firebase.messaging.unsubscribeFromTopic(topic).await() }
+
+    /**
+     * One line per topic call, so a phone check can see that alerts are set up. Topic names hold
+     * the uid, area and blood group: the published app logs only the kind (`up_…`), local test
+     * builds the whole name.
+     */
+    private suspend fun logged(done: String, topic: String, call: suspend () -> Unit) {
+        val shown = if (BuildConfig.LOCAL_BUILD) topic else topic.substringBefore('_') + "_…"
+        try {
+            call()
+            Log.i(TAG, "$done $shown")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "not $done $shown: ${e.javaClass.simpleName}")
+            throw e
+        }
     }
 }
 
@@ -40,10 +59,6 @@ class LoggingTopicMessaging @Inject constructor() : TopicMessaging {
 
     override suspend fun unsubscribe(topic: String) {
         Log.d(TAG, "demo: would unsubscribe from $topic")
-    }
-
-    private companion object {
-        const val TAG = "PushTopics"
     }
 }
 

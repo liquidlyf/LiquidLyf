@@ -34,6 +34,11 @@ android {
 
         val emulatorHost = providers.gradleProperty("liquidlyf.emulatorHost").getOrElse("127.0.0.1")
         buildConfigField("String", "EMULATOR_HOST", "\"$emulatorHost\"")
+
+        // False only in the published app (the release job sets LIQUIDLYF_RELEASE). Local test
+        // builds may log details the published app never logs, such as FCM topic names.
+        val localBuild = !providers.environmentVariable("LIQUIDLYF_RELEASE").isPresent
+        buildConfigField("boolean", "LOCAL_BUILD", "$localBuild")
     }
 
     // Three environments (doc 11 §2). A contributor's build has a different applicationId,
