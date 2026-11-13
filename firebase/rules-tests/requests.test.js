@@ -4,7 +4,7 @@ import { describe, test, beforeAll, afterAll, beforeEach } from 'vitest';
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, increment,
-  collection, query, where, Timestamp,
+  collection, query, where, orderBy, limit, startAfter, Timestamp,
 } from 'firebase/firestore';
 import {
   setupEnv, teardownEnv, getEnv, as, anon, seed, seedUsers, cast, ts, DAY,
@@ -37,6 +37,15 @@ describe('requests: read (doc 07 test 2)', () => {
       where('status', '==', 'OPEN'), where('district', '==', 'BD3026'),
       where('acceptedGroups', 'array-contains', 'B_POS'));
     await assertSucceeds(getDocs(feed));
+  });
+
+  test('the Nearby list (OPEN in my district, any group, by neededBy, paged) is allowed', async () => {
+    const nearby = (db, after) => query(collection(db, 'requests'),
+      where('status', '==', 'OPEN'), where('district', '==', 'BD3026'),
+      orderBy('neededBy'), ...(after ? [startAfter(after)] : []), limit(20));
+    await assertSucceeds(getDocs(nearby(as('eve'))));
+    await assertSucceeds(getDocs(nearby(as('eve'), ts(DAY))));
+    await assertFails(getDocs(nearby(as('eve', { email_verified: false }))));
   });
 
   test('the delta-sync feed (no status filter) is allowed', async () => {

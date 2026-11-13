@@ -123,6 +123,7 @@ General:
 
 ### Queries the rules allow
 - **Feed:** `requests` where `status == OPEN`, `district == X`, `acceptedGroups array-contains G`, ordered by `neededBy`. Delta sync: `district`, `acceptedGroups`, `updatedAt > lastSync`.
+- **Nearby (Requests tab):** `requests` where `status == OPEN`, `district == X`, ordered by `neededBy`, `limit 20`, paged with `startAfter(neededBy)`. Any blood group, so people can share requests they can't donate to. A one-off `get()` with pull-to-refresh, not a listener.
 - **Responders (requester):** `requests/{rid}/responses` **must** filter `where('requesterUid', '==', myUid)`.
 - **My offers:** `collectionGroup('responses')` **must** filter `where('donorUid', '==', myUid)`.
 - **Inbox:** `users/{me}/notifications` (owner only). Items are immutable; "seen" is `users.inboxSeenAt`.

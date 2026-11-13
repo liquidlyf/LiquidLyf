@@ -14,6 +14,15 @@
       "collectionGroup": "requests",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "district", "order": "ASCENDING" },
+        { "fieldPath": "neededBy", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "requests",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "district", "order": "ASCENDING" },
         { "fieldPath": "acceptedGroups", "arrayConfig": "CONTAINS" },
         { "fieldPath": "updatedAt", "order": "ASCENDING" }
