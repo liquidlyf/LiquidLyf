@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.firebase.auth.FirebaseAuth
 
 class SettingsFragment : Fragment() {
 
@@ -85,6 +86,7 @@ class SettingsFragment : Fragment() {
         }
 
         logoutButton.setOnClickListener {
+            FirebaseAuth.getInstance().signOut()
             Toast.makeText(requireContext(), "Logged out!", Toast.LENGTH_SHORT).show()
             val sharedPref = requireActivity().getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
             sharedPref.edit().putBoolean("is_logged_in", false).apply()

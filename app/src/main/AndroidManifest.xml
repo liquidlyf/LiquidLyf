@@ -6,7 +6,7 @@
 
     <uses-feature
         android:name="android.hardware.location.gps"
-        android:required="true" />
+        android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -19,9 +19,6 @@
         android:theme="@style/Theme.LiquidLyf">
         <activity
             android:name=".ForgotPasswordActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity_forgot_password"
             android:exported="false" />
         <activity
             android:name=".RegisterVerifyActivity"
@@ -38,19 +35,13 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDjy0K8dM_C7mFFVJ2hRlLxM717KjCl48E" />
+            android:value="${MAPS_API_KEY}" />
 
         <activity
             android:name=".RequestBloodActivity"
             android:exported="false" />
         <activity
-            android:name=".ForgotPasswordNewActivity"
-            android:exported="false" />
-        <activity
             android:name=".ForgotPasswordVerifyActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ForgotPasswordPhoneActivity"
             android:exported="false" />
         <activity
             android:name=".LoginActivity"

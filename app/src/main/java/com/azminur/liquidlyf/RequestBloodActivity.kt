@@ -37,7 +37,8 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var quantityInput: EditText
     private lateinit var auth: FirebaseAuth
     private lateinit var database: FirebaseDatabase
-    private lateinit var map: GoogleMap
+    // Null until the map loads, which may be never if no Maps key is set (BUG-011).
+    private var map: GoogleMap? = null
     private lateinit var searchView: SearchView
     private lateinit var searchResultsRecyclerView: RecyclerView
     private lateinit var searchResultsAdapter: SearchResultsAdapter
@@ -176,11 +177,11 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         val defaultLocation = LatLng(23.8103, 90.4125)
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
     }
 
     private fun searchForHospital(query: String) = coroutineScope.launch {
-        map.clear()
+        map?.clear()
         searchResultsList.clear()
 
         withContext(Dispatchers.IO) {
@@ -212,9 +213,10 @@ class RequestBloodActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun updateMapWithMarker(location: LatLng, title: String) {
-        map.clear()
-        map.addMarker(MarkerOptions().position(location).title(title))
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+        val googleMap = map ?: return
+        googleMap.clear()
+        googleMap.addMarker(MarkerOptions().position(location).title(title))
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
     }
 }
 

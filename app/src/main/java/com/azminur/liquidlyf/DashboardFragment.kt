@@ -197,6 +197,11 @@ class DashboardFragment : Fragment() {
     private fun showRequestDetailsDialog(request: IncomingRequest) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_donor_details, null)
         val builder = AlertDialog.Builder(context).setView(dialogView)
+        // Buttons must be added before create(), or they never appear.
+        builder.setNegativeButton("Reject") { dialog, _ ->
+            saveRejectionStatus(request.requestId)
+            dialog.dismiss()
+        }
         val alertDialog = builder.create()
 
         dialogView.findViewById<Button>(R.id.cancel_button)?.visibility = View.GONE
@@ -226,10 +231,6 @@ class DashboardFragment : Fragment() {
             alertDialog.dismiss()
         }
 
-        builder.setNegativeButton("Reject") { dialog, _ ->
-            saveRejectionStatus(request.requestId)
-            dialog.dismiss()
-        }
         alertDialog.show()
     }
 

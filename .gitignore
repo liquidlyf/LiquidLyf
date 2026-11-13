@@ -14,3 +14,7 @@
 .cxx
 local.properties
 app/google-services.json
+
+# IDE and Kotlin compiler state (machine-specific)
+.idea/
+.kotlin/

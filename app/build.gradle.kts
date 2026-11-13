@@ -1,7 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.gms.google.services)
+}
+
+// Secrets stay out of git: read them from local.properties (git-ignored).
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
 }
 
 android {
@@ -16,6 +24,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Add MAPS_API_KEY=<restricted key> to local.properties to load map tiles.
+        // The non-empty fallback keeps the Maps SDK from crashing on start-up when no
+        // key is set; the map then stays blank.
+        manifestPlaceholders["MAPS_API_KEY"] =
+            localProperties.getProperty("MAPS_API_KEY")?.takeIf { it.isNotBlank() }
+                ?: "MAPS_API_KEY_NOT_SET"
     }
 
     buildTypes {
