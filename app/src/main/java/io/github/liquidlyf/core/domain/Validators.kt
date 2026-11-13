@@ -70,6 +70,14 @@ object Validators {
 
     fun isBdPhone(phone: String): Boolean = BD_MOBILE.matches(phone)
 
+    /** New passwords: Firebase accepts 6, the app asks for 8. */
+    const val PASSWORD_MIN = 8
+
+    private val EMAIL = Regex("""^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$""")
+
+    /** A plausible email; Firebase has the final say. */
+    fun isValidEmail(email: String): Boolean = email.trim().length <= 254 && EMAIL.matches(email.trim())
+
     /** Trims and collapses inner spaces. Store names in this form. */
     fun normalizeName(input: String): String = input.trim().split(WHITESPACE).joinToString(" ")
 

@@ -21,6 +21,16 @@ enum class AppError(@param:StringRes val messageRes: Int) {
     InvalidInput(R.string.error_invalid_input),
     RateLimited(R.string.error_rate_limited),
     Unknown(R.string.error_unknown),
+
+    // Sign-in and account errors (Firebase Auth error codes, mapped in ErrorMapper).
+    /** Wrong email or password. Deliberately doesn't say which, or whether the account exists. */
+    InvalidCredentials(R.string.error_invalid_credentials),
+    EmailInUse(R.string.error_email_in_use),
+    WeakPassword(R.string.error_weak_password),
+    InvalidEmail(R.string.error_invalid_email),
+    AccountDisabled(R.string.error_account_disabled),
+    /** Sensitive changes (password, deletion) need a fresh sign-in first. */
+    RecentLoginRequired(R.string.error_recent_login_required),
 }
 
 inline fun <T, R> AppResult<T>.map(transform: (T) -> R): AppResult<R> = when (this) {

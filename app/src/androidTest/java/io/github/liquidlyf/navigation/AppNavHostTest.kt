@@ -1,6 +1,7 @@
 package io.github.liquidlyf.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
@@ -19,7 +20,10 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import io.github.liquidlyf.HiltTestActivity
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
+import io.github.liquidlyf.core.util.AppError
+import io.github.liquidlyf.testing.TestData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -28,9 +32,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Phase 1 acceptance on a real phone: tabs keep their own back stacks, Back goes to the tab
- * root, then to Home, then closes the app; sign-in screens never stack (BUG-031, BUG-032).
- * Run: ./gradlew connectedDemoDebugAndroidTest (phone unlocked).
+ * On the phone: the auth gate moves the user as the session changes and clears the back stack
+ * (BUG-003); tabs keep their own back stacks, Back goes to the tab root, then Home, then closes
+ * the app; sign-in screens never stack (BUG-031, BUG-032). The session is driven by the test, so
+ * no Firebase is needed. Run: ./gradlew connectedDemoDebugAndroidTest (phone unlocked).
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
@@ -45,28 +50,43 @@ class AppNavHostTest {
     @Before
     fun setUp() = hilt.inject()
 
+    private val session = mutableStateOf<SessionState>(SessionState.SignedOut)
+    private val ready = SessionState.Ready(TestData.user(), TestData.profile())
     private val selectedTabs = mutableListOf<TopLevelDestination>()
     private var onboardingFinished = false
+    private var retries = 0
+    private var signOuts = 0
 
     private fun str(@StringRes id: Int, vararg args: Any): String =
         InstrumentationRegistry.getInstrumentation().targetContext.getString(id, *args)
 
-    private fun launch(startWithOnboarding: Boolean = false, initialTab: TopLevelDestination? = null) {
+    private fun launch(start: GateZone, state: SessionState, initialTab: TopLevelDestination? = null) {
+        session.value = state
         compose.setContent {
             LiquidLyfTheme {
                 AppNavHost(
-                    startWithOnboarding = startWithOnboarding,
+                    startZone = start,
+                    session = session.value,
                     initialTab = initialTab,
                     onOnboardingFinished = { onboardingFinished = true },
                     onTabSelected = { selectedTabs += it },
+                    onRetrySession = { retries++ },
+                    onSignOut = { signOuts++ },
                 )
             }
         }
     }
 
-    /** Placeholder screens show their title in the top bar (first match). */
-    private fun assertOnScreen(@StringRes title: Int) {
-        compose.onAllNodesWithText(str(title)).onFirst().assertIsDisplayed()
+    private fun setSession(state: SessionState) {
+        compose.runOnUiThread { session.value = state }
+        compose.waitForIdle()
+    }
+
+    /** Waits up to 5 s: some screens load in the background (profile setup reads the area list). */
+    private fun assertOnScreen(@StringRes text: Int, vararg args: Any) {
+        val expected = str(text, *args)
+        compose.waitUntil(5_000) { compose.onAllNodesWithText(expected).fetchSemanticsNodes().isNotEmpty() }
+        compose.onAllNodesWithText(expected).onFirst().assertIsDisplayed()
     }
 
     private fun tab(@StringRes label: Int): SemanticsNodeInteraction =
@@ -89,19 +109,82 @@ class AppNavHostTest {
         assertTrue("Back should close the app here", activity.isFinishing || activity.isDestroyed)
     }
 
-    private fun signIn() {
+    // ---- the auth gate ----
+
+    @Test
+    fun theGateFollowsTheSessionFromSignUpToTheAppAndBackOnLogout() {
+        launch(GateZone.SIGNED_OUT, SessionState.SignedOut)
         assertOnScreen(R.string.title_sign_in)
-        clickButton(R.string.placeholder_continue_to_app)
+
+        setSession(SessionState.Unverified(TestData.user(verified = false)))
+        assertOnScreen(R.string.title_verify_email)
+
+        setSession(SessionState.NeedsProfile(TestData.user()))
+        assertOnScreen(R.string.title_profile_setup)
+        assertOnScreen(R.string.setup_step, 1, 4)
+
+        // API 30 has no notification permission: setup goes straight to the app.
+        setSession(ready)
+        assertOnScreen(R.string.nav_home)
+
+        // Logout from deep inside a tab: sign-in, and Back leaves the app (BUG-003).
+        tab(R.string.nav_profile).performClick()
+        compose.onNode(hasClickAction() and hasContentDescription(str(R.string.action_open_settings))).performClick()
+        compose.waitForIdle()
+        clickButton(R.string.action_sign_out)
+        assertEquals(1, signOuts)
+        setSession(SessionState.SignedOut)
+        assertOnScreen(R.string.title_sign_in)
+        assertAppClosesOnBack()
+    }
+
+    @Test
+    fun anOfflineProfileOffersRetryAndSignOut() {
+        launch(GateZone.SESSION_PROBLEM, SessionState.ProfileUnavailable(TestData.user(), AppError.Network))
+        assertOnScreen(R.string.error_network)
+        clickButton(R.string.action_retry)
+        assertEquals(1, retries)
+        setSession(ready)
         assertOnScreen(R.string.nav_home)
     }
 
     @Test
+    fun onboardingIsShownOnceAndBackFromSignInExits() {
+        launch(GateZone.ONBOARDING, SessionState.SignedOut)
+        assertOnScreen(R.string.onboarding_find_title)
+        clickButton(R.string.action_next)
+        assertOnScreen(R.string.onboarding_alert_title)
+        clickButton(R.string.action_next)
+        assertOnScreen(R.string.onboarding_money_title)
+        clickButton(R.string.action_get_started)
+        assertOnScreen(R.string.title_sign_in)
+        assertTrue(onboardingFinished)
+
+        assertAppClosesOnBack()
+    }
+
+    @Test
+    fun signInScreensNeverStack() {
+        launch(GateZone.SIGNED_OUT, SessionState.SignedOut)
+        clickButton(R.string.action_create_account)
+        assertOnScreen(R.string.label_full_name)
+        clickButton(R.string.action_sign_in)
+        assertOnScreen(R.string.action_forgot_password)
+        clickButton(R.string.action_forgot_password)
+        assertOnScreen(R.string.forgot_password_body)
+        clickButton(R.string.action_back_to_sign_in)
+
+        // Only one sign-in screen: Back now closes the app.
+        assertAppClosesOnBack()
+    }
+
+    // ---- inside the app ----
+
+    @Test
     fun tabsKeepTheirOwnBackStacksAndBackReturnsHomeThenExits() {
-        launch()
-        signIn()
+        launch(GateZone.MAIN, ready)
         tab(R.string.nav_home).assertIsSelected()
 
-        // Profile tab: open Settings inside the tab.
         tab(R.string.nav_profile).performClick()
         tab(R.string.nav_profile).assertIsSelected()
         compose.onNode(hasClickAction() and hasContentDescription(str(R.string.action_open_settings))).performClick()
@@ -131,12 +214,11 @@ class AppNavHostTest {
 
     @Test
     fun detailScreenOpensAboveTheTabsAndBackReturns() {
-        launch()
-        signIn()
+        launch(GateZone.MAIN, ready)
         tab(R.string.nav_requests).performClick()
         clickButton(R.string.placeholder_open_sample_request)
         assertOnScreen(R.string.title_request_detail)
-        compose.onAllNodesWithText(str(R.string.placeholder_request_id, "sample-request")).onFirst().assertIsDisplayed()
+        assertOnScreen(R.string.placeholder_request_id, "sample-request")
 
         pressBack()
         assertOnScreen(R.string.nav_requests)
@@ -145,32 +227,8 @@ class AppNavHostTest {
     }
 
     @Test
-    fun signInScreensNeverStack() {
-        launch()
-        clickButton(R.string.placeholder_go_to_sign_up)
-        assertOnScreen(R.string.title_sign_up)
-        clickButton(R.string.placeholder_go_to_sign_in)
-        assertOnScreen(R.string.title_sign_in)
-
-        // Only one sign-in screen: Back now closes the app.
-        assertAppClosesOnBack()
-    }
-
-    @Test
-    fun onboardingIsShownOnceAndBackFromSignInExits() {
-        launch(startWithOnboarding = true)
-        assertOnScreen(R.string.title_onboarding)
-        clickButton(R.string.action_get_started)
-        assertOnScreen(R.string.title_sign_in)
-        assertTrue(onboardingFinished)
-
-        assertAppClosesOnBack()
-    }
-
-    @Test
-    fun lastTabIsRestoredAfterSignIn() {
-        launch(initialTab = TopLevelDestination.DONORS)
-        clickButton(R.string.placeholder_continue_to_app)
+    fun lastTabIsRestoredWhenTheAppOpens() {
+        launch(GateZone.MAIN, ready, initialTab = TopLevelDestination.DONORS)
         assertOnScreen(R.string.nav_donors)
         tab(R.string.nav_donors).assertIsSelected()
 

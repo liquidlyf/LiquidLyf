@@ -1,5 +1,8 @@
 package io.github.liquidlyf.navigation
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -28,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -43,7 +47,19 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.core.content.ContextCompat
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.session.SessionState
+import io.github.liquidlyf.core.util.AppError
+import io.github.liquidlyf.feature.auth.ForgotPasswordRoute
+import io.github.liquidlyf.feature.auth.SignInRoute
+import io.github.liquidlyf.feature.auth.SignUpRoute
+import io.github.liquidlyf.feature.auth.VerifyEmailRoute
+import io.github.liquidlyf.feature.onboarding.OnboardingScreen
+import io.github.liquidlyf.feature.profilesetup.ProfileSetupRoute
+import io.github.liquidlyf.feature.session.NotificationPermissionScreen
+import io.github.liquidlyf.feature.session.SessionProblemScreen
+import io.github.liquidlyf.feature.session.needsNotificationPermission
 import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
@@ -66,14 +82,26 @@ private const val SAMPLE_REQUEST_ID = "sample-request"
  */
 @Composable
 fun AppNavHost(
-    startWithOnboarding: Boolean,
+    startZone: GateZone,
+    session: SessionState,
     initialTab: TopLevelDestination?,
     onOnboardingFinished: () -> Unit,
     onTabSelected: (TopLevelDestination) -> Unit,
+    onRetrySession: () -> Unit,
+    onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    // The auth gate: when the session changes, move the user to where they now belong.
+    LaunchedEffect(session) {
+        val current = navController.currentDestination ?: return@LaunchedEffect
+        val granted = Build.VERSION.SDK_INT < 33 ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        gateTarget(session, current.zone(), needsNotificationPermission(granted))?.let(navController::enterZone)
+    }
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentTab = currentEntry?.destination?.let { destination ->
         TopLevelDestination.entries.firstOrNull { destination.isInTab(it) }
@@ -119,7 +147,7 @@ fun AppNavHost(
                 if (railTab != null) AppNavigationRail(railTab, onSelect = selectTab)
                 NavHost(
                     navController = navController,
-                    startDestination = if (startWithOnboarding) Onboarding else AuthGraph,
+                    startDestination = startZone.route(),
                     modifier = Modifier
                         .weight(1f)
                         .then(
@@ -132,7 +160,8 @@ fun AppNavHost(
                 ) {
                     onboarding(navController, onOnboardingFinished)
                     authGraph(navController)
-                    mainGraph(navController)
+                    sessionScreens(navController, session, onRetrySession, onSignOut)
+                    mainGraph(navController, onSignOut)
                 }
             }
         }
@@ -181,95 +210,29 @@ internal fun NavController.navigateToTab(tab: TopLevelDestination) {
     }
 }
 
-/** Leaves sign-in for the app; Back then closes the app instead of returning to sign-in. */
-private fun NavController.navigateToMain() {
-    navigate(MainGraph) {
-        popUpTo(graph.id) { inclusive = true }
-    }
-}
-
 private fun NavGraphBuilder.onboarding(navController: NavController, onFinished: () -> Unit) {
     composable<Onboarding> {
-        PlaceholderScreen(
-            title = stringResource(R.string.title_onboarding),
-            phase = 3,
-            links = listOf(
-                PlaceholderLink(stringResource(R.string.action_get_started)) {
-                    onFinished()
-                    navController.navigate(SignIn) { popUpTo<Onboarding> { inclusive = true } }
-                },
-            ),
+        OnboardingScreen(
+            onFinished = dropUnlessResumed {
+                onFinished()
+                navController.navigate(AuthGraph) { popUpTo<Onboarding> { inclusive = true } }
+            },
         )
     }
 }
 
+/** Signed out. Success needs no navigation here: the session changes and the gate moves on. */
 private fun NavGraphBuilder.authGraph(navController: NavController) {
     navigation<AuthGraph>(startDestination = SignIn) {
         composable<SignIn> {
-            PlaceholderScreen(
-                title = stringResource(R.string.title_sign_in),
-                phase = 3,
-                links = listOf(
-                    PlaceholderLink(stringResource(R.string.placeholder_continue_to_app)) { navController.navigateToMain() },
-                    PlaceholderLink(stringResource(R.string.placeholder_go_to_sign_up)) {
-                        navController.navigate(SignUp) { launchSingleTop = true }
-                    },
-                    PlaceholderLink(stringResource(R.string.placeholder_go_to_forgot_password)) {
-                        navController.navigate(ForgotPassword) { launchSingleTop = true }
-                    },
-                ),
+            SignInRoute(
+                onCreateAccount = { navController.navigate(SignUp) { launchSingleTop = true } },
+                onForgotPassword = { navController.navigate(ForgotPassword) { launchSingleTop = true } },
             )
         }
-        composable<SignUp> {
-            PlaceholderScreen(
-                title = stringResource(R.string.title_sign_up),
-                phase = 3,
-                onBack = { navController.popBackStack() },
-                links = listOf(
-                    PlaceholderLink(stringResource(R.string.placeholder_go_to_verify_email)) {
-                        navController.navigate(VerifyEmail) { launchSingleTop = true }
-                    },
-                    // Back to the existing sign-in screen, never a second copy on top (BUG-031).
-                    PlaceholderLink(stringResource(R.string.placeholder_go_to_sign_in)) {
-                        navController.popBackStack<SignIn>(inclusive = false)
-                    },
-                ),
-            )
-        }
-        composable<VerifyEmail> {
-            PlaceholderScreen(
-                title = stringResource(R.string.title_verify_email),
-                phase = 3,
-                onBack = { navController.popBackStack() },
-                links = listOf(
-                    PlaceholderLink(stringResource(R.string.placeholder_go_to_profile_setup)) {
-                        navController.navigate(ProfileSetup) { launchSingleTop = true }
-                    },
-                ),
-            )
-        }
-        composable<ProfileSetup> {
-            PlaceholderScreen(
-                title = stringResource(R.string.title_profile_setup),
-                phase = 3,
-                onBack = { navController.popBackStack() },
-                links = listOf(
-                    PlaceholderLink(stringResource(R.string.placeholder_continue_to_app)) { navController.navigateToMain() },
-                ),
-            )
-        }
-        composable<ForgotPassword> {
-            PlaceholderScreen(
-                title = stringResource(R.string.title_forgot_password),
-                phase = 3,
-                onBack = { navController.popBackStack() },
-                links = listOf(
-                    PlaceholderLink(stringResource(R.string.placeholder_go_to_sign_in)) {
-                        navController.popBackStack<SignIn>(inclusive = false)
-                    },
-                ),
-            )
-        }
+        // Back to the existing sign-in screen, never a second copy on top (BUG-031).
+        composable<SignUp> { SignUpRoute(onBack = { navController.popBackStack<SignIn>(inclusive = false) }) }
+        composable<ForgotPassword> { ForgotPasswordRoute(onBack = { navController.popBackStack<SignIn>(inclusive = false) }) }
         // Telegram phone verification arrives in v1.1 (D3); no screen links here yet.
         composable<PhoneVerify> {
             PlaceholderScreen(
@@ -281,7 +244,28 @@ private fun NavGraphBuilder.authGraph(navController: NavController) {
     }
 }
 
-private fun NavGraphBuilder.mainGraph(navController: NavController) {
+/** Signed in, but not in the app yet: verify, set up, allow alerts, or retry an offline profile. */
+private fun NavGraphBuilder.sessionScreens(
+    navController: NavController,
+    session: SessionState,
+    onRetry: () -> Unit,
+    onSignOut: () -> Unit,
+) {
+    composable<VerifyEmail> { VerifyEmailRoute() }
+    composable<ProfileSetup> { ProfileSetupRoute() }
+    composable<NotificationPermission> {
+        NotificationPermissionScreen(onDone = dropUnlessResumed { navController.enterZone(GateZone.MAIN) })
+    }
+    composable<SessionProblem> {
+        SessionProblemScreen(
+            error = (session as? SessionState.ProfileUnavailable)?.error ?: AppError.Unknown,
+            onRetry = onRetry,
+            onSignOut = onSignOut,
+        )
+    }
+}
+
+private fun NavGraphBuilder.mainGraph(navController: NavController, onSignOut: () -> Unit) {
     navigation<MainGraph>(startDestination = HomeGraph) {
         navigation<HomeGraph>(startDestination = Home) {
             composable<Home> {
@@ -342,6 +326,7 @@ private fun NavGraphBuilder.mainGraph(navController: NavController) {
                 SettingsScreen(
                     onBack = { navController.popBackStack() },
                     onOpenComponentGallery = { navController.navigate(ComponentGallery) { launchSingleTop = true } },
+                    onSignOut = onSignOut,
                 )
             }
             composable<ComponentGallery> {

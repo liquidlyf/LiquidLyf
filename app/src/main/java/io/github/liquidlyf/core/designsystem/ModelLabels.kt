@@ -3,6 +3,7 @@ package io.github.liquidlyf.core.designsystem
 import androidx.annotation.StringRes
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.model.BloodGroup
+import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.Urgency
@@ -63,4 +64,11 @@ val ResponseStatus.labelRes: Int
         ResponseStatus.DECLINED -> R.string.response_status_declined
         ResponseStatus.WITHDRAWN -> R.string.response_status_withdrawn
         ResponseStatus.DONATED -> R.string.response_status_donated
+    }
+
+val Gender.labelRes: Int
+    @StringRes get() = when (this) {
+        Gender.MALE -> R.string.gender_male
+        Gender.FEMALE -> R.string.gender_female
+        Gender.OTHER -> R.string.gender_other
     }

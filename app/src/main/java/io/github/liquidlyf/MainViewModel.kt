@@ -3,43 +3,57 @@ package io.github.liquidlyf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.liquidlyf.core.data.session.SessionManager
+import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.data.settings.SettingsRepository
 import io.github.liquidlyf.core.data.settings.ThemeMode
+import io.github.liquidlyf.navigation.GateZone
 import io.github.liquidlyf.navigation.TopLevelDestination
+import io.github.liquidlyf.navigation.startZone
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface MainUiState {
-    /** Settings not read yet; the splash screen stays up. */
+    /** Settings or the session not read yet; the splash screen stays up. */
     data object Loading : MainUiState
 
     data class Ready(
         val themeMode: ThemeMode,
         /** Decided once per launch, so the navigation graph never changes under the user. */
-        val startWithOnboarding: Boolean,
+        val startZone: GateZone,
         val initialTab: TopLevelDestination?,
+        /** Live: the auth gate moves the user when it changes. */
+        val session: SessionState,
     ) : MainUiState
 }
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
+    private val sessionManager: SessionManager,
 ) : ViewModel() {
 
     // Eagerly: the start destination must survive the activity going to the background.
-    val uiState: StateFlow<MainUiState> = settingsRepository.settings
-        .scan<_, MainUiState>(MainUiState.Loading) { previous, settings ->
+    val uiState: StateFlow<MainUiState> = combine(settingsRepository.settings, sessionManager.state, ::Pair)
+        .scan<_, MainUiState>(MainUiState.Loading) { previous, (settings, session) ->
             when (previous) {
-                MainUiState.Loading -> MainUiState.Ready(
-                    themeMode = settings.themeMode,
-                    startWithOnboarding = !settings.onboardingSeen,
-                    initialTab = TopLevelDestination.fromName(settings.lastSelectedTab),
-                )
-                is MainUiState.Ready -> previous.copy(themeMode = settings.themeMode)
+                MainUiState.Loading ->
+                    if (session == SessionState.Loading) {
+                        MainUiState.Loading
+                    } else {
+                        MainUiState.Ready(
+                            themeMode = settings.themeMode,
+                            startZone = startZone(session, settings.onboardingSeen),
+                            initialTab = TopLevelDestination.fromName(settings.lastSelectedTab),
+                            session = session,
+                        )
+                    }
+                is MainUiState.Ready -> previous.copy(themeMode = settings.themeMode, session = session)
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, MainUiState.Loading)
@@ -50,5 +64,12 @@ class MainViewModel @Inject constructor(
 
     fun onTabSelected(tab: TopLevelDestination) {
         viewModelScope.launch { settingsRepository.setLastSelectedTab(tab.name) }
+    }
+
+    /** "Retry" on the can't-load-your-profile screen. */
+    fun retrySession() = sessionManager.refresh()
+
+    fun signOut() {
+        viewModelScope.launch { sessionManager.signOut() }
     }
 }

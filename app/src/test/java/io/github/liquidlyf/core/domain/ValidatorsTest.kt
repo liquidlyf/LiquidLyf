@@ -151,6 +151,13 @@ class ValidatorsTest {
     }
 
     @Test
+    fun `emails need a name, an at sign and a dotted domain`() {
+        listOf("rahim@example.com", " rahim.uddin+bd@mail.example.org ", "a@b.co").forEach { assertTrue(it, Validators.isValidEmail(it)) }
+        listOf("", "rahim", "rahim@", "@example.com", "rahim@example", "rahim @example.com", "rahim@example..com", "a@b.")
+            .forEach { assertFalse(it, Validators.isValidEmail(it)) }
+    }
+
+    @Test
     fun `codes and ids allow only path- and topic-safe characters`() {
         assertTrue(Validators.isCode("dhaka-north_12"))
         assertFalse(Validators.isCode(null))

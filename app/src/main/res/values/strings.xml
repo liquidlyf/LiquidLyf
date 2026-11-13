@@ -14,7 +14,6 @@
     <string name="nav_profile">Profile</string>
 
     <!-- Screen titles -->
-    <string name="title_onboarding">Welcome to LiquidLyf</string>
     <string name="title_sign_in">Sign in</string>
     <string name="title_sign_up">Create account</string>
     <string name="title_verify_email">Verify your email</string>
@@ -42,12 +41,6 @@
     <string name="placeholder_body">This screen arrives in Phase %1$d.</string>
     <string name="placeholder_open_sample_request">Open a sample request</string>
     <string name="placeholder_request_id">Request ID: %1$s</string>
-    <string name="placeholder_continue_to_app">Continue to the app</string>
-    <string name="placeholder_go_to_sign_up">Go to create account</string>
-    <string name="placeholder_go_to_forgot_password">Go to forgot password</string>
-    <string name="placeholder_go_to_verify_email">Go to verify email</string>
-    <string name="placeholder_go_to_profile_setup">Go to profile setup</string>
-    <string name="placeholder_go_to_sign_in">Go to sign in</string>
 
     <!-- Settings (the full screen arrives in Phase 8) -->
     <string name="settings_theme">Theme</string>
@@ -65,6 +58,12 @@
     <string name="error_invalid_input">Some details aren\'t valid. Check the highlighted fields.</string>
     <string name="error_rate_limited">Too many tries. Wait a moment and try again.</string>
     <string name="error_unknown">Something went wrong. Please try again.</string>
+    <string name="error_invalid_credentials">Wrong email or password.</string>
+    <string name="error_email_in_use">An account with this email already exists. Sign in instead.</string>
+    <string name="error_weak_password">Choose a stronger password: at least 8 characters.</string>
+    <string name="error_invalid_email">Enter a valid email address.</string>
+    <string name="error_account_disabled">This account is suspended. If you think this is a mistake, email liquidlyf@gmail.com.</string>
+    <string name="error_recent_login_required">For your safety, sign in again before doing this.</string>
 
     <!-- SafeIntents: shown in a snackbar when no app can handle the action -->
     <string name="intent_no_dialer">No phone app found to make this call.</string>
@@ -134,4 +133,101 @@
     <string name="gallery_empty_title">No requests near you yet</string>
     <string name="gallery_empty_body">When someone nearby needs blood, it shows up here.</string>
     <string name="state_error_title">Couldn\'t load this</string>
+    <!-- Phase 3: onboarding -->
+    <string name="onboarding_find_title">Find donors near you</string>
+    <string name="onboarding_find_body">Post a request, and donors nearby whose blood group matches get an alert.</string>
+    <string name="onboarding_alert_title">Get alerted when your blood type is needed</string>
+    <string name="onboarding_alert_body">List yourself as a donor, and you\'ll hear when someone near you needs your blood group.</string>
+    <string name="onboarding_money_title">Never pay or take money for blood</string>
+    <string name="onboarding_money_body">Giving blood is free. If anyone asks for money, report the request.</string>
+    <string name="onboarding_page">Page %1$d of %2$d</string>
+    <string name="action_next">Next</string>
+    <string name="action_skip">Skip</string>
+
+    <!-- Phase 3: sign in, sign up, verify, reset -->
+    <string name="label_full_name">Full name</string>
+    <string name="label_email">Email</string>
+    <string name="label_password">Password</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_signing_in">Signing in…</string>
+    <string name="action_forgot_password">Forgot password?</string>
+    <string name="action_create_account">Create account</string>
+    <string name="action_creating_account">Creating account…</string>
+    <string name="sign_in_no_account">New to LiquidLyf?</string>
+    <string name="sign_up_have_account">Already have an account?</string>
+    <string name="error_email_required">Enter your email.</string>
+    <string name="error_password_required">Enter your password.</string>
+    <string name="error_name_invalid">Enter your name (2 to 60 characters).</string>
+    <string name="error_password_short">Use at least 8 characters.</string>
+    <string name="password_hint">At least 8 characters. A longer password is stronger.</string>
+    <string name="sign_up_consent">I am 18 or older, and I agree to the Terms and the Privacy Policy</string>
+    <string name="error_consent_required">Please confirm you are 18 or older and agree to the Terms.</string>
+    <string name="action_read_terms">Read the Terms</string>
+    <string name="action_read_privacy">Read the Privacy Policy</string>
+    <string name="verify_email_body">We sent a link to %1$s. Open it, then come back and tap \"I\'ve verified\".</string>
+    <string name="action_open_email_app">Open email app</string>
+    <string name="action_resend_email">Resend email</string>
+    <string name="action_resend_in">Resend in %1$d s</string>
+    <string name="action_i_have_verified">I\'ve verified</string>
+    <string name="action_checking">Checking…</string>
+    <string name="verify_email_not_yet">Not verified yet. Open the link in the email first, then try again.</string>
+    <string name="verify_email_sent">Email sent. Check your inbox and spam folder.</string>
+    <string name="action_use_different_email">Use a different email</string>
+    <string name="forgot_password_body">Enter your account email, and we\'ll send a link to reset your password.</string>
+    <string name="action_send_link">Send link</string>
+    <string name="action_sending">Sending…</string>
+    <string name="forgot_password_sent_title">Check your email</string>
+    <string name="forgot_password_sent_body">If an account exists for %1$s, a reset link is on its way.</string>
+    <string name="action_back_to_sign_in">Back to sign in</string>
+
+    <!-- Phase 3: session problems and notification permission -->
+    <string name="session_problem_title">Couldn\'t load your profile</string>
+    <string name="action_sign_out">Sign out</string>
+    <string name="notifications_rationale_title">Get alerted when someone nearby needs your blood group</string>
+    <string name="notifications_rationale_body">LiquidLyf alerts you only when a request near you matches your blood group. You can turn alerts off at any time in Settings.</string>
+    <string name="action_allow_alerts">Allow alerts</string>
+    <string name="action_not_now">Not now</string>
+    <!-- Phase 3: profile setup -->
+    <string name="setup_step">Step %1$d of %2$d</string>
+    <string name="setup_blood_title">What\'s your blood group?</string>
+    <string name="setup_blood_unknown">I don\'t know my blood group</string>
+    <string name="setup_blood_unknown_body">Any hospital or diagnostic centre can test it, usually for a small fee, and blood banks test it free when you donate. Come back and finish setting up when you know it.</string>
+    <string name="error_blood_group_required">Choose your blood group.</string>
+    <string name="setup_about_title">About you</string>
+    <string name="label_gender">Gender</string>
+    <string name="gender_male">Male</string>
+    <string name="gender_female">Female</string>
+    <string name="gender_other">Other</string>
+    <string name="label_birth_year">Year of birth</string>
+    <string name="error_birth_year">You must be 18 or older. Enter the year you were born, for example 1995.</string>
+    <string name="setup_weight_question">Do you weigh at least 45 kg?</string>
+    <string name="answer_yes">Yes</string>
+    <string name="answer_no">No</string>
+    <string name="error_answer_required">Please choose an answer.</string>
+    <string name="setup_location_title">Where do you live?</string>
+    <string name="setup_location_body">Alerts are matched by area. Choose where you usually are.</string>
+    <string name="label_division">Division</string>
+    <string name="label_district">District</string>
+    <string name="label_upazila">Upazila or city corporation</string>
+    <string name="error_location_required">Choose your division, district and upazila.</string>
+    <string name="setup_contact_title">Phone and donating</string>
+    <string name="label_phone">Mobile number</string>
+    <string name="phone_hint">Shared only with a requester when you offer to donate.</string>
+    <string name="error_phone_invalid">Enter a Bangladeshi mobile number, for example 01712345678.</string>
+    <string name="setup_last_donation">When did you last donate blood?</string>
+    <string name="last_donation_never">Never</string>
+    <string name="last_donation_pick">Pick a date</string>
+    <string name="last_donation_on">On %1$s</string>
+    <string name="error_last_donation_required">Choose Never, or pick the date.</string>
+    <string name="setup_consent_question">List me as a donor, so people nearby who need %1$s blood can find me and alert me</string>
+    <string name="consent_yes">Yes, list me</string>
+    <string name="consent_not_now">Not now</string>
+    <string name="setup_consent_info">Your phone number is never listed. It\'s shared with a requester only when you offer to donate.</string>
+    <string name="error_consent_choice">Please choose: list me, or not now.</string>
+    <string name="setup_available">Ready to donate now</string>
+    <string name="settings_account">Account</string>
+    <string name="action_finish">Finish</string>
+    <string name="action_saving">Saving…</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
 </resources>

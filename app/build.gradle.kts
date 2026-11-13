@@ -136,6 +136,12 @@ android {
         }
     }
 
+    // In-memory fakes shared by the unit tests and the on-phone Compose tests.
+    sourceSets {
+        getByName("test").kotlin.directories.add("src/sharedTest/java")
+        getByName("androidTest").kotlin.directories.add("src/sharedTest/java")
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"

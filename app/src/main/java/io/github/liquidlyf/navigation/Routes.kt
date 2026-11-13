@@ -5,9 +5,12 @@ import kotlinx.serialization.Serializable
 /*
  * Type-safe navigation routes. A route's properties are its arguments.
  *
- * Graph layout:
+ * Graph layout. The auth gate (AuthGate.kt) moves the user between these as the session changes:
  *   Onboarding                      (first run only)
- *   AuthGraph:  SignIn · SignUp · VerifyEmail · ForgotPassword · PhoneVerify · ProfileSetup
+ *   AuthGraph:  SignIn · SignUp · ForgotPassword · PhoneVerify      (signed out)
+ *   VerifyEmail                     (signed in, email not verified)
+ *   ProfileSetup → NotificationPermission                         (verified, no profile yet)
+ *   SessionProblem                  (verified, but the profile can't be read: offline)
  *   MainGraph:  HomeGraph(Home) · RequestsGraph(Requests) · DonorsGraph(Donors)
  *               · ProfileGraph(Profile, Settings, ComponentGallery)   ← bottom navigation tabs
  *               · RequestDetail · CreateRequest · Notifications        ← full screen, no tabs
@@ -29,6 +32,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object ForgotPassword
 @Serializable data object PhoneVerify
 @Serializable data object ProfileSetup
+@Serializable data object NotificationPermission
+@Serializable data object SessionProblem
 
 // Tab roots
 @Serializable data object Home

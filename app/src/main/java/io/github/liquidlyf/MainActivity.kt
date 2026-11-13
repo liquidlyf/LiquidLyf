@@ -49,10 +49,13 @@ class MainActivity : AppCompatActivity() {
 
             LiquidLyfTheme(darkTheme = darkTheme) {
                 AppNavHost(
-                    startWithOnboarding = ready.startWithOnboarding,
+                    startZone = ready.startZone,
+                    session = ready.session,
                     initialTab = ready.initialTab,
                     onOnboardingFinished = viewModel::onOnboardingFinished,
                     onTabSelected = viewModel::onTabSelected,
+                    onRetrySession = viewModel::retrySession,
+                    onSignOut = viewModel::signOut,
                 )
             }
         }

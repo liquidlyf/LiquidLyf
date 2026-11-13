@@ -1,13 +1,12 @@
 package io.github.liquidlyf.core.data.push
 
+import io.github.liquidlyf.core.data.ProcessDataStores
 import android.content.Context
 import android.util.Log
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringSetPreferencesKey
-import androidx.datastore.preferences.preferencesDataStoreFile
 import com.google.firebase.Firebase
 import com.google.firebase.messaging.messaging
 import dagger.Binds
@@ -54,7 +53,7 @@ class DataStoreSubscribedTopicsStore @Inject constructor(
     @param:ApplicationContext private val context: Context,
 ) : SubscribedTopicsStore {
     private val dataStore: DataStore<Preferences> by lazy {
-        PreferenceDataStoreFactory.create(produceFile = { context.preferencesDataStoreFile("push_topics") })
+        ProcessDataStores.get(context, "push_topics")
     }
 
     override suspend fun get(): Set<String> = dataStore.data.first()[TOPICS].orEmpty()

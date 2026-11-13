@@ -25,6 +25,7 @@ import io.github.liquidlyf.core.model.UserStats
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
+import io.github.liquidlyf.core.util.map
 import kotlinx.coroutines.tasks.await
 import java.time.Duration
 import java.time.Instant
@@ -48,8 +49,8 @@ interface ProfileRepository {
     /** Profile edit, listing and unlisting (contracts 2, 3). */
     suspend fun update(before: UserProfile, draft: ProfileDraft): AppResult<Unit>
 
-    /** At most once every 3 days (contract 4); a no-op otherwise. */
-    suspend fun touchLastActive(profile: UserProfile): AppResult<Unit>
+    /** At most once every 3 days (contract 4). Success(true) when it wrote, false when not due. */
+    suspend fun touchLastActive(profile: UserProfile): AppResult<Boolean>
 
     /** "Seen" for the whole inbox: one timestamp instead of a flag per item. */
     suspend fun markInboxSeen(profile: UserProfile): AppResult<Unit>
@@ -122,11 +123,11 @@ class FirestoreProfileRepository @Inject constructor(
         return writeProfile(before, after, if (newlyListed) setOf(UserDoc.CONSENT_AT) else emptySet())
     }
 
-    override suspend fun touchLastActive(profile: UserProfile): AppResult<Unit> {
+    override suspend fun touchLastActive(profile: UserProfile): AppResult<Boolean> {
         val last = profile.lastActiveAt
         // The rules allow a new value only after 3 days; wait a little longer for clock skew.
-        if (last != null && clock.now().isBefore(last.plus(LAST_ACTIVE_EVERY))) return AppResult.Success(Unit)
-        return writeProfile(profile, profile, setOf(UserDoc.LAST_ACTIVE_AT))
+        if (last != null && clock.now().isBefore(last.plus(LAST_ACTIVE_EVERY))) return AppResult.Success(false)
+        return writeProfile(profile, profile, setOf(UserDoc.LAST_ACTIVE_AT)).map { true }
     }
 
     override suspend fun markInboxSeen(profile: UserProfile): AppResult<Unit> =

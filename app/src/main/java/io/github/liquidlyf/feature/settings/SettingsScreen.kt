@@ -38,6 +38,7 @@ import io.github.liquidlyf.core.designsystem.screenGutter
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenComponentGallery: () -> Unit,
+    onSignOut: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -46,6 +47,7 @@ fun SettingsScreen(
         onBack = dropUnlessResumed(block = onBack),
         onThemeModeChange = viewModel::setThemeMode,
         onOpenComponentGallery = dropUnlessResumed(block = onOpenComponentGallery),
+        onSignOut = dropUnlessResumed(block = onSignOut),
         showDeveloperOptions = BuildConfig.DEBUG,
     )
 }
@@ -57,6 +59,7 @@ internal fun SettingsContent(
     onBack: () -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onOpenComponentGallery: () -> Unit,
+    onSignOut: () -> Unit,
     showDeveloperOptions: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -88,6 +91,13 @@ internal fun SettingsContent(
                     }
                 }
             }
+
+            // Logout (BUG-003): alerts stop, the session ends and the gate clears the back stack.
+            SectionHeader(stringResource(R.string.settings_account), Modifier.padding(start = gutter, end = gutter, top = Spacing.md))
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.action_sign_out)) },
+                modifier = Modifier.clickable(role = Role.Button, onClick = onSignOut),
+            )
 
             if (showDeveloperOptions) {
                 SectionHeader(
