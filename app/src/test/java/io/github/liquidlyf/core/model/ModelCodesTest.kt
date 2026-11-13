@@ -38,6 +38,28 @@ class ModelCodesTest {
     }
 
     @Test
+    fun `component, gender, condition and report codes match the data model and the rules`() {
+        assertEquals(listOf("WHOLE_BLOOD", "RED_CELLS", "PLATELETS", "PLASMA"), BloodComponent.entries.map { it.code })
+        assertEquals(listOf("MALE", "FEMALE", "OTHER"), Gender.entries.map { it.code })
+        assertEquals(
+            listOf("SURGERY", "ACCIDENT", "THALASSEMIA", "DENGUE", "DELIVERY", "CANCER", "ANEMIA", "OTHER"),
+            PatientCondition.entries.map { it.code },
+        )
+        assertEquals(
+            listOf("FAKE_REQUEST", "ASKING_MONEY", "ABUSIVE", "SPAM", "WRONG_INFO", "OTHER"),
+            ReportReason.entries.map { it.code },
+        )
+        BloodComponent.entries.forEach { assertEquals(it, BloodComponent.fromCode(it.code)) }
+        Gender.entries.forEach { assertEquals(it, Gender.fromCode(it.code)) }
+        PatientCondition.entries.forEach { assertEquals(it, PatientCondition.fromCode(it.code)) }
+        ReportReason.entries.forEach { assertEquals(it, ReportReason.fromCode(it.code)) }
+        assertNull(BloodComponent.fromCode("BLOOD"))
+        assertNull(Gender.fromCode(null))
+        assertNull(PatientCondition.fromCode("other"))
+        assertNull(ReportReason.fromCode(""))
+    }
+
+    @Test
     fun `status codes match the data model`() {
         assertEquals(listOf("CRITICAL", "URGENT", "PLANNED"), Urgency.entries.map { it.code })
         assertEquals(listOf("OPEN", "FULFILLED", "CANCELLED", "EXPIRED", "REMOVED"), RequestStatus.entries.map { it.code })

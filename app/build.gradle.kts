@@ -11,6 +11,9 @@ plugins {
     alias(libs.plugins.firebase.crashlytics)
 }
 
+// Blood compatibility and fan-out test vectors, shared with firebase/ and backend/worker/.
+val sharedVectorsDir: File = rootDir.resolve("backend/shared")
+
 android {
     namespace = "io.github.liquidlyf"
     compileSdk = 37
@@ -60,6 +63,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // createDemoDebugUnitTestCoverageReport: Phase 2 asks for >= 90% line coverage
+            // on core/domain.
+            enableUnitTestCoverage = true
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -78,6 +86,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // java.time (Instant, Duration) on Android 7.x, which predates it.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     buildFeatures {
@@ -101,6 +111,14 @@ android {
         unitTests.isReturnDefaultValues = true
         // AGP's Compose Preview tasks need merged resources in unit tests.
         unitTests.isIncludeAndroidResources = true
+        // The domain tests check the app against the test vectors it shares with
+        // firestore.rules and the Worker, so all three stay in step.
+        unitTests.all { test ->
+            test.systemProperty("liquidlyf.sharedDir", sharedVectorsDir.absolutePath)
+            test.inputs.dir(sharedVectorsDir)
+                .withPropertyName("sharedVectors")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        }
     }
 
     packaging {
@@ -159,6 +177,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.kotlinx.serialization.json)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     // Hilt
     implementation(libs.hilt.android)
