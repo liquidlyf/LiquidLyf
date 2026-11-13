@@ -7,7 +7,9 @@
   // Must not be newer than the pinned wrangler's workerd supports (2026-10-30 for 4.155.0).
   "compatibility_date": "2026-10-15",
   "workers_dev": true,
-  "observability": { "enabled": true },
+  // Keep only the Worker's own console lines (request ID, tier, counts, errors: no personal data).
+  // Per-request invocation logs are off so request metadata isn't stored with Cloudflare.
+  "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } },
   // Crons arrive in Phase 5 (escalation sweep, expiry, retention).
 
   // ---------------- production: Firebase project liquidlyf-app ----------------
