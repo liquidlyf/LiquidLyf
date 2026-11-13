@@ -110,6 +110,23 @@ class HttpWorkerClientTest {
     }
 
     @Test
+    fun `the daily alert cap is never retried`() = runTest {
+        reply(429, """{"error":"daily alert limit reached","dailyCap":true}""")
+        assertEquals(AppResult.Failure(AppError.DailyAlertLimit), client.dispatch("req1"))
+        assertEquals(1, server.requestCount)
+        assertEquals(emptyList<Int>(), waits)
+    }
+
+    @Test
+    fun `a 429 without dailyCap is the per-minute limit and is retried`() = runTest {
+        reply(429, """{"error":"rate limited","dailyCap":false}""")
+        reply(429, "not json")
+        reply(202, """{"accepted":true,"tier":1}""")
+        assertEquals(AppResult.Success(Dispatch(1, false)), client.dispatch("req1"))
+        assertEquals(listOf(1, 2), waits)
+    }
+
+    @Test
     fun `no Worker configured yet is a quiet failure, with no call`() = runTest {
         val unconfigured = HttpWorkerClient(OkHttpClient(), { null }, tokens)
         assertEquals(AppResult.Failure(AppError.Unknown), unconfigured.dispatch("req1"))

@@ -20,6 +20,11 @@ enum class AppError(@param:StringRes val messageRes: Int) {
     NotFound(R.string.error_not_found),
     InvalidInput(R.string.error_invalid_input),
     RateLimited(R.string.error_rate_limited),
+    /**
+     * The Worker's daily alert cap (5+ requests in the 24 h before this one, cancelled ones too):
+     * the request is posted and stays in the feed, but nobody was alerted. Not worth a retry.
+     */
+    DailyAlertLimit(R.string.error_daily_alert_limit),
     Unknown(R.string.error_unknown),
 
     // Sign-in and account errors (Firebase Auth error codes, mapped in ErrorMapper).

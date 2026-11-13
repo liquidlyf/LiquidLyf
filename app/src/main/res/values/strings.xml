@@ -57,6 +57,7 @@
     <string name="error_not_found">We couldn\'t find that. It may have been removed.</string>
     <string name="error_invalid_input">Some details aren\'t valid. Check the highlighted fields.</string>
     <string name="error_rate_limited">Too many tries. Wait a moment and try again.</string>
+    <string name="error_daily_alert_limit">You\'ve reached today\'s limit for alerted requests. Your request is posted, but donors weren\'t notified.</string>
     <string name="error_unknown">Something went wrong. Please try again.</string>
     <string name="error_invalid_credentials">Wrong email or password.</string>
     <string name="error_email_in_use">An account with this email already exists. Sign in instead.</string>

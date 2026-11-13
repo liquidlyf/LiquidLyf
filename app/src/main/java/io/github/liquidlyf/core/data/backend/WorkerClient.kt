@@ -82,6 +82,8 @@ class HttpWorkerClient @Inject constructor(
                 404 -> return AppResult.Failure(AppError.NotFound)
                 409, 422 -> return AppResult.Failure(AppError.InvalidInput)
                 else -> {
+                    // The daily alert cap, not the per-minute limit: a retry gets the same answer.
+                    if (code == 429 && reply!!.isDailyCap()) return AppResult.Failure(AppError.DailyAlertLimit)
                     val retryable = code == null || code == 429 || code >= 500
                     if (!retryable || retries >= MAX_RETRIES) {
                         return AppResult.Failure(if (code == 429) AppError.RateLimited else AppError.Network)
@@ -98,6 +100,9 @@ class HttpWorkerClient @Inject constructor(
             val json = runCatching { JSON.decodeFromString<DispatchJson>(body) }.getOrNull()
             return Dispatch(tier = json?.tier, alreadyDispatched = json?.alreadyDispatched == true)
         }
+
+        fun isDailyCap(): Boolean =
+            runCatching { JSON.decodeFromString<ErrorJson>(body).dailyCap }.getOrDefault(false)
     }
 
     private suspend fun post(url: String, forceRefresh: Boolean): Reply? {
@@ -116,6 +121,9 @@ class HttpWorkerClient @Inject constructor(
 
     @Serializable
     private class DispatchJson(val accepted: Boolean = false, val tier: Int? = null, val alreadyDispatched: Boolean = false)
+
+    @Serializable
+    private class ErrorJson(val error: String? = null, val dailyCap: Boolean = false)
 
     companion object {
         /** "Retry with backoff, up to 3 times; the sweep covers the rest." */
