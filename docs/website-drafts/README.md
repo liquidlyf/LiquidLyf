@@ -33,7 +33,10 @@ checked.
 1. **Match the real app.** Every stored field, menu name, consent text and deletion step must match the
    app at release (Phase 8). The data list in the privacy policy comes from `firebase/firestore.rules`
    and the retention table from the project plan. **If a pull request adds or changes stored data,
-   update the privacy policy too.**
+   update the privacy policy too.** The app opens these pages from `core/util/Links.kt` (`/privacy`,
+   `/terms`, and `/bn/…`), and stores `Links.TERMS_VERSION` with each user's consent: change it
+   whenever the effective date of the Terms or the Privacy Policy changes in a way users must accept
+   again.
 2. **Resolve each `CHECK` comment** (HTML comments, invisible on the page): backups, what the Worker keeps, the PDPA 2026 rights and authority, the AppVerifier steps and the
    Obtainium link.
 3. **Legal review:** Terms sections 9 (liability) and 11 (law), and the rights section of the privacy
