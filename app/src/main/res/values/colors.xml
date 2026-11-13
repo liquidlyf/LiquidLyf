@@ -9,5 +9,4 @@
 
     <!-- Launcher icon backgrounds (logo colours from branding/README.md) -->
     <color name="ic_launcher_red">#DE2027</color>
-    <color name="ic_launcher_white">#FFFFFF</color>
 </resources>

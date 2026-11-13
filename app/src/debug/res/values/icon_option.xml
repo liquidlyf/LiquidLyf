@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Temporary (Phase 1.4b): show "Option B" in the launcher of debug builds to compare icons. -->
-    <bool name="show_icon_option_b">true</bool>
-</resources>

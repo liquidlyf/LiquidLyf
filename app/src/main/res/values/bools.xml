@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Temporary (Phase 1.4b): second launcher entry to compare icon options. Debug builds turn it on. -->
-    <bool name="show_icon_option_b">false</bool>
-    <string name="icon_option_b_label" translatable="false">Option B</string>
-</resources>
