@@ -125,11 +125,16 @@ We use a few services to run LiquidLyf. They process data for us and only on our
 | Provider | What it does for LiquidLyf | Where |
 |---|---|---|
 | Google Firebase: Authentication, Cloud Firestore, Cloud Messaging, Crashlytics, Remote Config, App Check | Sign-in, the database, notifications, crash reports, app settings, abuse protection | The database is in Mumbai, India. Sign-in, notifications and crash reports may be processed in other countries, including the United States |
-| Cloudflare Workers | Sends the request alerts to donors. It receives your user ID, the request ID and, like any web server, your IP address. It doesn't store them beyond short rate-limit counters | Cloudflare's worldwide network |
+| Cloudflare Workers | Sends the request alerts to donors. When your app asks it to, it receives your user ID, the request ID and, like any web server, your IP address. It stores none of them. To stop abuse, Cloudflare counts each user's calls for 60 seconds, then forgets them. Its technical logs contain no names, phone numbers or user IDs | Cloudflare's worldwide network |
 | GitHub | Hosts the app download, this website and the source code. It sees your IP address when you visit | United States and worldwide |
 
 <!-- Confirmed 13 Nov 2026: the production Firestore database is in asia-south1 (Mumbai).
-     CHECK: Cloudflare KV holds only per-uid rate-limit counters with a short expiry; confirm with session B. -->
+     Confirmed with session B, 13 Nov 2026 (Worker code at 2616359): KV holds only the Worker's own
+     Google access token (expires within 1 h); rate limiting is a 60-second per-uid counter in
+     Cloudflare's Rate Limiting binding (or in memory), never written to storage; the Worker's log lines
+     have no uid, names, phone numbers or tokens; automatic invocation logs are off. Re-check whenever
+     the Worker changes. Cloudflare's log retention isn't stated on purpose: check its docs before
+     adding a number. -->
 
 Their own privacy policies: [Google](https://policies.google.com/privacy) ·
 [Firebase](https://firebase.google.com/support/privacy) ·
