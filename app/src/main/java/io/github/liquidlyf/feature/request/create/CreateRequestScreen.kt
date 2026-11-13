@@ -74,6 +74,7 @@ import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
+import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
@@ -100,12 +101,14 @@ fun CreateRequestRoute(
     viewModel: CreateRequestViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val online by viewModel.online.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { e -> if (e is CreateRequestEvent.Posted) onPosted(e.requestId, e.notice) }
     }
     BackHandler(enabled = state.step > 0 && !state.posting) { viewModel.back() }
     CreateRequestScreen(
         state = state,
+        online = online,
         onEdit = viewModel::edit,
         onDivision = viewModel::onDivision,
         onDistrict = viewModel::onDistrict,
@@ -121,6 +124,7 @@ fun CreateRequestRoute(
 @Composable
 internal fun CreateRequestScreen(
     state: CreateRequestUiState,
+    online: Boolean,
     onEdit: (RequestForm.() -> RequestForm) -> Unit,
     onDivision: (String) -> Unit,
     onDistrict: (String) -> Unit,
@@ -179,7 +183,8 @@ internal fun CreateRequestScreen(
                 onAction = onOpenMyRequests,
                 modifier = Modifier.padding(padding),
             )
-            else -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
+            else -> Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
+                OfflineBanner(online)
                 Column(
                     Modifier
                         .widthIn(max = 560.dp)

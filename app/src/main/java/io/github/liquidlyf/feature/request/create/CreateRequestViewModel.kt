@@ -28,6 +28,7 @@ import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.ApplicationScope
 import io.github.liquidlyf.core.util.Clock
+import io.github.liquidlyf.core.util.NetworkMonitor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -35,6 +36,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -43,6 +45,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -140,7 +143,10 @@ class CreateRequestViewModel @Inject constructor(
     private val worker: WorkerClient,
     private val clock: Clock,
     @param:ApplicationScope private val appScope: CoroutineScope,
+    network: NetworkMonitor,
 ) : ViewModel() {
+
+    val online: StateFlow<Boolean> = network.isOnline.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 
     private val me: UserProfile? = (session.state.value as? SessionState.Ready)?.profile
 

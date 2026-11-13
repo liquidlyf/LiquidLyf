@@ -16,6 +16,7 @@ import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.testing.FakeHospitalRepository
+import io.github.liquidlyf.testing.FakeNetworkMonitor
 import io.github.liquidlyf.testing.FakeProfileRepository
 import io.github.liquidlyf.testing.FakeRequestRepository
 import io.github.liquidlyf.testing.FakeSessionManager
@@ -69,7 +70,7 @@ class CreateRequestViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun TestScope.vm(appScope: CoroutineScope = backgroundScope) =
-        CreateRequestViewModel(saved, session, profiles, requests, hospitals, geoRepo, worker, Clock { TestData.NOW }, appScope)
+        CreateRequestViewModel(saved, session, profiles, requests, hospitals, geoRepo, worker, Clock { TestData.NOW }, appScope, FakeNetworkMonitor())
 
     private fun TestScope.events(vm: CreateRequestViewModel): List<CreateRequestEvent> =
         mutableListOf<CreateRequestEvent>().also { list -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { list += it } } }

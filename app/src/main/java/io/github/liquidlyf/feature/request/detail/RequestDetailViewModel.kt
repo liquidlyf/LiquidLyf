@@ -26,13 +26,16 @@ import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
+import io.github.liquidlyf.core.util.NetworkMonitor
 import io.github.liquidlyf.feature.request.create.PostNotice
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -92,7 +95,11 @@ class RequestDetailViewModel @Inject constructor(
     private val geoRepository: GeoRepository,
     private val eligibility: EligibilityCalculator,
     private val clock: Clock,
+    network: NetworkMonitor,
 ) : ViewModel() {
+
+    /** Offline, an action's batch waits in Firestore's queue; the screen says so. */
+    val online: StateFlow<Boolean> = network.isOnline.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 
     // The RequestDetail route's arguments, by property name (works in plain unit tests too).
     val requestId: String = checkNotNull(savedState.get<String>("id"))

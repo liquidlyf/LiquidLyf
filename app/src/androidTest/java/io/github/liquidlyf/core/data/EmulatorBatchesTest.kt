@@ -241,6 +241,21 @@ class EmulatorBatchesTest {
     }
 
     @Test
+    fun notForMeAndTheAvailabilitySwitchPassTheRules() = runBlocking {
+        val email = newVerifiedUser("hide")
+        val uid = auth.uid!!
+        profiles.create(uid, email, profileDraft(BloodGroup.B_POS, listed = true)).ok()
+
+        profiles.hideRequest(profiles.profile(uid, refresh = true).ok()!!, "some-request").ok()
+        assertEquals(listOf("some-request"), profiles.profile(uid, refresh = true).ok()!!.hiddenRequestIds)
+
+        profiles.setAvailable(profiles.profile(uid, refresh = true).ok()!!, false).ok()
+        assertFalse(profiles.profile(uid, refresh = true).ok()!!.available)
+        // The donor card follows in the same batch, so donor search and alerts stop too.
+        assertEquals(false, db.donorRef(uid).get(Source.SERVER).await().getBoolean(DonorDoc.AVAILABLE))
+    }
+
+    @Test
     fun withdrawAndReport() = runBlocking {
         val donorEmail = newVerifiedUser("withdraw")
         val donorUid = auth.uid!!

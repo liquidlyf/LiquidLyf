@@ -66,6 +66,7 @@ import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.SectionHeader
 import io.github.liquidlyf.core.designsystem.components.StatusPill
 import io.github.liquidlyf.core.designsystem.components.UrgencyBadge
@@ -95,6 +96,7 @@ import java.time.Instant
 @Composable
 fun RequestDetailRoute(onBack: () -> Unit, viewModel: RequestDetailViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val online by viewModel.online.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbarHostState.current
     val resources = LocalResources.current
     LaunchedEffect(viewModel) {
@@ -105,12 +107,12 @@ fun RequestDetailRoute(onBack: () -> Unit, viewModel: RequestDetailViewModel = h
             }
         }
     }
-    RequestDetailScreen(state, viewModel, onBack)
+    RequestDetailScreen(state, online, viewModel, onBack)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RequestDetailScreen(state: RequestDetailUiState, vm: RequestDetailViewModel, onBack: () -> Unit) {
+private fun RequestDetailScreen(state: RequestDetailUiState, online: Boolean, vm: RequestDetailViewModel, onBack: () -> Unit) {
     val request = state.request
     var menuOpen by rememberSaveable { mutableStateOf(false) }
     var dialog by rememberSaveable { mutableStateOf<DetailDialog?>(null) }
@@ -171,7 +173,8 @@ private fun RequestDetailScreen(state: RequestDetailUiState, vm: RequestDetailVi
                 body = stringResource(R.string.detail_missing_body),
                 modifier = Modifier.padding(padding),
             )
-            else -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
+            else -> Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
+                OfflineBanner(online)
                 Column(
                     Modifier
                         .widthIn(max = 640.dp)
@@ -181,6 +184,9 @@ private fun RequestDetailScreen(state: RequestDetailUiState, vm: RequestDetailVi
                     verticalArrangement = Arrangement.spacedBy(Spacing.md),
                 ) {
                     Banners(state)
+                    if (state.working && !online) {
+                        NoticeCard(LLIcons.WifiOff, stringResource(R.string.detail_action_waiting))
+                    }
                     Header(request)
                     WhereCard(request, state, onOpenMaps = { r -> r.location?.let { launcher.openMaps(it.lat, it.lng, r.hospitalName) } })
                     SafetyBanner()

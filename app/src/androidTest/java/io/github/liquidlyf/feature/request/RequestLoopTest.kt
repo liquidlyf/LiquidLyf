@@ -39,6 +39,7 @@ import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.ApplicationScope
 import io.github.liquidlyf.core.util.Clock
+import io.github.liquidlyf.core.util.NetworkMonitor
 import io.github.liquidlyf.feature.request.create.CreateRequestEvent
 import io.github.liquidlyf.feature.request.create.CreateRequestViewModel
 import io.github.liquidlyf.feature.request.detail.RequestDetailViewModel
@@ -93,6 +94,7 @@ class RequestLoopTest {
     @Inject lateinit var worker: WorkerClient
     @Inject lateinit var eligibility: EligibilityCalculator
     @Inject lateinit var clock: Clock
+    @Inject lateinit var network: NetworkMonitor
 
     @Inject @ApplicationScope
     lateinit var appScope: CoroutineScope
@@ -117,7 +119,7 @@ class RequestLoopTest {
         profiles.create(aUid, aEmail, profileDraft(BloodGroup.A_POS, listed = false, phone = "+8801812345678")).ok()
         ready(aUid)
         val create = onMain {
-            CreateRequestViewModel(SavedStateHandle(), session, profiles, requests, hospitals, geo, worker, clock, appScope).also(viewModels::add)
+            CreateRequestViewModel(SavedStateHandle(), session, profiles, requests, hospitals, geo, worker, clock, appScope, network).also(viewModels::add)
         }
         waitUntil("form loaded") { create.uiState.value.loaded }
         onMain {
@@ -208,7 +210,7 @@ class RequestLoopTest {
 
     private suspend fun detail(rid: String) = onMain {
         RequestDetailViewModel(
-            SavedStateHandle(mapOf("id" to rid)), session, requests, offers, profiles, safety, worker, geo, eligibility, clock,
+            SavedStateHandle(mapOf("id" to rid)), session, requests, offers, profiles, safety, worker, geo, eligibility, clock, network,
         ).also(viewModels::add)
     }
 

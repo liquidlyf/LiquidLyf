@@ -182,6 +182,7 @@
     <string name="report_reason_spam">It\'s spam</string>
     <string name="report_reason_wrong_info">The details are wrong</string>
     <string name="report_reason_other">Something else</string>
+    <string name="detail_action_waiting">Waiting for network. This will finish when you\'re back online.</string>
     <string name="detail_offer_sent">Offer sent. The requester can now call you.</string>
     <string name="detail_withdrawn">Offer withdrawn</string>
     <string name="detail_reported">Thanks. Our team will review it.</string>

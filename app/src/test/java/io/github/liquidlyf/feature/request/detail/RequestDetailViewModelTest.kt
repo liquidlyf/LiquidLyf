@@ -16,6 +16,7 @@ import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.feature.request.create.PostNotice
+import io.github.liquidlyf.testing.FakeNetworkMonitor
 import io.github.liquidlyf.testing.FakeOfferRepository
 import io.github.liquidlyf.testing.FakeProfileRepository
 import io.github.liquidlyf.testing.FakeRequestRepository
@@ -74,7 +75,7 @@ class RequestDetailViewModelTest {
 
     private fun vm(id: String = "r1", notice: String? = null) = RequestDetailViewModel(
         SavedStateHandle(mapOf("id" to id, "notice" to notice)),
-        session, requests, offers, profiles, safety, worker, geoRepo, EligibilityCalculator(), Clock { TestData.NOW },
+        session, requests, offers, profiles, safety, worker, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, FakeNetworkMonitor(),
     )
 
     private fun signInAs(p: UserProfile) {
