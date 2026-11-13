@@ -8,6 +8,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.account.AccountDeleter
 import io.github.liquidlyf.core.data.account.DeletionStep
 import io.github.liquidlyf.core.data.auth.AuthRepository
+import io.github.liquidlyf.core.data.auth.CredentialSaver
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.profile.ProfileRepository
@@ -43,7 +44,10 @@ data class ChangePasswordUiState(
 
 /** Re-authenticate with the current password, then set the new one. Hidden for Google-only accounts. */
 @HiltViewModel
-class ChangePasswordViewModel @Inject constructor(private val auth: AuthRepository) : ViewModel() {
+class ChangePasswordViewModel @Inject constructor(
+    private val auth: AuthRepository,
+    private val credentials: CredentialSaver,
+) : ViewModel() {
     private val state = MutableStateFlow(ChangePasswordUiState())
     val uiState: StateFlow<ChangePasswordUiState> = state.asStateFlow()
 
@@ -74,7 +78,10 @@ class ChangePasswordViewModel @Inject constructor(private val auth: AuthReposito
                 return@launch
             }
             when (val result = auth.changePassword(s.new)) {
-                is AppResult.Success -> state.update { it.copy(saving = false, done = true, current = "", new = "") }
+                is AppResult.Success -> {
+                    auth.authState.value?.email?.let { credentials.offer(it, s.new) }
+                    state.update { it.copy(saving = false, done = true, current = "", new = "") }
+                }
                 is AppResult.Failure -> state.update {
                     if (result.error == AppError.WeakPassword) {
                         it.copy(saving = false, newError = result.error.messageRes)

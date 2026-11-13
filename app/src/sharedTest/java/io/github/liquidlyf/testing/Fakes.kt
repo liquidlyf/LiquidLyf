@@ -69,7 +69,13 @@ class FakeSessionManager(initial: SessionState = SessionState.SignedOut) : Sessi
 
 /** Accounts live in a map; [failNext] makes the next call fail with that error. */
 class FakeAuthRepository : AuthRepository {
-    data class Account(val uid: String, val password: String, val name: String?, var verified: Boolean)
+    data class Account(
+        val uid: String,
+        val password: String,
+        val name: String?,
+        var verified: Boolean,
+        val providers: Set<String> = setOf("password"),
+    )
 
     val accounts = mutableMapOf<String, Account>()
     val verificationEmails = mutableListOf<String>()
@@ -84,7 +90,7 @@ class FakeAuthRepository : AuthRepository {
 
     private fun publish(): AuthUser? = current?.let { email ->
         val a = accounts.getValue(email)
-        AuthUser(a.uid, email, a.verified, a.name, setOf("password"))
+        AuthUser(a.uid, email, a.verified, a.name, a.providers)
     }.also { state.value = it }
 
     override suspend fun signInEmail(email: String, password: String) = result {
@@ -110,7 +116,13 @@ class FakeAuthRepository : AuthRepository {
         }
     }
 
-    override suspend fun signInWithGoogle(idToken: String) = result<AuthUser> { AppResult.Failure(AppError.Unknown) }
+    /** A Google token "x" signs in (creating if needed) google-x@example.test, verified, no password. */
+    override suspend fun signInWithGoogle(idToken: String) = result {
+        val email = "google-$idToken@example.test"
+        accounts.getOrPut(email) { Account("g-$idToken", "", "Google User", verified = true, providers = setOf("google.com")) }
+        current = email
+        AppResult.Success(publish()!!)
+    }
 
     override suspend fun sendVerification() = result {
         current?.let { verificationEmails += it }

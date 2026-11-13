@@ -1,5 +1,8 @@
 package io.github.liquidlyf.feature.auth
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,10 +29,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.error
@@ -41,6 +47,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.auth.googleWebClientId
+import io.github.liquidlyf.core.data.auth.requestGoogleIdToken
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.EmptyState
@@ -52,6 +60,7 @@ import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.util.Links
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
+import kotlinx.coroutines.launch
 
 /** Shared frame: top bar, scrolling content that stays above the keyboard, at most 480 dp wide. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -106,7 +115,27 @@ internal fun currentAppLocale(): AppLocale =
 @Composable
 fun SignInRoute(onCreateAccount: () -> Unit, onForgotPassword: () -> Unit, viewModel: SignInViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    SignInScreen(state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, onCreateAccount, onForgotPassword)
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+    // Only builds with a real Firebase config have a web client ID; the demo flavor hides the button.
+    val webClientId = remember(context) { googleWebClientId(context) }
+    val scope = rememberCoroutineScope()
+    val onGoogle: (() -> Unit)? = if (activity != null && webClientId != null) {
+        {
+            if (viewModel.onGoogleStarted()) {
+                scope.launch { viewModel.onGoogleResult(requestGoogleIdToken(activity, webClientId)) }
+            }
+        }
+    } else {
+        null
+    }
+    SignInScreen(state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, onCreateAccount, onForgotPassword, onGoogle)
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable
@@ -117,8 +146,20 @@ fun SignInScreen(
     onSignIn: () -> Unit,
     onCreateAccount: () -> Unit,
     onForgotPassword: () -> Unit,
+    onContinueWithGoogle: (() -> Unit)? = null,
 ) {
     AuthLayout(title = stringResource(R.string.title_sign_in), onBack = null) {
+        if (onContinueWithGoogle != null) {
+            OutlinedButton(onClick = onContinueWithGoogle, enabled = !state.loading, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.action_continue_with_google))
+            }
+            Text(
+                stringResource(R.string.auth_or),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+        }
         LLTextField(
             value = state.email,
             onValueChange = onEmailChange,

@@ -1,6 +1,8 @@
 package io.github.liquidlyf.feature.auth
 
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.auth.CredentialSaver
+import io.github.liquidlyf.core.data.auth.GoogleSignInResult
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.testing.FakeAuthRepository
@@ -8,7 +10,9 @@ import io.github.liquidlyf.testing.FakeSessionManager
 import io.github.liquidlyf.testing.TestData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -29,9 +33,18 @@ class AuthViewModelsTest {
 
     private val dispatcher = StandardTestDispatcher()
     private val auth = FakeAuthRepository()
+    private val saver = CredentialSaver()
+    private val offers = mutableListOf<Pair<String, String>>()
 
     @Before
-    fun setUp() = Dispatchers.setMain(dispatcher)
+    fun setUp() {
+        Dispatchers.setMain(dispatcher)
+    }
+
+    /** Collects what the ViewModels offer to save, like MainActivity does. */
+    private fun TestScope.collectOffers() {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { saver.requests.collect { offers += it } }
+    }
 
     @After
     fun tearDown() = Dispatchers.resetMain()
@@ -42,7 +55,7 @@ class AuthViewModelsTest {
 
     @Test
     fun `sign in checks the fields before calling Firebase`() = test {
-        val vm = SignInViewModel(auth)
+        val vm = SignInViewModel(auth, saver)
         vm.signIn()
         assertEquals(R.string.error_email_required, vm.uiState.value.emailError)
         assertEquals(R.string.error_password_required, vm.uiState.value.passwordError)
@@ -57,7 +70,7 @@ class AuthViewModelsTest {
     @Test
     fun `a wrong password shows under the password field and loading ends`() = test {
         auth.accounts["rahim@example.test"] = FakeAuthRepository.Account("u1", "right-pass", "Rahim", verified = true)
-        val vm = SignInViewModel(auth)
+        val vm = SignInViewModel(auth, saver)
         vm.onEmailChange("rahim@example.test")
         vm.onPasswordChange("wrong-pass")
         vm.signIn()
@@ -70,7 +83,7 @@ class AuthViewModelsTest {
     @Test
     fun `success stays loading (no double submit) while the gate moves on`() = test {
         auth.accounts["rahim@example.test"] = FakeAuthRepository.Account("u1", "right-pass", "Rahim", verified = true)
-        val vm = SignInViewModel(auth)
+        val vm = SignInViewModel(auth, saver)
         vm.onEmailChange(" rahim@example.test ")
         vm.onPasswordChange("right-pass")
         vm.signIn()
@@ -81,9 +94,49 @@ class AuthViewModelsTest {
     }
 
     @Test
+    fun `a successful email sign-in offers to save the password`() = test {
+        collectOffers()
+        auth.accounts["rahim@example.test"] = FakeAuthRepository.Account("u1", "right-pass", "Rahim", verified = true)
+        val vm = SignInViewModel(auth, saver)
+        vm.onEmailChange("rahim@example.test")
+        vm.onPasswordChange("wrong-pass")
+        vm.signIn()
+        advanceUntilIdle()
+        assertTrue(offers.isEmpty())
+        vm.onPasswordChange("right-pass")
+        vm.signIn()
+        advanceUntilIdle()
+        assertEquals(listOf("rahim@example.test" to "right-pass"), offers)
+    }
+
+    @Test
+    fun `Google sign-in - a token signs in, cancel says nothing, problems are explained`() = test {
+        val vm = SignInViewModel(auth, saver)
+        assertTrue(vm.onGoogleStarted())
+        assertFalse(vm.onGoogleStarted()) // busy: a second tap is ignored
+        vm.onGoogleResult(GoogleSignInResult.Cancelled)
+        assertFalse(vm.uiState.value.loading)
+        assertNull(vm.uiState.value.formError)
+
+        vm.onGoogleStarted()
+        vm.onGoogleResult(GoogleSignInResult.NoAccount)
+        assertEquals(R.string.error_google_no_account, vm.uiState.value.formError)
+        vm.onGoogleStarted()
+        vm.onGoogleResult(GoogleSignInResult.Failed)
+        assertEquals(R.string.error_google_failed, vm.uiState.value.formError)
+
+        vm.onGoogleStarted()
+        vm.onGoogleResult(GoogleSignInResult.Token("abc"))
+        advanceUntilIdle()
+        assertEquals("g-abc", auth.authState.value?.uid)
+        assertEquals(false, auth.authState.value?.hasPassword)
+        assertTrue(vm.uiState.value.loading)
+    }
+
+    @Test
     fun `a network error is shown for the whole form, typing clears it`() = test {
         auth.failNext = AppError.Network
-        val vm = SignInViewModel(auth)
+        val vm = SignInViewModel(auth, saver)
         vm.onEmailChange("rahim@example.test")
         vm.onPasswordChange("pass")
         vm.signIn()
@@ -97,7 +150,7 @@ class AuthViewModelsTest {
 
     @Test
     fun `sign up needs a name, a valid email, 8 characters and the unticked consent`() = test {
-        val vm = SignUpViewModel(auth)
+        val vm = SignUpViewModel(auth, saver)
         vm.onNameChange("A")
         vm.onEmailChange("rahim@")
         vm.onPasswordChange("short")
@@ -113,7 +166,7 @@ class AuthViewModelsTest {
 
     @Test
     fun `sign up creates the account and sends the verification email`() = test {
-        val vm = SignUpViewModel(auth)
+        val vm = SignUpViewModel(auth, saver)
         vm.onNameChange("  Rahim   Uddin ")
         vm.onEmailChange("rahim@example.test")
         vm.onPasswordChange("long-enough")
@@ -128,7 +181,7 @@ class AuthViewModelsTest {
     @Test
     fun `an email that's taken shows under the email field`() = test {
         auth.accounts["rahim@example.test"] = FakeAuthRepository.Account("u1", "x", "R", verified = true)
-        val vm = SignUpViewModel(auth)
+        val vm = SignUpViewModel(auth, saver)
         vm.onNameChange("Rahim")
         vm.onEmailChange("rahim@example.test")
         vm.onPasswordChange("long-enough")

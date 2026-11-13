@@ -1,6 +1,6 @@
 # LiquidLyf version catalog.
 # Versions are the latest stable releases as of 13 Nov 2026. Dependabot keeps them current.
-# Some entries (credentials, googleid, work) are wired into
+# Some entries (work) are wired into
 # app/build.gradle.kts in the phase that first uses them, so the APK stays small until then.
 
 [versions]

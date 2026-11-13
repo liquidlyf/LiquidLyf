@@ -41,6 +41,8 @@ data class SetupDraft(
     /** The donor-listing consent: no pre-selected answer (PDPA 2026). */
     val listed: Boolean? = null,
     val available: Boolean = true,
+    /** 18+ and the Terms, asked here only from accounts that skipped the sign-up form (Google). */
+    val termsAccepted: Boolean = false,
 )
 
 interface SetupDraftStore {

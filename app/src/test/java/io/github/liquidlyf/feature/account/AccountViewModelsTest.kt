@@ -56,7 +56,7 @@ class AccountViewModelsTest {
     @Test
     fun `change password checks the current one first`() = test {
         signedIn()
-        val vm = ChangePasswordViewModel(auth)
+        val vm = ChangePasswordViewModel(auth, io.github.liquidlyf.core.data.auth.CredentialSaver())
         vm.onCurrentChange("wrong")
         vm.onNewChange("short")
         vm.save()

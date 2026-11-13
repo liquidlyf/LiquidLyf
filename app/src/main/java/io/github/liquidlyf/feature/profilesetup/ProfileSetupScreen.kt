@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -59,6 +62,8 @@ import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.Gender
+import io.github.liquidlyf.core.util.Links
+import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.auth.FormError
 import io.github.liquidlyf.feature.auth.currentAppLocale
 import java.time.LocalDate
@@ -317,6 +322,24 @@ private fun ContactStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Se
         onSelect = { v -> onEdit { copy(listed = v == "yes") } },
     )
     FieldError(SetupField.CONSENT in state.errors, stringResource(R.string.error_consent_choice))
+    if (state.needsTerms) {
+        val links = rememberSafeIntentLauncher()
+        val locale = currentAppLocale()
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(value = d.termsAccepted, role = Role.Checkbox, onValueChange = { v -> onEdit { copy(termsAccepted = v) } }),
+        ) {
+            Checkbox(checked = d.termsAccepted, onCheckedChange = null)
+            Text(stringResource(R.string.sign_up_consent), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = Spacing.xs))
+        }
+        FieldError(SetupField.TERMS in state.errors, stringResource(R.string.error_consent_required))
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            TextButton(onClick = { links.openUrl(Links.terms(locale)) }) { Text(stringResource(R.string.action_read_terms)) }
+            TextButton(onClick = { links.openUrl(Links.privacy(locale)) }) { Text(stringResource(R.string.action_read_privacy)) }
+        }
+    }
     if (d.listed == true) {
         ListItem(
             headlineContent = { Text(stringResource(R.string.setup_available)) },

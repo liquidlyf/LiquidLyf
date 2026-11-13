@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.auth.AuthRepository
+import io.github.liquidlyf.core.data.auth.CredentialSaver
+import io.github.liquidlyf.core.data.auth.GoogleSignInResult
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.util.AppError
@@ -45,7 +47,10 @@ data class SignInUiState(
 )
 
 @HiltViewModel
-class SignInViewModel @Inject constructor(private val auth: AuthRepository) : ViewModel() {
+class SignInViewModel @Inject constructor(
+    private val auth: AuthRepository,
+    private val credentials: CredentialSaver,
+) : ViewModel() {
     private val state = MutableStateFlow(SignInUiState())
     val uiState: StateFlow<SignInUiState> = state.asStateFlow()
 
@@ -64,9 +69,9 @@ class SignInViewModel @Inject constructor(private val auth: AuthRepository) : Vi
         }
         state.update { it.copy(loading = true, formError = null) }
         viewModelScope.launch {
-            val result = auth.signInEmail(s.email, s.password)
-            if (result is AppResult.Failure) {
-                state.update {
+            when (val result = auth.signInEmail(s.email, s.password)) {
+                is AppResult.Success -> credentials.offer(s.email, s.password)
+                is AppResult.Failure -> state.update {
                     when (result.error) {
                         AppError.InvalidEmail -> it.copy(loading = false, emailError = result.error.messageRes)
                         AppError.InvalidCredentials -> it.copy(loading = false, passwordError = result.error.messageRes)
@@ -74,6 +79,26 @@ class SignInViewModel @Inject constructor(private val auth: AuthRepository) : Vi
                     }
                 }
             }
+        }
+    }
+
+    /** "Continue with Google" was tapped; the screen shows Google's sheet. False if busy. */
+    fun onGoogleStarted(): Boolean {
+        if (state.value.loading) return false
+        state.update { it.copy(loading = true, formError = null) }
+        return true
+    }
+
+    /** What Google's sheet returned. A token signs in to Firebase; the gate then moves on. */
+    fun onGoogleResult(result: GoogleSignInResult) {
+        when (result) {
+            is GoogleSignInResult.Token -> viewModelScope.launch {
+                val signIn = auth.signInWithGoogle(result.idToken)
+                if (signIn is AppResult.Failure) state.update { it.copy(loading = false, formError = signIn.error.messageRes) }
+            }
+            GoogleSignInResult.Cancelled -> state.update { it.copy(loading = false) }
+            GoogleSignInResult.NoAccount -> state.update { it.copy(loading = false, formError = R.string.error_google_no_account) }
+            GoogleSignInResult.Failed -> state.update { it.copy(loading = false, formError = R.string.error_google_failed) }
         }
     }
 }
@@ -95,7 +120,10 @@ data class SignUpUiState(
 )
 
 @HiltViewModel
-class SignUpViewModel @Inject constructor(private val auth: AuthRepository) : ViewModel() {
+class SignUpViewModel @Inject constructor(
+    private val auth: AuthRepository,
+    private val credentials: CredentialSaver,
+) : ViewModel() {
     private val state = MutableStateFlow(SignUpUiState())
     val uiState: StateFlow<SignUpUiState> = state.asStateFlow()
 
@@ -122,9 +150,9 @@ class SignUpViewModel @Inject constructor(private val auth: AuthRepository) : Vi
         }
         state.update { it.copy(loading = true, formError = null) }
         viewModelScope.launch {
-            val result = auth.signUpEmail(Validators.normalizeName(s.name), s.email, s.password)
-            if (result is AppResult.Failure) {
-                state.update {
+            when (val result = auth.signUpEmail(Validators.normalizeName(s.name), s.email, s.password)) {
+                is AppResult.Success -> credentials.offer(s.email, s.password)
+                is AppResult.Failure -> state.update {
                     when (result.error) {
                         AppError.EmailInUse, AppError.InvalidEmail -> it.copy(loading = false, emailError = result.error.messageRes)
                         AppError.WeakPassword -> it.copy(loading = false, passwordError = result.error.messageRes)

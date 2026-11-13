@@ -168,6 +168,23 @@ class ProfileSetupViewModelTest {
     }
 
     @Test
+    fun `a Google account must accept the Terms in the last step, an email account already did`() = runTest(dispatcher) {
+        val google = FakeSessionManager(SessionState.NeedsProfile(user.copy(providers = setOf("google.com"))))
+        val vm = ProfileSetupViewModel(google, profiles, geoRepo, store, Clock { TestData.NOW })
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.needsTerms)
+        vm.fillAll()
+        vm.next(AppLocale.EN)
+        assertEquals(setOf(SetupField.TERMS), vm.uiState.value.errors)
+        vm.edit { copy(termsAccepted = true) }
+        vm.next(AppLocale.EN)
+        advanceUntilIdle()
+        assertEquals(1, profiles.created.size)
+
+        assertFalse(vm().uiState.value.needsTerms)
+    }
+
+    @Test
     fun `not listed means not available, and a failed save can be retried`() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()

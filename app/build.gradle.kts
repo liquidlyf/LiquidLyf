@@ -82,6 +82,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            // Local release builds are signed with the debug key, whose SHA-1 is registered in
+            // Firebase, so a prod build can be installed on the test phone (Google sign-in, the
+            // live dispatch test). There are no prod debug builds. The release job signs with
+            // the real key (Phase 9/10) and sets LIQUIDLYF_RELEASE.
+            if (!providers.environmentVariable("LIQUIDLYF_RELEASE").isPresent) {
+                signingConfig = signingConfigs.getByName("debug")
+            }
             // Only the real release job uploads R8 mappings. PR CI builds prodRelease with a
             // dummy config, where an upload would fail.
             configure<CrashlyticsExtension> {
@@ -112,6 +119,9 @@ android {
         // English strings land before their Bangla translation; the release job checks
         // Bangla coverage instead (doc 11 §6).
         warning += "MissingTranslation"
+        // Digital Asset Links share saved passwords between the app and a website login.
+        // liquidlyf.github.io has no login, and saving passwords in the app works without them.
+        disable += "CredManMissingDal"
     }
 
     testOptions {
@@ -196,6 +206,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)

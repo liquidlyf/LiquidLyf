@@ -31,7 +31,7 @@ import java.time.ZoneOffset
 import javax.inject.Inject
 
 /** The fields a step checks; the screen marks the ones in [ProfileSetupUiState.errors]. */
-enum class SetupField { BLOOD_GROUP, NAME, GENDER, BIRTH_YEAR, WEIGHT, LOCATION, PHONE, LAST_DONATION, CONSENT }
+enum class SetupField { BLOOD_GROUP, NAME, GENDER, BIRTH_YEAR, WEIGHT, LOCATION, PHONE, LAST_DONATION, CONSENT, TERMS }
 
 data class ProfileSetupUiState(
     val draft: SetupDraft,
@@ -40,6 +40,8 @@ data class ProfileSetupUiState(
     val errors: Set<SetupField> = emptySet(),
     val saving: Boolean = false,
     @StringRes val formError: Int? = null,
+    /** Google sign-ins never saw the sign-up form's 18+ and Terms box: the last step asks. */
+    val needsTerms: Boolean = false,
 ) {
     val step: Int get() = draft.step
     val isLastStep: Boolean get() = draft.step == ProfileSetupViewModel.STEPS - 1
@@ -62,7 +64,9 @@ class ProfileSetupViewModel @Inject constructor(
 
     private val user: AuthUser? = (session.state.value as? SessionState.NeedsProfile)?.user
 
-    private val state = MutableStateFlow(ProfileSetupUiState(SetupDraft(uid = user?.uid.orEmpty())))
+    private val state = MutableStateFlow(
+        ProfileSetupUiState(SetupDraft(uid = user?.uid.orEmpty()), needsTerms = user?.hasPassword == false),
+    )
     val uiState: StateFlow<ProfileSetupUiState> = state.asStateFlow()
 
     init {
@@ -131,6 +135,7 @@ class ProfileSetupViewModel @Inject constructor(
                 val donationOk = d.neverDonated == true || (d.neverDonated == false && pickedDay != null && pickedDay <= today)
                 if (!donationOk) add(SetupField.LAST_DONATION)
                 if (d.listed == null) add(SetupField.CONSENT)
+                if (state.value.needsTerms && !d.termsAccepted) add(SetupField.TERMS)
             }
         }
     }
