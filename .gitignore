@@ -1,20 +1,90 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-app/google-services.json
+# =====================================================================
+# LiquidLyf .gitignore
+# Rule: if a file holds a secret, a password, a key or real user data,
+# or a tool can rebuild it, it never goes into git.
+# =====================================================================
 
-# IDE and Kotlin compiler state (machine-specific)
-.idea/
+# ---------- 1. Secrets and keys (NEVER commit) ----------
+# Firebase config files. The `demo` flavor's dummy config is the only exception.
+google-services.json
+GoogleService-Info.plist
+!app/src/demo/google-services.json
+
+# Local settings: the SDK path, MAPS_API_KEY and other keys
+local.properties
+keystore.properties
+secrets.properties
+secrets/
+
+# Signing keys and certificates
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.der
+*.crt
+
+# Service accounts and cloud credentials
+service-account*.json
+*-service-account*.json
+*firebase-adminsdk*.json
+credentials*.json
+client_secret*.json
+.runtimeconfig.json
+
+# Environment files (keep only the example)
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+
+# ---------- 2. Build output (Gradle rebuilds it) ----------
+build/
+.gradle/
 .kotlin/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+app/release/
+app/*/release/
+output-metadata.json
+
+# ---------- 3. IDE and editor settings (machine-specific) ----------
+.idea/
+*.iml
+.vscode/
+.fleet/
+*.swp
+*~
+
+# ---------- 4. Operating system junk ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 5. Logs, crash dumps, test output ----------
+*.log
+*.hprof
+coverage/
+
+# ---------- 6. Node, Firebase CLI and Cloudflare Worker ----------
+node_modules/
+dist/
+.firebase/
+.wrangler/
+firebase-debug*.log
+firestore-debug*.log
+database-debug*.log
+ui-debug*.log
+pubsub-debug*.log
+
+# ---------- 7. Private notes and personal tool settings ----------
+CLAUDE.local.md
+.claude/settings.local.json
