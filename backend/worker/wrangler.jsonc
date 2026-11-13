@@ -21,7 +21,7 @@
   ],
   "vars": {
     "FIREBASE_PROJECT_ID": "liquidlyf-app",
-    "FIREBASE_PROJECT_NUMBER": "REPLACE_WITH_PROJECT_NUMBER",
+    "FIREBASE_PROJECT_NUMBER": "400334033235",
     "ANDROID_APP_ID": "",
     "ENFORCE_APP_CHECK": "false",
     // Keep in sync with Remote Config escalation_minutes_* (Phase 2.1).
