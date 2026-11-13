@@ -5,6 +5,8 @@
 //   node scripts/live-request.mjs --email <test email> --division BD30 --district BD3026 \
 //        --upazila BD30262000 --group B_POS            post + dispatch (prints timings)
 //   node scripts/live-request.mjs --email <test email> --cancel <requestId>   close it again
+//   node scripts/live-request.mjs --email <test email> --delete-account       remove the test
+//        account the way the app's account deletion does (write contract 16); asks first
 //   add --emulator to run against the local Auth + Firestore emulators (no dispatch)
 //
 // The account's password is asked for here and never printed or stored. A new account gets a
@@ -20,8 +22,10 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) =>
   return acc;
 }, []));
 const emulator = args.emulator === true;
+const deleting = args["delete-account"] === true;
+const posting = !args.cancel && !deleting;
 if (!args.email) usage("--email is required");
-if (!args.cancel && !(args.division && args.district && args.group)) usage("--division, --district and --group are required");
+if (posting && !(args.division && args.district && args.group)) usage("--division, --district and --group are required");
 function usage(msg) { console.error(`${msg}\nSee the comment at the top of scripts/live-request.mjs.`); process.exit(2); }
 
 const CODE = /^[A-Za-z0-9_-]{1,40}$/;
@@ -48,9 +52,9 @@ const ROOT = `projects/${project}/databases/(default)/documents`;
 const DOCS = `${DOCS_HOST}/v1/${ROOT}`;
 const WORKER = args.worker ?? "https://liquidlyf-worker.liquidlyf.workers.dev";
 
-async function call(url, body, headers = {}) {
+async function call(url, body, headers = {}, method) {
   const res = await fetch(url, {
-    method: body === undefined ? "GET" : "POST",
+    method: method ?? (body === undefined ? "GET" : "POST"),
     headers: { "content-type": "application/json", ...headers },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
@@ -70,16 +74,24 @@ function askHidden(prompt) {
     rl.question(prompt, (a) => { rl.close(); process.stdout.write("\n"); resolve(a); });
   });
 }
+function ask(prompt) {
+  return new Promise((resolve) => {
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    let answer = "";
+    rl.on("close", () => resolve(answer)); // no input at all counts as "no"
+    rl.question(prompt, (a) => { answer = a.trim(); rl.close(); });
+  });
+}
 
 const password = await askHidden(`Password for ${args.email}: `);
 if (password.length < 8) usage("use a password of at least 8 characters");
 let session = await authCall("signInWithPassword", { email: args.email, password, returnSecureToken: true });
-if (!session.ok && /EMAIL_NOT_FOUND|INVALID_LOGIN_CREDENTIALS/.test(err(session))) {
+if (!session.ok && posting && /EMAIL_NOT_FOUND|INVALID_LOGIN_CREDENTIALS/.test(err(session))) {
   const created = await authCall("signUp", { email: args.email, password, returnSecureToken: true });
   if (!created.ok) fail(`sign-up failed: ${err(created)}`);
   session = created;
   console.log(`Created the test account ${args.email}.`);
-} else if (!session.ok) fail(`sign-in failed: ${err(session)}`);
+} else if (!session.ok) fail(`sign-in failed: ${err(session)}`); // --cancel / --delete-account never create one
 let { idToken, localId: uid } = session.json;
 
 const lookup = await authCall("lookup", { idToken });
@@ -106,10 +118,21 @@ const enc = (v) => v === null ? { nullValue: null }
   : v instanceof Date ? { timestampValue: v.toISOString() }
   : Array.isArray(v) ? { arrayValue: { values: v.map(enc) } }
   : { mapValue: { fields: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, enc(x)])) } };
+const dec = (v) => "stringValue" in v ? v.stringValue
+  : "booleanValue" in v ? v.booleanValue
+  : "integerValue" in v ? Number(v.integerValue)
+  : "doubleValue" in v ? v.doubleValue
+  : "timestampValue" in v ? new Date(v.timestampValue)
+  : "nullValue" in v ? null
+  : "arrayValue" in v ? (v.arrayValue.values ?? []).map(dec)
+  : "mapValue" in v ? Object.fromEntries(Object.entries(v.mapValue.fields ?? {}).map(([k, x]) => [k, dec(x)]))
+  : undefined;
 const fields = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, enc(v)]));
+const fieldsOf = (d) => Object.fromEntries(Object.entries(d.fields ?? {}).map(([k, v]) => [k, dec(v)]));
 const serverTime = (...f) => f.map((fieldPath) => ({ fieldPath, setToServerValue: "REQUEST_TIME" }));
 const commit = (writes) => call(`${DOCS}:commit`, { writes }, bearer);
 const name = (path) => `${ROOT}/${path}`;
+const pathOf = (docName) => docName.slice(ROOT.length + 1);
 
 // ---------------------------------------------------------------- cancel
 if (args.cancel) {
@@ -124,6 +147,144 @@ if (args.cancel) {
   ]);
   if (!res.ok) fail(`cancel refused: ${err(res)}`);
   console.log(`PASS  request ${rid} cancelled (userStats -1).`);
+  process.exit(0);
+}
+
+// ---------------------------------------------------------------- delete the account (contract 16)
+// The same rules-checked steps as the app's account deletion (firebase/README.md, contract 16).
+// Each step re-reads the server state, so an interrupted run can simply be started again.
+if (deleting) {
+  const DELETED = "Deleted user";
+  const getDoc = async (path) => {
+    const r = await call(`${DOCS}/${path}`, undefined, bearer);
+    if (r.status === 404) return null;
+    if (!r.ok) fail(`couldn't read ${path}: ${err(r)}`);
+    return r.json;
+  };
+  const listDocs = async (path) => {
+    const r = await call(`${DOCS}/${path}?pageSize=300`, undefined, bearer);
+    if (!r.ok) fail(`couldn't list ${path}: ${err(r)}`);
+    return r.json.documents ?? [];
+  };
+  const query = async (collectionId, allDescendants, field) => {
+    const r = await call(`${DOCS}:runQuery`, { structuredQuery: {
+      from: [{ collectionId, allDescendants }],
+      where: { fieldFilter: { field: { fieldPath: field }, op: "EQUAL", value: { stringValue: uid } } },
+      orderBy: [{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }], // the indexed order
+      limit: 500,
+    } }, bearer);
+    if (!r.ok) fail(`couldn't query ${collectionId}: ${err(r)}`);
+    return r.json.filter((x) => x.document).map((x) => x.document);
+  };
+  const must = async (writes, what) => {
+    const r = await commit(writes);
+    if (!r.ok) fail(`${what} refused: ${err(r)}. Nothing else changed; run the same command again.`);
+  };
+  const entryPath = `responders.\`${uid}\``; // backticks: a uid may start with a digit
+
+  const requests = await query("requests", false, "requesterUid");
+  const offers = await query("responses", true, "donorUid");
+  const inbox = await listDocs(`users/${uid}/notifications`);
+  const donations = await listDocs(`users/${uid}/donations`);
+  console.log(`This deletes ${args.email} (uid ${uid}) the way the app does:`);
+  console.log(`  anonymizes ${requests.length} request(s) and ${offers.length} offer(s) (they stay, as "${DELETED}"),`);
+  console.log(`  deletes their contact details, ${inbox.length} inbox item(s), ${donations.length} donation(s), the profile and the login.`);
+  if (args.yes !== true && (await ask("Type DELETE to go on: ")) !== "DELETE") {
+    console.log("Stopped. Nothing changed.");
+    process.exit(0);
+  }
+
+  // 1. Withdraw my active offers (contract 10).
+  let withdrawn = 0;
+  for (const o of offers) {
+    const resp = await getDoc(pathOf(o.name));
+    if (!resp || !["OFFERED", "CONFIRMED"].includes(fieldsOf(resp).status)) continue;
+    const rid = pathOf(o.name).split("/")[1];
+    const entry = fieldsOf(await getDoc(`requests/${rid}`)).responders?.[uid];
+    if (!entry) fail(`request ${rid} has no responders entry for this account`);
+    await must([
+      { update: { name: o.name, fields: fields({ status: "WITHDRAWN" }) }, updateMask: { fieldPaths: ["status"] },
+        updateTransforms: serverTime("updatedAt"), currentDocument: { updateTime: resp.updateTime } },
+      { update: { name: name(`requests/${rid}`), fields: fields({
+          responders: { [uid]: { name: entry.name, group: entry.group, status: "WITHDRAWN" } }, lastResponderUid: uid }) },
+        updateMask: { fieldPaths: [entryPath, "lastResponderUid"] }, updateTransforms: serverTime("updatedAt") },
+    ], `withdrawing the offer on ${rid}`);
+    withdrawn++;
+  }
+  console.log(`PASS  1. ${withdrawn} active offer(s) withdrawn`);
+
+  // 2. Anonymize my requests; an OPEN one is cancelled with userStats -1 (one per batch).
+  let anonymized = 0, cancelled = 0;
+  for (const d of requests) {
+    const rid = pathOf(d.name).split("/")[1];
+    const doc = await getDoc(`requests/${rid}`);
+    const r = fieldsOf(doc);
+    const open = r.status === "OPEN";
+    if (!open && r.requesterDisplayName === DELETED && r.notes === undefined && r.closedReason === undefined && r.flagged === false) continue;
+    const writes = [{
+      update: { name: d.name, fields: fields({ requesterDisplayName: DELETED, flagged: false, ...(open ? { status: "CANCELLED" } : {}) }) },
+      updateMask: { fieldPaths: ["requesterDisplayName", "notes", "closedReason", "flagged", ...(open ? ["status"] : [])] },
+      updateTransforms: serverTime("updatedAt"), currentDocument: { updateTime: doc.updateTime },
+    }];
+    if (open) {
+      writes.push({ update: { name: name(`userStats/${uid}`), fields: fields({ lastRequestId: rid }) },
+        updateMask: { fieldPaths: ["lastRequestId"] },
+        updateTransforms: [{ fieldPath: "openRequests", increment: { integerValue: "-1" } }] });
+    }
+    await must(writes, `anonymizing request ${rid}`);
+    anonymized++;
+    if (open) cancelled++;
+  }
+  console.log(`PASS  2. ${anonymized} request(s) anonymized, ${cancelled} of them cancelled`);
+
+  // 3. Anonymize my offers, in any status: the responders entry + the response, one batch each.
+  let offersDone = 0;
+  for (const o of offers) {
+    const resp = await getDoc(pathOf(o.name));
+    if (!resp) continue;
+    const rf = fieldsOf(resp);
+    const rid = pathOf(o.name).split("/")[1];
+    const entry = fieldsOf(await getDoc(`requests/${rid}`)).responders?.[uid];
+    if (rf.donorDisplayName === DELETED && rf.donorPhone === undefined && rf.message === undefined && entry?.name === DELETED) continue;
+    await must([
+      ...(entry ? [{ update: { name: name(`requests/${rid}`), fields: fields({
+          responders: { [uid]: { name: DELETED, group: entry.group, status: entry.status } } }) },
+        updateMask: { fieldPaths: [entryPath] }, updateTransforms: serverTime("updatedAt") }] : []),
+      { update: { name: o.name, fields: fields({ donorDisplayName: DELETED }) },
+        updateMask: { fieldPaths: ["donorDisplayName", "donorPhone", "message"] },
+        updateTransforms: serverTime("updatedAt"), currentDocument: { updateTime: resp.updateTime } },
+    ], `anonymizing the offer on ${rid}`);
+    offersDone++;
+  }
+  console.log(`PASS  3. ${offersDone} offer(s) anonymized`);
+
+  // 4. Delete my requests' contact docs and my inbox (deleting one that's gone is allowed).
+  const gone = [
+    ...requests.map((d) => ({ delete: `${d.name}/private/contact` })),
+    ...(await listDocs(`users/${uid}/notifications`)).map((d) => ({ delete: d.name })),
+  ];
+  for (let i = 0; i < gone.length; i += 400) await must(gone.slice(i, i + 400), "deleting contacts and inbox");
+  console.log(`PASS  4. ${requests.length} contact doc(s) and the inbox deleted`);
+
+  // 5. Final batch: donor card + userStats (needs openRequests == 0) + donations + the profile.
+  const stats = await getDoc(`userStats/${uid}`);
+  if (stats && fieldsOf(stats).openRequests !== 0) {
+    fail(`userStats still counts ${fieldsOf(stats).openRequests} open request(s); run the same command again`);
+  }
+  const profile = await getDoc(`users/${uid}`);
+  const last = [
+    { delete: name(`donors/${uid}`) },
+    ...(stats ? [{ delete: name(`userStats/${uid}`) }] : []),
+    ...(await listDocs(`users/${uid}/donations`)).map((d) => ({ delete: d.name })),
+    ...(profile ? [{ delete: name(`users/${uid}`) }] : []),
+  ];
+  await must(last, "the final batch (profile, stats, donor card, donations)");
+  console.log("PASS  5. profile, userStats, donor card and donations deleted");
+
+  // 6. The login itself, last. (A phone would unsubscribe from its topics first; a script has none.)
+  const del = await authCall("delete", { idToken });
+  if (!del.ok) fail(`deleting the login failed: ${err(del)}; the data is already gone, run again to retry`);
+  console.log(`PASS  6. login ${args.email} deleted. Reports it filed stay with the admins (contract 16).`);
   process.exit(0);
 }
 
