@@ -58,4 +58,6 @@ Bitwarden and Mastodon (GPL-3.0).
   - the app's **About** screen links to the source code, to meet section 13, and shows the
     "Based on LiquidLyf" credit;
   - the README has a licence section;
-  - turn on the DCO check on pull requests.
+  - turn on the DCO check on pull requests. Sign-offs start on 2026-11-13: every commit from then on
+    is signed off. Earlier commits on `rebuild` aren't, so the check is overridden once, for the
+    `rebuild` → `main` merge.
