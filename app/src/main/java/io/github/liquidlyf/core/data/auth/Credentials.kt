@@ -3,11 +3,9 @@ package io.github.liquidlyf.core.data.auth
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import androidx.credentials.CreatePasswordRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.CreateCredentialException
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.NoCredentialException
@@ -15,15 +13,12 @@ import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /*
- * Credential Manager (Phase 3.4, 3.15): "Continue with Google", and offering to save the email
- * password so a new phone can sign in quickly. Both need an Activity, so they live here rather
- * than in a ViewModel.
+ * Credential Manager for "Continue with Google" (Phase 3.4). It needs an Activity, so it lives
+ * here rather than in a ViewModel. Email passwords are saved and filled by Android Autofill
+ * (the fields carry content types), which already asks "Save password?": a second offer from
+ * Credential Manager would ask twice (Phase 3.15).
  */
 
 sealed interface GoogleSignInResult {
@@ -70,33 +65,5 @@ suspend fun requestGoogleIdToken(activity: Activity, webClientId: String): Googl
         GoogleSignInResult.Failed
     } catch (_: GoogleIdTokenParsingException) {
         GoogleSignInResult.Failed
-    }
-}
-
-/**
- * Offers to save an email and password after a successful sign-in, sign-up or password change.
- * ViewModels call [offer]; MainActivity collects [requests] and shows the system's save sheet,
- * so the offer survives the screen changing right after sign-in.
- */
-@Singleton
-class CredentialSaver @Inject constructor() {
-    private val pending = MutableSharedFlow<Pair<String, String>>(extraBufferCapacity = 1)
-    val requests: SharedFlow<Pair<String, String>> = pending
-
-    fun offer(email: String, password: String) {
-        pending.tryEmit(email.trim() to password)
-    }
-
-    companion object {
-        /** Shows the save sheet. Saying no, or a phone without a password manager, is fine. */
-        suspend fun save(activity: Activity, email: String, password: String) {
-            try {
-                CredentialManager.create(activity).createCredential(activity, CreatePasswordRequest(email, password))
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: CreateCredentialException) {
-                // Declined or unavailable: nothing to do.
-            }
-        }
     }
 }

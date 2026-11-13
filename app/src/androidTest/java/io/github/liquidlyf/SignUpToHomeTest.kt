@@ -1,5 +1,7 @@
 package io.github.liquidlyf
 
+import android.accessibilityservice.AccessibilityService
+import android.view.View
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasClickAction
@@ -9,8 +11,10 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.firebase.auth.FirebaseAuth
@@ -63,11 +67,21 @@ class SignUpToHomeTest {
         assumeTrue(BuildConfig.USE_FIREBASE_EMULATOR && emulatorsUp())
         hilt.inject()
         auth.signOut()
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        scenario = ActivityScenario.launch(MainActivity::class.java).also { s ->
+            // No "save password?" sheet from Android Autofill during the test: it would stay on
+            // screen and take the focus from the tests that run after this one.
+            s.onActivity { it.window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS }
+        }
     }
 
     @After
     fun tearDown() {
+        // The app's own "save password?" offer may still be showing: a system Back closes it.
+        val ui = InstrumentationRegistry.getInstrumentation().uiAutomation
+        repeat(2) {
+            ui.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+            Thread.sleep(500)
+        }
         scenario?.close()
     }
 
@@ -94,12 +108,18 @@ class SignUpToHomeTest {
 
     private fun tapText(text: String) {
         waitFor(text)
-        compose.onNode(hasText(text) and hasClickAction()).performClick()
+        val node = compose.onNode(hasText(text) and hasClickAction())
+        // Inside the scrolling form, bring it into view first: with the keyboard up it can sit
+        // under the bottom bar, and the tap would land on the bar instead.
+        runCatching { node.performScrollTo() }
+        node.performClick()
         compose.waitForIdle()
     }
 
     private fun type(@StringRes label: Int, value: String) {
         compose.onNode(hasText(str(label)) and hasSetTextAction()).performTextInput(value)
+        Espresso.closeSoftKeyboard()
+        compose.waitForIdle()
     }
 
     /** Opens a dropdown field and picks [item] from its menu (the menu item is the last match). */

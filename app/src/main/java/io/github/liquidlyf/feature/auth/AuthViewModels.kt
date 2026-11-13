@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.auth.AuthRepository
-import io.github.liquidlyf.core.data.auth.CredentialSaver
 import io.github.liquidlyf.core.data.auth.GoogleSignInResult
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.domain.Validators
@@ -47,10 +46,7 @@ data class SignInUiState(
 )
 
 @HiltViewModel
-class SignInViewModel @Inject constructor(
-    private val auth: AuthRepository,
-    private val credentials: CredentialSaver,
-) : ViewModel() {
+class SignInViewModel @Inject constructor(private val auth: AuthRepository) : ViewModel() {
     private val state = MutableStateFlow(SignInUiState())
     val uiState: StateFlow<SignInUiState> = state.asStateFlow()
 
@@ -70,7 +66,7 @@ class SignInViewModel @Inject constructor(
         state.update { it.copy(loading = true, formError = null) }
         viewModelScope.launch {
             when (val result = auth.signInEmail(s.email, s.password)) {
-                is AppResult.Success -> credentials.offer(s.email, s.password)
+                is AppResult.Success -> Unit // the gate moves on; Autofill offers to save the password
                 is AppResult.Failure -> state.update {
                     when (result.error) {
                         AppError.InvalidEmail -> it.copy(loading = false, emailError = result.error.messageRes)
@@ -120,10 +116,7 @@ data class SignUpUiState(
 )
 
 @HiltViewModel
-class SignUpViewModel @Inject constructor(
-    private val auth: AuthRepository,
-    private val credentials: CredentialSaver,
-) : ViewModel() {
+class SignUpViewModel @Inject constructor(private val auth: AuthRepository) : ViewModel() {
     private val state = MutableStateFlow(SignUpUiState())
     val uiState: StateFlow<SignUpUiState> = state.asStateFlow()
 
@@ -151,7 +144,7 @@ class SignUpViewModel @Inject constructor(
         state.update { it.copy(loading = true, formError = null) }
         viewModelScope.launch {
             when (val result = auth.signUpEmail(Validators.normalizeName(s.name), s.email, s.password)) {
-                is AppResult.Success -> credentials.offer(s.email, s.password)
+                is AppResult.Success -> Unit // the gate moves on; Autofill offers to save the password
                 is AppResult.Failure -> state.update {
                     when (result.error) {
                         AppError.EmailInUse, AppError.InvalidEmail -> it.copy(loading = false, emailError = result.error.messageRes)
