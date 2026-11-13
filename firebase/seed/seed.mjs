@@ -4,8 +4,9 @@
 //   npm run seed          writes fresh data into running emulators (requests dated from now)
 //   npm run seed:export   regenerates the committed snapshot in seed/emulator-data/
 //
-// Area codes are placeholders until app/src/main/assets/bd-geo.json (Phase 2.4) fixes
-// the code scheme. When it does, update AREAS below and re-run seed:export.
+// Area codes are the HDX pcodes used by app/src/main/assets/bd-geo.json (BBS data via
+// UN OCHA HDX). Each city corporation is one area. If bd-geo.json changes a code, update
+// AREAS below and re-run seed:export.
 import { pathToFileURL } from 'node:url';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import { Timestamp, doc, setDoc } from 'firebase/firestore';
@@ -20,9 +21,9 @@ const at = (ms) => Timestamp.fromMillis(Math.floor((now + ms) / 1000) * 1000);
 const EPOCH = Timestamp.fromMillis(0);
 
 const AREAS = {
-  dhanmondi: { division: '30', district: '3026', upazila: '302616' },
-  mirpur: { division: '30', district: '3026', upazila: '302648' },
-  kotwali: { division: '20', district: '2015', upazila: '201541' },
+  dhanmondi: { division: 'BD30', district: 'BD3026', upazila: 'BD30262000' }, // Dhaka South City Corporation
+  mirpur: { division: 'BD30', district: 'BD3026', upazila: 'BD30262500' }, // Dhaka North City Corporation
+  kotwali: { division: 'BD20', district: 'BD2015', upazila: 'BD20151600' }, // Chattogram City Corporation
 };
 
 // ------------------------------------------------------------------ people

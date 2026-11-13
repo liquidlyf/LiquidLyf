@@ -64,7 +64,7 @@ export function fakePhone() {
   return `+88017000000${String(phoneSeq).padStart(2, '0')}`;
 }
 
-export const AREA = { division: '30', district: '3026', upazila: '302612' };
+export const AREA = { division: 'BD30', district: 'BD3026', upazila: 'BD30262000' }; // HDX pcodes, as in bd-geo.json
 
 /** A complete, valid users/{uid} doc as stored (fixed timestamps, for seeding). */
 export function userDoc(uid, o = {}) {

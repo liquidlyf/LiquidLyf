@@ -165,7 +165,7 @@ export function requestRest(o: Record<string, unknown> = {}) {
   const v: Record<string, unknown> = {
     requesterUid: "alice", status: "OPEN", fanoutTier: 0, createdAt: new Date(Date.now() - 60_000),
     bloodGroup: "B_POS", component: "WHOLE_BLOOD", acceptCompatible: false, acceptedGroups: ["B_POS"],
-    division: "30", district: "3026", upazila: "302616", urgency: "URGENT", ...o,
+    division: "BD30", district: "BD3026", upazila: "BD30262000", urgency: "URGENT", ...o,
   };
   const enc = (x: unknown): any => x instanceof Date ? { timestampValue: x.toISOString() }
     : Array.isArray(x) ? { arrayValue: { values: x.map(enc) } }

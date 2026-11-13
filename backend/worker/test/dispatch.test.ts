@@ -26,9 +26,9 @@ describe("dispatch: the owner", () => {
     expect(await res.json()).toEqual({ accepted: true, tier: 1, messages: 1 });
 
     expect(calls.fcm).toHaveLength(1);
-    expect(calls.fcm[0].condition).toBe("'up_302616_B_POS' in topics");
+    expect(calls.fcm[0].condition).toBe("'up_BD30262000_B_POS' in topics");
     expect(calls.fcm[0].data).toEqual({
-      type: "NEW_REQUEST", requestId: RID, bloodGroup: "B_POS", district: "3026", urgency: "URGENT", tier: "1",
+      type: "NEW_REQUEST", requestId: RID, bloodGroup: "B_POS", district: "BD3026", urgency: "URGENT", tier: "1",
     });
     expect(calls.fcm[0].android).toMatchObject({ priority: "HIGH", collapse_key: RID });
 
@@ -53,7 +53,7 @@ describe("dispatch: the owner", () => {
     const calls = await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest({ bloodGroup: "O_NEG", acceptedGroups: ["O_NEG"], urgency: "CRITICAL" }) } });
     const res = await call(await bearer("alice"));
     expect(await res.json()).toMatchObject({ tier: 3 });
-    expect(calls.fcm[0].condition).toBe("'di_3026_O_NEG' in topics");
+    expect(calls.fcm[0].condition).toBe("'di_BD3026_O_NEG' in topics");
   });
 
   test("a repeated dispatch is accepted but sends nothing", async () => {

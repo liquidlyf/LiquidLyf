@@ -159,11 +159,11 @@ describe('donors: owner-written mirror (Spark test 1)', () => {
 
   test('users + donors in one batch with matching fields succeeds', async () => {
     await assertSucceeds(updateProfile(as('bob'), 'bob',
-      { district: '3027', upazila: '302701' }, { district: '3027', upazila: '302701' }));
+      { district: 'BD3033', upazila: 'BD30333300' }, { district: 'BD3033', upazila: 'BD30333300' }));
   });
 
   test('a mismatching card in the batch fails', async () => {
-    await assertFails(updateProfile(as('bob'), 'bob', { district: '3027', upazila: '302701' }, { district: '3027' }));
+    await assertFails(updateProfile(as('bob'), 'bob', { district: 'BD3033', upazila: 'BD30333300' }, { district: 'BD3033' }));
     await assertFails(updateProfile(as('bob'), 'bob', { available: false }, { available: true }));
   });
 

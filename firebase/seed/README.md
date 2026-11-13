@@ -30,5 +30,5 @@ All passwords are `password123`, and every email is already verified.
 
 ## Notes
 - **The snapshot's requests expire after a few days**, because they carry the date they were generated. With the emulators running, run `npm run seed` in a second terminal for fresh ones.
-- **Area codes are placeholders** until `app/src/main/assets/bd-geo.json` (Phase 2.4) fixes the code scheme. When it does, update `AREAS` in `seed.mjs` and re-run `npm run seed:export`.
+- **Area codes are the HDX pcodes from `app/src/main/assets/bd-geo.json`**, for example Dhaka South City Corporation `BD30262000`. Each city corporation is one area. If a code changes there, update `AREAS` in `seed.mjs` and re-run `npm run seed:export`.
 - **`rules-tests/seed.test.js` checks that the seed stays valid** under the security rules. If a schema change breaks it, update `seed.mjs`.

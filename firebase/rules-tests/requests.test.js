@@ -34,14 +34,14 @@ describe('requests: read (doc 07 test 2)', () => {
   test('a verified user can read requests and query the feed', async () => {
     await assertSucceeds(getDoc(doc(as('eve'), 'requests/r1')));
     const feed = query(collection(as('eve'), 'requests'),
-      where('status', '==', 'OPEN'), where('district', '==', '3026'),
+      where('status', '==', 'OPEN'), where('district', '==', 'BD3026'),
       where('acceptedGroups', 'array-contains', 'B_POS'));
     await assertSucceeds(getDocs(feed));
   });
 
   test('the delta-sync feed (no status filter) is allowed', async () => {
     const delta = query(collection(as('eve'), 'requests'),
-      where('district', '==', '3026'), where('updatedAt', '>', ts(-DAY)));
+      where('district', '==', 'BD3026'), where('updatedAt', '>', ts(-DAY)));
     await assertSucceeds(getDocs(delta));
   });
 

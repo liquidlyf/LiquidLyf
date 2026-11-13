@@ -67,7 +67,7 @@ export function newRequest(requesterUid: string, o: Record<string, unknown> = {}
   return {
     requesterUid, requesterDisplayName: "Alice T.", bloodGroup: "B_POS", component: "WHOLE_BLOOD",
     acceptCompatible: false, acceptedGroups: ["B_POS"], unitsNeeded: 1, unitsFulfilled: 0,
-    hospitalName: "Demo Hospital", division: "30", district: "3026", upazila: "302616",
+    hospitalName: "Demo Hospital", division: "BD30", district: "BD3026", upazila: "BD30262000",
     urgency: "URGENT", neededBy, expiresAt: new Date(neededBy.getTime() + 86_400_000),
     notes: "", flagged: false, status: "OPEN", responseCount: 0, reportCount: 0, askCount: 0,
     responders: {}, fanoutTier: 0, nextTierAt: new Date(), createdAt: new Date(), updatedAt: new Date(),
