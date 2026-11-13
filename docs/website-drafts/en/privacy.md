@@ -160,7 +160,13 @@ serious harm.
 | Reports and moderators' action log | 1 year, to prevent repeat abuse |
 | Crash reports | 90 days |
 
-<!-- CHECK: whether any backups exist. The free Spark plan has no scheduled Firestore backups. -->
+<!-- CHECK: whether any backups exist. The free Spark plan has no scheduled Firestore backups.
+     CHECK (session B, item B6): the Worker's cleanup job (Phase 5) that deletes reports after 1 year and
+     cleans closed requests after 90 days doesn't exist yet. B6 also decides whether closed requests lose
+     the name after 90 days ("LiquidLyf user") or keep "Alice T." with only phones and free text removed.
+     Reword the "Closed requests and offers" row (both languages) to match, and publish only once the
+     job runs. -->
+
 
 ## 7. Your choices and rights
 
