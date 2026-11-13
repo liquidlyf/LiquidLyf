@@ -1,0 +1,51 @@
+# Dependabot version updates. Note: GitHub reads this file only from the default branch
+# (main), so it starts working when `rebuild` is merged into main at v1.0.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: deps
+    groups:
+      # Kotlin, its compiler plugins and KSP must move together.
+      kotlin:
+        patterns:
+          - org.jetbrains.kotlin*
+          - com.google.devtools.ksp*
+      kotlinx:
+        patterns:
+          - org.jetbrains.kotlinx*
+      androidx:
+        patterns:
+          - androidx.*
+      android-gradle-plugin:
+        patterns:
+          - com.android.*
+      firebase:
+        patterns:
+          - com.google.firebase*
+          - com.google.gms*
+      hilt:
+        patterns:
+          - com.google.dagger*
+      test:
+        patterns:
+          - junit*
+          - io.mockk*
+          - app.cash.turbine*
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns:
+          - '*'

@@ -1,0 +1,30 @@
+{
+  "_comment": "Dummy production config for CI only. It lets PR builds compile the prod flavor (and run R8) without any secret. demo-liquidlyf-ci is a Firebase demo project with no live resources. The release job replaces this file with the real config.",
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "demo-liquidlyf-ci",
+    "storage_bucket": "demo-liquidlyf-ci.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000002",
+        "android_client_info": {
+          "package_name": "io.github.liquidlyf"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "Aci-dummy-config-not-a-real-key0000000"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
