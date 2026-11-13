@@ -29,6 +29,25 @@
             </intent-filter>
         </activity>
 
+        <!--
+            Temporary (Phase 1.4b): a second launcher entry, "Option B", so the maintainer can
+            compare the two icon options on the phone. Off unless a debug build turns it on.
+            Remove it, and ic_launcher_option_b, once an icon is chosen.
+        -->
+        <activity-alias
+            android:name=".IconOptionB"
+            android:enabled="@bool/show_icon_option_b"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_option_b"
+            android:label="@string/icon_option_b_label"
+            android:roundIcon="@mipmap/ic_launcher_option_b"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <!-- Per-app language on Android 12 and older (AppCompat stores the choice). -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
