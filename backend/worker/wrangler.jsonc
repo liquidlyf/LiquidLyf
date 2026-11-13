@@ -1,0 +1,48 @@
+// LiquidLyf Worker. Non-secret settings only. The one secret, the service-account JSON,
+// is stored with:  npx wrangler secret put GCP_SA_JSON   (see README.md)
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "liquidlyf-worker",
+  "main": "src/index.ts",
+  // Must not be newer than the pinned wrangler's workerd supports (2026-10-30 for 4.155.0).
+  "compatibility_date": "2026-10-15",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  // Crons arrive in Phase 5 (escalation sweep, expiry, retention).
+
+  // ---------------- production: Firebase project liquidlyf-app ----------------
+  "kv_namespaces": [
+    // Created with: npx wrangler kv namespace create CACHE
+    { "binding": "CACHE", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }
+  ],
+  "ratelimits": [
+    // 10 calls per minute per uid (src/auth.ts RATE_LIMIT)
+    { "name": "RATE_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }
+  ],
+  "vars": {
+    "FIREBASE_PROJECT_ID": "liquidlyf-app",
+    "FIREBASE_PROJECT_NUMBER": "REPLACE_WITH_PROJECT_NUMBER",
+    "ANDROID_APP_ID": "",
+    "ENFORCE_APP_CHECK": "false",
+    // Keep in sync with Remote Config escalation_minutes_* (Phase 2.1).
+    "ESCALATION_MINUTES": { "CRITICAL": 15, "URGENT": 30, "PLANNED": 120 }
+  },
+
+  "env": {
+    // ---------------- npm run dev: local emulators, no Google calls ----------------
+    "local": {
+      "kv_namespaces": [{ "binding": "CACHE", "id": "local-cache" }],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }
+      ],
+      "vars": {
+        "FIREBASE_PROJECT_ID": "demo-liquidlyf",
+        "FIREBASE_PROJECT_NUMBER": "0",
+        "ANDROID_APP_ID": "",
+        "ENFORCE_APP_CHECK": "false",
+        "ESCALATION_MINUTES": { "CRITICAL": 15, "URGENT": 30, "PLANNED": 120 },
+        "FIRESTORE_EMULATOR_HOST": "127.0.0.1:8085"
+      }
+    }
+  }
+}

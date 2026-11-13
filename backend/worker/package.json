@@ -1,0 +1,22 @@
+{
+  "name": "liquidlyf-worker",
+  "private": true,
+  "description": "LiquidLyf Cloudflare Worker: request dispatch over FCM topics (free plan)",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "wrangler dev --env local",
+    "test": "vitest run",
+    "test:e2e": "cd ../../firebase && npx firebase emulators:exec --only auth,firestore --project demo-liquidlyf \"npm --prefix ../backend/worker run test:e2e:inner\"",
+    "test:e2e:inner": "vitest run --config vitest.e2e.config.js",
+    "build": "wrangler deploy --dry-run --env=\"\" --outdir dist",
+    "deploy": "wrangler deploy --env=\"\""
+  },
+  "devDependencies": {
+    "vitest": "5.0.5",
+    "wrangler": "4.155.0"
+  }
+}
