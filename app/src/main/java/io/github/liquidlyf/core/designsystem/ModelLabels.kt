@@ -2,8 +2,11 @@ package io.github.liquidlyf.core.designsystem
 
 import androidx.annotation.StringRes
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.model.BloodComponent
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.Gender
+import io.github.liquidlyf.core.model.PatientCondition
+import io.github.liquidlyf.core.model.ReportReason
 import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.Urgency
@@ -64,6 +67,39 @@ val ResponseStatus.labelRes: Int
         ResponseStatus.DECLINED -> R.string.response_status_declined
         ResponseStatus.WITHDRAWN -> R.string.response_status_withdrawn
         ResponseStatus.DONATED -> R.string.response_status_donated
+    }
+
+@get:StringRes
+val BloodComponent.labelRes: Int
+    get() = when (this) {
+        BloodComponent.WHOLE_BLOOD -> R.string.component_whole_blood
+        BloodComponent.RED_CELLS -> R.string.component_red_cells
+        BloodComponent.PLATELETS -> R.string.component_platelets
+        BloodComponent.PLASMA -> R.string.component_plasma
+    }
+
+@get:StringRes
+val PatientCondition.labelRes: Int
+    get() = when (this) {
+        PatientCondition.SURGERY -> R.string.condition_surgery
+        PatientCondition.ACCIDENT -> R.string.condition_accident
+        PatientCondition.THALASSEMIA -> R.string.condition_thalassemia
+        PatientCondition.DENGUE -> R.string.condition_dengue
+        PatientCondition.DELIVERY -> R.string.condition_delivery
+        PatientCondition.CANCER -> R.string.condition_cancer
+        PatientCondition.ANEMIA -> R.string.condition_anemia
+        PatientCondition.OTHER -> R.string.condition_other
+    }
+
+@get:StringRes
+val ReportReason.labelRes: Int
+    get() = when (this) {
+        ReportReason.FAKE_REQUEST -> R.string.report_reason_fake
+        ReportReason.ASKING_MONEY -> R.string.report_reason_money
+        ReportReason.ABUSIVE -> R.string.report_reason_abusive
+        ReportReason.SPAM -> R.string.report_reason_spam
+        ReportReason.WRONG_INFO -> R.string.report_reason_wrong_info
+        ReportReason.OTHER -> R.string.report_reason_other
     }
 
 val Gender.labelRes: Int

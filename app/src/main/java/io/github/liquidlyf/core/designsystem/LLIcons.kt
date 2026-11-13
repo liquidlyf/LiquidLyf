@@ -52,4 +52,20 @@ object LLIcons {
     val Verified = R.drawable.ic_verified
     val Favorite = R.drawable.ic_favorite
     val Undo = R.drawable.ic_undo
+
+    // Requests and contact (Phase 4)
+    val Call = R.drawable.ic_call
+    val Copy = R.drawable.ic_content_copy
+    val Share = R.drawable.ic_share
+    val MoreVert = R.drawable.ic_more_vert
+    val Location = R.drawable.ic_location_on
+    val Hospital = R.drawable.ic_local_hospital
+    val Map = R.drawable.ic_map
+    val Edit = R.drawable.ic_edit
+    val Close = R.drawable.ic_close
+    val Flag = R.drawable.ic_flag
+    val Group = R.drawable.ic_group
+    val Remove = R.drawable.ic_remove
+    val Info = R.drawable.ic_info
+    val Shield = R.drawable.ic_shield
 }

@@ -46,7 +46,7 @@ import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.feature.auth.AuthLayout
 import io.github.liquidlyf.feature.auth.FormError
-import io.github.liquidlyf.feature.auth.currentAppLocale
+import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.feature.profilesetup.AreaPickers
 
 // ---- Change password ----

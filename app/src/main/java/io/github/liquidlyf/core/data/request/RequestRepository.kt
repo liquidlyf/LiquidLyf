@@ -42,14 +42,26 @@ interface RequestRepository {
      */
     fun feed(district: String, group: BloodGroup): Flow<List<BloodRequest>>
 
+    /**
+     * Requests → Nearby: every OPEN request in [district], including groups I can't give, soonest
+     * first, a page at a time (a plain read with pull-to-refresh; listeners are for Home only).
+     */
+    suspend fun nearby(district: String, after: BloodRequest? = null, limit: Long = PAGE_SIZE): AppResult<List<BloodRequest>>
+
     /** The request being viewed, live. Null if it doesn't exist. */
     fun observe(requestId: String): Flow<BloodRequest?>
 
     /** My requests, newest first, one page at a time ([after] = last item of the previous page). */
     suspend fun mine(uid: String, after: BloodRequest? = null, limit: Long = PAGE_SIZE): AppResult<List<BloodRequest>>
 
-    /** Contract 6. Returns the new request's id. */
-    suspend fun create(requester: UserProfile, draft: RequestDraft): AppResult<String>
+    /** A fresh id, known before the write, so an offline create can open the request at once. */
+    fun newRequestId(): String
+
+    /**
+     * Contract 6. Returns [requestId] once the server has the batch. Offline, Firestore keeps the
+     * write and this suspends until it's back online; the request shows locally meanwhile.
+     */
+    suspend fun create(requester: UserProfile, draft: RequestDraft, requestId: String = newRequestId()): AppResult<String>
 
     /** Contract 7: CANCELLED or FULFILLED, freeing a slot in the 1/3 open-request limit. */
     suspend fun close(request: BloodRequest, status: RequestStatus, reason: String?): AppResult<Unit>
@@ -81,6 +93,15 @@ class FirestoreRequestRepository @Inject constructor(
             .limit(RequestRepository.FEED_LIMIT)
             .snapshots { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
 
+    override suspend fun nearby(district: String, after: BloodRequest?, limit: Long): AppResult<List<BloodRequest>> = appResultOf {
+        var query = db.requests()
+            .whereEqualTo(RequestDoc.STATUS, RequestStatus.OPEN.code)
+            .whereEqualTo(RequestDoc.DISTRICT, district)
+            .orderBy(RequestDoc.NEEDED_BY)
+        after?.let { query = query.startAfter(it.neededBy.toTimestamp()) }
+        query.limit(limit).get().await().documents.mapNotNull { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
+    }
+
     override fun observe(requestId: String): Flow<BloodRequest?> =
         db.requestRef(requestId).snapshots { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
 
@@ -92,10 +113,12 @@ class FirestoreRequestRepository @Inject constructor(
         query.limit(limit).get().await().documents.mapNotNull { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
     }
 
-    override suspend fun create(requester: UserProfile, draft: RequestDraft): AppResult<String> {
+    override fun newRequestId(): String = db.requests().document().id
+
+    override suspend fun create(requester: UserProfile, draft: RequestDraft, requestId: String): AppResult<String> {
         if (!isValid(draft)) return AppResult.Failure(AppError.InvalidInput)
         return appResultOf {
-            val ref = db.requests().document()
+            val ref = db.requestRef(requestId)
             val batch = db.batch()
             batch.set(ref, RequestDoc.createMap(draft, requester.uid, displayNameOf(requester)))
             batch.set(db.contactRef(ref.id), ContactDoc.createMap(draft, requester.uid))

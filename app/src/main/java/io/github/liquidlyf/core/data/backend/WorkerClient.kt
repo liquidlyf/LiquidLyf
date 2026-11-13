@@ -23,6 +23,15 @@ import javax.inject.Singleton
 interface WorkerClient {
     /** Asks the Worker to alert the first tier of donors. Call right after the create batch commits. */
     suspend fun dispatch(requestId: String): AppResult<Dispatch>
+
+    /**
+     * Phase 5 personal push about one offer: the donor calls it after offering (NEW_OFFER), the
+     * requester after confirming, declining or marking donated. The Worker checks the current state.
+     */
+    suspend fun notifyOffer(requestId: String, donorUid: String): AppResult<Unit>
+
+    /** The requester, after fulfilling or cancelling: tells donors still OFFERED or CONFIRMED. */
+    suspend fun notifyResponders(requestId: String): AppResult<Unit>
 }
 
 data class Dispatch(
@@ -55,10 +64,20 @@ class HttpWorkerClient @Inject constructor(
     /** Waits before retry number [attempt] (1-based). Tests replace it. */
     internal var backoff: suspend (attempt: Int) -> Unit = { attempt -> delay(BASE_DELAY_MS shl (attempt - 1)) }
 
-    override suspend fun dispatch(requestId: String): AppResult<Dispatch> {
+    override suspend fun dispatch(requestId: String): AppResult<Dispatch> =
+        call("v1/requests/$requestId/dispatch") { it.toDispatch() }
+
+    override suspend fun notifyOffer(requestId: String, donorUid: String): AppResult<Unit> =
+        call("v1/requests/$requestId/responses/$donorUid/notify") { }
+
+    override suspend fun notifyResponders(requestId: String): AppResult<Unit> =
+        call("v1/requests/$requestId/notify-responders") { }
+
+    /** One POST with the retry table of backend/worker/README.md; [ok] reads a 202 body. */
+    private suspend fun <T> call(path: String, ok: (Reply) -> T): AppResult<T> {
         val base = endpoint.baseUrl()?.trimEnd('/')
         if (base.isNullOrBlank()) return AppResult.Failure(AppError.Unknown)
-        val url = "$base/v1/requests/$requestId/dispatch"
+        val url = "$base/$path"
 
         var refreshedToken = false
         var retries = 0
@@ -71,7 +90,7 @@ class HttpWorkerClient @Inject constructor(
                 null // offline or timed out: retry like a 503
             }
             when (val code = reply?.code) {
-                202 -> return AppResult.Success(reply!!.toDispatch())
+                202 -> return AppResult.Success(ok(reply!!))
                 401 -> if (!refreshedToken) {
                     refreshedToken = true
                     continue

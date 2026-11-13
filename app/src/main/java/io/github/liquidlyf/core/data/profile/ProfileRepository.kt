@@ -55,6 +55,12 @@ interface ProfileRepository {
     /** "Seen" for the whole inbox: one timestamp instead of a flag per item. */
     suspend fun markInboxSeen(profile: UserProfile): AppResult<Unit>
 
+    /**
+     * "Not for me" (Phase 4.5): hides a request from Home on every device. The list lives on the
+     * user doc (rules: at most 200), so the oldest entries drop off.
+     */
+    suspend fun hideRequest(profile: UserProfile, requestId: String): AppResult<Unit>
+
     suspend fun donations(uid: String): AppResult<List<Donation>>
 
     /** Contract 13: a donation the donor types in. Never verified. */
@@ -132,6 +138,12 @@ class FirestoreProfileRepository @Inject constructor(
 
     override suspend fun markInboxSeen(profile: UserProfile): AppResult<Unit> =
         writeProfile(profile, profile, setOf(UserDoc.INBOX_SEEN_AT))
+
+    override suspend fun hideRequest(profile: UserProfile, requestId: String): AppResult<Unit> {
+        if (requestId in profile.hiddenRequestIds) return AppResult.Success(Unit)
+        val ids = (profile.hiddenRequestIds + requestId).takeLast(Validators.MAX_HIDDEN_OR_BLOCKED)
+        return writeProfile(profile, profile.copy(hiddenRequestIds = ids))
+    }
 
     override suspend fun donations(uid: String): AppResult<List<Donation>> = appResultOf {
         db.donations(uid).orderBy(DonationDoc.DONATED_AT, Query.Direction.DESCENDING).get().await()

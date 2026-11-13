@@ -127,6 +127,22 @@ class HttpWorkerClientTest {
     }
 
     @Test
+    fun `notify calls hit the personal-push paths with the same retry rules`() = runTest {
+        reply(202, """{"accepted":true,"type":"NEW_OFFER"}""")
+        assertEquals(AppResult.Success(Unit), client.notifyOffer("req1", "donor1"))
+        assertEquals("/v1/requests/req1/responses/donor1/notify", server.takeRequest().url.encodedPath)
+
+        reply(503)
+        reply(202, """{"accepted":true,"type":"REQUEST_FULFILLED"}""")
+        assertEquals(AppResult.Success(Unit), client.notifyResponders("req1"))
+        assertEquals("/v1/requests/req1/notify-responders", server.takeRequest().url.encodedPath)
+        assertEquals(listOf(1), waits)
+
+        reply(409, """{"error":"nothing to announce"}""")
+        assertEquals(AppResult.Failure(AppError.InvalidInput), client.notifyOffer("req1", "donor1"))
+    }
+
+    @Test
     fun `no Worker configured yet is a quiet failure, with no call`() = runTest {
         val unconfigured = HttpWorkerClient(OkHttpClient(), { null }, tokens)
         assertEquals(AppResult.Failure(AppError.Unknown), unconfigured.dispatch("req1"))

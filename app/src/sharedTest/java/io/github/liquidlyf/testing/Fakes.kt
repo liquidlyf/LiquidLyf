@@ -15,6 +15,7 @@ import io.github.liquidlyf.core.model.BloodComponent
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.Donation
+import io.github.liquidlyf.core.model.DonationSource
 import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.core.model.ProfileDraft
 import io.github.liquidlyf.core.model.UserProfile
@@ -180,8 +181,11 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
 
     override suspend fun profile(uid: String, refresh: Boolean) = result { AppResult.Success(profiles[uid]) }
 
+    /** Per-user counters; a user with a profile but no entry has none open. */
+    val stats = mutableMapOf<String, UserStats>()
+
     override suspend fun stats(uid: String, refresh: Boolean) =
-        result { AppResult.Success(profiles[uid]?.let { UserStats(0, 0, null) }) }
+        result { AppResult.Success(stats[uid] ?: profiles[uid]?.let { UserStats(0, 0, null) }) }
 
     override suspend fun create(uid: String, email: String, draft: ProfileDraft) = result {
         created += uid to draft
@@ -198,15 +202,31 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
 
     override suspend fun markInboxSeen(profile: UserProfile) = result { AppResult.Success(Unit) }
 
-    override suspend fun donations(uid: String) = result { AppResult.Success(emptyList<Donation>()) }
+    override suspend fun hideRequest(profile: UserProfile, requestId: String) = result {
+        val current = profiles[profile.uid] ?: profile
+        profiles[profile.uid] = current.copy(hiddenRequestIds = (current.hiddenRequestIds - requestId) + requestId)
+        AppResult.Success(Unit)
+    }
+
+    /** Donations by uid; recordVerifiedDonation adds one with the request id. */
+    val donationList = mutableMapOf<String, MutableList<Donation>>()
+
+    override suspend fun donations(uid: String) = result { AppResult.Success(donationList[uid].orEmpty().toList()) }
 
     override suspend fun addSelfDonation(profile: UserProfile, donatedAt: Instant, component: BloodComponent, hospitalName: String?) =
         result { AppResult.Success(Unit) }
 
     override suspend fun deleteSelfDonation(profile: UserProfile, donation: Donation) = result { AppResult.Success(Unit) }
 
-    override suspend fun recordVerifiedDonation(profile: UserProfile, request: BloodRequest, donatedAt: Instant) =
-        result { AppResult.Success(Unit) }
+    val verifiedRecorded = mutableListOf<Pair<String, String>>()
+
+    override suspend fun recordVerifiedDonation(profile: UserProfile, request: BloodRequest, donatedAt: Instant) = result {
+        verifiedRecorded += profile.uid to request.id
+        donationList.getOrPut(profile.uid) { mutableListOf() } +=
+            Donation(request.id, donatedAt, request.component, request.hospitalName, requestId = request.id, verified = true, source = DonationSource.REQUEST, createdAt = donatedAt)
+        profiles[profile.uid] = profile.copy(donationCount = profile.donationCount + 1, verifiedDonations = profile.verifiedDonations + 1, lastDonationAt = donatedAt)
+        AppResult.Success(Unit)
+    }
 }
 
 object TestData {

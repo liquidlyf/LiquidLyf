@@ -34,7 +34,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -59,6 +58,7 @@ import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.AppLocale
+import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.util.Links
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import kotlinx.coroutines.launch
@@ -105,11 +105,6 @@ internal fun FormError(@StringRes error: Int?) {
         )
     }
 }
-
-/** The app's current language, for picking the English or Bangla web page. */
-@Composable
-internal fun currentAppLocale(): AppLocale =
-    if (LocalConfiguration.current.locales[0].language == "bn") AppLocale.BN else AppLocale.EN
 
 // ---- Sign in ----
 

@@ -2,6 +2,7 @@ package io.github.liquidlyf.core.data.geo
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.GeoArea
 import io.github.liquidlyf.core.model.GeoDistrict
@@ -42,6 +43,13 @@ class BdGeo(val divisions: List<GeoDivision>) {
 
     /** Neighbouring district codes for the request fan-out (tier 4). */
     fun neighbours(districtCode: String): List<String> = districtsByCode[districtCode]?.neighbours.orEmpty()
+
+    /** "Jhikargachha, Jashore", or just the district without an area; the code if it's unknown. */
+    fun placeLabel(district: String, area: String?, locale: AppLocale): String {
+        val districtName = districtsByCode[district]?.name?.localized(locale) ?: district
+        val areaName = area?.let { areasByCode[it]?.name?.localized(locale) } ?: return districtName
+        return "$areaName, $districtName"
+    }
 }
 
 @Singleton

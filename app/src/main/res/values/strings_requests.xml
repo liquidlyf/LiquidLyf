@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 4: blood requests (create, feed, detail, offers). Bangla in values-bn/ (needs native review). -->
+<resources>
+    <!-- Relative times -->
+    <string name="time_now">now</string>
+    <plurals name="time_in_minutes">
+        <item quantity="one">in %d min</item>
+        <item quantity="other">in %d min</item>
+    </plurals>
+    <plurals name="time_in_hours">
+        <item quantity="one">in %d h</item>
+        <item quantity="other">in %d h</item>
+    </plurals>
+    <plurals name="time_in_days">
+        <item quantity="one">in %d day</item>
+        <item quantity="other">in %d days</item>
+    </plurals>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d min ago</item>
+        <item quantity="other">%d min ago</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d h ago</item>
+        <item quantity="other">%d h ago</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
+
+    <!-- Components and conditions -->
+    <string name="component_whole_blood">Whole blood</string>
+    <string name="component_red_cells">Red cells</string>
+    <string name="component_platelets">Platelets</string>
+    <string name="component_plasma">Plasma</string>
+    <string name="condition_surgery">Surgery</string>
+    <string name="condition_accident">Accident</string>
+    <string name="condition_thalassemia">Thalassemia</string>
+    <string name="condition_dengue">Dengue</string>
+    <string name="condition_delivery">Childbirth</string>
+    <string name="condition_cancer">Cancer</string>
+    <string name="condition_anemia">Anaemia</string>
+    <string name="condition_other">Other</string>
+
+    <!-- Request card -->
+    <plurals name="request_units">
+        <item quantity="one">%1$d unit · %2$s</item>
+        <item quantity="other">%1$d units · %2$s</item>
+    </plurals>
+    <plurals name="request_offers_count">
+        <item quantity="one">%d offer</item>
+        <item quantity="other">%d offers</item>
+    </plurals>
+    <string name="request_needed_by">Needed %1$s</string>
+
+    <!-- Create request -->
+    <string name="create_step">Step %1$d of %2$d</string>
+    <string name="action_post_request">Post request</string>
+    <string name="action_posting">Posting…</string>
+    <string name="create_limit_title">You have the most open requests allowed</string>
+    <plurals name="create_limit_body">
+        <item quantity="one">You can have %1$d open request at a time. Close it when it\'s fulfilled or no longer needed, then post again.</item>
+        <item quantity="other">You can have up to %1$d open requests at a time. Close one that\'s fulfilled or no longer needed, then post again.</item>
+    </plurals>
+    <string name="create_limit_body_new">New accounts can have 1 open request during their first week. Close it when it\'s fulfilled or no longer needed, then post again.</string>
+    <string name="create_limit_action">See my requests</string>
+    <string name="create_patient_title">Who needs blood?</string>
+    <string name="create_patient_group">The patient\'s blood group</string>
+    <string name="create_error_group">Choose the patient\'s blood group.</string>
+    <string name="create_component">What\'s needed</string>
+    <string name="create_units">Units (bags)</string>
+    <plurals name="create_units_spoken">
+        <item quantity="one">%1$d unit</item>
+        <item quantity="other">%1$d units</item>
+    </plurals>
+    <string name="create_units_less">Fewer units</string>
+    <string name="create_units_more">More units</string>
+    <string name="create_condition">Reason (optional)</string>
+    <string name="create_accept_compatible">Compatible groups are OK</string>
+    <string name="create_accept_compatible_info">Only if the doctor agrees. More donors will be alerted.</string>
+    <string name="create_compatible_list">Donors with %1$s will also be asked.</string>
+    <string name="create_compatible_none">No other group can give this. Only this group will be asked.</string>
+    <string name="create_where_title">Where and when?</string>
+    <string name="create_hospital">Hospital</string>
+    <string name="create_hospital_hint">Type the hospital\'s name. If it\'s in our list, pick it.</string>
+    <string name="create_error_hospital">Enter the hospital\'s name.</string>
+    <string name="create_ward">Ward or bed (optional)</string>
+    <string name="create_private_hint">Private: only you and donors who offer can see it.</string>
+    <string name="create_urgency">How soon?</string>
+    <string name="create_urgency_critical_help">Needed within 6 hours.</string>
+    <string name="create_urgency_urgent_help">Needed within 24 hours.</string>
+    <string name="create_urgency_planned_help">For a set day, such as a planned operation or a thalassaemia transfusion.</string>
+    <string name="create_error_urgency">Choose how soon blood is needed.</string>
+    <string name="create_pick_time">Pick the date and time</string>
+    <string name="create_error_planned">Pick a time between 15 minutes and 30 days from now.</string>
+    <string name="create_contact_title">How can donors reach you?</string>
+    <string name="create_contact_info">Donors see this only after they offer to donate.</string>
+    <string name="create_contact_name">Contact name</string>
+    <string name="create_contact_phone">Contact mobile number</string>
+    <string name="create_patient_name">Patient\'s name (optional)</string>
+    <string name="create_notes">Notes for donors (optional)</string>
+    <string name="create_notes_counter">%1$d / %2$d</string>
+    <string name="create_money_warning">Blood must never be bought or sold. Requests that mention money are checked by our team.</string>
+    <string name="create_review">Check your request</string>
+    <string name="create_genuine">I confirm this request is genuine, and no money will be asked or paid.</string>
+    <string name="create_error_genuine">Please confirm the request is genuine.</string>
+
+    <!-- Request detail -->
+    <string name="action_share">Share</string>
+    <string name="action_more">More options</string>
+    <string name="action_call">Call</string>
+    <string name="action_copy">Copy</string>
+    <string name="detail_missing_title">This request isn\'t available</string>
+    <string name="detail_missing_body">It may have been removed, or it wasn\'t posted.</string>
+    <string name="detail_waiting_network">Waiting for network. Your request is saved on this phone and will be posted when you\'re back online.</string>
+    <plurals name="detail_units_progress">
+        <item quantity="one">%1$d of %2$d unit received</item>
+        <item quantity="other">%1$d of %2$d units received</item>
+    </plurals>
+    <string name="detail_posted_by">Posted %1$s by %2$s</string>
+    <string name="detail_posted_by_unsent">By %1$s · not posted yet</string>
+    <string name="detail_ward">Ward or bed: %1$s</string>
+    <string name="detail_open_maps">Open in Maps</string>
+    <string name="detail_safety">Never pay or accept money for blood. Report requests that ask for money.</string>
+    <string name="detail_i_can_donate">I can donate</string>
+    <string name="detail_your_offer">Your offer</string>
+    <string name="detail_donated_thanks">Thank you! This donation is in your donation history.</string>
+    <string name="detail_declined_info">The requester has found other donors. Thank you for offering.</string>
+    <string name="detail_withdraw">Withdraw my offer</string>
+    <string name="detail_withdraw_title">Withdraw your offer?</string>
+    <string name="detail_withdraw_body">The requester will no longer count on you. You can\'t offer again on this request.</string>
+    <string name="detail_check_title">Before you offer</string>
+    <string name="detail_check_well">You feel well today.</string>
+    <string name="detail_check_interval">Your last whole-blood donation was at least 4 months ago.</string>
+    <string name="detail_check_weight">You weigh at least 45 kg.</string>
+    <string name="detail_check_illness">No fever, infection or new medicine in the last week.</string>
+    <string name="detail_check_meal">You can eat and drink before donating.</string>
+    <string name="detail_check_guidance">This is guidance only. The blood bank checks you before you donate.</string>
+    <string name="detail_offer_message">Message to the requester (optional)</string>
+    <string name="detail_offer_consent">Your name, blood group and mobile number will be shared with the requester.</string>
+    <string name="detail_offer_confirm">Share my number and offer</string>
+    <string name="detail_block_closed">This request is closed.</string>
+    <string name="detail_block_no_group">Add your blood group in your profile to offer.</string>
+    <string name="detail_block_incompatible">Your blood group isn\'t one this request can use.</string>
+    <plurals name="detail_block_rest">
+        <item quantity="one">You can donate again in %d day.</item>
+        <item quantity="other">You can donate again in %d days.</item>
+    </plurals>
+    <string name="detail_block_weight">Donors must weigh at least 45 kg.</string>
+    <string name="detail_block_age">Donors must be 18 to 60 years old.</string>
+    <string name="detail_contact">Contact</string>
+    <string name="detail_patient">Patient: %1$s</string>
+    <string name="detail_copied">Number copied</string>
+    <plurals name="detail_offers_title">
+        <item quantity="one">%d offer</item>
+        <item quantity="other">%d offers</item>
+    </plurals>
+    <string name="detail_no_offers_open">No offers yet. Matching donors nearby have been alerted.</string>
+    <string name="detail_no_offers">No one offered on this request.</string>
+    <string name="detail_call_donor">Call %1$s</string>
+    <string name="detail_confirm">Confirm</string>
+    <string name="detail_decline">Decline</string>
+    <string name="detail_decline_title">Decline this offer?</string>
+    <string name="detail_decline_body">The donor will be told you don\'t need them for this request.</string>
+    <string name="detail_mark_donated">Mark donated</string>
+    <string name="detail_donated_title">Did this donor give blood?</string>
+    <string name="detail_donated_body">It counts as a unit received, and it\'s added to their donation history as verified.</string>
+    <string name="detail_close_request">Close request</string>
+    <string name="detail_close_title">Close this request</string>
+    <string name="detail_close_found">Found blood</string>
+    <string name="detail_close_not_needed">No longer needed</string>
+    <string name="detail_close_reason">Note (optional)</string>
+    <string name="detail_edit">Edit request</string>
+    <string name="detail_edit_needed_by">Needed by</string>
+    <string name="detail_not_for_me">Not for me</string>
+    <string name="detail_report">Report</string>
+    <string name="detail_report_title">Report this request</string>
+    <string name="detail_report_note">What\'s wrong? (optional)</string>
+    <string name="report_reason_fake">It\'s fake</string>
+    <string name="report_reason_money">It asks for money</string>
+    <string name="report_reason_abusive">It\'s abusive</string>
+    <string name="report_reason_spam">It\'s spam</string>
+    <string name="report_reason_wrong_info">The details are wrong</string>
+    <string name="report_reason_other">Something else</string>
+    <string name="detail_offer_sent">Offer sent. The requester can now call you.</string>
+    <string name="detail_withdrawn">Offer withdrawn</string>
+    <string name="detail_reported">Thanks. Our team will review it.</string>
+    <string name="detail_confirmed">Donor confirmed</string>
+    <string name="detail_declined">Offer declined</string>
+    <string name="detail_marked_donated">Donation recorded</string>
+    <string name="detail_closed">Request closed</string>
+    <string name="detail_saved">Request updated</string>
+    <plurals name="request_units_plain">
+        <item quantity="one">%d unit</item>
+        <item quantity="other">%d units</item>
+    </plurals>
+    <string name="detail_share_text">%1$s blood needed: %2$s of %3$s at %4$s, %5$s. Needed by %6$s. Can you help? Shared from LiquidLyf, the free blood donation app.</string>
+</resources>

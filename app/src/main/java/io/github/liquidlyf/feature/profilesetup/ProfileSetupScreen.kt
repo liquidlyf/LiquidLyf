@@ -65,7 +65,7 @@ import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.core.util.Links
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.auth.FormError
-import io.github.liquidlyf.feature.auth.currentAppLocale
+import io.github.liquidlyf.core.designsystem.currentAppLocale
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
