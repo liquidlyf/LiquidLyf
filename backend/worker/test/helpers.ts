@@ -90,7 +90,7 @@ export async function makeEnv(o: Partial<Env> = {}): Promise<Env> {
 export interface Calls {
   token: number; idJwks: number; appCheckJwks: number;
   reads: string[]; writes: any[][]; fcm: any[]; other: string[];
-  queries: any[]; batches: any[][];
+  queries: any[]; batches: any[][]; counts: any[];
 }
 
 export interface GoogleOpts {
@@ -103,6 +103,8 @@ export interface GoogleOpts {
   query?: (q: any) => any[];
   /** Successive batchWrite calls: per-write status codes (default all 0 = OK). */
   batchCodes?: number[][];
+  /** runAggregationQuery COUNT: the result for a structuredQuery (default 0), or an error. */
+  count?: (q: any) => number | { status: number; grpc: string };
 }
 
 /** A full document name in the fake project. */
@@ -110,7 +112,7 @@ export const docName = (path: string) => `projects/${PROJECT}/databases/(default
 
 /** Install a fetch mock; returns the live call log. */
 export async function fakeGoogle(opts: GoogleOpts = {}): Promise<Calls> {
-  const calls: Calls = { token: 0, idJwks: 0, appCheckJwks: 0, reads: [], writes: [], fcm: [], other: [], queries: [], batches: [] };
+  const calls: Calls = { token: 0, idJwks: 0, appCheckJwks: 0, reads: [], writes: [], fcm: [], other: [], queries: [], batches: [], counts: [] };
   const commitErrors = [...(opts.commitErrors ?? [])];
   const batchCodes = [...(opts.batchCodes ?? [])];
   const idKeys = { keys: [await jwk(keys.id, "id-1")] };
@@ -160,6 +162,13 @@ export async function fakeGoogle(opts: GoogleOpts = {}): Promise<Calls> {
       const docs = opts.query?.(structuredQuery) ?? [];
       const readTime = new Date().toISOString();
       return json(docs.length ? docs.map((document) => ({ document, readTime })) : [{ readTime }]);
+    }
+    if (url === `${base.slice(0, -1)}:runAggregationQuery`) {
+      const { structuredAggregationQuery: a } = JSON.parse(String(init?.body));
+      calls.counts.push(a);
+      const n = opts.count?.(a.structuredQuery) ?? 0;
+      if (typeof n === "object") return json({ error: { status: n.grpc } }, n.status);
+      return json([{ result: { aggregateFields: { n: { integerValue: String(n) } } }, readTime: new Date().toISOString() }]);
     }
     if (url === `${base.slice(0, -1)}:batchWrite`) {
       const { writes } = JSON.parse(String(init?.body));

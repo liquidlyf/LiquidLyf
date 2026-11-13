@@ -1,8 +1,10 @@
 // POST /v1/requests/{rid}/dispatch: send the first tier of a new request (doc 10 §6.4).
-// Cost: 1 Firestore read + 1 write. Later tiers are the 5-minute sweep's job (sweep.ts).
+// Cost: 2 Firestore reads (the request + the daily-cap count) + 1 write.
+// Later tiers are the 5-minute sweep's job (sweep.ts).
+import { overDailyCap } from "./cap";
 import type { Env } from "./env";
 import { sendToCondition } from "./fcm";
-import { addMinutes, escalationMinutes, fanoutWrite, requestPushData } from "./fanout";
+import { addMinutes, escalationMinutes, FAR_FUTURE, fanoutWrite, requestPushData } from "./fanout";
 import { Firestore, FirestoreError, fieldsOf } from "./firestore";
 import { getAccessToken } from "./google-auth";
 import { HttpError, json } from "./http";
@@ -11,10 +13,11 @@ import type { FirebaseUser } from "./verify";
 
 /** The app calls dispatch right after creating the request; later ones are the sweep's job. */
 export const DISPATCH_WINDOW_MS = 10 * 60 * 1000;
-const MASK = ["requesterUid", "status", "fanoutTier", "createdAt", "bloodGroup", "component",
+const MASK = ["requesterUid", "status", "fanoutTier", "nextTierAt", "createdAt", "bloodGroup", "component",
   "acceptCompatible", "acceptedGroups", "division", "district", "upazila", "urgency"];
 
 const alreadyDispatched = () => json({ accepted: true, alreadyDispatched: true }, 202);
+const dailyCapped = () => json({ error: "daily alert limit reached", dailyCap: true }, 429);
 
 export async function dispatch(env: Env, user: FirebaseUser, rid: string): Promise<Response> {
   const token = await getAccessToken(env);
@@ -41,6 +44,17 @@ export async function dispatch(env: Env, user: FirebaseUser, rid: string): Promi
     throw new HttpError(422, "request has invalid area or group codes");
   }
   if (tier === null || conditions.length === 0) throw new HttpError(422, "nothing to send");
+
+  // Parked at tier 0 = an earlier call (or the sweep) found it over the cap: answer the same, cheaply.
+  if (r.nextTierAt instanceof Date && r.nextTierAt >= FAR_FUTURE) return dailyCapped();
+  if (await overDailyCap(fs, env, user.uid, r.createdAt)) {
+    // Park it (tier 0, never due), so the sweep doesn't send it either. It stays in the feed.
+    await fs.commit([fanoutWrite(fs, rid, 0, FAR_FUTURE, doc.updateTime)]).catch((e) => {
+      if (!(e instanceof FirestoreError && e.preconditionFailed)) throw e;
+    });
+    console.log(JSON.stringify({ dispatch: rid, dailyCap: true }));
+    return dailyCapped();
+  }
 
   const nextTierAt = addMinutes(now, escalationMinutes(env.ESCALATION_MINUTES, r.urgency));
 

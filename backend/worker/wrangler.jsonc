@@ -30,7 +30,9 @@
     "ANDROID_APP_ID": "1:400334033235:android:880810095c3d0d3b7fd1a6",
     "ENFORCE_APP_CHECK": "false",
     // Keep in sync with Remote Config escalation_minutes_* (Phase 2.1).
-    "ESCALATION_MINUTES": { "CRITICAL": 15, "URGENT": 30, "PLANNED": 120 }
+    "ESCALATION_MINUTES": { "CRITICAL": 15, "URGENT": 30, "PLANNED": 120 },
+    // Requests per uid per rolling 24 h that alert donors (src/cap.ts).
+    "DAILY_ALERT_CAP": 5
   },
 
   "env": {
@@ -46,6 +48,7 @@
         "ANDROID_APP_ID": "",
         "ENFORCE_APP_CHECK": "false",
         "ESCALATION_MINUTES": { "CRITICAL": 15, "URGENT": 30, "PLANNED": 120 },
+        "DAILY_ALERT_CAP": 5,
         "FIRESTORE_EMULATOR_HOST": "127.0.0.1:8085"
       }
     }

@@ -117,12 +117,65 @@ describe("sweep run", () => {
   });
 
   test("stays inside the free plan's subrequest limit: extra work waits for the next run", async () => {
-    const many = Array.from({ length: SEND_BUDGET + 5 }, (_, i) => due(`r${i}`));
+    const many = Array.from({ length: SEND_BUDGET + 5 }, (_, i) => due(`r${i}`, { fanoutTier: 1 }));
     const calls = await fakeGoogle({ query: () => many });
     const out = await sweep(await makeEnv(), NOW);
     expect(calls.fcm).toHaveLength(SEND_BUDGET);
+    expect(calls.counts).toHaveLength(0);               // later tiers skip the daily-cap count
     expect(out.deferred).toBe(5);
     expect(calls.batches[0]).toHaveLength(SEND_BUDGET); // deferred ones aren't claimed
+  });
+
+  test("a first alert costs a daily-cap count too, and that counts against the same budget", async () => {
+    const many = Array.from({ length: SEND_BUDGET }, (_, i) => due(`r${i}`)); // all at tier 0
+    const calls = await fakeGoogle({ query: () => many });
+    const out = await sweep(await makeEnv(), NOW);
+    expect(calls.fcm.length + calls.counts.length).toBe(SEND_BUDGET);
+    expect(calls.fcm).toHaveLength(SEND_BUDGET / 2);
+    expect(out.deferred).toBe(SEND_BUDGET / 2);
+  });
+
+  test("daily cap: a never-dispatched request from someone over the cap is parked unalerted at tier 0", async () => {
+    const created = new Date(NOW.getTime() - 3 * 60_000);
+    const calls = await fakeGoogle({ query: () => [due("r1", { createdAt: created })], count: () => 5 });
+    const out = await sweep(await makeEnv(), NOW);
+    expect(out).toMatchObject({ due: 1, sent: 0, capped: 1, finished: 0 });
+    expect(calls.fcm).toHaveLength(0);
+    const claim = calls.batches[0][0];
+    expect(claim.update.fields).toEqual({
+      fanoutTier: { integerValue: "0" }, nextTierAt: { timestampValue: FAR_FUTURE.toISOString() },
+    });
+    expect(claim.currentDocument).toEqual({ updateTime: expect.any(String) });
+    // The count: this requester's requests in the 24 h before this one, stopped at the cap.
+    const { structuredQuery: q, aggregations } = calls.counts[0];
+    expect(aggregations).toEqual([{ alias: "n", count: { upTo: "5" } }]);
+    expect(q.where.compositeFilter.filters.map((f: any) => [f.fieldFilter.field.fieldPath, f.fieldFilter.op, Object.values(f.fieldFilter.value)[0]]))
+      .toEqual([
+        ["requesterUid", "EQUAL", "alice"],
+        ["createdAt", "GREATER_THAN_OR_EQUAL", new Date(created.getTime() - 86_400_000).toISOString()],
+        ["createdAt", "LESS_THAN", created.toISOString()],
+      ]);
+    expect(q.orderBy).toEqual([{ field: { fieldPath: "createdAt" }, direction: "DESCENDING" }]); // the my-requests index
+  });
+
+  test("daily cap: under the cap it's sent; a broken count fails open (alerts are never silenced by an error)", async () => {
+    let calls = await fakeGoogle({ query: () => [due("r1")], count: () => 4 });
+    expect(await sweep(await makeEnv(), NOW)).toMatchObject({ sent: 1, capped: 0 });
+    vi.unstubAllGlobals();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    calls = await fakeGoogle({ query: () => [due("r1")], count: () => ({ status: 400, grpc: "FAILED_PRECONDITION" }) });
+    expect(await sweep(await makeEnv(), NOW)).toMatchObject({ sent: 1, capped: 0 });
+    expect(calls.fcm).toHaveLength(1);
+  });
+
+  test("daily cap: DAILY_ALERT_CAP sets the limit; later tiers aren't counted", async () => {
+    let calls = await fakeGoogle({ query: () => [due("r1")], count: () => 2 });
+    expect(await sweep(await makeEnv({ DAILY_ALERT_CAP: 2 }), NOW)).toMatchObject({ capped: 1 });
+    expect(calls.counts[0].aggregations[0].count.upTo).toBe("2");
+    vi.unstubAllGlobals();
+    calls = await fakeGoogle({ query: () => [due("r1", { fanoutTier: 1 })], count: () => 99 });
+    expect(await sweep(await makeEnv({ DAILY_ALERT_CAP: 2 }), NOW)).toMatchObject({ sent: 1, capped: 0 });
+    expect(calls.counts).toHaveLength(0);
   });
 
   test("nothing due: one query, no writes, no pushes", async () => {

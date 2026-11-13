@@ -18,8 +18,9 @@ The checks run cheapest first, so junk traffic never costs a Firestore read:
 3. **Firebase ID token.** RS256 against Google's keys, then `aud`, `iss`, `exp` and `email_verified`; the `banned` claim is refused.
 4. **Per-uid rate limit**, 10 calls per minute.
 5. **Read the request** (1 read). The caller must own it, it must be `OPEN` and still at `fanoutTier 0`, and it must have been created less than 10 minutes ago.
-6. **Claim the tier** (1 write). It sets `fanoutTier` and `nextTierAt` with an `updateTime` precondition, so a repeated or concurrent dispatch loses cleanly and nobody is alerted twice.
-7. **Send the tier's topic condition** through FCM HTTP v1. If FCM fails, the claim is released and the app gets 503.
+6. **Daily alert cap** (1 read, `src/cap.ts`). If the caller created 5 or more requests in the 24 hours before this one (cancelled ones count too), it isn't sent. It's parked at tier 0, so the sweep won't send it either, and it stays in the feed. The limit is `DAILY_ALERT_CAP` in `wrangler.jsonc`.
+7. **Claim the tier** (1 write). It sets `fanoutTier` and `nextTierAt` with an `updateTime` precondition, so a repeated or concurrent dispatch loses cleanly and nobody is alerted twice.
+8. **Send the tier's topic condition** through FCM HTTP v1. If FCM fails, the claim is released and the app gets 503.
 
 Tiers (`src/tiers.ts`, doc 06 §4.3). Topics are `up_{upazila}_{GROUP}`, `di_{district}_{GROUP}` and `dv_{division}_{GROUP}`.
 - **Tier 1:** the exact group in the hospital's upazila.
@@ -48,6 +49,7 @@ Call it right after the request-create batch commits. It doesn't change the requ
 | 403 | `{error}` | Not the owner, unverified email or suspended: don't retry |
 | 404 / 409 / 422 | `{error}` | Don't retry: missing, closed, older than 10 min (the sweep sends it), or bad data |
 | 429 | `{error}` | Back off |
+| 429 | `{error, dailyCap: true}` | Don't retry. The request is posted but alerts nobody: tell the user they've reached today's limit of alerted requests |
 | 500 / 503 | `{error}` | Retry with backoff, up to 3 times; the sweep covers the rest |
 
 **Personal pushes (Phase 5).** Call these after the batch that changed the state, and after writing the inbox item:
@@ -76,7 +78,7 @@ Public fields only, because anyone can subscribe to a topic. The app renders the
 ## Crons (Phase 5; `wrangler.jsonc` → `triggers`, times in UTC)
 | Cron | Job | Cost per run |
 |---|---|---|
-| `*/5 * * * *` | **Escalation sweep** (`sweep.ts`): up to 25 OPEN requests with `nextTierAt <= now`. If active offers (`OFFERED`/`CONFIRMED`) cover the units still needed, it waits an hour. Otherwise it sends the next tier. A request the app never dispatched gets tier 1. When all tiers are sent, or the request has expired, it's parked in 2100. | 1 read per request (≥ 1) + 1 batch write |
+| `*/5 * * * *` | **Escalation sweep** (`sweep.ts`): up to 25 OPEN requests with `nextTierAt <= now`. If active offers (`OFFERED`/`CONFIRMED`) cover the units still needed, it waits an hour. Otherwise it sends the next tier. A request the app never dispatched gets tier 1, after the same daily-cap check as dispatch. When all tiers are sent, or the request has expired or is over the cap, it's parked in 2100. | 1 read per request (≥ 1), +1 per first alert (cap count), + 1 batch write |
 | `7 * * * *` | **Expiry** (`expiry.ts`): OPEN past `expiresAt` → `EXPIRED` + `userStats.openRequests −1`, in one commit. | 1 read + 1 commit per request |
 | `0 3 * * *` (09:00 Dhaka) | **Retention** (`retention.ts`, decision B6): see below. Old requests are walked from a cursor in KV. | small |
 
@@ -87,7 +89,7 @@ Public fields only, because anyone can subscribe to a topic. The app renders the
 
 **Safety:**
 - **Idempotent.** Every claim carries the doc's `updateTime`, so two overlapping sweeps (or the Apps Script backup) alert once.
-- **Within the free plan's limits.** Every run stays under 50 subrequests. The sweep sends at most 40 messages, and the rest wait for the next run.
+- **Within the free plan's limits.** Every run stays under 50 subrequests. The sweep makes at most 40 FCM sends and cap counts together, and the rest wait for the next run.
 
 ## Run it
 You need Node 22.12+. For the end-to-end tests, also Java 21 (`JAVA_HOME` = Android Studio's `jbr`).

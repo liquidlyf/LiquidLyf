@@ -19,7 +19,7 @@ async function call(headers: Record<string, string>, envOverrides = {}, path = P
 const bearer = async (uid: string, claims = {}) => ({ authorization: `Bearer ${await idToken(uid, claims)}` });
 
 describe("dispatch: the owner", () => {
-  test("gets 202 and the tier-1 topic message is sent, for 1 read + 1 write", async () => {
+  test("gets 202 and the tier-1 topic message is sent, for 2 reads (request + daily-cap count) + 1 write", async () => {
     const calls = await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest() } });
     const res = await call(await bearer("alice"));
     expect(res.status).toBe(202);
@@ -33,8 +33,40 @@ describe("dispatch: the owner", () => {
     expect(calls.fcm[0].android).toMatchObject({ priority: "HIGH", collapse_key: RID });
 
     expect(calls.reads).toEqual([`requests/${RID}`]);
+    expect(calls.counts).toHaveLength(1);
     expect(calls.writes).toHaveLength(1);
-    expect(calls.reads.length).toBeLessThanOrEqual(2);
+    expect(calls.reads.length + calls.counts.length).toBeLessThanOrEqual(2);
+  });
+
+  test("over the daily alert cap: 429 {dailyCap}, nothing sent, the request is parked so the sweep won't send it", async () => {
+    const calls = await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest() }, count: () => 5 });
+    const res = await call(await bearer("alice"));
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ error: "daily alert limit reached", dailyCap: true });
+    expect(calls.fcm).toHaveLength(0);
+    const [park] = calls.writes[0];
+    expect(park.update.fields).toEqual({
+      fanoutTier: { integerValue: "0" }, nextTierAt: { timestampValue: "2100-01-01T00:00:00.000Z" },
+    });
+    expect(park.currentDocument).toEqual({ updateTime: "2026-11-13T10:00:00.123456Z" });
+    expect(calls.counts[0].structuredQuery.where.compositeFilter.filters[0].fieldFilter.value).toEqual({ stringValue: "alice" });
+  });
+
+  test("a retry after the cap answers the same 429 for 1 read: no count, no write", async () => {
+    const parked = requestRest({ nextTierAt: new Date("2100-01-01T00:00:00Z") });
+    const calls = await fakeGoogle({ docs: { [`requests/${RID}`]: parked }, count: () => 0 });
+    const res = await call(await bearer("alice"));
+    expect(res.status).toBe(429);
+    expect(await res.json()).toMatchObject({ dailyCap: true });
+    expect(calls.counts).toHaveLength(0);
+    expect(calls.writes).toHaveLength(0);
+  });
+
+  test("the daily cap comes from DAILY_ALERT_CAP; under it, dispatch goes ahead", async () => {
+    const calls = await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest() }, count: () => 2 });
+    expect((await call(await bearer("alice"), { DAILY_ALERT_CAP: 3 })).status).toBe(202);
+    expect(calls.counts[0].aggregations[0].count.upTo).toBe("3");
+    expect(calls.fcm).toHaveLength(1);
   });
 
   test("the claim write uses an updateTime precondition and touches only the fan-out fields", async () => {

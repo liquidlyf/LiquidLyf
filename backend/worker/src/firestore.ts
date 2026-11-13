@@ -118,22 +118,27 @@ export class Firestore {
    * Each returned document costs 1 read; an empty result costs 1 read.
    */
   async runQuery(q: StructuredQuery): Promise<FsDoc[]> {
-    const { collection, allDescendants = false, where = [], orderBy = [], limit, select, startAfter } = q;
-    const filters = where.map(([field, op, value]) => ({ fieldFilter: { field: { fieldPath: field }, op, value: encode(value) } }));
-    const structuredQuery: Record<string, unknown> = {
-      from: [{ collectionId: collection, allDescendants }],
-      ...(filters.length === 1 ? { where: filters[0] }
-        : filters.length > 1 ? { where: { compositeFilter: { op: "AND", filters } } } : {}),
-      orderBy: orderBy.map(([field, dir]) => ({ field: { fieldPath: field }, direction: dir === "desc" ? "DESCENDING" : "ASCENDING" })),
-      ...(select ? { select: { fields: select.map((f) => ({ fieldPath: f })) } } : {}),
-      ...(startAfter ? { startAt: { values: startAfter.map(encodeCursor), before: false } } : {}),
-      ...(limit ? { limit } : {}),
-    };
     // Collection-group queries run from the database root.
     const rows = await this.call<{ document?: FsDoc }[]>(`${this.base}:runQuery`, {
-      method: "POST", body: JSON.stringify({ structuredQuery }),
+      method: "POST", body: JSON.stringify({ structuredQuery: structuredQuery(q) }),
     });
     return rows.filter((r) => r.document).map((r) => r.document!);
+  }
+
+  /**
+   * COUNT of a query's matches, stopping at `upTo`. Costs 1 read per 1000 index entries
+   * scanned (minimum 1); needs the same index as the query itself.
+   */
+  async count(q: StructuredQuery, upTo?: number): Promise<number> {
+    const rows = await this.call<{ result?: { aggregateFields?: Record<string, FsValue> } }[]>(
+      `${this.base}:runAggregationQuery`, {
+        method: "POST",
+        body: JSON.stringify({ structuredAggregationQuery: {
+          structuredQuery: structuredQuery(q),
+          aggregations: [{ alias: "n", count: upTo ? { upTo: String(upTo) } : {} }],
+        } }),
+      });
+    return Number(decode(rows.find((r) => r.result)?.result?.aggregateFields?.n) ?? 0);
   }
 
   docName(path: string) {
@@ -146,7 +151,7 @@ export class Firestore {
   }
 }
 
-export type FilterOp = "EQUAL" | "LESS_THAN" | "LESS_THAN_OR_EQUAL" | "GREATER_THAN" | "IN";
+export type FilterOp = "EQUAL" | "LESS_THAN" | "LESS_THAN_OR_EQUAL" | "GREATER_THAN" | "GREATER_THAN_OR_EQUAL" | "IN";
 export interface StructuredQuery {
   collection: string;
   allDescendants?: boolean;
@@ -156,6 +161,20 @@ export interface StructuredQuery {
   select?: string[];
   /** Cursor values matching orderBy; use { ref: fullDocName } for __name__. */
   startAfter?: unknown[];
+}
+
+function structuredQuery(q: StructuredQuery): Record<string, unknown> {
+  const { collection, allDescendants = false, where = [], orderBy = [], limit, select, startAfter } = q;
+  const filters = where.map(([field, op, value]) => ({ fieldFilter: { field: { fieldPath: field }, op, value: encode(value) } }));
+  return {
+    from: [{ collectionId: collection, allDescendants }],
+    ...(filters.length === 1 ? { where: filters[0] }
+      : filters.length > 1 ? { where: { compositeFilter: { op: "AND", filters } } } : {}),
+    orderBy: orderBy.map(([field, dir]) => ({ field: { fieldPath: field }, direction: dir === "desc" ? "DESCENDING" : "ASCENDING" })),
+    ...(select ? { select: { fields: select.map((f) => ({ fieldPath: f })) } } : {}),
+    ...(startAfter ? { startAt: { values: startAfter.map(encodeCursor), before: false } } : {}),
+    ...(limit ? { limit } : {}),
+  };
 }
 
 function encodeCursor(v: unknown): FsValue {

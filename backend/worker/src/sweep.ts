@@ -6,6 +6,7 @@
 // Idempotent: every claim carries the doc's updateTime, so a second sweep (or the Apps Script
 // backup, or a late dispatch) loses cleanly and nobody is alerted twice for a tier.
 // Free plan: 50 subrequests per invocation, so one run sends at most SEND_BUDGET messages.
+import { overDailyCap } from "./cap";
 import type { Env } from "./env";
 import { sendToCondition } from "./fcm";
 import { addMinutes, escalationMinutes, FAR_FUTURE, fanoutWrite, requestPushData } from "./fanout";
@@ -21,7 +22,8 @@ const ACTIVE = new Set(["OFFERED", "CONFIRMED"]);
 
 export const SWEEP_FIELDS = ["status", "fanoutTier", "nextTierAt", "expiresAt", "unitsNeeded", "unitsFulfilled",
   "responders", "bloodGroup", "component", "acceptCompatible", "acceptedGroups", "division", "district",
-  "upazila", "urgency"];
+  "upazila", "urgency", "requesterUid", "createdAt"];
+export const CAPPED = "daily alert cap";
 
 export type Plan =
   | { kind: "send"; tier: number; conditions: string[]; nextTierAt: Date }
@@ -50,7 +52,9 @@ export function planEscalation(r: Record<string, any>, now: Date, minutes?: Reco
   return { kind: "send", tier, conditions, nextTierAt: addMinutes(now, escalationMinutes(minutes, r.urgency)) };
 }
 
-export interface SweepResult { due: number; sent: number; waiting: number; finished: number; lost: number; failed: number; deferred: number }
+export interface SweepResult {
+  due: number; sent: number; waiting: number; finished: number; capped: number; lost: number; failed: number; deferred: number;
+}
 
 export async function sweep(env: Env, now = new Date()): Promise<SweepResult> {
   const token = await getAccessToken(env);
@@ -63,15 +67,23 @@ export async function sweep(env: Env, now = new Date()): Promise<SweepResult> {
     select: SWEEP_FIELDS,
   });
 
-  const out: SweepResult = { due: docs.length, sent: 0, waiting: 0, finished: 0, lost: 0, failed: 0, deferred: 0 };
+  const out: SweepResult = { due: docs.length, sent: 0, waiting: 0, finished: 0, capped: 0, lost: 0, failed: 0, deferred: 0 };
   const items: { rid: string; r: Record<string, any>; plan: Plan; updateTime: string }[] = [];
-  let budget = SEND_BUDGET;
+  let budget = SEND_BUDGET; // FCM sends + daily-cap counts: both are subrequests
   for (const d of docs) {
     const r = fieldsOf(d);
-    const plan = planEscalation(r, now, env.ESCALATION_MINUTES);
+    let plan = planEscalation(r, now, env.ESCALATION_MINUTES);
     if (plan.kind === "send") {
-      if (plan.conditions.length > budget) { out.deferred++; continue; } // next run
-      budget -= plan.conditions.length;
+      // A request's first alert (the app never dispatched it) obeys the daily cap like dispatch does.
+      const first = Number(r.fanoutTier ?? 0) === 0;
+      const cost = plan.conditions.length + (first ? 1 : 0);
+      if (cost > budget) { out.deferred++; continue; } // next run
+      budget -= cost;
+      const createdAt = r.createdAt instanceof Date ? r.createdAt : now;
+      if (first && await overDailyCap(fs, env, String(r.requesterUid), createdAt)) {
+        budget += plan.conditions.length;
+        plan = { kind: "done", reason: CAPPED };       // parked at tier 0: it stays in the feed, unalerted
+      }
     }
     items.push({ rid: fs.pathOf(d.name).split("/")[1], r, plan, updateTime: d.updateTime });
   }
@@ -90,7 +102,7 @@ export async function sweep(env: Env, now = new Date()): Promise<SweepResult> {
     const claim = claims[i];
     if (!claim.ok) { out.lost++; continue; }          // changed meanwhile: someone else handled it
     if (plan.kind === "wait") { out.waiting++; continue; }
-    if (plan.kind === "done") { out.finished++; continue; }
+    if (plan.kind === "done") { if (plan.reason === CAPPED) out.capped++; else out.finished++; continue; }
     const data = requestPushData(rid, r, plan.tier);
     let ok = true;
     for (const condition of plan.conditions) {

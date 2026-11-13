@@ -77,6 +77,36 @@ describe("escalation sweep (emulator)", () => {
   });
 });
 
+describe("daily alert cap (emulator)", () => {
+  test("the COUNT runs on real Firestore: 5 earlier requests in 24 h park the 6th; older or other people's don't count", async () => {
+    const env = emulatorEnv();
+    const sent = pushes();
+    const t = (minAgo: number) => new Date(Date.now() - minAgo * MIN);
+    // alice: 5 requests in the last 24 h (cancelled ones count too), one 2 days ago
+    for (let i = 1; i <= 5; i++) {
+      await putDoc(`requests/a${i}`, newRequest("alice", { status: i <= 3 ? "CANCELLED" : "OPEN", fanoutTier: 1, nextTierAt: FAR_FUTURE, createdAt: t(60 * i) }));
+    }
+    await putDoc("requests/a_old", newRequest("alice", { status: "FULFILLED", nextTierAt: FAR_FUTURE, createdAt: t(48 * 60) }));
+    await putDoc("requests/a6", newRequest("alice", { createdAt: t(2), nextTierAt: t(2) }));    // the 6th: capped
+    await putDoc("requests/b1", newRequest("bob", { createdAt: t(2), nextTierAt: t(2) }));      // someone else: sent
+    // carol: 5 requests, but the oldest is just outside the 24 h before her new one
+    for (let i = 1; i <= 4; i++) {
+      await putDoc(`requests/c${i}`, newRequest("carol", { status: "CANCELLED", nextTierAt: FAR_FUTURE, createdAt: t(60 * i) }));
+    }
+    await putDoc("requests/c5", newRequest("carol", { status: "CANCELLED", nextTierAt: FAR_FUTURE, createdAt: t(24 * 60 + 5) }));
+    await putDoc("requests/c6", newRequest("carol", { createdAt: t(2), nextTierAt: t(2) }));    // 4 in the window: sent
+
+    const out = await sweep(env, NOW);
+    expect(out).toMatchObject({ due: 3, sent: 2, capped: 1 });
+    expect(sent().map((p) => p.data.requestId).sort()).toEqual(["b1", "c6"]);
+    const a6 = (await fields("requests/a6"))!;
+    expect(a6.fanoutTier).toBe(0);
+    expect(a6.nextTierAt).toEqual(FAR_FUTURE);                 // never due again; still OPEN in the feed
+    expect(a6.status).toBe("OPEN");
+    expect((await sweep(env, NOW)).due).toBe(0);               // a6 parked; b1 and c6 are due again in 30 min
+  });
+});
+
 describe("expiry (emulator)", () => {
   test("EXPIRED + userStats -1 + fresh updatedAt; a missing userStats isn't created", async () => {
     const env = emulatorEnv();

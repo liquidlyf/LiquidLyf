@@ -52,6 +52,22 @@ describe("Worker in workerd + emulators", () => {
     expect(doc.fields.notes).toEqual({ stringValue: "" }); // nothing else touched
   });
 
+  test("over the daily alert cap (5 in 24 h, from wrangler.jsonc): 429 dailyCap and the request is parked", async () => {
+    for (let i = 1; i <= 5; i++) {
+      await putDoc(`requests/old${i}`, newRequest("e2e-alice", {
+        status: "CANCELLED", fanoutTier: 1, createdAt: new Date(Date.now() - i * 3_600_000),
+      }));
+    }
+    await putDoc("requests/r6", newRequest("e2e-alice"));
+    const res = await dispatch("r6", alice);
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ error: "daily alert limit reached", dailyCap: true });
+    const doc = await getDoc("requests/r6");
+    expect(doc.fields.fanoutTier).toEqual({ integerValue: "0" });
+    expect(doc.fields.nextTierAt).toEqual({ timestampValue: "2100-01-01T00:00:00Z" });
+    expect(doc.fields.status).toEqual({ stringValue: "OPEN" });
+  });
+
   test("a second dispatch sends nothing", async () => {
     await putDoc("requests/r1", newRequest("e2e-alice"));
     await dispatch("r1", alice);

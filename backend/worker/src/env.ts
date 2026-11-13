@@ -21,6 +21,8 @@ export interface Env {
   ENFORCE_APP_CHECK: string;
   /** Minutes until the next tier, per urgency. Keep in sync with Remote Config escalation_minutes_*. */
   ESCALATION_MINUTES: Record<string, number>;
+  /** Requests per uid per rolling 24 h that alert donors (src/cap.ts). Default 5. */
+  DAILY_ALERT_CAP?: number;
   /** Local development only: "127.0.0.1:8085". Allowed only for demo- projects. */
   FIRESTORE_EMULATOR_HOST?: string;
   CACHE: KV;
