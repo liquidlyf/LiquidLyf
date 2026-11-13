@@ -26,15 +26,26 @@ object FirebaseModule {
     // Must match the firestore port in firebase/firebase.json.
     private const val FIRESTORE_EMULATOR_PORT = 8085
 
-    @Provides
-    @Singleton
-    fun provideFirebaseAuth(): FirebaseAuth = Firebase.auth.apply {
-        if (BuildConfig.USE_FIREBASE_EMULATOR) useEmulator(BuildConfig.EMULATOR_HOST, AUTH_EMULATOR_PORT)
+    // Firebase.auth and Firebase.firestore are process-wide, and useEmulator() may be called only
+    // once, before first use. A Hilt component can be built more than once per process (every
+    // instrumented test builds a new one), so the setup lives here, not in the @Provides.
+    private val auth: FirebaseAuth by lazy {
+        Firebase.auth.apply {
+            if (BuildConfig.USE_FIREBASE_EMULATOR) useEmulator(BuildConfig.EMULATOR_HOST, AUTH_EMULATOR_PORT)
+        }
+    }
+
+    private val firestore: FirebaseFirestore by lazy {
+        Firebase.firestore.apply {
+            if (BuildConfig.USE_FIREBASE_EMULATOR) useEmulator(BuildConfig.EMULATOR_HOST, FIRESTORE_EMULATOR_PORT)
+        }
     }
 
     @Provides
     @Singleton
-    fun provideFirestore(): FirebaseFirestore = Firebase.firestore.apply {
-        if (BuildConfig.USE_FIREBASE_EMULATOR) useEmulator(BuildConfig.EMULATOR_HOST, FIRESTORE_EMULATOR_PORT)
-    }
+    fun provideFirebaseAuth(): FirebaseAuth = auth
+
+    @Provides
+    @Singleton
+    fun provideFirestore(): FirebaseFirestore = firestore
 }

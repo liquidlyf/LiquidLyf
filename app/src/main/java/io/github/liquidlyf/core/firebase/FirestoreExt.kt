@@ -2,10 +2,13 @@ package io.github.liquidlyf.core.firebase
 
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.Source
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 
 /*
  * Firestore listeners as Flows. The listener is removed as soon as the collector stops
@@ -35,6 +38,22 @@ fun <T : Any> Query.snapshots(mapper: (DocumentSnapshot) -> T?): Flow<List<T>> =
         if (snapshot != null) trySend(snapshot.documents.mapNotNull(mapper))
     }
     awaitClose { registration.remove() }
+}
+
+/**
+ * One read, from the local cache when the document is there (0 billed reads), otherwise from the
+ * server (doc 10 §5.1 rule 2). [refresh] skips the cache, for pull-to-refresh.
+ */
+suspend fun DocumentReference.getCacheFirst(refresh: Boolean = false): DocumentSnapshot {
+    if (!refresh) {
+        try {
+            val cached = get(Source.CACHE).await()
+            if (cached.exists()) return cached
+        } catch (_: FirebaseFirestoreException) {
+            // Not in the cache: fall through to the server.
+        }
+    }
+    return get(Source.DEFAULT).await()
 }
 
 /** [snapshots] that maps with Firestore's class mapper. [T] needs a no-argument constructor. */
