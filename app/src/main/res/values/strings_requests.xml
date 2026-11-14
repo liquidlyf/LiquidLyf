@@ -156,6 +156,7 @@
         <item quantity="other">%d offers</item>
     </plurals>
     <string name="detail_no_offers_open">No offers yet. Matching donors nearby have been alerted.</string>
+    <string name="detail_no_offers_unsent">No offers yet. Matching donors nearby will be alerted once your request is posted.</string>
     <string name="detail_no_offers">No one offered on this request.</string>
     <string name="detail_call_donor">Call %1$s</string>
     <string name="detail_confirm">Confirm</string>

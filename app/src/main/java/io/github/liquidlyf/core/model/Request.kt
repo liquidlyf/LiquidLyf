@@ -42,6 +42,10 @@ data class BloodRequest(
     fun isActive(now: Instant): Boolean = status == RequestStatus.OPEN && now.isBefore(expiresAt)
 
     val unitsStillNeeded: Int get() = (unitsNeeded - unitsFulfilled).coerceAtLeast(0)
+
+    /** Offers still standing. `responseCount` only ever grows, so it also counts withdrawn and declined ones. */
+    val liveOffers: Int
+        get() = responders.values.count { it.status == ResponseStatus.OFFERED || it.status == ResponseStatus.CONFIRMED || it.status == ResponseStatus.DONATED }
 }
 
 /** One entry of `requests.responders`. No phone: that lives only in the response doc. */

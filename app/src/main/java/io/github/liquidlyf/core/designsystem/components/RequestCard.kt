@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.dateTimeText
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.relativeTimeText
 import io.github.liquidlyf.core.model.BloodRequest
@@ -56,10 +57,11 @@ fun RequestCard(
                 }
                 IconLine(LLIcons.Hospital, request.hospitalName)
                 IconLine(LLIcons.Location, placeText)
-                IconLine(LLIcons.Schedule, neededByText(request.neededBy, now))
+                // A closed request needs nothing any more: its date, not "Needed in 5 h".
+                IconLine(LLIcons.Schedule, if (request.status == RequestStatus.OPEN) neededByText(request.neededBy, now) else dateTimeText(request.neededBy))
                 val extras = listOfNotNull(
                     request.condition?.let { stringResource(it.labelRes) },
-                    request.responseCount.takeIf { it > 0 }?.let {
+                    request.liveOffers.takeIf { it > 0 }?.let {
                         pluralStringResource(R.plurals.request_offers_count, it, it)
                     },
                 )

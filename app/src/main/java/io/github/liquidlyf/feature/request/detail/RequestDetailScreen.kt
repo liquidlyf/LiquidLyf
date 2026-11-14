@@ -32,6 +32,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -241,7 +242,7 @@ private fun Banners(state: RequestDetailUiState) {
 
 @Composable
 private fun NoticeCard(icon: Int, text: String) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
         Row(Modifier.padding(Spacing.md), horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalAlignment = Alignment.CenterVertically) {
             Icon(painterResource(icon), contentDescription = null)
             Text(text, style = MaterialTheme.typography.bodyMedium)
@@ -270,7 +271,7 @@ private fun Header(r: BloodRequest) {
             }
         }
     }
-    IconLine(LLIcons.Schedule, "${neededByText(r.neededBy, now)} · ${dateTimeText(r.neededBy)}")
+    IconLine(LLIcons.Schedule, if (r.status == RequestStatus.OPEN) "${neededByText(r.neededBy, now)} · ${dateTimeText(r.neededBy)}" else dateTimeText(r.neededBy))
     r.condition?.let { IconLine(LLIcons.Info, stringResource(it.labelRes)) }
     r.notes?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
     val posted = r.createdAt?.let { relativeTimeText(it, now) }
@@ -284,7 +285,7 @@ private fun Header(r: BloodRequest) {
 @Composable
 private fun WhereCard(r: BloodRequest, state: RequestDetailUiState, onOpenMaps: (BloodRequest) -> Unit) {
     val locale = currentAppLocale()
-    Card {
+    Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             IconLine(LLIcons.Hospital, r.hospitalName)
             r.hospitalAddress?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
@@ -338,16 +339,20 @@ private fun DonorSection(state: RequestDetailUiState, vm: RequestDetailViewModel
         }
         state.contact?.let { ContactCard(it, onCall) }
         if (StatusTransitions.donorCanSet(status, ResponseStatus.WITHDRAWN)) {
-            OutlinedButton(onClick = onWithdraw, enabled = !state.working, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+            OutlinedButton(onClick = onWithdraw, enabled = !state.working, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
                 Text(stringResource(R.string.detail_withdraw))
             }
         }
     }
     if (checking) {
         var message by rememberSaveable { mutableStateOf("") }
-        ModalBottomSheet(onDismissRequest = { checking = false }) {
+        // Fully open and scrollable, so the offer button is reachable with large text or in landscape.
+        ModalBottomSheet(onDismissRequest = { checking = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
             Column(
-                Modifier.padding(horizontal = screenGutter()).padding(bottom = Spacing.lg),
+                Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = screenGutter())
+                    .padding(bottom = Spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
                 Text(stringResource(R.string.detail_check_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
@@ -395,7 +400,7 @@ private fun ContactCard(c: RequestContact, onCall: (String) -> Unit) {
     val scope = rememberCoroutineScope()
     val snackbar = LocalSnackbarHostState.current
     val copied = stringResource(R.string.detail_copied)
-    Card {
+    Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Text(stringResource(R.string.detail_contact), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             Text(c.contactName, style = MaterialTheme.typography.bodyLarge)
@@ -434,8 +439,13 @@ private fun RequesterSection(
     val r = state.request ?: return
     SectionHeader(pluralStringResource(R.plurals.detail_offers_title, state.responses.size, state.responses.size))
     if (state.responses.isEmpty()) {
+        val text = when {
+            r.status != RequestStatus.OPEN -> R.string.detail_no_offers
+            state.waitingForNetwork -> R.string.detail_no_offers_unsent
+            else -> R.string.detail_no_offers_open
+        }
         Text(
-            stringResource(if (r.status == RequestStatus.OPEN) R.string.detail_no_offers_open else R.string.detail_no_offers),
+            stringResource(text),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

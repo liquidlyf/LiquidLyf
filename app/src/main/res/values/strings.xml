@@ -39,8 +39,6 @@
 
     <!-- Placeholder screens (Phase 1 only; each phase replaces its screens) -->
     <string name="placeholder_body">This screen arrives in Phase %1$d.</string>
-    <string name="placeholder_open_sample_request">Open a sample request</string>
-    <string name="placeholder_request_id">Request ID: %1$s</string>
 
     <!-- Settings (the full screen arrives in Phase 8) -->
     <string name="settings_theme">Theme</string>

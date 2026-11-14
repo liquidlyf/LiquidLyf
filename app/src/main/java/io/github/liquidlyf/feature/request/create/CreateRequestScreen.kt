@@ -453,7 +453,8 @@ private fun ContactStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> 
         value = f.contactPhone,
         onValueChange = { v -> onEdit { copy(contactPhone = v.take(20)) } },
         label = stringResource(R.string.create_contact_phone),
-        supportingText = stringResource(R.string.phone_hint),
+        // The requester's number, not the donor's own (that one's hint is phone_hint).
+        supportingText = stringResource(R.string.create_private_hint),
         errorText = if (RequestField.CONTACT_PHONE in state.errors) stringResource(R.string.error_phone_invalid) else null,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
     )
