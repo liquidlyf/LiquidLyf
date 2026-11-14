@@ -25,6 +25,18 @@ describe("crons", () => {
       expect(JSON.stringify(calls.queries[0].where)).toContain(`"${field}"`);
     });
 
+  test(`${CRONS.reports} runs the report alert (a COUNT on reports once the cursor exists)`, async () => {
+    resetCaches();
+    const calls = await fakeGoogle({ count: () => 1 });
+    const env = await makeEnv();
+    const at = Date.parse("2026-11-20T03:02:00Z");
+    await worker.scheduled({ cron: CRONS.reports, scheduledTime: at }, env);           // first run: cursor only
+    await worker.scheduled({ cron: CRONS.reports, scheduledTime: at + 300_000 }, env);
+    expect(calls.counts[0].structuredQuery.from[0].collectionId).toBe("reports");
+    expect(calls.fcm).toHaveLength(1);
+    expect(calls.queries).toHaveLength(0);
+  });
+
   test("an unknown cron does nothing", async () => {
     resetCaches();
     const calls = await fakeGoogle();

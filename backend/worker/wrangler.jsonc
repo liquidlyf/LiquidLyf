@@ -10,9 +10,10 @@
   // Keep only the Worker's own console lines (request ID, tier, counts, errors: no personal data).
   // Per-request invocation logs are off so request metadata isn't stored with Cloudflare.
   "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } },
-  // Phase 5 crons (UTC). Must match CRONS in src/index.ts. Free plan: up to 5 per account.
-  //   */5: escalation sweep; 7 * * * *: expiry; 0 3 * * *: retention clean-up (09:00 Dhaka)
-  "triggers": { "crons": ["*/5 * * * *", "7 * * * *", "0 3 * * *"] },
+  // Crons (UTC). Must match CRONS in src/index.ts. Free plan: up to 5 per account.
+  //   */5: escalation sweep; 7 * * * *: expiry; 0 3 * * *: retention clean-up (09:00 Dhaka);
+  //   2,7,…,57: new-report alert to admins (phase 7), 2 min after each sweep, in its own run
+  "triggers": { "crons": ["*/5 * * * *", "7 * * * *", "0 3 * * *", "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"] },
 
   // ---------------- production: Firebase project liquidlyf-app ----------------
   "kv_namespaces": [

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { expireOverdue } from "../../src/expiry";
 import { FAR_FUTURE } from "../../src/fanout";
 import { fieldsOf } from "../../src/firestore";
+import { alertNewReports } from "../../src/reports";
 import { CURSOR_KEY, retention } from "../../src/retention";
 import { sweep } from "../../src/sweep";
 import { clearFirestore, emulatorEnv, getDoc, newRequest, putDoc } from "./emulators";
@@ -145,9 +146,13 @@ describe("retention clean-up (emulator)", () => {
     await putDoc("users/u1/notifications/new", { type: "NEW_OFFER", createdAt: new Date(Date.now() - DAY) });
     await putDoc("reports/a_old", { reporterUid: "a", createdAt: new Date(Date.now() - 400 * DAY) });
     await putDoc("reports/b_new", { reporterUid: "b", createdAt: new Date(Date.now() - 10 * DAY) });
+    await putDoc("adminLog/old", { adminUid: "mod", action: "RESTORE_REQUEST", createdAt: new Date(Date.now() - 400 * DAY) });
+    await putDoc("adminLog/new", { adminUid: "mod", action: "RESTORE_REQUEST", createdAt: new Date(Date.now() - 10 * DAY) });
 
     const out = await retention(env, NOW);
-    expect(out).toEqual({ requests: 1, responses: 1, inbox: 1, reports: 1 });
+    expect(out).toEqual({ requests: 1, responses: 1, inbox: 1, reports: 1, adminLog: 1 });
+    expect(await getDoc("adminLog/old")).toBeNull();
+    expect(await getDoc("adminLog/new")).not.toBeNull();
 
     const r = (await fields("requests/old"))!;
     expect(r.notes).toBeUndefined();
@@ -169,6 +174,30 @@ describe("retention clean-up (emulator)", () => {
 
     // A second run starts after the cursor and finds nothing more to do.
     expect(JSON.parse((await env.CACHE.get(CURSOR_KEY, "json")) ? JSON.stringify(await env.CACHE.get(CURSOR_KEY, "json")) : "null").name).toContain("requests/old");
-    expect(await retention(env, NOW)).toEqual({ requests: 0, responses: 0, inbox: 0, reports: 0 });
+    expect(await retention(env, NOW)).toEqual({ requests: 0, responses: 0, inbox: 0, reports: 0, adminLog: 0 });
+  });
+});
+
+describe("report alerts (emulator)", () => {
+  test("counts only reports filed since the last alert, pushes the count to admins, then moves on", async () => {
+    const env = emulatorEnv();
+    const sent = pushes();
+    const T0 = new Date(Date.now() - 10 * MIN);
+    expect(await alertNewReports(env, T0)).toMatchObject({ started: true }); // first run: cursor only
+
+    const report = (id: string, createdAt: Date) =>
+      putDoc(`reports/${id}`, { reporterUid: id.split("_")[0], targetType: "REQUEST", targetId: "r1", reason: "SPAM", status: "OPEN", createdAt });
+    await report("old_r1", new Date(T0.getTime() - MIN));   // before the cursor: already alerted
+    await report("eve_r1", new Date(T0.getTime() + MIN));
+    await report("bob_r1", new Date(T0.getTime() + 2 * MIN));
+    await report("late_r1", at(MIN));                         // after this run's "now": next run
+
+    const T1 = new Date(T0.getTime() + 5 * MIN);
+    expect(await alertNewReports(env, T1)).toEqual({ new: 2, sent: true });
+    expect(sent()).toEqual([{ fcmDryRun: true, condition: "'admins' in topics", data: { type: "NEW_REPORTS", count: "2" } }]);
+
+    expect(await alertNewReports(env, new Date(T1.getTime() + 5 * MIN))).toEqual({ new: 0, sent: false });
+    expect(await alertNewReports(env, at(2 * MIN))).toEqual({ new: 1, sent: true }); // the late one
+    expect(sent()).toHaveLength(2);
   });
 });

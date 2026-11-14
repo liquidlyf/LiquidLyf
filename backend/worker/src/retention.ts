@@ -3,32 +3,34 @@
 //     and message in its responses, and the request's notes and closing reason. Short names
 //     ("Alice T."), blood group, area, dates and outcome stay, for history and statistics;
 //   - inbox items (users/*/notifications) after 60 days;
-//   - reports after 1 year.
+//   - reports and the moderators' action log (adminLog, phase-07 7.4) after 1 year (doc 03 §5).
 // Old requests are walked in updatedAt order from a cursor kept in KV, so each is handled once.
 // Free plan: 50 subrequests per run, so each part does a bounded number of pages.
 import type { Env } from "./env";
 import { deleteWrite, Firestore, fieldsOf, updateWrite, type FsDoc } from "./firestore";
 import { getAccessToken } from "./google-auth";
 
-export const RETENTION_DAYS = { closedRequest: 90, inbox: 60, report: 365 };
+export const RETENTION_DAYS = { closedRequest: 90, inbox: 60, report: 365, adminLog: 365 };
 export const PAGE = 100;       // docs per query
-export const MAX_PAGES = 4;    // per part per run: 3 parts x 4 pages x 2 subrequests + token < 50
+export const MAX_PAGES = 4;    // per part per run: 4 parts x 4 pages x 2 subrequests + token < 50
 export const CURSOR_KEY = "retention_cursor";
 const UID = /^[A-Za-z0-9_-]{1,128}$/;
 const DAY = 86_400_000;
 
 interface Cursor { t: string; name: string }
-export interface RetentionResult { requests: number; responses: number; inbox: number; reports: number }
+export interface RetentionResult { requests: number; responses: number; inbox: number; reports: number; adminLog: number }
 
 export async function retention(env: Env, now = new Date()): Promise<RetentionResult> {
   const token = await getAccessToken(env);
   const fs = new Firestore(env, token);
-  const out: RetentionResult = { requests: 0, responses: 0, inbox: 0, reports: 0 };
+  const out: RetentionResult = { requests: 0, responses: 0, inbox: 0, reports: 0, adminLog: 0 };
   await purgeClosedRequests(env, fs, now, out);
   out.inbox = await deleteOlderThan(fs, { collection: "notifications", allDescendants: true }, "createdAt",
     new Date(now.getTime() - RETENTION_DAYS.inbox * DAY));
   out.reports = await deleteOlderThan(fs, { collection: "reports" }, "createdAt",
     new Date(now.getTime() - RETENTION_DAYS.report * DAY));
+  out.adminLog = await deleteOlderThan(fs, { collection: "adminLog" }, "createdAt",
+    new Date(now.getTime() - RETENTION_DAYS.adminLog * DAY));
   console.log(JSON.stringify({ retention: out }));
   return out;
 }

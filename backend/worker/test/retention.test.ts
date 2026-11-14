@@ -56,18 +56,23 @@ describe("retention", () => {
     expect(calls.batches.flat()).toHaveLength(0);
   });
 
-  test("inbox items after 60 days (all users), reports after 1 year: deleted", async () => {
+  test("inbox items after 60 days (all users), reports and the admin log after 1 year: deleted", async () => {
     const calls = await fakeGoogle({
       query: (q) => q.from[0].collectionId === "notifications" ? [{ name: docName("users/u1/notifications/n1"), fields: {}, updateTime: "x" }]
-        : q.from[0].collectionId === "reports" ? [{ name: docName("reports/a_r1"), fields: {}, updateTime: "x" }] : [],
+        : q.from[0].collectionId === "reports" ? [{ name: docName("reports/a_r1"), fields: {}, updateTime: "x" }]
+        : q.from[0].collectionId === "adminLog" ? [{ name: docName("adminLog/l1"), fields: {}, updateTime: "x" }] : [],
     });
     const out = await retention(await makeEnv(), NOW);
-    expect(out).toMatchObject({ inbox: 1, reports: 1 });
+    expect(out).toMatchObject({ inbox: 1, reports: 1, adminLog: 1 });
+    const logQuery = calls.queries.find((q) => q.from[0].collectionId === "adminLog");
+    expect(logQuery.from[0].allDescendants).toBe(false);
+    expect(JSON.stringify(logQuery.where)).toContain(daysAgo(365).toISOString());
     const inboxQuery = calls.queries.find((q) => q.from[0].collectionId === "notifications");
     expect(inboxQuery.from[0].allDescendants).toBe(true);
     expect(JSON.stringify(inboxQuery.where)).toContain(daysAgo(60).toISOString());
     const reportQuery = calls.queries.find((q) => q.from[0].collectionId === "reports");
     expect(JSON.stringify(reportQuery.where)).toContain(daysAgo(365).toISOString());
-    expect(calls.batches.flat()).toEqual([{ delete: docName("users/u1/notifications/n1") }, { delete: docName("reports/a_r1") }]);
+    expect(calls.batches.flat()).toEqual([{ delete: docName("users/u1/notifications/n1") }, { delete: docName("reports/a_r1") },
+      { delete: docName("adminLog/l1") }]);
   });
 });

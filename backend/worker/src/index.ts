@@ -1,12 +1,13 @@
 // LiquidLyf Worker (Cloudflare Workers Free).
 //   HTTP: GET /health; POST dispatch (tier 1), notify (one response), notify-responders.
-//   Crons (wrangler.jsonc triggers): escalation sweep, expiry, retention clean-up.
+//   Crons (wrangler.jsonc triggers): escalation sweep, expiry, retention clean-up, report alerts.
 import { authenticate } from "./auth";
 import { dispatch } from "./dispatch";
 import type { Env } from "./env";
 import { expireOverdue } from "./expiry";
 import { HttpError, json } from "./http";
 import { notifyResponders, notifyResponse } from "./notify";
+import { alertNewReports } from "./reports";
 import { retention } from "./retention";
 import { sweep } from "./sweep";
 
@@ -15,11 +16,12 @@ const DISPATCH = new RegExp(`^/v1/requests/${ID}/dispatch$`);
 const NOTIFY = new RegExp(`^/v1/requests/${ID}/responses/${ID}/notify$`);
 const NOTIFY_RESPONDERS = new RegExp(`^/v1/requests/${ID}/notify-responders$`);
 
-/** Must match wrangler.jsonc "triggers.crons" (test/index.test.ts checks). */
+/** Must match wrangler.jsonc "triggers.crons" (test/wiring.test.ts checks). */
 export const CRONS = {
   sweep: "*/5 * * * *",
   expiry: "7 * * * *",
   retention: "0 3 * * *", // 09:00 in Dhaka (UTC+6)
+  reports: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *", // 2 min after each sweep, in its own run (src/reports.ts)
 } as const;
 
 export default {
@@ -52,6 +54,7 @@ export default {
       if (event.cron === CRONS.sweep) await sweep(env, now);
       else if (event.cron === CRONS.expiry) await expireOverdue(env, now);
       else if (event.cron === CRONS.retention) await retention(env, now);
+      else if (event.cron === CRONS.reports) await alertNewReports(env, now);
       else console.error(JSON.stringify({ unknownCron: event.cron }));
     } catch (e) {
       console.error(JSON.stringify({ cron: event.cron, error: String(e) }));

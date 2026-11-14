@@ -9,8 +9,9 @@ Design: `project-plan` doc 10 §6.
 | Phase | What |
 |---|---|
 | **2 (live)** | `GET /health`, and `POST /v1/requests/{id}/dispatch`, which sends the first tier |
-| **5 (built, tested, not deployed yet)** | the two `notify` endpoints, plus crons: the 5-minute escalation sweep, hourly expiry and the daily retention clean-up; the per-uid daily alert cap |
+| **5 (live since 15 Nov 2026, version 476f0045)** | the two `notify` endpoints, plus crons: the 5-minute escalation sweep, hourly expiry and the daily retention clean-up; the per-uid daily alert cap |
 | **5 backup** | `backend/apps-script`: Google Apps Script runs the same escalation code if the sweep falls behind by more than 10 minutes |
+| **7 (built, tested, not deployed yet)** | the new-report alert to the `admins` topic (its own cron, 2 minutes after each sweep); the retention job also deletes `adminLog` entries after 1 year |
 
 ## How dispatch works
 The checks run cheapest first, so junk traffic never costs a Firestore read:
@@ -76,17 +77,20 @@ Responses: 202 `{accepted, type}`. 403 means it isn't your request or offer; 409
 
 Public fields only, because anyone can subscribe to a topic. The app renders the text.
 
-## Crons (Phase 5; `wrangler.jsonc` → `triggers`, times in UTC)
+## Crons (Phases 5 and 7; `wrangler.jsonc` → `triggers`, times in UTC)
 | Cron | Job | Cost per run |
 |---|---|---|
 | `*/5 * * * *` | **Escalation sweep** (`escalation.ts`, run by `sweep.ts`): up to 25 OPEN requests with `nextTierAt <= now`. If active offers (`OFFERED`/`CONFIRMED`) cover the units still needed, it waits an hour. Otherwise it sends the next tier. A request the app never dispatched gets tier 1, after the same daily-cap check as dispatch. When all tiers are sent, or the request has expired or is over the cap, it's parked in 2100. | 1 read per request (≥ 1), +1 per first alert (cap count), + 1 batch write |
 | `7 * * * *` | **Expiry** (`expiry.ts`): OPEN past `expiresAt` → `EXPIRED` + `userStats.openRequests −1`, in one commit. | 1 read + 1 commit per request |
 | `0 3 * * *` (09:00 Dhaka) | **Retention** (`retention.ts`, decision B6): see below. Old requests are walked from a cursor in KV. | small |
+| `2,7,12,…,57 * * * *` | **Report alert** (`reports.ts`, phase-07 7.3): counts the reports filed since the last alert. If there are any, it sends one push `{type: "NEW_REPORTS", count}` to the `admins` topic, which admin devices subscribe to. Its own run, 2 minutes after each sweep, so the sweep keeps its whole 50-subrequest budget. The cursor is in KV; the first run only sets it. | 1 read (COUNT), + 1 FCM send when there are new reports |
 
 **What the retention job removes:**
 - **90 days after a request closes:** `private/contact`, the donor phone and message in its responses, and the request's notes and closing reason. Short names stay.
 - **Inbox items:** after 60 days.
-- **Reports:** after 1 year.
+- **Reports and the moderators' action log (`adminLog`):** after 1 year (doc 03 §5).
+
+**The admin push carries only a count.** Anyone can subscribe to a topic, including `admins`, so it has no IDs, names or text. The admin's app then reads `reports`, which the rules allow only for the `admin` claim.
 
 **Safety:**
 - **Idempotent.** Every claim carries the doc's `updateTime`, so two overlapping sweeps (or the Apps Script backup) alert once.
