@@ -165,9 +165,10 @@ serious harm.
      date and outcome; contact details, donor phones, messages, notes and the closing reason are deleted.
      The Worker's clean-up job does this (backend/worker/src/retention.ts, 82db627; deployed 15 Nov 2026
      with Worker 476f0045, daily at 09:00 Dhaka): closed requests after 90 days, inbox items after
-     60 days, reports after 1 year. CHECK before publishing: (1) B confirms it has run in production;
-     (2) the moderators' action log (adminLog, Phase 7) is deleted after 1 year too. The job doesn't
-     do that yet (asked B, 15 Nov). -->
+     60 days, reports after 1 year. The moderators' action log (adminLog) after 1 year is in the code
+     too (ed89357), but not deployed yet; until then prod has no adminLog entries. CHECK before
+     publishing: (1) the Worker with ed89357 is deployed; (2) B confirms the job has run in
+     production (first run 15 Nov, 09:00 Dhaka). -->
 
 
 ## 7. Your choices and rights
