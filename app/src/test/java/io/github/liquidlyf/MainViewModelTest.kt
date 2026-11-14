@@ -76,7 +76,8 @@ class MainViewModelTest {
             assertEquals(MainUiState.Loading, awaitItem())
             settings.emit(UserSettings(onboardingSeen = false, lastSelectedTab = "DONORS"))
             assertEquals(
-                MainUiState.Ready(ThemeMode.SYSTEM, GateZone.ONBOARDING, TopLevelDestination.DONORS, SessionState.SignedOut),
+                // Signed out: no saved tab, so whoever signs in starts on Home.
+                MainUiState.Ready(ThemeMode.SYSTEM, GateZone.ONBOARDING, null, SessionState.SignedOut),
                 awaitItem(),
             )
             settings.emit(UserSettings(themeMode = ThemeMode.DARK, onboardingSeen = true))
@@ -91,24 +92,30 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `an unknown saved tab is ignored`() = runTest {
-        session.state.value = SessionState.SignedOut
-        val vm = MainViewModel(settings, session)
-        settings.emit(UserSettings(lastSelectedTab = "SEARCH"))
-        assertEquals(null, ready(vm).initialTab)
+    fun `the saved tab reopens only when the app opens signed in, and an unknown one is ignored`() = runTest {
+        session.state.value = SessionState.Ready(TestData.user(), TestData.profile())
+        val signedIn = MainViewModel(settings, session)
+        settings.emit(UserSettings(onboardingSeen = true, lastSelectedTab = "DONORS"))
+        assertEquals(TopLevelDestination.DONORS, ready(signedIn).initialTab)
+
+        settings.emit(UserSettings(onboardingSeen = true, lastSelectedTab = "SEARCH"))
+        assertEquals(null, ready(MainViewModel(settings, session)).initialTab)
     }
 
     @Test
     fun `events reach settings and the session`() = runTest {
+        session.state.value = SessionState.Ready(TestData.user(), TestData.profile())
         val vm = MainViewModel(settings, session)
         vm.onOnboardingFinished()
         vm.onTabSelected(TopLevelDestination.REQUESTS)
         vm.retrySession()
-        vm.signOut()
-
         assertEquals(true, settings.onboardingSeen)
         assertEquals("REQUESTS", settings.lastSelectedTab)
         assertEquals(1, session.refreshes)
+
+        // Signing out forgets the tab, so the next person starts on Home.
+        vm.signOut()
         assertEquals(1, session.signOuts)
+        assertEquals("HOME", settings.lastSelectedTab)
     }
 }

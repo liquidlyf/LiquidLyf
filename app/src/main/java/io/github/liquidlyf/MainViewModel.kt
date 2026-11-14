@@ -13,6 +13,7 @@ import io.github.liquidlyf.navigation.startZone
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -46,10 +47,12 @@ class MainViewModel @Inject constructor(
                     if (session == SessionState.Loading) {
                         MainUiState.Loading
                     } else {
+                        val start = startZone(session, settings.onboardingSeen)
                         MainUiState.Ready(
                             themeMode = settings.themeMode,
-                            startZone = startZone(session, settings.onboardingSeen),
-                            initialTab = TopLevelDestination.fromName(settings.lastSelectedTab),
+                            startZone = start,
+                            // Only when the app opens signed in: after signing in or up, it starts on Home.
+                            initialTab = if (start == GateZone.MAIN) TopLevelDestination.fromName(settings.lastSelectedTab) else null,
                             session = session,
                         )
                     }
@@ -57,6 +60,15 @@ class MainViewModel @Inject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, MainUiState.Loading)
+
+    init {
+        // Signed out (from any screen, or the account is gone): the next person on this phone starts on Home.
+        viewModelScope.launch {
+            sessionManager.state.filter { it == SessionState.SignedOut }.collect {
+                settingsRepository.setLastSelectedTab(TopLevelDestination.HOME.name)
+            }
+        }
+    }
 
     fun onOnboardingFinished() {
         viewModelScope.launch { settingsRepository.setOnboardingSeen(true) }
