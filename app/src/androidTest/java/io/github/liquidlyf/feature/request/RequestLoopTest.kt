@@ -3,14 +3,11 @@ package io.github.liquidlyf.feature.request
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import io.github.liquidlyf.BuildConfig
 import io.github.liquidlyf.core.data.backend.WorkerClient
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.hospital.HospitalRepository
@@ -95,6 +92,7 @@ class RequestLoopTest {
     @Inject lateinit var eligibility: EligibilityCalculator
     @Inject lateinit var clock: Clock
     @Inject lateinit var network: NetworkMonitor
+    @Inject lateinit var alerts: io.github.liquidlyf.core.data.push.AlertStore
 
     @Inject @ApplicationScope
     lateinit var appScope: CoroutineScope
@@ -119,7 +117,7 @@ class RequestLoopTest {
         profiles.create(aUid, aEmail, profileDraft(BloodGroup.A_POS, listed = false, phone = "+8801812345678")).ok()
         ready(aUid)
         val create = onMain {
-            CreateRequestViewModel(SavedStateHandle(), session, profiles, requests, hospitals, geo, worker, clock, appScope, network).also(viewModels::add)
+            CreateRequestViewModel(SavedStateHandle(), session, profiles, requests, hospitals, geo, worker, clock, appScope, network, alerts).also(viewModels::add)
         }
         waitUntil("form loaded") { create.uiState.value.loaded }
         onMain {
@@ -184,7 +182,7 @@ class RequestLoopTest {
         val d1Email = EmulatorAccounts.newVerifiedUser(auth, "race-1")
         val d1Uid = auth.uid!!
         profiles.create(d1Uid, d1Email, profileDraft(BloodGroup.O_POS, listed = true, phone = "+8801711111111")).ok()
-        val (auth2, db2) = secondFirebase()
+        val (auth2, db2) = EmulatorAccounts.secondFirebase("second-donor")
         val d2Email = EmulatorAccounts.newVerifiedUser(auth2, "race-2")
         val d2Uid = auth2.uid!!
         val profiles2 = FirestoreProfileRepository(db2, eligibility, clock)
@@ -259,21 +257,4 @@ class RequestLoopTest {
         contactName = "Test Requester", contactPhone = "+8801812345678", patientName = null, wardOrBed = null,
     )
 
-    private companion object {
-        /** A second, independent Firebase client on the emulators (its own signed-in user). */
-        fun secondFirebase(): Pair<FirebaseAuth, FirebaseFirestore> {
-            val context = InstrumentationRegistry.getInstrumentation().targetContext
-            val existing = FirebaseApp.getApps(context).firstOrNull { it.name == SECOND }
-            val app = existing ?: FirebaseApp.initializeApp(context, FirebaseApp.getInstance().options, SECOND)
-            val auth = FirebaseAuth.getInstance(app)
-            val db = FirebaseFirestore.getInstance(app)
-            if (existing == null) {
-                auth.useEmulator(BuildConfig.EMULATOR_HOST, 9099)
-                db.useEmulator(BuildConfig.EMULATOR_HOST, 8085)
-            }
-            return auth to db
-        }
-
-        const val SECOND = "second-donor"
-    }
 }

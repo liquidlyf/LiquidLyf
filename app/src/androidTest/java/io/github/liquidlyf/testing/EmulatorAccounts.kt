@@ -1,6 +1,9 @@
 package io.github.liquidlyf.testing
 
+import androidx.test.platform.app.InstrumentationRegistry
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import io.github.liquidlyf.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
@@ -55,5 +58,22 @@ object EmulatorAccounts {
         } finally {
             http.disconnect()
         }
+    }
+
+    /**
+     * A second, independent Firebase client on the emulators, with its own signed-in user: the
+     * other person in a two-person test, while the app's own session stays signed in.
+     */
+    fun secondFirebase(name: String): Pair<FirebaseAuth, FirebaseFirestore> {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val existing = FirebaseApp.getApps(context).firstOrNull { it.name == name }
+        val app = existing ?: FirebaseApp.initializeApp(context, FirebaseApp.getInstance().options, name)
+        val auth = FirebaseAuth.getInstance(app)
+        val db = FirebaseFirestore.getInstance(app)
+        if (existing == null) {
+            auth.useEmulator(BuildConfig.EMULATOR_HOST, 9099)
+            db.useEmulator(BuildConfig.EMULATOR_HOST, 8085)
+        }
+        return auth to db
     }
 }

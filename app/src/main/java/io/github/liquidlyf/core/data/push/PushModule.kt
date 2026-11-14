@@ -87,6 +87,10 @@ class DataStoreSubscribedTopicsStore @Inject constructor(
 abstract class PushModule {
     @Binds abstract fun store(impl: DataStoreSubscribedTopicsStore): SubscribedTopicsStore
 
+    @Binds abstract fun alerts(impl: DataStoreAlertStore): AlertStore
+
+    @Binds abstract fun notifications(impl: io.github.liquidlyf.notifications.AlertNotifier): SystemNotifications
+
     companion object {
         @Provides
         fun topicMessaging(fcm: dagger.Lazy<FcmTopicMessaging>, demo: dagger.Lazy<LoggingTopicMessaging>): TopicMessaging =

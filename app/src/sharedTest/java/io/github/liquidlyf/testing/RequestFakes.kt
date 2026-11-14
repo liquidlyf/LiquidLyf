@@ -239,3 +239,55 @@ fun TestData.request(
     closedReason = null, responseCount = 0, reportCount = 0, askCount = 0, responders = emptyMap(), fanoutTier = 1,
     nextTierAt = null, createdAt = NOW, updatedAt = NOW, expiresAt = Validators.expiresAt(neededBy),
 )
+
+/** In memory; [cleared] counts sign-out clears. */
+class FakeAlertStore : io.github.liquidlyf.core.data.push.AlertStore {
+    private val state = MutableStateFlow<List<io.github.liquidlyf.core.data.push.LocalAlert>>(emptyList())
+    val shown = mutableMapOf<String, Int>()
+    val mine = mutableSetOf<String>()
+    var cleared = 0
+
+    override val alerts: Flow<List<io.github.liquidlyf.core.data.push.LocalAlert>> = state
+
+    override suspend fun shownCount(requestId: String): Int = shown[requestId] ?: 0
+
+    override suspend fun recordShown(alert: io.github.liquidlyf.core.data.push.LocalAlert) {
+        shown[alert.requestId] = (shown[alert.requestId] ?: 0) + 1
+        state.value = listOf(alert) + state.value
+    }
+
+    override suspend fun rememberMyRequest(requestId: String) {
+        mine += requestId
+    }
+
+    override suspend fun isMyRequest(requestId: String): Boolean = requestId in mine
+
+    override suspend fun clear() {
+        cleared++
+        shown.clear()
+        mine.clear()
+        state.value = emptyList()
+    }
+}
+
+/** The personal inbox in memory, newest first by [InboxItem.createdAt]. */
+class FakeInboxRepository : io.github.liquidlyf.core.data.inbox.InboxRepository {
+    val items = mutableListOf<io.github.liquidlyf.core.model.InboxItem>()
+    var reads = 0
+
+    override suspend fun page(
+        uid: String,
+        after: io.github.liquidlyf.core.model.InboxItem?,
+        limit: Long,
+    ): AppResult<List<io.github.liquidlyf.core.model.InboxItem>> {
+        reads++
+        val sorted = items.sortedByDescending { it.createdAt }
+        val start = after?.let { a -> sorted.indexOfFirst { it.id == a.id } + 1 } ?: 0
+        return AppResult.Success(sorted.drop(start).take(limit.toInt()))
+    }
+
+    override suspend fun hasNewer(uid: String, since: java.time.Instant?): AppResult<Boolean> {
+        reads++
+        return AppResult.Success(items.any { since == null || (it.createdAt != null && it.createdAt.isAfter(since)) })
+    }
+}

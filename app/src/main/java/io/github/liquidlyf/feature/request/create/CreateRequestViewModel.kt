@@ -12,6 +12,7 @@ import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.hospital.Hospital
 import io.github.liquidlyf.core.data.hospital.HospitalRepository
 import io.github.liquidlyf.core.data.profile.ProfileRepository
+import io.github.liquidlyf.core.data.push.AlertStore
 import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
@@ -144,6 +145,7 @@ class CreateRequestViewModel @Inject constructor(
     private val clock: Clock,
     @param:ApplicationScope private val appScope: CoroutineScope,
     network: NetworkMonitor,
+    private val alerts: AlertStore,
 ) : ViewModel() {
 
     val online: StateFlow<Boolean> = network.isOnline.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
@@ -224,6 +226,7 @@ class CreateRequestViewModel @Inject constructor(
         state.update { it.copy(posting = true, formError = null) }
         val requestId = requests.newRequestId()
         val work = appScope.async {
+            alerts.rememberMyRequest(requestId) // its alert reaches my phone too: don't show it to me
             when (val created = requests.create(requester, draft, requestId)) {
                 is AppResult.Failure -> PostResult.Failed(created.error)
                 is AppResult.Success -> PostResult.Created(worker.dispatch(requestId))

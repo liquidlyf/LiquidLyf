@@ -4,7 +4,9 @@ import io.github.liquidlyf.core.data.account.AccountDeleter
 import io.github.liquidlyf.core.data.auth.AuthRepository
 import io.github.liquidlyf.core.data.auth.AuthUser
 import io.github.liquidlyf.core.data.profile.ProfileRepository
+import io.github.liquidlyf.core.data.push.AlertStore
 import io.github.liquidlyf.core.data.push.PushTopicManager
+import io.github.liquidlyf.core.data.push.SystemNotifications
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
@@ -64,6 +66,8 @@ class AppSessionManager @Inject constructor(
     private val profiles: ProfileRepository,
     private val push: PushTopicManager,
     private val deleter: AccountDeleter,
+    private val alerts: AlertStore,
+    private val notifications: SystemNotifications,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) : SessionManager {
     private val refreshes = MutableStateFlow(0)
@@ -84,6 +88,18 @@ class AppSessionManager @Inject constructor(
                 push.sync(ready.profile, force = firstForUser)
                 // The card must carry the profile's new lastActiveAt in later writes: re-read it.
                 if (firstForUser && profiles.touchLastActive(ready.profile).getOrNull() == true) refresh()
+            }
+        }
+        // Signed out (or the account is gone): forget this person's alerts and clear their
+        // notifications, so the next person on the phone sees none of them.
+        scope.launch {
+            var signedIn = false
+            state.collect { s ->
+                if (s is SessionState.SignedOut && signedIn) {
+                    alerts.clear()
+                    notifications.cancelAll()
+                }
+                if (s !is SessionState.Loading) signedIn = s !is SessionState.SignedOut
             }
         }
     }

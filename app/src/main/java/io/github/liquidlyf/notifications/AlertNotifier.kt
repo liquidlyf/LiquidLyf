@@ -1,0 +1,131 @@
+package io.github.liquidlyf.notifications
+
+import android.Manifest
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.liquidlyf.MainActivity
+import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.geo.GeoRepository
+import io.github.liquidlyf.core.data.push.SystemNotifications
+import io.github.liquidlyf.core.designsystem.LLIcons
+import io.github.liquidlyf.core.designsystem.labelRes
+import io.github.liquidlyf.core.model.AppLocale
+import io.github.liquidlyf.navigation.REQUEST_DEEP_LINK
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Posts the app's notifications (phase-05 5.2). The push carries codes only; the text is
+ * rendered here in the phone's language (per-app language comes in Phase 8). Every tap opens the
+ * request through the `liquidlyf://request/{id}` deep link, also from a killed app.
+ */
+@Singleton
+class AlertNotifier @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val geoRepository: GeoRepository,
+) : SystemNotifications {
+
+    /** False when the person turned notifications off (or, on Android 13+, never allowed them). */
+    fun canPost(): Boolean {
+        val granted = Build.VERSION.SDK_INT < 33 ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        return granted && NotificationManagerCompat.from(context).areNotificationsEnabled()
+    }
+
+    suspend fun showRequestAlert(alert: PushMessage.RequestAlert, stillNeeded: Boolean) {
+        val group = alert.bloodGroup?.let { context.getString(it.labelRes) }
+        val title = when {
+            stillNeeded && group != null -> context.getString(R.string.notification_still_needed_title, group)
+            stillNeeded -> context.getString(R.string.notification_still_needed_title_any)
+            group != null -> context.getString(R.string.notification_new_request_title, group)
+            else -> context.getString(R.string.notification_new_request_title_any)
+        }
+        val place = alert.district?.let { code -> geoRepository.geo().district(code)?.name?.localized(locale()) }
+        val urgency = alert.urgency?.let { context.getString(it.labelRes) }
+        val body = if (place != null && urgency != null) {
+            context.getString(R.string.notification_request_body, urgency, place)
+        } else {
+            context.getString(R.string.notification_new_request_body)
+        }
+        post(
+            id = notificationId(alert.requestId, "alert"),
+            channel = NotificationChannels.URGENT_REQUESTS,
+            title = title,
+            body = body,
+            requestId = alert.requestId,
+            priority = NotificationCompat.PRIORITY_HIGH,
+        )
+    }
+
+    fun showPersonal(type: PersonalPush, requestId: String) {
+        val (title, body) = PERSONAL.getValue(type)
+        post(
+            id = notificationId(requestId, type.code),
+            channel = NotificationChannels.REQUEST_UPDATES,
+            title = context.getString(title),
+            body = context.getString(body),
+            requestId = requestId,
+            priority = NotificationCompat.PRIORITY_DEFAULT,
+        )
+    }
+
+    override fun cancelAll() = NotificationManagerCompat.from(context).cancelAll()
+
+    /** Opens the request in a fresh task: the deep link builds Home → request under it. */
+    fun openRequest(requestId: String): PendingIntent = PendingIntent.getActivity(
+        context,
+        requestId.hashCode(),
+        Intent(Intent.ACTION_VIEW, "$REQUEST_DEEP_LINK/$requestId".toUri(), context, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+
+    /** The app creates the channels at start; make sure of them here too (a push can start the process). */
+    private val channelsReady by lazy { NotificationChannels.createAll(context) }
+
+    private fun post(id: Int, channel: String, title: String, body: String, requestId: String?, priority: Int) {
+        if (!canPost()) return // the app's own screens still show everything
+        channelsReady
+        val notification = NotificationCompat.Builder(context, channel)
+            .setSmallIcon(LLIcons.BloodDrop)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(priority)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setAutoCancel(true)
+            .apply { requestId?.let { setContentIntent(openRequest(it)) } }
+            .build()
+        try {
+            NotificationManagerCompat.from(context).notify(id, notification)
+        } catch (_: SecurityException) {
+            // The permission was revoked between the check and the post.
+        }
+    }
+
+    private fun locale(): AppLocale =
+        if (context.resources.configuration.locales[0].language == "bn") AppLocale.BN else AppLocale.EN
+
+    private companion object {
+        /** One notification per request and kind: a later tier replaces the first alert. */
+        fun notificationId(requestId: String, kind: String) = "$requestId:$kind".hashCode()
+
+        val PERSONAL: Map<PersonalPush, Pair<Int, Int>> = mapOf(
+            PersonalPush.NEW_OFFER to (R.string.notification_new_offer_title to R.string.notification_new_offer_body),
+            PersonalPush.OFFER_CONFIRMED to (R.string.notification_offer_confirmed_title to R.string.notification_offer_confirmed_body),
+            PersonalPush.OFFER_DECLINED to (R.string.notification_offer_declined_title to R.string.notification_offer_declined_body),
+            PersonalPush.DONATION_RECORDED to (R.string.notification_donation_recorded_title to R.string.notification_donation_recorded_body),
+            PersonalPush.REQUEST_FULFILLED to (R.string.notification_request_fulfilled_title to R.string.notification_request_fulfilled_body),
+            PersonalPush.REQUEST_CANCELLED to (R.string.notification_request_cancelled_title to R.string.notification_request_cancelled_body),
+            PersonalPush.ASKED_TO_DONATE to (R.string.notification_asked_title to R.string.notification_asked_body),
+        )
+    }
+}

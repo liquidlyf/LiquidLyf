@@ -280,4 +280,22 @@
     <string name="notification_new_request_title">%1$s blood needed near you</string>
     <string name="notification_new_request_title_any">Blood needed near you</string>
     <string name="notification_new_request_body">Someone near you needs your blood group. Open LiquidLyf to see the request.</string>
+    <string name="notification_still_needed_title">Still needed: %1$s blood near you</string>
+    <string name="notification_still_needed_title_any">Blood still needed near you</string>
+    <!-- Urgency · district, e.g. "Urgent · Jashore" -->
+    <string name="notification_request_body">%1$s · %2$s. Tap to see the request.</string>
+    <string name="notification_new_offer_title">Someone offered to donate</string>
+    <string name="notification_new_offer_body">Open your request to see who offered, and call them.</string>
+    <string name="notification_offer_confirmed_title">Your offer was confirmed</string>
+    <string name="notification_offer_confirmed_body">The requester is counting on you. Open the request for the details.</string>
+    <string name="notification_offer_declined_title">Your offer was declined</string>
+    <string name="notification_offer_declined_body">Thank you for offering. The requester has made other plans.</string>
+    <string name="notification_donation_recorded_title">Your donation is recorded</string>
+    <string name="notification_donation_recorded_body">Thank you! It\'s in your donation history now.</string>
+    <string name="notification_request_fulfilled_title">A request you offered on has found blood</string>
+    <string name="notification_request_fulfilled_body">Thank you for offering. You don\'t need to go.</string>
+    <string name="notification_request_cancelled_title">A request you offered on was closed</string>
+    <string name="notification_request_cancelled_body">It\'s no longer needed. Thank you for offering.</string>
+    <string name="notification_asked_title">Someone asked you to donate</string>
+    <string name="notification_asked_body">Open the request to see if you can help.</string>
 </resources>

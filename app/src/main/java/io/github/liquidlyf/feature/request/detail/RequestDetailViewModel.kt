@@ -10,6 +10,7 @@ import io.github.liquidlyf.core.data.backend.WorkerClient
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.profile.ProfileRepository
+import io.github.liquidlyf.core.data.profile.VerifiedDonationRecorder
 import io.github.liquidlyf.core.data.request.OfferRepository
 import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.safety.SafetyRepository
@@ -123,6 +124,7 @@ class RequestDetailViewModel @Inject constructor(
     private var listeningToResponses = false
     private var contactLoaded = false
     private var donationChecked = false
+    private val donations = VerifiedDonationRecorder(profiles, offers, requests, clock)
 
     init {
         viewModelScope.launch {
@@ -187,23 +189,15 @@ class RequestDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Contract 12: once the requester marks my offer DONATED, my app adds the verified donation to
-     * my history (one per request; the doc id is the request id, so a second run finds it).
-     */
+    /** Contract 12: my verified donation, once per request (also done from the push and the inbox). */
     private fun recordDonationOnce(r: BloodRequest) {
         if (donationChecked) return
         donationChecked = true
         val uid = me?.uid ?: return
         viewModelScope.launch {
-            val existing = (profiles.donations(uid) as? AppResult.Success)?.data ?: run { donationChecked = false; return@launch }
-            if (existing.any { it.id == r.id }) return@launch
-            val fresh = (profiles.profile(uid, refresh = true) as? AppResult.Success)?.data ?: run { donationChecked = false; return@launch }
-            val donatedAt = (offers.myOffer(r.id, uid) as? AppResult.Success)?.data?.updatedAt ?: clock.now()
-            if (profiles.recordVerifiedDonation(fresh, r, donatedAt) is AppResult.Success) {
-                session.refresh() // the new last donation changes eligibility and alert topics
-            } else {
-                donationChecked = false
+            when (val result = donations.recordIfMissing(uid, r)) {
+                is AppResult.Success -> if (result.data) session.refresh() // eligibility and alert topics change
+                is AppResult.Failure -> donationChecked = false
             }
         }
     }
