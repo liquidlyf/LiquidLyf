@@ -163,8 +163,11 @@ serious harm.
 <!-- CHECK: whether any backups exist. The free Spark plan has no scheduled Firestore backups.
      B6 answered 13 Nov 2026 (a): after 90 days closed requests keep short names, blood group, area,
      date and outcome; contact details, donor phones, messages, notes and the closing reason are deleted.
-     CHECK: the Worker's cleanup job (Phase 5) that does this, and deletes inbox items after 60 days and
-     reports and the admin log after 1 year, doesn't exist yet. Publish only once it runs. -->
+     The Worker's clean-up job does this (backend/worker/src/retention.ts, 82db627; deployed 15 Nov 2026
+     with Worker 476f0045, daily at 09:00 Dhaka): closed requests after 90 days, inbox items after
+     60 days, reports after 1 year. CHECK before publishing: (1) B confirms it has run in production;
+     (2) the moderators' action log (adminLog, Phase 7) is deleted after 1 year too. The job doesn't
+     do that yet (asked B, 15 Nov). -->
 
 
 ## 7. Your choices and rights
