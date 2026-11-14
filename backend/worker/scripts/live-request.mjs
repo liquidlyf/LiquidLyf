@@ -4,10 +4,15 @@
 //
 //   node scripts/live-request.mjs --email <test email> --division BD30 --district BD3026 \
 //        --upazila BD30262000 --group B_POS            post + dispatch (prints timings)
-//   node scripts/live-request.mjs --email <test email> --cancel <requestId>   close it again
+//   node scripts/live-request.mjs --email <test email> --confirm <requestId> [--donor <uid>]
+//        confirm the offer on it, as the app does (contract 11 + the donor's inbox item), then
+//        notify -> OFFER_CONFIRMED to the donor. Without --donor: the one OFFERED offer
+//   node scripts/live-request.mjs --email <test email> --cancel <requestId>   close it again,
+//        then notify-responders -> REQUEST_CANCELLED to donors still OFFERED or CONFIRMED
 //   node scripts/live-request.mjs --email <test email> --delete-account       remove the test
 //        account the way the app's account deletion does (write contract 16); asks first
-//   add --emulator to run against the local Auth + Firestore emulators (no dispatch)
+//   add --emulator to run against the local Auth + Firestore emulators. The Worker is then
+//        called only if you also pass --worker http://127.0.0.1:8787 (npm run dev)
 //
 // The account's password is asked for here and never printed or stored. A new account gets a
 // verification email first: click the link, then run the script again. The Android API key
@@ -23,11 +28,14 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) =>
 }, []));
 const emulator = args.emulator === true;
 const deleting = args["delete-account"] === true;
-const posting = !args.cancel && !deleting;
+const confirming = args.confirm !== undefined;
+const posting = !args.cancel && !deleting && !confirming;
 if (!args.email) usage("--email is required");
 if (posting && !(args.division && args.district && args.group)) usage("--division, --district and --group are required");
 function usage(msg) { console.error(`${msg}\nSee the comment at the top of scripts/live-request.mjs.`); process.exit(2); }
 
+const ID = /^[A-Za-z0-9_-]{1,128}$/;
+for (const k of ["confirm", "cancel", "donor"]) if (args[k] !== undefined && !ID.test(String(args[k]))) usage(`--${k} needs an ID`);
 const CODE = /^[A-Za-z0-9_-]{1,40}$/;
 const GROUPS = ["A_POS", "A_NEG", "B_POS", "B_NEG", "AB_POS", "AB_NEG", "O_POS", "O_NEG"];
 for (const k of ["division", "district", "upazila"]) if (args[k] && !CODE.test(args[k])) usage(`bad --${k}`);
@@ -110,6 +118,19 @@ if (!lookup.json.users?.[0]?.emailVerified) {
 const bearer = { authorization: `Bearer ${idToken}` };
 function fail(msg) { console.error(`FAILED  ${msg}`); process.exit(1); }
 
+/** POST to the Worker as this account. On the emulators only with an explicit --worker. */
+async function workerPost(path) {
+  if (emulator && !args.worker) {
+    console.log(`      (Worker ${path} skipped: add --worker http://127.0.0.1:8787 to call the local Worker)`);
+    return null;
+  }
+  const t = Date.now();
+  const r = await call(`${WORKER}${path}`, {}, bearer);
+  console.log(`${r.status === 202 ? "PASS" : "FAIL"}  ${path.split("/").pop()} -> ${r.status} ${JSON.stringify(r.json)} in ${Date.now() - t} ms`);
+  console.log(`      sent at ${new Date().toISOString()} (compare with the phone's receive time)`);
+  return r;
+}
+
 // ---------------------------------------------------------------- Firestore helpers
 const enc = (v) => v === null ? { nullValue: null }
   : typeof v === "string" ? { stringValue: v }
@@ -134,6 +155,41 @@ const commit = (writes) => call(`${DOCS}:commit`, { writes }, bearer);
 const name = (path) => `${ROOT}/${path}`;
 const pathOf = (docName) => docName.slice(ROOT.length + 1);
 
+// ---------------------------------------------------------------- confirm an offer (contract 11)
+if (confirming) {
+  const rid = String(args.confirm);
+  const reqDoc = await call(`${DOCS}/requests/${rid}`, undefined, bearer);
+  if (!reqDoc.ok) fail(`couldn't read request ${rid}: ${err(reqDoc)}`);
+  const r = fieldsOf(reqDoc.json);
+  if (r.requesterUid !== uid) fail(`request ${rid} isn't this account's`);
+  if (r.status !== "OPEN") fail(`request ${rid} is ${r.status}, not OPEN`);
+  const offered = Object.entries(r.responders ?? {}).filter(([, v]) => v?.status === "OFFERED").map(([k]) => k);
+  const donor = args.donor ? String(args.donor) : offered.length === 1 ? offered[0] : null;
+  if (!donor) fail(offered.length ? `${offered.length} offers are OFFERED (${offered.join(", ")}): pick one with --donor <uid>` : "no offer is OFFERED yet");
+  const entry = r.responders?.[donor];
+  if (entry?.status !== "OFFERED") fail(`donor ${donor}'s offer is ${entry?.status ?? "missing"}, not OFFERED`);
+  const resp = await call(`${DOCS}/requests/${rid}/responses/${donor}`, undefined, bearer);
+  if (!resp.ok) fail(`couldn't read the offer: ${err(resp)}`);
+
+  // One batch, as the app: the response, its mirror on the request, and the donor's inbox item.
+  const res = await commit([
+    { update: { name: name(`requests/${rid}/responses/${donor}`), fields: fields({ status: "CONFIRMED" }) },
+      updateMask: { fieldPaths: ["status"] }, updateTransforms: serverTime("updatedAt"),
+      currentDocument: { updateTime: resp.json.updateTime } },
+    { update: { name: name(`requests/${rid}`), fields: fields({
+        responders: { [donor]: { name: entry.name, group: entry.group, status: "CONFIRMED" } }, lastResponderUid: donor }) },
+      updateMask: { fieldPaths: [`responders.\`${donor}\``, "lastResponderUid"] }, updateTransforms: serverTime("updatedAt") },
+    { update: { name: name(`users/${donor}/notifications/OFFER_CONFIRMED_${rid}`),
+        fields: fields({ type: "OFFER_CONFIRMED", fromUid: uid, requestId: rid }) },
+      updateTransforms: serverTime("createdAt"), currentDocument: { exists: false } },
+  ]);
+  if (!res.ok) fail(`confirm refused by the rules: ${err(res)}`);
+  console.log(`PASS  offer from ${donor} on ${rid} confirmed through the rules (+ the donor's inbox item)`);
+  const n = await workerPost(`/v1/requests/${rid}/responses/${donor}/notify`);
+  console.log(`      to close it later: node scripts/live-request.mjs --email ${args.email} --cancel ${rid}`);
+  process.exit(n && n.status !== 202 ? 1 : 0);
+}
+
 // ---------------------------------------------------------------- cancel
 if (args.cancel) {
   const rid = String(args.cancel);
@@ -147,7 +203,9 @@ if (args.cancel) {
   ]);
   if (!res.ok) fail(`cancel refused: ${err(res)}`);
   console.log(`PASS  request ${rid} cancelled (userStats -1).`);
-  process.exit(0);
+  // Donors still OFFERED or CONFIRMED get REQUEST_CANCELLED, as from the app.
+  const n = await workerPost(`/v1/requests/${rid}/notify-responders`);
+  process.exit(n && n.status !== 202 ? 1 : 0);
 }
 
 // ---------------------------------------------------------------- delete the account (contract 16)
@@ -333,7 +391,7 @@ const created = await commit([
 if (!created.ok) fail(`request refused by the rules: ${err(created)}`);
 console.log(`PASS  request ${rid} created through the rules (${Date.now() - t0} ms)`);
 
-if (emulator || args["no-dispatch"]) process.exit(0);
+if (args["no-dispatch"] || (emulator && !args.worker)) process.exit(0);
 const t1 = Date.now();
 const res = await call(`${WORKER}/v1/requests/${rid}/dispatch`, {}, bearer);
 const t2 = Date.now();
