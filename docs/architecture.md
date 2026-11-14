@@ -22,7 +22,9 @@ Firebase, free Spark plan                    Cloudflare Worker, free plan (backe
 There are **no Cloud Functions and no paid services**. The app writes to Firestore directly, so the
 **security rules are the backend**: they decide who may read or write each document, and they check
 every write. The Worker does only the jobs the app can't do safely itself: sending alerts to other
-donors and running timed jobs.
+donors and running timed jobs. If the Worker's 5-minute job ever stops, a backup in Google Apps Script
+(`backend/apps-script/`) widens the search instead, so the next round of alerts goes out at most 20
+minutes after it was due.
 
 ## The app
 
@@ -46,15 +48,17 @@ appear as the build phases add them.
 
 ```
 io/github/liquidlyf/
-├─ LiquidLyfApp.kt, MainActivity.kt   app start; the single activity
-├─ navigation/        routes (Routes.kt), the nav host, deep links from notifications
+├─ LiquidLyfApp.kt    app start
+├─ MainActivity.kt    the single activity, with MainViewModel.kt
+├─ navigation/        routes (Routes.kt), the nav host (AppNavHost.kt), the sign-in gate (AuthGate.kt),
+│                     deep links from notifications
 ├─ core/
 │  ├─ designsystem/   theme, colours, type, spacing; shared components in components/
 │  ├─ model/          plain data: BloodGroup, RequestStatus, Urgency…
 │  ├─ domain/         pure Kotlin rules: eligibility, blood compatibility, status changes
 │  ├─ data/<area>/    repositories: an interface plus its Firebase or DataStore implementation
 │  ├─ firebase/       Firebase setup, Flow helpers (FirestoreExt.kt), error mapping (ErrorMapper.kt)
-│  └─ util/           AppResult and AppError, SafeIntents
+│  └─ util/           AppResult and AppError (AppResult.kt), SafeIntents, the website links (Links.kt)
 ├─ feature/<name>/    one folder per feature: its screens, ViewModels and UiState
 └─ notifications/     notification channels and the push-message service
 ```
@@ -62,10 +66,14 @@ io/github/liquidlyf/
 | Elsewhere in the repo | What's there |
 |---|---|
 | `app/src/test/`, `app/src/androidTest/` | Unit tests; UI tests that run on a phone |
-| `app/src/demo/`, `app/src/dev/` | Files for one build flavor only (see below) |
+| `app/src/sharedTest/` | Fakes used by both the unit tests and the UI tests |
+| `app/src/demo/`, `app/src/dev/`, `app/src/prod/` | Files for one build flavor only (see below) |
+| `app/src/main/assets/` | Data that ships inside the app, such as the list of areas (`bd-geo.json`) |
+| `app/scripts/` | Scripts that build `bd-geo.json` and the launcher icons |
 | `firebase/` | `firestore.rules`, indexes, the rules tests in `rules-tests/`, sample data in `seed/` |
 | `backend/worker/` | The Cloudflare Worker (TypeScript) |
 | `backend/shared/` | Data shared by the app and the Worker, such as the blood compatibility table |
+| `backend/apps-script/` | A free Google Apps Script backup. If the Worker's 5-minute job stops, it widens the search for overdue requests with the same code |
 
 ## Rules for the code
 
@@ -144,7 +152,7 @@ scarcest resource, so:
 |---|---|---|
 | `demo` | The Firebase emulators on your own computer, with sample data | Everyone. No Firebase account needed; see [CONTRIBUTING.md](../CONTRIBUTING.md) |
 | `dev` | A separate free Firebase project | Maintainers, to test push messages, Google sign-in and App Check |
-| `prod` | The real app and its users' data | Only the release workflow. There are no `prod` debug builds |
+| `prod` | The real app and its users' data | Release builds only; there are no `prod` debug builds. Maintainers build it on their computer, signed with the debug key, to test on a phone. CI builds it with a dummy config. Only the release workflow signs it with the real key |
 
 ## Tests
 
