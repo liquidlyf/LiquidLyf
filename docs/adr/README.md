@@ -20,6 +20,7 @@ They follow [ADR 0001](0001-record-architecture-decisions.md). To add one, copy
 | [0012](0012-github-distribution.md) | Distribution: a signed APK on GitHub Releases first, Google Play later | Accepted |
 | [0013](0013-project-accounts.md) | Project accounts owned by the project email, not a person | Accepted |
 | [0014](0014-logo-and-trademark.md) | Redrawn logo; the name and logo stay outside the AGPL | Accepted |
+| [0015](0015-area-data.md) | Area list: official BBS codes, with Bangla names added | Accepted |
 
 Statuses: **Proposed** (under discussion), **Accepted**, **Superseded by NNNN** (replaced by a later record).
 A record is never deleted: when a decision changes, write a new record and mark the old one superseded.

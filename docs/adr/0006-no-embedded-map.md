@@ -23,7 +23,8 @@ by a pin on a map.
 ## Decision
 
 v1 has **no embedded map**:
-- areas come from a bundled list of divisions, districts, upazilas and city thanas (English and Bangla);
+- areas come from a bundled list of divisions, districts, and upazilas or city corporations (English
+  and Bangla; see [0015](0015-area-data.md));
 - hospitals come from a curated list, with "Other" as free text;
 - "Open in Maps" opens the phone's own maps app with a link or a `geo:` intent, which needs **no API key**.
 

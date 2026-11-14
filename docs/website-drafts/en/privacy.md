@@ -46,7 +46,7 @@ it does with your data.
 - Gender and birth year. We use them only to check whether you can donate and to count your rest
   period after a donation. They are never shown to other users.
 - Whether you weigh at least 45 kg (yes or no).
-- Your area: division, district, and upazila or city thana.
+- Your area: division, district, and upazila or city corporation.
 - Whether you are available to donate, and the date of your last donation.
 - Whether you chose to be listed as a donor, and when you chose it.
 - Your app language.
@@ -66,7 +66,7 @@ it does with your data.
 
 **From your phone**
 - **Push notifications:** your phone subscribes to notification "topics" named after your area and
-  blood group (for example, "Dhanmondi, B+"), through Google's Firebase Cloud Messaging. We don't
+  blood group (for example, "Savar, B+"), through Google's Firebase Cloud Messaging. We don't
   store a device token. You can stop alerts at any time (section 7).
 - **App Check:** Google Play services checks that requests come from the genuine LiquidLyf app on a
   real phone. This helps stop bots and fake apps.
