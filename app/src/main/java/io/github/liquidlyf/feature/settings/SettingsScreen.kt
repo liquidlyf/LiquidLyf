@@ -43,6 +43,7 @@ fun SettingsScreen(
     onChangePassword: () -> Unit,
     onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
+    onOpenNotificationSettings: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -56,6 +57,7 @@ fun SettingsScreen(
         onDeleteAccount = dropUnlessResumed(block = onDeleteAccount),
         onSignOut = dropUnlessResumed(block = onSignOut),
         showDeveloperOptions = BuildConfig.DEBUG,
+        onOpenNotificationSettings = dropUnlessResumed(block = onOpenNotificationSettings),
     )
 }
 
@@ -72,6 +74,7 @@ internal fun SettingsContent(
     onSignOut: () -> Unit,
     showDeveloperOptions: Boolean,
     modifier: Modifier = Modifier,
+    onOpenNotificationSettings: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -101,6 +104,14 @@ internal fun SettingsContent(
                     }
                 }
             }
+
+            // Phase 5.10: which notifications this phone gets.
+            SectionHeader(stringResource(R.string.settings_notifications), Modifier.padding(start = gutter, end = gutter, top = Spacing.md))
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.title_notification_settings)) },
+                supportingContent = { Text(stringResource(R.string.settings_notifications_summary)) },
+                modifier = Modifier.clickable(role = Role.Button, onClick = onOpenNotificationSettings),
+            )
 
             // Logout (BUG-003): alerts stop, the session ends and the gate clears the back stack.
             SectionHeader(stringResource(R.string.settings_account), Modifier.padding(start = gutter, end = gutter, top = Spacing.md))

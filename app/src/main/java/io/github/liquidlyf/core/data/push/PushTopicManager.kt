@@ -37,14 +37,19 @@ class PushTopicManager @Inject constructor(
     private val store: SubscribedTopicsStore,
     private val eligibility: EligibilityCalculator,
     private val clock: Clock,
+    private val alertPrefs: AlertPrefsStore,
 ) {
 
-    /** The topics [profile] should be subscribed to right now. Empty when signed out. */
-    fun desiredTopics(profile: UserProfile?): Set<String> {
+    /**
+     * The topics [profile] should be subscribed to right now, given this phone's notification
+     * settings ([prefs], phase-05 5.10). Empty when signed out.
+     */
+    fun desiredTopics(profile: UserProfile?, prefs: AlertPrefs = AlertPrefs()): Set<String> {
         if (profile == null) return emptySet()
-        val topics = linkedSetOf(Tiers.userTopic(profile.uid))
+        val topics = linkedSetOf<String>()
+        if (prefs.updates) topics += Tiers.userTopic(profile.uid)
         val group = profile.bloodGroup
-        if (group != null && isMatchable(profile)) {
+        if (group != null && prefs.requestAlerts && isMatchable(profile)) {
             topics += Tiers.donorTopics(group, profile.area.division, profile.area.district, profile.area.upazila)
         }
         return topics
@@ -66,7 +71,7 @@ class PushTopicManager @Inject constructor(
      * next sync retries it.
      */
     suspend fun sync(profile: UserProfile?, force: Boolean = false): AppResult<Unit> = appResultOf {
-        val desired = desiredTopics(profile)
+        val desired = desiredTopics(profile, alertPrefs.current())
         val current = store.get().toMutableSet()
         try {
             for (topic in current - desired) {

@@ -14,6 +14,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.liquidlyf.core.data.push.AlertPrefsStore
 import io.github.liquidlyf.core.data.push.PushTopicManager
 import io.github.liquidlyf.core.data.push.Reminders
 import io.github.liquidlyf.core.data.request.RequestRepository
@@ -90,6 +91,7 @@ interface ReminderEntryPoint {
     fun notifier(): AlertNotifier
     fun push(): PushTopicManager
     fun requests(): RequestRepository
+    fun alertPrefs(): AlertPrefsStore
 }
 
 private suspend fun readySession(session: SessionManager): SessionState.Ready? =
@@ -102,7 +104,7 @@ class EligibleAgainWorker(context: Context, params: WorkerParameters) : Coroutin
         graph.session().refresh()
         // The rest period is over: the alert topics come back (PushTopicManager decides).
         graph.push().sync(ready.profile)
-        graph.notifier().showEligibleAgain()
+        if (graph.alertPrefs().current().reminders) graph.notifier().showEligibleAgain()
         return Result.success()
     }
 }
@@ -117,7 +119,8 @@ class RequestEndingWorker(context: Context, params: WorkerParameters) : Coroutin
             is AppResult.Failure -> return if (runAttemptCount < 3) Result.retry() else Result.success()
         }
         // Only my own request, and only while it still waits for blood.
-        if (request.requesterUid == uid && request.status == RequestStatus.OPEN) graph.notifier().showRequestEnding(id)
+        val wanted = graph.alertPrefs().current().reminders
+        if (wanted && request.requesterUid == uid && request.status == RequestStatus.OPEN) graph.notifier().showRequestEnding(id)
         return Result.success()
     }
 

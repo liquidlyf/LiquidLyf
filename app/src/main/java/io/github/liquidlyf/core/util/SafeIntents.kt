@@ -44,6 +44,16 @@ object SafeIntents {
     fun openEmailApp(context: Context): Boolean =
         context.tryStart(Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_EMAIL))
 
+    /** The phone's notification settings for this app (Android 8+), or the app's info page. */
+    fun openNotificationSettings(context: Context): Boolean {
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            val notifications = Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+            if (context.tryStart(notifications)) return true
+        }
+        return context.tryStart(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${context.packageName}".toUri()))
+    }
+
     fun shareText(context: Context, text: String, chooserTitle: String): Boolean {
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
@@ -104,6 +114,8 @@ class SafeIntentLauncher internal constructor(
     fun openUrl(url: String) = run(R.string.intent_no_browser) { SafeIntents.openUrl(context, url) }
 
     fun openEmailApp() = run(R.string.intent_no_email_app) { SafeIntents.openEmailApp(context) }
+
+    fun openNotificationSettings() = run(R.string.intent_no_settings) { SafeIntents.openNotificationSettings(context) }
 
     fun shareText(text: String) = run(R.string.intent_no_share_target) {
         SafeIntents.shareText(context, text, context.getString(R.string.intent_share_chooser_title))

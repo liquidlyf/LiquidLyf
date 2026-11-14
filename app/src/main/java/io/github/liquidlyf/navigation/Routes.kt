@@ -55,3 +55,4 @@ import kotlinx.serialization.Serializable
 @Serializable data class RequestDetail(val id: String, val notice: String? = null)
 @Serializable data object CreateRequest
 @Serializable data object Notifications
+@Serializable data object NotificationSettings

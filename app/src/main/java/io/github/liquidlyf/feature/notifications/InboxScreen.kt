@@ -16,6 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -49,9 +50,14 @@ import io.github.liquidlyf.core.model.InboxType
 import io.github.liquidlyf.core.model.Urgency
 
 @Composable
-fun InboxRoute(onBack: () -> Unit, onOpenRequest: (String) -> Unit, viewModel: InboxViewModel = hiltViewModel()) {
+fun InboxRoute(
+    onBack: () -> Unit,
+    onOpenRequest: (String) -> Unit,
+    onOpenSettings: () -> Unit,
+    viewModel: InboxViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    InboxScreen(state, onBack, onOpenRequest, viewModel::loadMore)
+    InboxScreen(state, onBack, onOpenRequest, viewModel::loadMore, onOpenSettings)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,9 +67,22 @@ internal fun InboxScreen(
     onBack: () -> Unit,
     onOpenRequest: (String) -> Unit,
     onLoadMore: () -> Unit,
+    onOpenSettings: () -> Unit = {},
 ) {
     val entries = state.entries
-    Scaffold(topBar = { LLTopBar(title = stringResource(R.string.title_notifications), onBack = onBack) }) { padding ->
+    Scaffold(
+        topBar = {
+            LLTopBar(
+                title = stringResource(R.string.title_notifications),
+                onBack = onBack,
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(painterResource(LLIcons.Settings), contentDescription = stringResource(R.string.title_notification_settings))
+                    }
+                },
+            )
+        },
+    ) { padding ->
         when {
             entries == null && state.error == null -> LoadingState(Modifier.padding(padding))
             entries.isNullOrEmpty() && state.error == null -> EmptyState(

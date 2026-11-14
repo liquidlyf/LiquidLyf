@@ -8,14 +8,15 @@ import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
+import io.github.liquidlyf.testing.FakeAlertPrefsStore
+import java.io.IOException
+import java.time.Duration
+import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.IOException
-import java.time.Duration
-import java.time.Instant
 
 class PushTopicManagerTest {
 
@@ -49,7 +50,8 @@ class PushTopicManagerTest {
 
     private val fcm = FakeMessaging()
     private val store = MemoryStore()
-    private val manager = PushTopicManager(fcm, store, EligibilityCalculator(), Clock { now })
+    private val prefs = FakeAlertPrefsStore()
+    private val manager = PushTopicManager(fcm, store, EligibilityCalculator(), Clock { now }, prefs)
 
     private val donor = UserProfile(
         uid = "u1", fullName = "Karim Uddin", email = "k@example.test", phone = "+8801712345678", phoneVerified = false,
@@ -140,5 +142,26 @@ class PushTopicManagerTest {
         assertNull(manager.nextChangeAt(donor))
         assertNull(manager.nextChangeAt(donor.copy(lastDonationAt = donated, available = false)))
         assertNull(manager.nextChangeAt(null))
+    }
+
+    @Test
+    fun `the phone's notification settings take topics away`() = runTest {
+        manager.sync(donor)
+        assertEquals(4, store.topics.size)
+
+        // Request alerts off: the area topics go, personal updates stay.
+        prefs.set(AlertPrefs(requestAlerts = false))
+        manager.sync(donor)
+        assertEquals(setOf("usr_u1"), store.topics)
+
+        // Updates off too: nothing at all.
+        prefs.set(AlertPrefs(requestAlerts = false, updates = false))
+        manager.sync(donor)
+        assertTrue(store.topics.isEmpty())
+
+        // Both back on.
+        prefs.set(AlertPrefs())
+        manager.sync(donor)
+        assertEquals(4, store.topics.size)
     }
 }

@@ -64,6 +64,8 @@ import io.github.liquidlyf.feature.request.list.PagedList
 import io.github.liquidlyf.feature.request.list.RequestsScreen
 import io.github.liquidlyf.feature.request.list.RequestsTab
 import io.github.liquidlyf.feature.request.list.RequestsUiState
+import io.github.liquidlyf.feature.settings.NotificationPrefsScreen
+import io.github.liquidlyf.feature.settings.NotificationPrefsUiState
 import io.github.liquidlyf.testing.FakeNetworkMonitor
 import io.github.liquidlyf.testing.FakeOfferRepository
 import io.github.liquidlyf.testing.FakeProfileRepository
@@ -226,6 +228,23 @@ class AccessibilityLabelsTest {
         compose.runOnUiThread { state.value = state.value.copy(limit = OpenRequestLimit(max = 3, newAccount = false)) }
         compose.waitForIdle()
         assertControlsAreLabelledAndBigEnough("Create request, open-request limit")
+    }
+
+    @Test
+    fun notificationSettingsAndTheNotificationsOffBanner() {
+        show { NotificationPrefsScreen(NotificationPrefsUiState(loaded = true), systemEnabled = false, onChange = {}, onOpenSystemSettings = {}, onBack = {}) }
+        assertControlsAreLabelledAndBigEnough("Notification settings")
+    }
+
+    @Test
+    fun homeWithNotificationsOff() {
+        val me = TestData.profile()
+        val eligibility = EligibilityCalculator().evaluate(me.birthYear, me.weightOk, me.gender, me.lastDonationAt, TestData.NOW)
+        show {
+            HomeScreen(HomeUiState(me, eligibility, available = true, requests = emptyList(), geo = geo), online = true, {}, {}, {}, {}, {},
+                unreadInbox = true, notificationsEnabled = false)
+        }
+        assertControlsAreLabelledAndBigEnough("Home, notifications off")
     }
 
     @Test

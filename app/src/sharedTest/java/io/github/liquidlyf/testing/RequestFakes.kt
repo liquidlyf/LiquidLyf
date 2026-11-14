@@ -316,3 +316,13 @@ class FakeReminders : io.github.liquidlyf.core.data.push.Reminders {
         ending.clear()
     }
 }
+
+class FakeAlertPrefsStore(initial: io.github.liquidlyf.core.data.push.AlertPrefs = io.github.liquidlyf.core.data.push.AlertPrefs()) :
+    io.github.liquidlyf.core.data.push.AlertPrefsStore {
+    private val state = MutableStateFlow(initial)
+    override val prefs: Flow<io.github.liquidlyf.core.data.push.AlertPrefs> = state
+
+    override suspend fun set(prefs: io.github.liquidlyf.core.data.push.AlertPrefs) {
+        state.value = prefs
+    }
+}

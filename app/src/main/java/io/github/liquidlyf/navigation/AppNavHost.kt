@@ -75,6 +75,7 @@ import io.github.liquidlyf.feature.request.list.RequestsRoute
 import io.github.liquidlyf.feature.session.NotificationPermissionScreen
 import io.github.liquidlyf.feature.session.SessionProblemScreen
 import io.github.liquidlyf.feature.session.needsNotificationPermission
+import io.github.liquidlyf.feature.settings.NotificationPrefsRoute
 import io.github.liquidlyf.feature.settings.SettingsScreen
 
 /** Used by the Phase 1 placeholders until real requests exist (Phase 4). */
@@ -326,6 +327,7 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                     onChangePassword = { navController.navigate(ChangePassword) { launchSingleTop = true } },
                     onDeleteAccount = { navController.navigate(DeleteAccount) { launchSingleTop = true } },
                     onSignOut = onSignOut,
+                    onOpenNotificationSettings = { navController.navigate(NotificationSettings) { launchSingleTop = true } },
                 )
             }
             composable<EditProfile> { EditProfileRoute(onDone = { navController.popBackStack() }) }
@@ -358,7 +360,9 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
             InboxRoute(
                 onBack = { navController.popBackStack() },
                 onOpenRequest = { id -> navController.navigate(RequestDetail(id = id)) { launchSingleTop = true } },
+                onOpenSettings = { navController.navigate(NotificationSettings) { launchSingleTop = true } },
             )
         }
+        composable<NotificationSettings> { NotificationPrefsRoute(onBack = { navController.popBackStack() }) }
     }
 }

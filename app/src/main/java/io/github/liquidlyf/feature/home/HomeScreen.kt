@@ -61,7 +61,10 @@ import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.EligibilityRules
 import io.github.liquidlyf.core.domain.IneligibleReason
+import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.profile.BloodGroupReminder
+import io.github.liquidlyf.feature.settings.NotificationsOffBanner
+import io.github.liquidlyf.feature.settings.rememberNotificationsEnabled
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.launch
@@ -96,8 +99,10 @@ internal fun HomeScreen(
     onOpenNotifications: () -> Unit,
     onEditProfile: () -> Unit,
     unreadInbox: Boolean = false,
+    notificationsEnabled: Boolean = rememberNotificationsEnabled(),
 ) {
     val now by rememberNow()
+    val launcher = rememberSafeIntentLauncher()
     val locale = currentAppLocale()
     Scaffold(
         topBar = {
@@ -129,6 +134,10 @@ internal fun HomeScreen(
                     contentPadding = PaddingValues(horizontal = screenGutter(), vertical = Spacing.md),
                     verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                 ) {
+                    // Phase 5.10: without notifications a donor never hears about a request.
+                    if (!notificationsEnabled) {
+                        item(key = "notifications-off") { NotificationsOffBanner(onTurnOn = launcher::openNotificationSettings) }
+                    }
                     item(key = "availability") { AvailabilityCard(state, onAvailableToggled, onEditProfile) }
                     item(key = "header") { SectionHeader(stringResource(R.string.home_urgent_near_you)) }
                     val list = state.requests

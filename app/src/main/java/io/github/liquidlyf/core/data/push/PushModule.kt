@@ -89,6 +89,8 @@ abstract class PushModule {
 
     @Binds abstract fun alerts(impl: DataStoreAlertStore): AlertStore
 
+    @Binds abstract fun alertPrefs(impl: DataStoreAlertPrefsStore): AlertPrefsStore
+
     @Binds abstract fun notifications(impl: io.github.liquidlyf.notifications.AlertNotifier): SystemNotifications
 
     companion object {

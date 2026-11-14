@@ -70,6 +70,7 @@
     <string name="intent_no_browser">No browser found to open this link.</string>
     <string name="intent_no_email_app">No email app found.</string>
     <string name="intent_no_share_target">No app found to share with.</string>
+    <string name="intent_no_settings">Couldn\'t open the phone\'s settings. Open Settings → Apps → LiquidLyf → Notifications.</string>
     <string name="intent_share_chooser_title">Share with</string>
 
     <!-- Blood groups: the symbol is the same in every language; the spoken form is for TalkBack -->
@@ -311,4 +312,20 @@
     <string name="inbox_load_more">Show older</string>
     <string name="inbox_load_failed">%1$s Tap to try again.</string>
     <string name="action_open_notifications_unread">Open notifications, new ones waiting</string>
+
+    <!-- Notification settings (Phase 5.10) -->
+    <string name="title_notification_settings">Notification settings</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_summary">Request alerts, updates and reminders</string>
+    <string name="notif_prefs_alerts_title">Blood requests near me</string>
+    <string name="notif_prefs_alerts_summary">An alert when someone near you needs your blood group.</string>
+    <string name="notif_prefs_updates_title">Offers and updates</string>
+    <string name="notif_prefs_updates_summary">When someone offers on your request, or a requester answers your offer. They also stay in the inbox.</string>
+    <string name="notif_prefs_reminders_title">Reminders</string>
+    <string name="notif_prefs_reminders_summary">When you can donate again, and 2 hours before your request ends.</string>
+    <string name="notif_prefs_system_title">Phone notification settings</string>
+    <string name="notif_prefs_system_summary">Sound, vibration and more, in your phone\'s settings.</string>
+    <string name="notif_off_title">Notifications are off</string>
+    <string name="notif_off_body">You won\'t hear when someone near you needs your blood, or when someone offers on your request.</string>
+    <string name="notif_off_turn_on">Turn on</string>
 </resources>
