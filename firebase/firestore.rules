@@ -661,6 +661,31 @@ service cloud.firestore {
     }
 
     // ================================================================
+    // adminLog/{id}: one entry per in-app admin action (phase-07 7.4; doc 03, insider row).
+    // The admin's app writes it in the same batch as the action. Create only: nobody can
+    // edit or delete an entry from the app. The local admin scripts log with the service
+    // account, which the rules don't cover, so their actions aren't limited to this list.
+    // ================================================================
+    function adminActions() {
+      return ['DISMISS_REPORT','ACTION_REPORT','REMOVE_REQUEST','RESTORE_REQUEST','CANCEL_REQUEST'];
+    }
+    function validAdminLog(l) {
+      return l.keys().hasAll(['adminUid','action','targetType','targetId','createdAt'])
+          && l.keys().hasOnly(['adminUid','action','targetType','targetId','reportId','note','createdAt'])
+          && l.adminUid == me()
+          && l.action in adminActions()
+          && l.targetType in ['REQUEST','USER','REPORT'] && isId(l.targetId)
+          && (absent(l, 'reportId') || isId(l.reportId))
+          && optStr(l, 'note', 500)
+          && l.createdAt == request.time;
+    }
+    match /adminLog/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && validAdminLog(data());
+      allow update, delete: if false;
+    }
+
+    // ================================================================
     // Reference data. The app reads hospitals from the bundled JSON; this collection
     // is the admin source of truth. config/public moved to Remote Config (doc 07 §9.1).
     // ================================================================

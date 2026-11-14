@@ -113,6 +113,52 @@ describe('reportCount and auto-hide (Spark test 6)', () => {
   });
 });
 
+describe('adminLog: admins append, nobody rewrites (phase-07 7.4)', () => {
+  const mod = () => as('mod', { admin: true });
+  const entry = (o = {}) => ({
+    adminUid: 'mod', action: 'RESTORE_REQUEST', targetType: 'REQUEST', targetId: 'r1',
+    reportId: 'eve_r1', note: 'Checked with the hospital', createdAt: serverTimestamp(), ...o,
+  });
+
+  test('an admin logs an action in the same batch as the action, and reads the log', async () => {
+    await seed(async (db) => updateDoc(doc(db, 'requests/r1'), { status: 'REMOVED', reportCount: 3 }));
+    const db = mod();
+    const b = writeBatch(db);
+    b.update(doc(db, 'requests/r1'), { status: 'OPEN', updatedAt: serverTimestamp() });
+    b.set(doc(db, 'adminLog/a1'), entry());
+    await assertSucceeds(b.commit());
+    await assertSucceeds(getDoc(doc(db, 'adminLog/a1')));
+    await assertSucceeds(getDocs(collection(db, 'adminLog')));
+  });
+
+  test('a non-admin can neither write nor read the log', async () => {
+    await assertFails(setDoc(doc(as('eve'), 'adminLog/a1'), entry({ adminUid: 'eve' })));
+    await seed(async (db) => setDoc(doc(db, 'adminLog/a1'), { ...entry(), createdAt: new Date() }));
+    await assertFails(getDoc(doc(as('eve'), 'adminLog/a1')));
+    await assertFails(getDocs(collection(as('eve'), 'adminLog')));
+  });
+
+  test('an entry names its own admin, a known action, a valid target and the server time', async () => {
+    await assertFails(setDoc(doc(mod(), 'adminLog/a1'), entry({ adminUid: 'other' })));
+    await assertFails(setDoc(doc(mod(), 'adminLog/a1'), entry({ action: 'DELETE_EVERYTHING' })));
+    await assertFails(setDoc(doc(mod(), 'adminLog/a1'), entry({ targetType: 'DONOR' })));
+    await assertFails(setDoc(doc(mod(), 'adminLog/a1'), entry({ targetId: 'bad/id' })));
+    await assertFails(setDoc(doc(mod(), 'adminLog/a1'), entry({ createdAt: new Date(0) })));
+    await assertFails(setDoc(doc(mod(), 'adminLog/a1'), entry({ extra: 1 })));
+    const { targetId, ...noTarget } = entry();
+    await assertFails(setDoc(doc(mod(), 'adminLog/a1'), noTarget));
+    const { reportId, note, ...minimal } = entry({ action: 'DISMISS_REPORT', targetType: 'REPORT', targetId: 'eve_r1' });
+    await assertSucceeds(setDoc(doc(mod(), 'adminLog/a2'), minimal));
+  });
+
+  test('nobody edits or deletes an entry, not even an admin', async () => {
+    await assertSucceeds(setDoc(doc(mod(), 'adminLog/a1'), entry()));
+    await assertFails(updateDoc(doc(mod(), 'adminLog/a1'), { note: 'changed' }));
+    await assertFails(deleteDoc(doc(mod(), 'adminLog/a1')));
+    await assertFails(setDoc(doc(mod(), 'adminLog/a1'), entry({ note: 'overwrite' })));
+  });
+});
+
 describe('hospitals', () => {
   test('signed-in users read; only admins write', async () => {
     await assertSucceeds(getDoc(doc(as('eve'), 'hospitals/h1')));

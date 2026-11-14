@@ -91,6 +91,11 @@ describe('offers (doc 07 test 5)', () => {
   test('an unverified user cannot offer', async () => {
     await assertFails(offer(as('bob', { email_verified: false }), 'bob', 'r1', 'alice', users.bob));
   });
+
+  test('a banned user (custom claim) cannot offer (phase-07 7.9)', async () => {
+    await assertFails(offer(as('bob', { banned: true }), 'bob', 'r1', 'alice', users.bob));
+    await assertSucceeds(offer(as('bob', { banned: false }), 'bob', 'r1', 'alice', users.bob));
+  });
 });
 
 describe('responses: read', () => {

@@ -120,6 +120,11 @@ General:
     6. Unsubscribe from all topics, then call `user.delete()` last.
 
     Reports the user filed stay with the admins, keyed by uid.
+17. **Admin action** (custom claim `admin: true`; the hidden Moderation screen, phase-07 7.4–7.5), one batch:
+    - the action itself: request `status` to `OPEN` (restore), `REMOVED` or `CANCELLED`, plus `updatedAt`; or a report's `status`;
+    - plus `adminLog/{id}`: `adminUid` (me), `action` (`DISMISS_REPORT`, `ACTION_REPORT`, `REMOVE_REQUEST`, `RESTORE_REQUEST`, `CANCEL_REQUEST`), `targetType` (`REQUEST`, `USER`, `REPORT`), `targetId`, optional `reportId` and `note` (≤ 500), `createdAt` = server time.
+
+    The log is create-only: nobody can edit or delete an entry from the app, not even an admin. Only admins read it.
 
 ### Queries the rules allow
 - **Feed:** `requests` where `status == OPEN`, `district == X`, `acceptedGroups array-contains G`, ordered by `neededBy`. Delta sync: `district`, `acceptedGroups`, `updatedAt > lastSync`.
