@@ -77,8 +77,18 @@ host a fork, you must use your own name and logo. See [TRADEMARKS.md](TRADEMARKS
 ## Third-party components
 
 Libraries and data from other projects keep their own licences. The app lists them under
-**Settings → About → Open-source licences**. Examples: AndroidX and the open-source Firebase SDKs
-(Apache-2.0); map or place data from OpenStreetMap, if used (ODbL, credited in the app).
+**Settings → About → Open-source licences**. They include:
+
+- AndroidX and the open-source Firebase SDKs (Apache-2.0).
+- The list of Bangladesh's divisions, districts and upazilas, in
+  [`app/src/main/assets/bd-geo.json`](app/src/main/assets/bd-geo.json):
+  - codes and English names from the Bangladesh Bureau of Statistics (BBS), via UN OCHA's
+    [Humanitarian Data Exchange](https://data.humdata.org/dataset/cod-ab-bgd) (`cod-ab-bgd`), under
+    CC BY-IGO;
+  - Bangla names from [`ifahimreza/bangladesh-geojson`](https://github.com/ifahimreza/bangladesh-geojson)
+    (MIT). Names marked `bnNeedsReview` are LiquidLyf's own.
+
+  The file is built by [`app/scripts/build_bd_geo.py`](app/scripts/build_bd_geo.py).
 
 ## Contributions
 
