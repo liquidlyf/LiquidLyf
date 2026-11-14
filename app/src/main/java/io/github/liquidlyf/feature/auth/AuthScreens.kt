@@ -323,6 +323,12 @@ fun VerifyEmailScreen(
     val intents = rememberSafeIntentLauncher()
     AuthLayout(title = stringResource(R.string.title_verify_email), onBack = null) {
         Text(stringResource(R.string.verify_email_body, state.email), style = MaterialTheme.typography.bodyLarge)
+        // Gmail often files Firebase's first mail from a new project under Spam or Promotions (A15).
+        Text(
+            listOf(emailSpamHint(state.sender), stringResource(R.string.verify_email_resend_hint)).joinToString(" "),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         LLPrimaryButton(
             text = stringResource(R.string.action_i_have_verified),
             onClick = onCheckVerified,
@@ -347,6 +353,11 @@ fun VerifyEmailScreen(
     }
 }
 
+/** "Can't find it? Check Spam and Promotions. It comes from …" (the sender only when known). */
+@Composable
+private fun emailSpamHint(sender: String): String =
+    stringResource(R.string.email_spam_hint) + if (sender.isNotBlank()) " " + stringResource(R.string.email_sender, sender) else ""
+
 // ---- Forgot password ----
 
 @Composable
@@ -369,7 +380,7 @@ fun ForgotPasswordScreen(
             EmptyState(
                 icon = LLIcons.CheckCircle,
                 title = stringResource(R.string.forgot_password_sent_title),
-                body = stringResource(R.string.forgot_password_sent_body, sentTo),
+                body = stringResource(R.string.forgot_password_sent_body, sentTo) + " " + emailSpamHint(state.sender),
                 actionLabel = stringResource(R.string.action_back_to_sign_in),
                 onAction = onBack,
             )

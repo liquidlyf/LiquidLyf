@@ -152,6 +152,9 @@ class SignUpToHomeTest {
 
         // Verify: the emulator's admin API plays the email link.
         waitFor(str(R.string.action_i_have_verified))
+        // The verification email really went out, although the gate replaced the sign-up screen
+        // at once (A15: the first email was never sent).
+        assertTrue("No verification email was sent to $email", verificationEmailSent(email))
         verifyEmail(auth.currentUser!!.uid)
         tap(R.string.action_i_have_verified)
 
@@ -190,6 +193,23 @@ class SignUpToHomeTest {
         assertEquals("Test D.", card.getString("displayName"))
         assertEquals(0L, card.getTimestamp("eligibleFrom")!!.seconds)
         assertTrue("The card must hold no phone", !card.contains("phone"))
+    }
+
+    /** The Auth emulator lists every email it "sent"; waits up to 10 s for this one. */
+    private suspend fun verificationEmailSent(email: String): Boolean = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val url = URL("http://${BuildConfig.EMULATOR_HOST}:9099/emulator/v1/projects/demo-liquidlyf/oobCodes")
+        repeat(20) {
+            val http = url.openConnection() as HttpURLConnection
+            val body = try { http.inputStream.bufferedReader().readText() } finally { http.disconnect() }
+            val codes = org.json.JSONObject(body).optJSONArray("oobCodes")
+            val sent = codes != null && (0 until codes.length()).any { i ->
+                val code = codes.getJSONObject(i)
+                code.optString("email") == email && code.optString("requestType") == "VERIFY_EMAIL"
+            }
+            if (sent) return@withContext true
+            kotlinx.coroutines.delay(500)
+        }
+        false
     }
 
     private suspend fun verifyEmail(uid: String) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {

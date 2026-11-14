@@ -199,6 +199,8 @@ class SignUpViewModel @Inject constructor(private val auth: AuthRepository) : Vi
 
 data class VerifyEmailUiState(
     val email: String = "",
+    /** Firebase's sender address, for the "check Spam" hint. */
+    val sender: String = "",
     /** Seconds until Resend works again (BUG-026: no resend spam). */
     val resendIn: Int = VerifyEmailViewModel.COOLDOWN_SECONDS,
     val checking: Boolean = false,
@@ -210,7 +212,7 @@ class VerifyEmailViewModel @Inject constructor(
     private val auth: AuthRepository,
     private val session: SessionManager,
 ) : ViewModel() {
-    private val state = MutableStateFlow(VerifyEmailUiState(email = auth.authState.value?.email.orEmpty()))
+    private val state = MutableStateFlow(VerifyEmailUiState(email = auth.authState.value?.email.orEmpty(), sender = auth.emailSender))
     val uiState: StateFlow<VerifyEmailUiState> = state.asStateFlow()
     private var countdown: Job? = null
 
@@ -279,11 +281,13 @@ data class ForgotPasswordUiState(
     val loading: Boolean = false,
     /** Set once the link is sent: the screen shows "check your email". */
     val sentTo: String? = null,
+    /** Firebase's sender address, for the "check Spam" hint. */
+    val sender: String = "",
 )
 
 @HiltViewModel
 class ForgotPasswordViewModel @Inject constructor(private val auth: AuthRepository) : ViewModel() {
-    private val state = MutableStateFlow(ForgotPasswordUiState())
+    private val state = MutableStateFlow(ForgotPasswordUiState(sender = auth.emailSender))
     val uiState: StateFlow<ForgotPasswordUiState> = state.asStateFlow()
 
     fun onEmailChange(value: String) = state.update { it.copy(email = value, emailError = null, formError = null) }

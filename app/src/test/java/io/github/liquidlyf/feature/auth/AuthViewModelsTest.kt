@@ -210,6 +210,8 @@ class AuthViewModelsTest {
         val session = FakeSessionManager(SessionState.Unverified(auth.authState.value!!))
         val vm = VerifyEmailViewModel(auth, session)
         assertEquals("rahim@example.test", vm.uiState.value.email)
+        // The "check Spam" hint names the sender.
+        assertEquals("noreply@demo-liquidlyf.firebaseapp.com", vm.uiState.value.sender)
 
         vm.checkVerified()
         runCurrent()
@@ -245,5 +247,6 @@ class AuthViewModelsTest {
         advanceUntilIdle()
         assertEquals("nobody@example.test", vm.uiState.value.sentTo)
         assertEquals(listOf("nobody@example.test"), auth.resetEmails)
+        assertEquals("noreply@demo-liquidlyf.firebaseapp.com", vm.uiState.value.sender)
     }
 }

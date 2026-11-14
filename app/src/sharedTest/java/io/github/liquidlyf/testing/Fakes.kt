@@ -84,6 +84,7 @@ class FakeAuthRepository : AuthRepository {
     var failNext: AppError? = null
     private val state = MutableStateFlow<AuthUser?>(null)
     override val authState: StateFlow<AuthUser?> = state
+    override val emailSender = "noreply@demo-liquidlyf.firebaseapp.com"
     private var current: String? = null
 
     private fun <T> result(block: () -> AppResult<T>): AppResult<T> =

@@ -8,10 +8,12 @@ import com.google.firebase.auth.userProfileChangeRequest
 import io.github.liquidlyf.core.firebase.appResultOf
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -37,6 +39,9 @@ data class AuthUser(
 interface AuthRepository {
     /** Null when signed out. Also updates after [reloadUser], when "email verified" can change. */
     val authState: StateFlow<AuthUser?>
+
+    /** Who Firebase's emails come from (the project's default sender), for the "check Spam" hints. */
+    val emailSender: String
 
     suspend fun signInEmail(email: String, password: String): AppResult<AuthUser>
 
@@ -71,6 +76,7 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
 
     private val state = MutableStateFlow(auth.currentUser?.toAuthUser())
     override val authState: StateFlow<AuthUser?> = state.asStateFlow()
+    override val emailSender: String = "noreply@${auth.app.options.projectId}.firebaseapp.com"
 
     init {
         // A singleton for the whole process: the listener lives as long as the app does.
@@ -84,9 +90,14 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
 
     override suspend fun signUpEmail(name: String, email: String, password: String): AppResult<AuthUser> = appResultOf {
         val user = auth.createUserWithEmailAndPassword(email.trim(), password).await().user!!
-        user.updateProfile(userProfileChangeRequest { displayName = name.trim() }).await()
-        auth.useAppLanguage()
-        user.sendEmailVerification().await()
+        // Creating the account signs the user in, and the auth gate at once replaces the sign-up
+        // screen with Verify email, cancelling the screen's scope. The name and the verification
+        // email must still go out (A15: without this, the first email was never sent).
+        withContext(NonCancellable) {
+            user.updateProfile(userProfileChangeRequest { displayName = name.trim() }).await()
+            auth.useAppLanguage()
+            user.sendEmailVerification().await()
+        }
         publish()!!
     }
 
