@@ -43,6 +43,9 @@ import javax.inject.Inject
 
 enum class ViewerRole { REQUESTER, DONOR }
 
+/** A donor's offer statuses that show the requester's contact. */
+private val CONTACT_STATUSES = setOf(ResponseStatus.OFFERED, ResponseStatus.CONFIRMED, ResponseStatus.DONATED)
+
 /** Why this donor can't offer right now; the button is disabled with this reason. */
 sealed interface OfferBlock {
     data object Closed : OfferBlock
@@ -60,7 +63,10 @@ data class RequestDetailUiState(
     /** The donor's own offer status, live from the request's responders map. */
     val myStatus: ResponseStatus? = null,
     val offerBlock: OfferBlock? = null,
-    /** The requester always; a donor only after offering (the rules allow nobody else). */
+    /**
+     * The requester always; a donor only after offering (the rules allow nobody else), and no longer
+     * once the offer is withdrawn or declined (doc 03: harassers), although the rules would still allow it.
+     */
     val contact: RequestContact? = null,
     /** The requester's live list of offers, with phones. */
     val responses: List<DonorResponse> = emptyList(),
@@ -130,6 +136,7 @@ class RequestDetailViewModel @Inject constructor(
         val profile = me
         val mine = r != null && profile != null && r.requesterUid == profile.uid
         val myStatus = if (r != null && profile != null) r.responders[profile.uid]?.status else null
+        val seesContact = mine || myStatus in CONTACT_STATUSES
         state.update {
             it.copy(
                 loading = false,
@@ -137,11 +144,12 @@ class RequestDetailViewModel @Inject constructor(
                 role = if (mine) ViewerRole.REQUESTER else ViewerRole.DONOR,
                 myStatus = myStatus,
                 offerBlock = if (r != null && profile != null && !mine) offerBlock(r, profile) else null,
+                contact = if (seesContact) it.contact else null,
             )
         }
         if (r == null || profile == null) return
         if (mine) listenToResponses(profile.uid)
-        if (mine || myStatus != null) loadContact()
+        if (seesContact) loadContact()
         if (myStatus == ResponseStatus.DONATED) recordDonationOnce(r)
     }
 

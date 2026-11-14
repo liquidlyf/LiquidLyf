@@ -106,6 +106,33 @@ class RequestDetailViewModelTest {
     }
 
     @Test
+    fun `the contact disappears once the offer is withdrawn or declined`() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.offer("")
+        advanceUntilIdle()
+        assertEquals(contact, vm.uiState.value.contact)
+        vm.withdraw()
+        advanceUntilIdle()
+        assertEquals(ResponseStatus.WITHDRAWN, vm.uiState.value.myStatus)
+        assertNull(vm.uiState.value.contact)
+
+        // A declined donor: the requester said no, so the number goes too.
+        requests.put(TestData.request(id = "r2", group = BloodGroup.B_POS))
+        requests.contacts["r2"] = contact
+        val r2 = vm("r2")
+        advanceUntilIdle()
+        r2.offer("")
+        advanceUntilIdle()
+        assertEquals(contact, r2.uiState.value.contact)
+        val offer = offers.responses.value.getValue("r2" to "donor")
+        offers.decide(requests.requests.value.getValue("r2"), offer, ResponseStatus.DECLINED)
+        advanceUntilIdle()
+        assertEquals(ResponseStatus.DECLINED, r2.uiState.value.myStatus)
+        assertNull(r2.uiState.value.contact)
+    }
+
+    @Test
     fun `offering is blocked with a reason`() = runTest(dispatcher) {
         signInAs(donor.copy(bloodGroup = null))
         val noGroup = vm()
