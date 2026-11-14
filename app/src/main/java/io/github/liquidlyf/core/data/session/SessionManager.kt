@@ -6,6 +6,7 @@ import io.github.liquidlyf.core.data.auth.AuthUser
 import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.push.AlertStore
 import io.github.liquidlyf.core.data.push.PushTopicManager
+import io.github.liquidlyf.core.data.push.Reminders
 import io.github.liquidlyf.core.data.push.SystemNotifications
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppError
@@ -68,6 +69,7 @@ class AppSessionManager @Inject constructor(
     private val deleter: AccountDeleter,
     private val alerts: AlertStore,
     private val notifications: SystemNotifications,
+    private val reminders: Reminders,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) : SessionManager {
     private val refreshes = MutableStateFlow(0)
@@ -82,10 +84,15 @@ class AppSessionManager @Inject constructor(
         // mark the donor active (at most every 3 days; the repository skips it otherwise).
         scope.launch {
             var lastUid: String? = null
+            var lastEligibleAgain: java.time.Instant? = null
             state.filterIsInstance<SessionState.Ready>().collect { ready ->
                 val firstForUser = ready.user.uid != lastUid
                 lastUid = ready.user.uid
                 push.sync(ready.profile, force = firstForUser)
+                // "You can donate again" at the end of the rest period (it also brings the alerts back).
+                val eligibleAgain = push.nextChangeAt(ready.profile)
+                if (firstForUser || eligibleAgain != lastEligibleAgain) reminders.scheduleEligibleAgain(eligibleAgain)
+                lastEligibleAgain = eligibleAgain
                 // The card must carry the profile's new lastActiveAt in later writes: re-read it.
                 if (firstForUser && profiles.touchLastActive(ready.profile).getOrNull() == true) refresh()
             }
@@ -98,6 +105,7 @@ class AppSessionManager @Inject constructor(
                 if (s is SessionState.SignedOut && signedIn) {
                     alerts.clear()
                     notifications.cancelAll()
+                    reminders.cancelAll()
                 }
                 if (s !is SessionState.Loading) signedIn = s !is SessionState.SignedOut
             }

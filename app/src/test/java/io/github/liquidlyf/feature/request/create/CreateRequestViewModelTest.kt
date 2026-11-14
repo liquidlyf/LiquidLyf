@@ -18,6 +18,7 @@ import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.testing.FakeAlertStore
 import io.github.liquidlyf.testing.FakeHospitalRepository
 import io.github.liquidlyf.testing.FakeNetworkMonitor
+import io.github.liquidlyf.testing.FakeReminders
 import io.github.liquidlyf.testing.FakeProfileRepository
 import io.github.liquidlyf.testing.FakeRequestRepository
 import io.github.liquidlyf.testing.FakeSessionManager
@@ -57,6 +58,7 @@ class CreateRequestViewModelTest {
     private val requests = FakeRequestRepository()
     private val worker = FakeWorkerClient()
     private val alerts = FakeAlertStore()
+    private val reminders = FakeReminders()
     private val dmch = Hospital("h1", PlaceName("Dhaka Medical College Hospital", null), "Bakshibazar", "BD3026", "BD30262000", null)
     private val hospitals = FakeHospitalRepository(listOf(dmch))
     private val geo = BdGeoParser.parse(File("src/main/assets/bd-geo.json").readText())
@@ -72,7 +74,7 @@ class CreateRequestViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun TestScope.vm(appScope: CoroutineScope = backgroundScope) =
-        CreateRequestViewModel(saved, session, profiles, requests, hospitals, geoRepo, worker, Clock { TestData.NOW }, appScope, FakeNetworkMonitor(), alerts)
+        CreateRequestViewModel(saved, session, profiles, requests, hospitals, geoRepo, worker, Clock { TestData.NOW }, appScope, FakeNetworkMonitor(), alerts, reminders)
 
     private fun TestScope.events(vm: CreateRequestViewModel): List<CreateRequestEvent> =
         mutableListOf<CreateRequestEvent>().also { list -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { list += it } } }
@@ -177,6 +179,8 @@ class CreateRequestViewModelTest {
         assertNull(saved.get<String>(CreateRequestViewModel.FORM_KEY))
         // Its alert also reaches my phone (I may be a matching donor): it's remembered as mine.
         assertTrue(alerts.isMyRequest(id))
+        // "Ends in 2 hours" is scheduled against its needed-by time.
+        assertEquals(draft.neededBy, reminders.ending[id])
     }
 
     @Test

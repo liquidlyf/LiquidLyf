@@ -22,6 +22,9 @@ import io.github.liquidlyf.navigation.REQUEST_DEEP_LINK
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** The one "You can donate again" notification (request notifications use ids from their request). */
+internal const val ELIGIBLE_AGAIN_NOTIFICATION_ID = 1
+
 /**
  * Posts the app's notifications (phase-05 5.2). The push carries codes only; the text is
  * rendered here in the phone's language (per-app language comes in Phase 8). Every tap opens the
@@ -77,6 +80,26 @@ class AlertNotifier @Inject constructor(
         )
     }
 
+    /** The rest period is over (phase-05 5.4); a tap opens the app at Home. */
+    fun showEligibleAgain() = post(
+        id = ELIGIBLE_AGAIN_NOTIFICATION_ID,
+        channel = NotificationChannels.REMINDERS,
+        title = context.getString(R.string.notification_eligible_again_title),
+        body = context.getString(R.string.notification_eligible_again_body),
+        requestId = null,
+        priority = NotificationCompat.PRIORITY_DEFAULT,
+    )
+
+    /** 2 hours before my open request's needed-by time. */
+    fun showRequestEnding(requestId: String) = post(
+        id = notificationId(requestId, "ending"),
+        channel = NotificationChannels.REMINDERS,
+        title = context.getString(R.string.notification_request_ending_title),
+        body = context.getString(R.string.notification_request_ending_body),
+        requestId = requestId,
+        priority = NotificationCompat.PRIORITY_DEFAULT,
+    )
+
     override fun cancelAll() = NotificationManagerCompat.from(context).cancelAll()
 
     /** Opens the request in a fresh task: the deep link builds Home → request under it. */
@@ -91,6 +114,13 @@ class AlertNotifier @Inject constructor(
     /** The app creates the channels at start; make sure of them here too (a push can start the process). */
     private val channelsReady by lazy { NotificationChannels.createAll(context) }
 
+    private fun openApp(): PendingIntent = PendingIntent.getActivity(
+        context,
+        0,
+        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+
     private fun post(id: Int, channel: String, title: String, body: String, requestId: String?, priority: Int) {
         if (!canPost()) return // the app's own screens still show everything
         channelsReady
@@ -102,7 +132,7 @@ class AlertNotifier @Inject constructor(
             .setPriority(priority)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setAutoCancel(true)
-            .apply { requestId?.let { setContentIntent(openRequest(it)) } }
+            .setContentIntent(requestId?.let { openRequest(it) } ?: openApp())
             .build()
         try {
             NotificationManagerCompat.from(context).notify(id, notification)

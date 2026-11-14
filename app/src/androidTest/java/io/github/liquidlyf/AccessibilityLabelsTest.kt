@@ -67,6 +67,7 @@ import io.github.liquidlyf.feature.request.list.RequestsUiState
 import io.github.liquidlyf.testing.FakeNetworkMonitor
 import io.github.liquidlyf.testing.FakeOfferRepository
 import io.github.liquidlyf.testing.FakeProfileRepository
+import io.github.liquidlyf.testing.FakeReminders
 import io.github.liquidlyf.testing.FakeRequestRepository
 import io.github.liquidlyf.testing.FakeSafetyRepository
 import io.github.liquidlyf.testing.FakeSessionManager
@@ -257,7 +258,7 @@ class AccessibilityLabelsTest {
             object : GeoRepository {
                 override suspend fun geo() = this@AccessibilityLabelsTest.geo
             },
-            EligibilityCalculator(), Clock { TestData.NOW }, FakeNetworkMonitor(),
+            EligibilityCalculator(), Clock { TestData.NOW }, FakeNetworkMonitor(), FakeReminders(),
         )
         show { RequestDetailRoute(onBack = {}, viewModel = vm) }
         compose.waitUntil(5_000) { vm.uiState.value.request != null }

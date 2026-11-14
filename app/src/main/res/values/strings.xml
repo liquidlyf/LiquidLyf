@@ -298,6 +298,10 @@
     <string name="notification_request_cancelled_body">It\'s no longer needed. Thank you for offering.</string>
     <string name="notification_asked_title">Someone asked you to donate</string>
     <string name="notification_asked_body">Open the request to see if you can help.</string>
+    <string name="notification_eligible_again_title">You can donate again</string>
+    <string name="notification_eligible_again_body">Your rest period is over. You\'ll get alerts again when someone near you needs your blood group.</string>
+    <string name="notification_request_ending_title">Your request ends in 2 hours</string>
+    <string name="notification_request_ending_body">Still need blood? Open it to change the time, or close it if you found blood.</string>
 
     <!-- Inbox, the bell (Phase 5.9) -->
     <string name="inbox_empty_title">No notifications yet</string>

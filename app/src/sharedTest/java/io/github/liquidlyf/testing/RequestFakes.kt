@@ -291,3 +291,28 @@ class FakeInboxRepository : io.github.liquidlyf.core.data.inbox.InboxRepository 
         return AppResult.Success(items.any { since == null || (it.createdAt != null && it.createdAt.isAfter(since)) })
     }
 }
+
+/** Records what would be scheduled. */
+class FakeReminders : io.github.liquidlyf.core.data.push.Reminders {
+    var eligibleAgain: java.time.Instant? = null
+    val ending = mutableMapOf<String, java.time.Instant>()
+    var cancelledAll = 0
+
+    override fun scheduleEligibleAgain(at: java.time.Instant?) {
+        eligibleAgain = at
+    }
+
+    override fun scheduleRequestEnding(requestId: String, neededBy: java.time.Instant) {
+        ending[requestId] = neededBy
+    }
+
+    override fun cancelRequestEnding(requestId: String) {
+        ending -= requestId
+    }
+
+    override fun cancelAll() {
+        cancelledAll++
+        eligibleAgain = null
+        ending.clear()
+    }
+}

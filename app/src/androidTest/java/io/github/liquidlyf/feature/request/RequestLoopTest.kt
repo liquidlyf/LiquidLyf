@@ -93,6 +93,7 @@ class RequestLoopTest {
     @Inject lateinit var clock: Clock
     @Inject lateinit var network: NetworkMonitor
     @Inject lateinit var alerts: io.github.liquidlyf.core.data.push.AlertStore
+    @Inject lateinit var reminders: io.github.liquidlyf.core.data.push.Reminders
 
     @Inject @ApplicationScope
     lateinit var appScope: CoroutineScope
@@ -117,7 +118,7 @@ class RequestLoopTest {
         profiles.create(aUid, aEmail, profileDraft(BloodGroup.A_POS, listed = false, phone = "+8801812345678")).ok()
         ready(aUid)
         val create = onMain {
-            CreateRequestViewModel(SavedStateHandle(), session, profiles, requests, hospitals, geo, worker, clock, appScope, network, alerts).also(viewModels::add)
+            CreateRequestViewModel(SavedStateHandle(), session, profiles, requests, hospitals, geo, worker, clock, appScope, network, alerts, reminders).also(viewModels::add)
         }
         waitUntil("form loaded") { create.uiState.value.loaded }
         onMain {
@@ -208,7 +209,7 @@ class RequestLoopTest {
 
     private suspend fun detail(rid: String) = onMain {
         RequestDetailViewModel(
-            SavedStateHandle(mapOf("id" to rid)), session, requests, offers, profiles, safety, worker, geo, eligibility, clock, network,
+            SavedStateHandle(mapOf("id" to rid)), session, requests, offers, profiles, safety, worker, geo, eligibility, clock, network, reminders,
         ).also(viewModels::add)
     }
 

@@ -11,6 +11,7 @@ import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.profile.VerifiedDonationRecorder
+import io.github.liquidlyf.core.data.push.Reminders
 import io.github.liquidlyf.core.data.request.OfferRepository
 import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.safety.SafetyRepository
@@ -103,6 +104,7 @@ class RequestDetailViewModel @Inject constructor(
     private val eligibility: EligibilityCalculator,
     private val clock: Clock,
     network: NetworkMonitor,
+    private val reminders: Reminders,
 ) : ViewModel() {
 
     /** Offline, an action's batch waits in Firestore's queue; the screen says so. */
@@ -124,6 +126,7 @@ class RequestDetailViewModel @Inject constructor(
     private var listeningToResponses = false
     private var contactLoaded = false
     private var donationChecked = false
+    private var endingReminderFor: Pair<RequestStatus, java.time.Instant>? = null
     private val donations = VerifiedDonationRecorder(profiles, offers, requests, clock)
 
     init {
@@ -150,9 +153,20 @@ class RequestDetailViewModel @Inject constructor(
             )
         }
         if (r == null || profile == null) return
-        if (mine) listenToResponses(profile.uid)
+        if (mine) {
+            listenToResponses(profile.uid)
+            keepEndingReminder(r)
+        }
         if (seesContact) loadContact()
         if (myStatus == ResponseStatus.DONATED) recordDonationOnce(r)
+    }
+
+    /** My open request reminds me 2 h before it's needed; edited or closed, the reminder follows. */
+    private fun keepEndingReminder(r: BloodRequest) {
+        val key = r.status to r.neededBy
+        if (key == endingReminderFor) return
+        endingReminderFor = key
+        if (r.status == RequestStatus.OPEN) reminders.scheduleRequestEnding(r.id, r.neededBy) else reminders.cancelRequestEnding(r.id)
     }
 
     private fun offerBlock(r: BloodRequest, p: UserProfile): OfferBlock? {

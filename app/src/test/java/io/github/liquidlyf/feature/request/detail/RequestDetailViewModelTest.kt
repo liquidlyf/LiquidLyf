@@ -19,6 +19,7 @@ import io.github.liquidlyf.feature.request.create.PostNotice
 import io.github.liquidlyf.testing.FakeNetworkMonitor
 import io.github.liquidlyf.testing.FakeOfferRepository
 import io.github.liquidlyf.testing.FakeProfileRepository
+import io.github.liquidlyf.testing.FakeReminders
 import io.github.liquidlyf.testing.FakeRequestRepository
 import io.github.liquidlyf.testing.FakeSafetyRepository
 import io.github.liquidlyf.testing.FakeSessionManager
@@ -57,6 +58,7 @@ class RequestDetailViewModelTest {
     private val profiles = FakeProfileRepository().apply { profiles["donor"] = donor; profiles["requester-1"] = requester }
     private val safety = FakeSafetyRepository()
     private val worker = FakeWorkerClient()
+    private val reminders = FakeReminders()
     private val geo = BdGeoParser.parse(File("src/main/assets/bd-geo.json").readText())
     private val geoRepo = object : GeoRepository {
         override suspend fun geo(): BdGeo = geo
@@ -75,7 +77,7 @@ class RequestDetailViewModelTest {
 
     private fun vm(id: String = "r1", notice: String? = null) = RequestDetailViewModel(
         SavedStateHandle(mapOf("id" to id, "notice" to notice)),
-        session, requests, offers, profiles, safety, worker, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, FakeNetworkMonitor(),
+        session, requests, offers, profiles, safety, worker, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, FakeNetworkMonitor(), reminders,
     )
 
     private fun signInAs(p: UserProfile) {
@@ -189,10 +191,14 @@ class RequestDetailViewModelTest {
         signInAs(requester)
         val vm = vm()
         advanceUntilIdle()
+        // My open request reminds me 2 h before it's needed.
+        assertEquals(requests.requests.value.getValue("r1").neededBy, reminders.ending["r1"])
         vm.close(RequestStatus.CANCELLED, "  ")
         advanceUntilIdle()
         assertEquals(Triple("r1", RequestStatus.CANCELLED, null), requests.closed.single())
         assertEquals(listOf("r1"), worker.responderNotices)
+        // Closed: no reminder.
+        assertEquals(null, reminders.ending["r1"])
     }
 
     @Test
