@@ -17,6 +17,7 @@ your phone number or other personal details here.
 |---|---|
 | Report a user (scam, harassment, fake request) | In the app, open their request or profile and tap **Report**. You can also block them |
 | Delete your account | In the app: **Settings → Delete account**. No longer have the app? See [liquidlyf.github.io/delete-account](https://liquidlyf.github.io/delete-account) |
+| Find the verification or password-reset email | Check **Spam** and **Promotions**. It comes from `noreply@liquidlyf-app.firebaseapp.com`. Nothing after 2 minutes? Tap **Resend** on the Verify email screen, or ask for a new password-reset email |
 | Get help with your account or the app | Email **liquidlyf@gmail.com** |
 | Download or update the app | [liquidlyf.github.io/download](https://liquidlyf.github.io/download) |
 | Read the privacy policy | [liquidlyf.github.io/privacy](https://liquidlyf.github.io/privacy) |
