@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,9 +62,9 @@ import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.EligibilityRules
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.feature.profile.BloodGroupReminder
-import kotlinx.coroutines.launch
 import java.time.Duration
 import java.time.Instant
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeRoute(
@@ -74,12 +76,13 @@ fun HomeRoute(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val online by viewModel.online.collectAsStateWithLifecycle()
+    val unreadInbox by viewModel.unreadInbox.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbarHostState.current
     val resources = LocalResources.current
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { e -> if (e is HomeEvent.Message) launch { snackbar.showSnackbar(resources.getString(e.text)) } }
     }
-    HomeScreen(state, online, viewModel::onAvailableToggled, onOpenRequest, onCreateRequest, onOpenNotifications, onEditProfile)
+    HomeScreen(state, online, viewModel::onAvailableToggled, onOpenRequest, onCreateRequest, onOpenNotifications, onEditProfile, unreadInbox)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,6 +95,7 @@ internal fun HomeScreen(
     onCreateRequest: () -> Unit,
     onOpenNotifications: () -> Unit,
     onEditProfile: () -> Unit,
+    unreadInbox: Boolean = false,
 ) {
     val now by rememberNow()
     val locale = currentAppLocale()
@@ -101,7 +105,14 @@ internal fun HomeScreen(
                 title = stringResource(R.string.nav_home),
                 actions = {
                     IconButton(onClick = onOpenNotifications) {
-                        Icon(painterResource(LLIcons.Notifications), contentDescription = stringResource(R.string.action_open_notifications))
+                        BadgedBox(badge = { if (unreadInbox) Badge() }) {
+                            Icon(
+                                painterResource(if (unreadInbox) LLIcons.NotificationsFilled else LLIcons.Notifications),
+                                contentDescription = stringResource(
+                                    if (unreadInbox) R.string.action_open_notifications_unread else R.string.action_open_notifications,
+                                ),
+                            )
+                        }
                     }
                 },
             )

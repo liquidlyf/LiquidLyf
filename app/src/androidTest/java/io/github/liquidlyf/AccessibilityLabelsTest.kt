@@ -20,6 +20,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
+import io.github.liquidlyf.core.data.push.LocalAlert
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
@@ -27,6 +28,8 @@ import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.DonorResponse
+import io.github.liquidlyf.core.model.InboxItem
+import io.github.liquidlyf.core.model.InboxType
 import io.github.liquidlyf.core.model.PatientCondition
 import io.github.liquidlyf.core.model.RequestContact
 import io.github.liquidlyf.core.model.ResponseStatus
@@ -42,6 +45,9 @@ import io.github.liquidlyf.feature.auth.VerifyEmailScreen
 import io.github.liquidlyf.feature.auth.VerifyEmailUiState
 import io.github.liquidlyf.feature.home.HomeScreen
 import io.github.liquidlyf.feature.home.HomeUiState
+import io.github.liquidlyf.feature.notifications.InboxEntry
+import io.github.liquidlyf.feature.notifications.InboxScreen
+import io.github.liquidlyf.feature.notifications.InboxUiState
 import io.github.liquidlyf.feature.onboarding.OnboardingScreen
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupScreen
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupUiState
@@ -219,6 +225,18 @@ class AccessibilityLabelsTest {
         compose.runOnUiThread { state.value = state.value.copy(limit = OpenRequestLimit(max = 3, newAccount = false)) }
         compose.waitForIdle()
         assertControlsAreLabelledAndBigEnough("Create request, open-request limit")
+    }
+
+    @Test
+    fun inboxWithUpdatesAndAlerts() {
+        val now = java.time.Instant.now()
+        val entries = listOf(
+            InboxEntry.Update(InboxItem("i1", InboxType.NEW_OFFER, "d1", "r1", now.minusSeconds(60))),
+            InboxEntry.Alert(LocalAlert("r2", stillNeeded = true, bloodGroup = "O_POS", district = "BD3026", urgency = "URGENT", receivedAtMillis = now.minusSeconds(600).toEpochMilli())),
+            InboxEntry.Update(InboxItem("i3", InboxType.DONATION_RECORDED, "r", "r3", now.minusSeconds(7200))),
+        )
+        show { InboxScreen(InboxUiState(entries = entries, seenAt = now.minusSeconds(3600), geo = geo), {}, {}, {}) }
+        assertControlsAreLabelledAndBigEnough("Inbox")
     }
 
     private val donor = TestData.profile(uid = "donor")

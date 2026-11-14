@@ -298,4 +298,13 @@
     <string name="notification_request_cancelled_body">It\'s no longer needed. Thank you for offering.</string>
     <string name="notification_asked_title">Someone asked you to donate</string>
     <string name="notification_asked_body">Open the request to see if you can help.</string>
+
+    <!-- Inbox, the bell (Phase 5.9) -->
+    <string name="inbox_empty_title">No notifications yet</string>
+    <string name="inbox_empty_body">Alerts for requests near you, and news about your offers and requests, show up here.</string>
+    <string name="inbox_new">New</string>
+    <string name="inbox_just_now">Just now</string>
+    <string name="inbox_load_more">Show older</string>
+    <string name="inbox_load_failed">%1$s Tap to try again.</string>
+    <string name="action_open_notifications_unread">Open notifications, new ones waiting</string>
 </resources>

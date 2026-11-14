@@ -201,7 +201,12 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
 
     override suspend fun touchLastActive(profile: UserProfile) = result { AppResult.Success(false) }
 
-    override suspend fun markInboxSeen(profile: UserProfile) = result { AppResult.Success(Unit) }
+    var inboxSeenMarks = 0
+
+    override suspend fun markInboxSeen(profile: UserProfile) = result {
+        inboxSeenMarks++
+        AppResult.Success(Unit)
+    }
 
     val availabilityWrites = mutableListOf<Boolean>()
 

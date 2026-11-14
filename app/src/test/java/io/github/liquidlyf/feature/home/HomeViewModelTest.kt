@@ -4,20 +4,27 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
+import io.github.liquidlyf.core.data.push.LocalAlert
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.model.BloodGroup
+import io.github.liquidlyf.core.model.InboxItem
+import io.github.liquidlyf.core.model.InboxType
 import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.Clock
+import io.github.liquidlyf.testing.FakeAlertStore
+import io.github.liquidlyf.testing.FakeInboxRepository
 import io.github.liquidlyf.testing.FakeNetworkMonitor
 import io.github.liquidlyf.testing.FakeProfileRepository
 import io.github.liquidlyf.testing.FakeRequestRepository
 import io.github.liquidlyf.testing.FakeSessionManager
 import io.github.liquidlyf.testing.TestData
 import io.github.liquidlyf.testing.request
+import java.io.File
+import java.time.Duration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -35,8 +42,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.io.File
-import java.time.Duration
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -46,6 +51,8 @@ class HomeViewModelTest {
     private val session = FakeSessionManager(SessionState.Ready(TestData.user(uid = "me"), me))
     private val requests = FakeRequestRepository()
     private val profiles = FakeProfileRepository().apply { profiles["me"] = me }
+    private val inbox = FakeInboxRepository()
+    private val alerts = FakeAlertStore()
     private val geo = BdGeoParser.parse(File("src/main/assets/bd-geo.json").readText())
     private val geoRepo = object : GeoRepository {
         override suspend fun geo(): BdGeo = geo
@@ -58,7 +65,7 @@ class HomeViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun TestScope.vm() = HomeViewModel(
-        session, requests, profiles, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, FakeNetworkMonitor(),
+        session, requests, profiles, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, FakeNetworkMonitor(), inbox, alerts,
     ).also { vm -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} } }
 
     @Test
@@ -140,5 +147,31 @@ class HomeViewModelTest {
         val e = vm.uiState.value.eligibility!!
         assertEquals(setOf(IneligibleReason.REST_PERIOD), e.reasons)
         assertEquals(TestData.NOW.plus(Duration.ofDays(20)), e.eligibleFrom)
+    }
+
+    @Test
+    fun `the bell shows a badge for anything newer than my last visit`() = runTest(dispatcher) {
+        val seen = TestData.NOW.minus(Duration.ofHours(1))
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(inboxSeenAt = seen))
+        inbox.items += InboxItem("old", InboxType.NEW_OFFER, "donor", "r1", seen.minusSeconds(60))
+        val vm = vm()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.unreadInbox.collect {} }
+        advanceUntilIdle()
+        assertFalse(vm.unreadInbox.value)
+
+        // A request alert on this phone after my visit.
+        alerts.recordShown(LocalAlert("r2", stillNeeded = false, receivedAtMillis = TestData.NOW.toEpochMilli()))
+        advanceUntilIdle()
+        assertTrue(vm.unreadInbox.value)
+
+        // Opening the inbox moves inboxSeenAt: the badge clears. A newer Firestore item brings it back.
+        alerts.clear()
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(inboxSeenAt = TestData.NOW))
+        advanceUntilIdle()
+        assertFalse(vm.unreadInbox.value)
+        inbox.items += InboxItem("new", InboxType.OFFER_CONFIRMED, "requester", "r3", TestData.NOW.plusSeconds(60))
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(inboxSeenAt = TestData.NOW.minusSeconds(1)))
+        advanceUntilIdle()
+        assertTrue(vm.unreadInbox.value)
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -44,11 +45,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
-import androidx.navigation.navDeepLink
 import androidx.navigation.compose.rememberNavController
-import androidx.core.content.ContextCompat
+import androidx.navigation.navDeepLink
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.session.SessionState
+import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
+import io.github.liquidlyf.core.designsystem.LLIcons
+import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.windowWidth
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.feature.account.ChangePasswordRoute
 import io.github.liquidlyf.feature.account.DeleteAccountRoute
@@ -58,22 +62,19 @@ import io.github.liquidlyf.feature.auth.ForgotPasswordRoute
 import io.github.liquidlyf.feature.auth.SignInRoute
 import io.github.liquidlyf.feature.auth.SignUpRoute
 import io.github.liquidlyf.feature.auth.VerifyEmailRoute
+import io.github.liquidlyf.feature.gallery.ComponentGalleryScreen
+import io.github.liquidlyf.feature.home.HomeRoute
+import io.github.liquidlyf.feature.notifications.InboxRoute
 import io.github.liquidlyf.feature.onboarding.OnboardingScreen
+import io.github.liquidlyf.feature.placeholder.PlaceholderScreen
+import io.github.liquidlyf.feature.profile.BloodGroupReminder
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupRoute
+import io.github.liquidlyf.feature.request.create.CreateRequestRoute
+import io.github.liquidlyf.feature.request.detail.RequestDetailRoute
+import io.github.liquidlyf.feature.request.list.RequestsRoute
 import io.github.liquidlyf.feature.session.NotificationPermissionScreen
 import io.github.liquidlyf.feature.session.SessionProblemScreen
 import io.github.liquidlyf.feature.session.needsNotificationPermission
-import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
-import io.github.liquidlyf.core.designsystem.LLIcons
-import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
-import io.github.liquidlyf.core.designsystem.windowWidth
-import io.github.liquidlyf.feature.gallery.ComponentGalleryScreen
-import io.github.liquidlyf.feature.profile.BloodGroupReminder
-import io.github.liquidlyf.feature.placeholder.PlaceholderScreen
-import io.github.liquidlyf.feature.home.HomeRoute
-import io.github.liquidlyf.feature.request.create.CreateRequestRoute
-import io.github.liquidlyf.feature.request.list.RequestsRoute
-import io.github.liquidlyf.feature.request.detail.RequestDetailRoute
 import io.github.liquidlyf.feature.settings.SettingsScreen
 
 /** Used by the Phase 1 placeholders until real requests exist (Phase 4). */
@@ -354,10 +355,9 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
             )
         }
         composable<Notifications> {
-            PlaceholderScreen(
-                title = stringResource(R.string.title_notifications),
-                phase = 5,
+            InboxRoute(
                 onBack = { navController.popBackStack() },
+                onOpenRequest = { id -> navController.navigate(RequestDetail(id = id)) { launchSingleTop = true } },
             )
         }
     }

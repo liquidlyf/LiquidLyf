@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.GeoRepository
+import io.github.liquidlyf.core.data.inbox.InboxRepository
 import io.github.liquidlyf.core.data.profile.ProfileRepository
+import io.github.liquidlyf.core.data.push.AlertStore
 import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
@@ -18,6 +20,7 @@ import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.core.util.NetworkMonitor
+import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -29,13 +32,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class HomeUiState(
     val profile: UserProfile? = null,
@@ -66,6 +69,8 @@ class HomeViewModel @Inject constructor(
     private val eligibility: EligibilityCalculator,
     private val clock: Clock,
     network: NetworkMonitor,
+    private val inbox: InboxRepository,
+    private val alerts: AlertStore,
 ) : ViewModel() {
 
     private val profileFlow: Flow<UserProfile?> =
@@ -93,6 +98,26 @@ class HomeViewModel @Inject constructor(
             geo = g,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
+
+    /**
+     * The bell's badge (phase-05 5.9): anything newer than my last visit to the inbox. One read
+     * each time `inboxSeenAt` changes, plus this phone's own alert list.
+     */
+    val unreadInbox: StateFlow<Boolean> = profileFlow
+        .map { p -> p?.let { it.uid to it.inboxSeenAt } }
+        .distinctUntilChanged()
+        .flatMapLatest { key ->
+            if (key == null) {
+                flowOf(false)
+            } else {
+                val (uid, seenAt) = key
+                val remote = flow { emit((inbox.hasNewer(uid, seenAt) as? AppResult.Success)?.data == true) }
+                combine(remote, alerts.alerts) { newer, local ->
+                    newer || local.any { seenAt == null || it.receivedAtMillis > seenAt.toEpochMilli() }
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     val online: StateFlow<Boolean> = network.isOnline.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 
