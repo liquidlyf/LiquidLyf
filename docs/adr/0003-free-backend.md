@@ -38,13 +38,16 @@ Functions, no paid SMS and no Blaze plan.
 | Counters, donor cards, offers, reports, "donated" | The app, in batched writes that the **Firestore rules** check field by field |
 | Sending alerts to donors, tier by tier | The **Worker**, through FCM **topics** (one message per area and blood group, no device tokens stored) |
 | Widening the search, expiring requests, cleaning up | The Worker's **scheduled jobs** (every 5 minutes, hourly, daily) |
+| A backup for widening the search, if the Worker's 5-minute job stops | A free **Google Apps Script** (`backend/apps-script/`). Every 10 minutes it looks for requests more than 10 minutes overdue and runs the Worker's own escalation code, so the next round of alerts goes out at most 20 minutes after it was due |
 | "You can donate again" reminders | The phone itself, with local notifications |
 | Moderator roles, bans | A local admin script and the Firebase console |
 | Deleting an account | The app, which deletes its own data before deleting the sign-in account |
 
 The Worker talks to Google with its own service account, **`liquidlyf-worker`**, which has exactly two
 roles: **Cloud Datastore User** and **Firebase Cloud Messaging API Admin**. Its key is stored only as a
-Cloudflare secret, never in git or on GitHub.
+Cloudflare secret, never in git or on GitHub. The Apps Script backup has its **own** service account,
+`liquidlyf-backup`, with the same two roles; its key is stored only in the script's properties. The
+backup has no public web endpoint (decided 2026-11-14).
 
 If the app outgrows the free limits, the fallback is Blaze with a hard spending limit, paid for by a
 sponsor.
@@ -95,12 +98,14 @@ start. If that brings a cold alert close to the 10 ms limit, record it here as a
     many tests.
   - The free plan allows 50,000 Firestore reads a day, which caps the app at roughly 9,000–15,000 users
     unless the read-budget rules in [docs/architecture.md](../architecture.md) are followed.
-  - The Worker's service-account key bypasses the security rules. Only 1–2 maintainers hold it, with
-    two-step verification, and it is rotated yearly.
+  - The Worker's and the backup's service-account keys bypass the security rules. Only 1–2
+    maintainers hold them, with two-step verification, and they are rotated yearly.
 - **Follow-ups:**
   - set up App Check in the Firebase console (turn on the Play Integrity and App Check APIs, and
     register the app's SHA-256 fingerprint). Then run tests 5 and 6, and measure CPU time for a cold
     alert that carries an App Check token (test 3). Update this record with the results;
   - measure an alert on a warm Worker on its own (test 3);
   - repeat tests 1 and 2 in the beta, on mobile data and on phones from other makers;
+  - set up the Apps Script backup, and check that it widens the search within 20 minutes while the
+    Worker is stopped (Phase 5);
   - if test 1 or 3 fails, write a new record before building more on this design.
