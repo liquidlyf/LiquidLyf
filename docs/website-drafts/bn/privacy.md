@@ -178,6 +178,11 @@ LiquidLyf চালাতে আমরা কয়েকটি সেবা ব
 - App Check আসল অ্যাপ ছাড়া অন্য কোথাও থেকে আসা অনুরোধ আটকায়।
 - মডারেটরের অনুমতি শুধু রক্ষণাবেক্ষণকারীরা দিতে পারেন।
 
+<!-- CHECK (15 Nov 2026, ADR 0003 test 6): App Check isn't working yet. The Worker only logs a missing
+     token, and on 15 Nov the release-signed app sent none (Play Integrity and App Check APIs off, no
+     SHA-256 registered). Publish the App Check lines here and in section 2 only once test 6 passes and
+     the Worker and Firestore enforce App Check. -->
+
 কোনো ব্যবস্থাই নিখুঁত নয়। তথ্য ফাঁস হয়ে আপনি ঝুঁকিতে পড়লে আমরা অ্যাপে ও ইমেইলে আপনাকে জানাব, আর আইন
 অনুযায়ী প্রয়োজন হলে কর্তৃপক্ষকে জানাব। নিরাপত্তা সমস্যা জানাতে আমাদের
 [নিরাপত্তা নীতি](https://github.com/liquidlyf/LiquidLyf/security/policy) দেখুন।

@@ -37,8 +37,9 @@ checked.
    `/terms`, and `/bn/…`), and stores `Links.TERMS_VERSION` with each user's consent: change it
    whenever the effective date of the Terms or the Privacy Policy changes in a way users must accept
    again.
-2. **Resolve each `CHECK` comment** (HTML comments, invisible on the page): backups, the PDPA 2026 rights and authority, the AppVerifier steps and the
-   Obtainium link.
+2. **Resolve each `CHECK` comment** (HTML comments, invisible on the page): backups, the Worker's
+   clean-up job running (90 days, 60 days, 1 year), App Check enforced (ADR 0003 test 6), the PDPA 2026
+   rights and authority, the AppVerifier steps and the Obtainium link.
 3. **Legal review:** Terms sections 9 (liability) and 11 (law), and the rights section of the privacy
    policy, by someone with legal training. Bangladesh's Personal Data Protection Act, 2026 applies.
 4. **Native Bangla review** of all five Bangla pages, including medical and safety wording. Remove the

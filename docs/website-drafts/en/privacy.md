@@ -197,6 +197,11 @@ that Act.
 - App Check blocks requests that don't come from the genuine app.
 - Moderator access needs a special permission that only maintainers can grant.
 
+<!-- CHECK (15 Nov 2026, ADR 0003 test 6): App Check isn't working yet. The Worker only logs a missing
+     token, and on 15 Nov the release-signed app sent none (Play Integrity and App Check APIs off, no
+     SHA-256 registered). Publish the App Check lines here and in section 2 only once test 6 passes and
+     the Worker and Firestore enforce App Check. -->
+
 No system is perfect. If a breach puts you at risk, we will tell you in the app and by email, and
 inform the authorities when the law requires it. To report a security problem, see our
 [security policy](https://github.com/liquidlyf/LiquidLyf/security/policy).
