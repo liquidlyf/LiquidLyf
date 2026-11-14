@@ -1,5 +1,6 @@
 package io.github.liquidlyf.core.data.backend
 
+import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.appcheck.appCheck
 import com.google.firebase.auth.FirebaseAuth
@@ -17,6 +18,8 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private const val TAG = "LiquidLyfWorker"
+
 class FirebaseWorkerTokens @Inject constructor(private val auth: FirebaseAuth) : WorkerTokens {
     override suspend fun idToken(forceRefresh: Boolean): String? =
         auth.currentUser?.getIdToken(forceRefresh)?.await()?.token
@@ -27,8 +30,10 @@ class FirebaseWorkerTokens @Inject constructor(private val auth: FirebaseAuth) :
             Firebase.appCheck.getAppCheckToken(false).await().token
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
-            null // monitor mode: the Worker logs a missing token, it doesn't refuse it yet
+        } catch (e: Exception) {
+            // Monitor mode: the Worker logs a missing token, it doesn't refuse it yet. Say why here.
+            Log.w(TAG, "no App Check token: ${e.javaClass.simpleName}: ${e.message}")
+            null
         }
     }
 }
