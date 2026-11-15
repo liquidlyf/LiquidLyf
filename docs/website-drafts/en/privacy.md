@@ -36,7 +36,7 @@ it does with your data.
 ## 2. What we collect
 
 **When you create an account**
-- Your email address, and how you sign in (email and password, or Google). If you use Google, Google
+- Your email address, and how you sign in (email and password, Google, or both). If you use Google, Google
   shares your name, email address and profile picture link with us. We don't show the picture.
 - Your password is handled by Google's Firebase Authentication. We never see it.
 - That you are 18 or older and accepted these terms, with the date and the version you accepted.
@@ -61,8 +61,10 @@ it does with your data.
 - **Your donation history:** date, blood component, hospital name, and whether it was confirmed through
   a request in the app.
 - **Your in-app notifications,** the requests you chose to hide, and the people you blocked.
+- **Badges:** "Rapid responder", if you offer to donate within 15 minutes of a request being posted.
 - **Reports you send** about a request or a person: the reason and an optional note.
 - **Counters** that protect against abuse, such as how many open requests you have.
+- **When you last used the app,** updated at most once every 3 days.
 
 **From your phone**
 - **Push notifications:** your phone subscribes to notification "topics" named after your area and
@@ -76,7 +78,8 @@ it does with your data.
 
 <!-- v1.1: add when the features ship.
 - **Phone verification with Telegram:** if you choose to verify your number, Telegram shares your
-  phone number and Telegram user ID with our bot. We store only "verified: yes".
+  phone number and Telegram user ID with our bot. We store only "verified: yes". If you're listed
+  as a donor, other signed-in users see a "Phone verified" badge.
 - **Approximate location:** only if you allow it, only while the app is open, to sort donors and
   requests by distance. We store a rough area (about 5 km), never your exact position, and never show
   it to others. -->
@@ -105,12 +108,20 @@ We use your data only for these purposes. Your data is never used for advertisin
 | Email address | Only you |
 | Phone number | Only you, **plus** the requester of a request you offered to donate for |
 | Blood group and area | Other signed-in users, if you chose to be listed as a donor or when you post or offer on a request |
+| Whether you're available to donate, and when you last used the app | Other signed-in users, if you chose to be listed as a donor. Find donors shows only available donors, and shows "Active this week" instead of a date |
 | Gender, birth year, weight answer | Only you. Others may see "can donate now" or "can donate in N days" |
 | Last donation date | Only you. Others see only "can donate now" or "in N days" |
 | Donation history | You see all of it. Others see only how many times you donated |
+| Your badges | Only you |
 | A request's blood group, units, hospital, area, urgency and notes | Signed-in users with a verified email |
 | A request's contact name and phone, patient name and ward | The requester, and donors who offered for that request |
 | Reports you send | Only the LiquidLyf moderators. The person you report isn't told who reported them |
+
+<!-- CHECK (15 Nov 2026): every request document, which all verified users can read, also holds
+     lastAskedUid: the user ID of the last donor its requester asked to donate (rules since 87a4d2d,
+     used by Ask to donate since Phase 6), and the 90-day clean-up keeps it. With the donor cards,
+     that shows who was asked for which request. Asked session B whether it can move off the request
+     or be cleared; if it stays, add a row here and in the Bangla page. -->
 
 **Moderators** are a small number of volunteers chosen by the maintainers. They can see account
 details when they need to review a report or help with a support request, and their actions are logged.
@@ -125,7 +136,7 @@ We use a few services to run LiquidLyf. They process data for us and only on our
 | Provider | What it does for LiquidLyf | Where |
 |---|---|---|
 | Google Firebase: Authentication, Cloud Firestore, Cloud Messaging, Crashlytics, Remote Config, App Check | Sign-in, the database, notifications, crash reports, app settings, abuse protection | The database is in Mumbai, India. Sign-in, notifications and crash reports may be processed in other countries, including the United States |
-| Cloudflare Workers | Sends the request alerts to donors. When your app asks it to, it receives your user ID, the request ID and, like any web server, your IP address. It stores none of them. To stop abuse, Cloudflare counts each user's calls for 60 seconds, then forgets them. Its technical logs contain no names, phone numbers or user IDs | Cloudflare's worldwide network |
+| Cloudflare Workers | Sends the request alerts to donors. When your app asks it to, it receives your user ID, the request ID, the donor's user ID for a notification about an offer or an ask, and, like any web server, your IP address. It stores none of them. To stop abuse, Cloudflare counts each user's calls for 60 seconds, then forgets them. Its technical logs contain no names, phone numbers or user IDs | Cloudflare's worldwide network |
 | GitHub | Hosts the app download, this website and the source code. It sees your IP address when you visit | United States and worldwide |
 
 <!-- Confirmed 13 Nov 2026: the production Firestore database is in asia-south1 (Mumbai).
