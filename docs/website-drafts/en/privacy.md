@@ -63,7 +63,8 @@ it does with your data.
 - **Your in-app notifications,** the requests you chose to hide, and the people you blocked.
 - **Badges:** "Rapid responder", if you offer to donate within 15 minutes of a request being posted.
 - **Reports you send** about a request or a person: the reason and an optional note.
-- **Counters** that protect against abuse, such as how many open requests you have.
+- **Counters** that protect against abuse, such as how many open requests you have, and the last
+  donor you asked to donate (only you can see it).
 - **When you last used the app,** updated at most once every 3 days.
 
 **From your phone**
@@ -117,11 +118,9 @@ We use your data only for these purposes. Your data is never used for advertisin
 | A request's contact name and phone, patient name and ward | The requester, and donors who offered for that request |
 | Reports you send | Only the LiquidLyf moderators. The person you report isn't told who reported them |
 
-<!-- CHECK (15 Nov 2026): every request document, which all verified users can read, also holds
-     lastAskedUid: the user ID of the last donor its requester asked to donate (rules since 87a4d2d,
-     used by Ask to donate since Phase 6), and the 90-day clean-up keeps it. With the donor cards,
-     that shows who was asked for which request. Asked session B whether it can move off the request
-     or be cleared; if it stays, add a row here and in the Bangla page. -->
+<!-- Confirmed with session B, 15 Nov 2026 (d6b9d74): a request shows only how many donors were asked
+     (askCount), never who. The last donor you asked, and for which request, is kept in your own
+     userStats, which only you and moderators can read; it is deleted with your account. -->
 
 **Moderators** are a small number of volunteers chosen by the maintainers. They can see account
 details when they need to review a report or help with a support request, and their actions are logged.
