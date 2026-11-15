@@ -78,6 +78,7 @@ class PushHandlerTest {
     @Inject lateinit var store: AlertStore
     @Inject lateinit var eligibility: EligibilityCalculator
     @Inject lateinit var clock: Clock
+    @Inject lateinit var settings: io.github.liquidlyf.core.data.settings.SettingsRepository
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val manager = context.getSystemService(NotificationManager::class.java)
@@ -167,7 +168,9 @@ class PushHandlerTest {
         assertEquals(str(R.string.notification_reports_body, "2"), shown.text())
         assertEquals(NotificationChannels.REQUEST_UPDATES, shown.notification.channelId)
 
-        // The tap opens Moderation (a fresh task, through its deep link).
+        // The tap opens Moderation (a fresh task, through its deep link), even when the app
+        // would otherwise reopen another tab (A19 on prod: Home was the last tab, and won).
+        settings.setLastSelectedTab(io.github.liquidlyf.navigation.TopLevelDestination.HOME.name)
         shown.notification.contentIntent.send()
         compose.waitUntil(20_000) { compose.onAllNodesWithText(str(R.string.title_moderation)).fetchSemanticsNodes().isNotEmpty() }
         // The admin's view, not "Only admins can see this".

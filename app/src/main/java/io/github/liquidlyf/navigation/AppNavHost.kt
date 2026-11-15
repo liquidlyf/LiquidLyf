@@ -126,13 +126,17 @@ fun AppNavHost(
     }
     val useRail = windowWidth() >= ExpandedLayoutMinWidth
 
-    // Reopen the tab used last time, once per launch (not after rotation).
+    // Reopen the tab used last time, once per launch (not after rotation), but only when the
+    // app opens on a tab's root. A notification's deep link (Moderation, a request) opens its
+    // own screen, and that screen stays.
     var lastTabRestored by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(currentTab) {
-        if (currentTab != null && !lastTabRestored) {
-            lastTabRestored = true
-            if (initialTab != null && initialTab != currentTab) navController.navigateToTab(initialTab)
-        }
+    LaunchedEffect(currentEntry?.destination) {
+        val destination = currentEntry?.destination ?: return@LaunchedEffect
+        if (lastTabRestored || destination.zone() != GateZone.MAIN) return@LaunchedEffect
+        lastTabRestored = true
+        val tab = TopLevelDestination.entries.firstOrNull { destination.isInTab(it) } ?: return@LaunchedEffect
+        val atTabRoot = destination.hasRoute(tab.root::class)
+        if (atTabRoot && initialTab != null && initialTab != tab) navController.navigateToTab(initialTab)
     }
 
     val selectTab: (TopLevelDestination) -> Unit = { tab ->
