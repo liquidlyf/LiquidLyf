@@ -10,8 +10,8 @@ Design: `project-plan` doc 10 §6.
 |---|---|
 | **2 (live)** | `GET /health`, and `POST /v1/requests/{id}/dispatch`, which sends the first tier |
 | **5 (live since 15 Nov 2026, version 476f0045)** | the two `notify` endpoints, plus crons: the 5-minute escalation sweep, hourly expiry and the daily retention clean-up; the per-uid daily alert cap |
-| **5 backup** | `backend/apps-script`: Google Apps Script runs the same escalation code if the sweep falls behind by more than 10 minutes |
-| **7 (built, tested, not deployed yet)** | the new-report alert to the `admins` topic (its own cron, 2 minutes after each sweep); the retention job also deletes `adminLog` entries after 1 year |
+| **5 backup (live since 15 Nov 2026)** | `backend/apps-script`: Google Apps Script runs the same escalation code if the sweep falls behind by more than 10 minutes. Live test with the sweep off: the phone alerted 12 min 42 s after the post (limit 20) |
+| **7 (live since 15 Nov 2026, version e8bc0d1d)** | the new-report alert to the `admins` topic (its own cron, 2 minutes after each sweep); the retention job also deletes `adminLog` entries after 1 year |
 
 ## How dispatch works
 The checks run cheapest first, so junk traffic never costs a Firestore read:
