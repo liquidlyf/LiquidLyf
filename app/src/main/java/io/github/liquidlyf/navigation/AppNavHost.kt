@@ -75,6 +75,7 @@ import io.github.liquidlyf.feature.request.detail.RequestDetailRoute
 import io.github.liquidlyf.feature.request.list.RequestsRoute
 import io.github.liquidlyf.feature.session.NotificationPermissionScreen
 import io.github.liquidlyf.feature.session.SessionProblemScreen
+import io.github.liquidlyf.feature.session.SuspendedScreen
 import io.github.liquidlyf.feature.session.needsNotificationPermission
 import io.github.liquidlyf.feature.safety.BlockedPeopleRoute
 import io.github.liquidlyf.feature.safety.SafetyTipsRoute
@@ -270,6 +271,7 @@ private fun NavGraphBuilder.sessionScreens(
         NotificationPermissionScreen(onDone = dropUnlessResumed { navController.enterZone(GateZone.MAIN) })
     }
     composable<DeletingAccount> { DeletingAccountRoute() }
+    composable<Suspended> { SuspendedScreen(onSignOut = onSignOut) }
     composable<SessionProblem> {
         SessionProblemScreen(
             error = (session as? SessionState.ProfileUnavailable)?.error ?: AppError.Unknown,

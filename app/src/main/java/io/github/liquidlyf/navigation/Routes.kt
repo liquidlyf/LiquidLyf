@@ -36,6 +36,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object NotificationPermission
 @Serializable data object SessionProblem
 @Serializable data object DeletingAccount
+@Serializable data object Suspended
 
 // Tab roots
 @Serializable data object Home

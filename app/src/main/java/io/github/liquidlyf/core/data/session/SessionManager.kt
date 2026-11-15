@@ -3,6 +3,7 @@ package io.github.liquidlyf.core.data.session
 import io.github.liquidlyf.core.data.account.AccountDeleter
 import io.github.liquidlyf.core.data.auth.AuthRepository
 import io.github.liquidlyf.core.data.auth.AuthUser
+import io.github.liquidlyf.core.data.auth.Claims
 import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.push.AlertStore
 import io.github.liquidlyf.core.data.push.PushTopicManager
@@ -41,7 +42,11 @@ sealed interface SessionState {
     /** Signed in and verified, but the profile couldn't be read (offline on a new phone). */
     data class ProfileUnavailable(val user: AuthUser, val error: AppError) : SessionState
 
-    data class Ready(val user: AuthUser, val profile: UserProfile) : SessionState
+    /** [admin]: the `admin` claim (phase-07 7.5), which shows Moderation and subscribes the `admins` topic. */
+    data class Ready(val user: AuthUser, val profile: UserProfile, val admin: Boolean = false) : SessionState
+
+    /** The `banned` claim (phase-07 7.4): the rules refuse every write, so the app stops at a notice. */
+    data class Suspended(val user: AuthUser) : SessionState
 
     /** An account deletion started on this phone and isn't finished: it resumes before anything else. */
     data class DeletingAccount(val user: AuthUser) : SessionState
@@ -75,8 +80,8 @@ class AppSessionManager @Inject constructor(
     private val refreshes = MutableStateFlow(0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val state: StateFlow<SessionState> = combine(auth.authState, refreshes) { user, _ -> user }
-        .mapLatest(::resolve)
+    override val state: StateFlow<SessionState> = combine(auth.authState, auth.claims, refreshes) { user, claims, _ -> user to claims }
+        .mapLatest { (user, claims) -> resolve(user, claims) }
         .stateIn(scope, SharingStarted.Eagerly, SessionState.Loading)
 
     init {
@@ -127,12 +132,15 @@ class AppSessionManager @Inject constructor(
         reminders.cancelAll()
     }
 
-    private suspend fun resolve(user: AuthUser?): SessionState = when {
+    private suspend fun resolve(user: AuthUser?, claims: Claims): SessionState = when {
         user == null -> SessionState.SignedOut
+        // A suspended user may still finish deleting their account (contract 16).
         deleter.isPending(user.uid) -> SessionState.DeletingAccount(user)
+        claims.uid == user.uid && claims.banned -> SessionState.Suspended(user)
         !user.emailVerified -> SessionState.Unverified(user)
         else -> when (val result = profiles.profile(user.uid)) {
-            is AppResult.Success -> result.data?.let { SessionState.Ready(user, it) } ?: SessionState.NeedsProfile(user)
+            is AppResult.Success -> result.data?.let { SessionState.Ready(user, it, admin = claims.uid == user.uid && claims.admin) }
+                ?: SessionState.NeedsProfile(user)
             is AppResult.Failure -> SessionState.ProfileUnavailable(user, result.error)
         }
     }

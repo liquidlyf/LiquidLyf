@@ -21,6 +21,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /** The signed-in Firebase user, as much as the app needs. */
+/**
+ * Custom claims from the ID token, set by the maintainer's admin scripts (phase-07 7.4): `admin`
+ * opens Moderation, `banned` suspends the account. [uid] says whose they are, so a stale value
+ * never applies to the next person signed in.
+ */
+data class Claims(val uid: String? = null, val admin: Boolean = false, val banned: Boolean = false)
+
 data class AuthUser(
     val uid: String,
     val email: String?,
@@ -45,6 +52,9 @@ interface AuthRepository {
 
     /** Who Firebase's emails come from (the project's default sender), for the "check Spam" hints. */
     val emailSender: String
+
+    /** Read again on every ID token change: sign-in, and each hourly refresh (a new claim shows within the hour). */
+    val claims: StateFlow<Claims>
 
     suspend fun signInEmail(email: String, password: String): AppResult<AuthUser>
 
@@ -90,9 +100,24 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
     override val authState: StateFlow<AuthUser?> = state.asStateFlow()
     override val emailSender: String = "noreply@${auth.app.options.projectId}.firebaseapp.com"
 
+    private val claimsState = MutableStateFlow(Claims())
+    override val claims: StateFlow<Claims> = claimsState.asStateFlow()
+
     init {
-        // A singleton for the whole process: the listener lives as long as the app does.
+        // A singleton for the whole process: the listeners live as long as the app does.
         auth.addAuthStateListener { state.value = it.currentUser?.toAuthUser() }
+        auth.addIdTokenListener(FirebaseAuth.IdTokenListener { readClaims(it.currentUser) })
+    }
+
+    private fun readClaims(user: FirebaseUser?) {
+        if (user == null) {
+            claimsState.value = Claims()
+            return
+        }
+        user.getIdToken(false).addOnSuccessListener { token ->
+            val c = token.claims
+            claimsState.value = Claims(user.uid, admin = c["admin"] == true, banned = c["banned"] == true)
+        }
     }
 
     override suspend fun signInEmail(email: String, password: String): AppResult<AuthUser> = appResultOf {

@@ -27,12 +27,39 @@ import androidx.compose.ui.unit.dp
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.util.AppError
 
 /** Signed in, but the profile can't be read (offline on a new phone): Retry or sign out. */
+/** Phase 7: the `banned` claim. The rules refuse every write; the person can sign out or write to us. */
+@Composable
+fun SuspendedScreen(onSignOut: () -> Unit) {
+    Surface(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(horizontal = screenGutter()),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            EmptyState(
+                icon = LLIcons.Block,
+                title = stringResource(R.string.suspended_title),
+                body = stringResource(R.string.suspended_body, SUPPORT_EMAIL),
+                actionLabel = stringResource(R.string.action_sign_out),
+                onAction = onSignOut,
+            )
+        }
+    }
+}
+
+/** The project's public contact (never a maintainer's personal address). */
+private const val SUPPORT_EMAIL = "liquidlyf@gmail.com"
+
 @Composable
 fun SessionProblemScreen(error: AppError, onRetry: () -> Unit, onSignOut: () -> Unit) {
     Surface(Modifier.fillMaxSize()) {

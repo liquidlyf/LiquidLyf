@@ -20,7 +20,7 @@ import io.github.liquidlyf.core.data.session.SessionState
  * moved and the back stack is cleared, so Back never returns to a screen they no longer belong on
  * (BUG-003).
  */
-enum class GateZone { ONBOARDING, SIGNED_OUT, VERIFY_EMAIL, PROFILE_SETUP, NOTIFICATION_PERMISSION, SESSION_PROBLEM, MAIN, DELETING_ACCOUNT }
+enum class GateZone { ONBOARDING, SIGNED_OUT, VERIFY_EMAIL, PROFILE_SETUP, NOTIFICATION_PERMISSION, SESSION_PROBLEM, MAIN, DELETING_ACCOUNT, SUSPENDED }
 
 /** Where the app starts, decided once per launch while the splash screen is up. */
 fun startZone(session: SessionState, onboardingSeen: Boolean): GateZone = when (session) {
@@ -30,6 +30,7 @@ fun startZone(session: SessionState, onboardingSeen: Boolean): GateZone = when (
     is SessionState.ProfileUnavailable -> GateZone.SESSION_PROBLEM
     is SessionState.Ready -> GateZone.MAIN
     is SessionState.DeletingAccount -> GateZone.DELETING_ACCOUNT
+    is SessionState.Suspended -> GateZone.SUSPENDED
 }
 
 /**
@@ -46,6 +47,7 @@ fun gateTarget(session: SessionState, current: GateZone, askForNotifications: Bo
         is SessionState.Ready -> setOf(GateZone.MAIN, GateZone.NOTIFICATION_PERMISSION) to
             if (current == GateZone.PROFILE_SETUP && askForNotifications) GateZone.NOTIFICATION_PERMISSION else GateZone.MAIN
         is SessionState.DeletingAccount -> setOf(GateZone.DELETING_ACCOUNT) to GateZone.DELETING_ACCOUNT
+        is SessionState.Suspended -> setOf(GateZone.SUSPENDED) to GateZone.SUSPENDED
     }
     return if (current in allowed) null else target
 }
@@ -60,6 +62,7 @@ fun GateZone.route(): Any = when (this) {
     GateZone.SESSION_PROBLEM -> SessionProblem
     GateZone.MAIN -> MainGraph
     GateZone.DELETING_ACCOUNT -> DeletingAccount
+    GateZone.SUSPENDED -> Suspended
 }
 
 /** The zone a destination belongs to. */
