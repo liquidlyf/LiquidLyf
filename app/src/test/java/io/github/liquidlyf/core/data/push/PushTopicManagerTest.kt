@@ -89,6 +89,13 @@ class PushTopicManagerTest {
         auth.claims.value = Claims(uid = "u1", admin = true)
         manager.sync(donor)
         assertTrue("admins" in fcm.subscribed)
+        // Just after a launch the claims aren't read yet: the topic stays, no unsubscribe-resubscribe.
+        auth.claims.value = Claims()
+        fcm.calls.clear()
+        manager.sync(donor)
+        assertTrue("admins" in fcm.subscribed)
+        assertEquals(emptyList<String>(), fcm.calls)
+        auth.claims.value = Claims(uid = "u1", admin = true)
         // The claim is taken away: the next sync drops the topic.
         auth.claims.value = Claims(uid = "u1")
         manager.sync(donor)

@@ -78,6 +78,20 @@ class ModerationViewModelTest {
     }
 
     @Test
+    fun `an admin claim read after the screen opened still loads the reports`() = runTest(dispatcher) {
+        moderation.reports += report("1", "r1")
+        requests.put(TestData.request(id = "r1"))
+        val session = FakeSessionManager(admin.copy(admin = false))
+        val vm = ModerationViewModel(session, moderation, requests, profiles)
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.admin)
+
+        session.state.value = admin
+        advanceUntilIdle()
+        assertEquals(listOf("1"), vm.uiState.value.items!!.map { it.report.id })
+    }
+
+    @Test
     fun `each action goes to the repository as the admin, and the list reloads`() = runTest(dispatcher) {
         requests.put(TestData.request(id = "r1"), TestData.request(id = "r2", status = RequestStatus.REMOVED))
         moderation.reports += listOf(report("1", "r1"), report("2", "r2"), report("3", "pest", type = ReportTarget.USER))

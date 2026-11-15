@@ -76,9 +76,14 @@ class PushTopicManager @Inject constructor(
      */
     suspend fun sync(profile: UserProfile?, force: Boolean = false): AppResult<Unit> = appResultOf {
         val claims = auth.claims.value
-        val admin = profile != null && claims.uid == profile.uid && claims.admin
-        val desired = desiredTopics(profile, alertPrefs.current(), admin)
         val current = store.get().toMutableSet()
+        // Until this person's claims are read (just after a launch), leave the admins topic as it is.
+        val admin = when {
+            profile == null -> false
+            claims.uid == profile.uid -> claims.admin
+            else -> ADMINS_TOPIC in current
+        }
+        val desired = desiredTopics(profile, alertPrefs.current(), admin)
         try {
             for (topic in current - desired) {
                 messaging.unsubscribe(topic)

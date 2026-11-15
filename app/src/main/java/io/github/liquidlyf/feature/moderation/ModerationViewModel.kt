@@ -21,6 +21,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -75,7 +77,11 @@ class ModerationViewModel @Inject constructor(
     private val ready: SessionState.Ready? get() = session.state.value as? SessionState.Ready
 
     init {
-        load()
+        // The admin claim is read from the ID token a moment after a cold start, e.g. when the
+        // "Reports to review" alert opens the app straight here: follow it, don't read it once.
+        viewModelScope.launch {
+            session.state.map { (it as? SessionState.Ready)?.admin == true }.distinctUntilChanged().collect { load() }
+        }
     }
 
     fun load() {
