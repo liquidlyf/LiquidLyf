@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.firebase.dto.RequestDoc
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.numberText
@@ -310,7 +311,7 @@ private fun Header(r: BloodRequest) {
     r.notes?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
     val posted = r.createdAt?.let { relativeTimeText(it, now) }
     Text(
-        if (posted != null) stringResource(R.string.detail_posted_by, posted, r.requesterDisplayName) else stringResource(R.string.detail_posted_by_unsent, r.requesterDisplayName),
+        if (posted != null) stringResource(R.string.detail_posted_by, posted, shownName(r.requesterDisplayName)) else stringResource(R.string.detail_posted_by_unsent, shownName(r.requesterDisplayName)),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -522,14 +523,14 @@ private fun ResponderRow(
             BloodGroupBadge(response.donorBloodGroup, size = 40.dp)
             // The status sits under the name, so a long label (Bangla, large text) can't squeeze it.
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
-                Text(response.donorDisplayName, style = MaterialTheme.typography.titleMedium)
+                Text(shownName(response.donorDisplayName), style = MaterialTheme.typography.titleMedium)
                 response.message?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                 StatusPill(response.status)
             }
             // 7.1/7.2: report or block this person.
             Box {
                 IconButton(onClick = { menuOpen = true }, enabled = enabled, modifier = Modifier.size(Spacing.minTouchTarget)) {
-                    Icon(painterResource(LLIcons.MoreVert), contentDescription = stringResource(R.string.detail_more_about, response.donorDisplayName))
+                    Icon(painterResource(LLIcons.MoreVert), contentDescription = stringResource(R.string.detail_more_about, shownName(response.donorDisplayName)))
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(
@@ -548,7 +549,7 @@ private fun ResponderRow(
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             response.donorPhone?.takeIf { response.status != ResponseStatus.WITHDRAWN }?.let { phone ->
                 IconButton(onClick = { onCall(phone) }, modifier = Modifier.size(Spacing.minTouchTarget)) {
-                    Icon(painterResource(LLIcons.Call), contentDescription = stringResource(R.string.detail_call_donor, response.donorDisplayName))
+                    Icon(painterResource(LLIcons.Call), contentDescription = stringResource(R.string.detail_call_donor, shownName(response.donorDisplayName)))
                 }
             }
             if (ResponseStatus.CONFIRMED in next) {
@@ -674,3 +675,8 @@ private fun shareText(r: BloodRequest, state: RequestDetailUiState): String {
         dateTimeText(r.neededBy),
     )
 }
+
+/** A deleted account's name is stored as the English "Deleted user" (contract 16): show it in the app's language. */
+@Composable
+private fun shownName(name: String): String =
+    if (name == RequestDoc.DELETED_NAME) stringResource(R.string.deleted_user) else name

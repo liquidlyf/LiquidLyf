@@ -273,4 +273,5 @@
     <string name="notif_off_title">নোটিফিকেশন বন্ধ আছে</string>
     <string name="notif_off_body">কাছাকাছি কারও আপনার রক্ত দরকার হলে, বা কেউ আপনার অনুরোধে প্রস্তাব দিলে আপনি জানতে পারবেন না।</string>
     <string name="notif_off_turn_on">চালু করুন</string>
+    <string name="deleted_user">মুছে ফেলা ব্যবহারকারী</string>
 </resources>

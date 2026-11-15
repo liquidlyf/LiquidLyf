@@ -230,4 +230,5 @@
     <string name="requests_see_nearby">See requests near you</string>
 
     <string name="detail_share_text">%1$s blood needed: %2$s of %3$s at %4$s, %5$s. Needed by %6$s. Can you help? Shared from LiquidLyf, the free blood donation app.</string>
+    <string name="deleted_user">Deleted user</string>
 </resources>

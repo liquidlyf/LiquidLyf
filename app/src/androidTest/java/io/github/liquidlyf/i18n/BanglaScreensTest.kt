@@ -21,6 +21,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.testing.request
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -173,5 +174,28 @@ class BanglaScreensTest {
         }
         assertShows(R.string.settings_list_me)
         save("set2-settings")
+    }
+
+    @Test
+    fun aDeletedAccountsNameIsShownInBangla() {
+        val requests = io.github.liquidlyf.testing.FakeRequestRepository().apply {
+            put(io.github.liquidlyf.testing.TestData.request(id = "r1", neededBy = java.time.Instant.now().plusSeconds(18_000)).copy(requesterDisplayName = "Deleted user"))
+        }
+        val donor = io.github.liquidlyf.testing.TestData.profile(uid = "donor")
+        val geo = target.assets.open("bd-geo.json").bufferedReader().use { io.github.liquidlyf.core.data.geo.BdGeoParser.parse(it.readText()) }
+        val vm = io.github.liquidlyf.feature.request.detail.RequestDetailViewModel(
+            androidx.lifecycle.SavedStateHandle(mapOf("id" to "r1")),
+            io.github.liquidlyf.testing.FakeSessionManager(io.github.liquidlyf.core.data.session.SessionState.Ready(io.github.liquidlyf.testing.TestData.user(uid = "donor"), donor)),
+            requests, io.github.liquidlyf.testing.FakeOfferRepository(requests), io.github.liquidlyf.testing.FakeProfileRepository(),
+            io.github.liquidlyf.testing.FakeSafetyRepository(), io.github.liquidlyf.testing.FakeWorkerClient(),
+            object : io.github.liquidlyf.core.data.geo.GeoRepository {
+                override suspend fun geo() = geo
+            },
+            io.github.liquidlyf.core.domain.EligibilityCalculator(), io.github.liquidlyf.core.util.Clock { java.time.Instant.now() },
+            io.github.liquidlyf.testing.FakeNetworkMonitor(), io.github.liquidlyf.testing.FakeReminders(),
+        )
+        show { io.github.liquidlyf.feature.request.detail.RequestDetailRoute(onBack = {}, viewModel = vm) }
+        // Stored in English (contract 16), shown in the app's language.
+        assertShows(R.string.deleted_user)
     }
 }
