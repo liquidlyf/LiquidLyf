@@ -10,10 +10,12 @@ object Links {
     const val SUPPORT_EMAIL = "liquidlyf@gmail.com"
 
     /**
-     * Stored with each profile as `termsVersion`. Change it when the Terms change in a way users
-     * must accept again (Phase 8 asks them). The published Terms have no effective date yet.
+     * Stored with each profile as `termsVersion`: the effective date of the published Privacy
+     * Policy and Terms (liquidlyf.github.io, 15 Nov 2026). Only new profiles record it; there is
+     * no re-accept prompt yet. Before the first change to the Terms after launch, add one that
+     * asks people whose termsVersion is older.
      */
-    const val TERMS_VERSION = "draft-2026-11"
+    const val TERMS_VERSION = "2026-11-15"
 
     fun terms(locale: AppLocale): String = page(locale, "terms")
 
