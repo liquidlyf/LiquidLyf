@@ -15,17 +15,24 @@
 > 🩸 **Need blood urgently?** Contact your hospital or a licensed blood bank now. GitHub is not an
 > emergency channel.
 
-## What it will do
+## What it does
+
+The new app is being tested and isn't released yet. It:
 
 - **Alerts the right donors:** a request reaches donors who are eligible, available and have a
   compatible blood group near the hospital. If nobody responds, the search area widens step by step.
 - **Lets you search for donors:** find listed donors by blood group and area, and ask them to
   donate, without seeing their phone numbers.
-- **Protects phone numbers:** numbers are never listed publicly. They are shared only when a donor
-  offers to help, and only with that requester.
-- **Knows when you can donate:** it counts the rest period after each donation for you.
-- **Fights scams:** a clear "never pay for blood" rule, plus report, block and moderation tools.
-- **Speaks Bangla:** full Bangla and English.
+- **Protects phone numbers:** numbers are never listed publicly. A requester sees a donor's number
+  only when that donor offers to help, and the donor sees the request's contact only while the offer
+  is active.
+- **Knows when you can donate:** it counts the rest period after each donation, and reminds you when
+  you can donate again.
+- **Keeps your record:** your donation history, your impact and your badges, on your profile.
+- **Fights scams:** a clear "never pay for blood" rule, a warning when a request mentions money,
+  report and block buttons, and volunteer moderators.
+- **Speaks Bangla:** Bangla and English. The Bangla translation is being finished.
+- **Lets you leave:** delete your account and its data in the app, or by email.
 - **Costs nothing:** free for everyone, with no ads. It runs on free plans of Firebase and Cloudflare.
 
 ## Download
@@ -51,11 +58,32 @@ The full steps, the code rules and how to send a pull request are in [CONTRIBUTI
 **Built with:** Kotlin, Jetpack Compose and Material 3 · Cloud Firestore with tested security rules ·
 Firebase Cloud Messaging · a Cloudflare Worker (TypeScript) for alerts and timed jobs · GitHub Actions.
 
+```mermaid
+flowchart LR
+  app["Android app"]
+  fs[("Cloud Firestore<br>rules check every write")]
+  auth["Firebase Auth"]
+  worker["Cloudflare Worker<br>alerts and timed jobs"]
+  fcm["Firebase Cloud Messaging<br>topics"]
+  backup["Apps Script backup"]
+  app -- "sign in" --> auth
+  app -- "reads and writes" --> fs
+  app -- "send the alerts" --> worker
+  worker -- "reads and updates" --> fs
+  worker -- "topic messages" --> fcm
+  fcm -- "notifications" --> app
+  backup -. "widens the search if the Worker stops" .-> fs
+  backup -.-> fcm
+```
+
+There are no Cloud Functions and no paid services. [How the app is built](docs/architecture.md)
+explains the parts and the rules every pull request follows.
+
 | Folder | What's inside |
 |---|---|
 | `app/` | The Android app |
 | `firebase/` | Firestore security rules, rules tests and sample data for the emulators |
-| `backend/` | The Cloudflare Worker, its Google Apps Script backup, and data shared with the app |
+| `backend/` | The Cloudflare Worker, its Google Apps Script backup, the maintainers' admin scripts, and data shared with the app |
 | `docs/` | [How the app is built](docs/architecture.md) and [decision records](docs/adr/) |
 | `branding/` | The logo (not open-licensed; see [TRADEMARKS.md](TRADEMARKS.md)) |
 

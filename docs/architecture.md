@@ -68,12 +68,14 @@ io/github/liquidlyf/
 | `onboarding/` | The three first-launch slides, with the "never pay for blood" pledge |
 | `auth/` | Sign in, sign up, verify email, forgot password |
 | `profilesetup/` | Profile set-up after sign-up, in four steps: blood group, about you, area, then phone, last donation and the donor-listing choice |
-| `session/` | Between sign-in and Home: the notification permission, and Retry or sign out when the profile can't load |
+| `session/` | Between sign-in and Home: the notification permission, Retry or sign out when the profile can't load, and "Account suspended" for a banned account |
 | `home/` | The Home feed, with availability and eligibility |
 | `request/` | `create/`, `detail/` and `list/`: post a request, view one, and your own requests |
 | `donors/` | Find donors: filters, results without phone numbers, and the "Ask to donate" sheet |
 | `profile/` | The Profile tab: eligibility ring, impact, badges, donation history, adding a past donation, sharing the app |
 | `notifications/` | The inbox behind the bell |
+| `safety/` | Safety tips, the Report dialog (for a request or a person), and Settings → Blocked people |
+| `moderation/` | Admins only (the `admin` claim): open reports, with Dismiss, Hide, Restore and Cancel, each written to the moderators' action log. Bans use the admin scripts (`backend/admin-scripts/`) |
 | `settings/` | Settings, and which notifications this phone gets |
 | `account/` | Edit profile, change password, add a password (`AddPassword.kt`, for Google-only accounts), delete account |
 | `gallery/` | Debug builds only: every design-system component, to check themes, Bangla and large fonts on a phone |
@@ -89,6 +91,7 @@ io/github/liquidlyf/
 | `firebase/` | `firestore.rules`, indexes, the rules tests in `rules-tests/`, sample data in `seed/` |
 | `backend/worker/` | The Cloudflare Worker (TypeScript) |
 | `backend/shared/` | Data shared by the app and the Worker, such as the blood compatibility table |
+| `backend/admin-scripts/` | Node scripts a maintainer runs on their own computer with the Firebase Admin SDK: make someone a moderator, ban an account, delete an account for an emailed request, list moderators |
 | `backend/apps-script/` | A free Google Apps Script backup. If the Worker's 5-minute job stops, it widens the search for overdue requests with the same code |
 
 ## Rules for the code
