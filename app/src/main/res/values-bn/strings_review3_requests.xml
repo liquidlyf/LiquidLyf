@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Bangla, review set 3: Home, requests (post, detail, offers) and notifications (Phase 8.4).
+    NEEDS NATIVE REVIEW: first drafts, not yet checked by a native speaker. When the maintainer
+    has reviewed this set on the phone, change this line to "Reviewed by the maintainer, <date>".
+    Same terms as sets 1 and 2. Plurals: Bangla uses one form, but Android needs both items.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="bn">
+    <!-- Statuses, components, reasons -->
+    <string name="title_request_detail">অনুরোধের বিস্তারিত</string>
+    <string name="request_status_open">চলমান</string>
+    <string name="request_status_fulfilled">পূরণ হয়েছে</string>
+    <string name="request_status_cancelled">বাতিল</string>
+    <string name="request_status_expired">মেয়াদ শেষ</string>
+    <string name="request_status_removed">সরানো হয়েছে</string>
+    <string name="response_status_offered">প্রস্তাব দিয়েছেন</string>
+    <string name="response_status_confirmed">নিশ্চিত</string>
+    <string name="response_status_declined">প্রত্যাখ্যাত</string>
+    <string name="response_status_withdrawn">প্রত্যাহার করা হয়েছে</string>
+    <string name="response_status_donated">রক্ত দিয়েছেন</string>
+    <string name="component_whole_blood">পূর্ণ রক্ত</string>
+    <string name="component_red_cells">লোহিত রক্তকণিকা</string>
+    <string name="component_platelets">প্লাটিলেট</string>
+    <string name="component_plasma">প্লাজমা</string>
+    <string name="condition_surgery">অস্ত্রোপচার</string>
+    <string name="condition_accident">দুর্ঘটনা</string>
+    <string name="condition_thalassemia">থ্যালাসেমিয়া</string>
+    <string name="condition_dengue">ডেঙ্গু</string>
+    <string name="condition_delivery">সন্তান প্রসব</string>
+    <string name="condition_cancer">ক্যান্সার</string>
+    <string name="condition_anemia">রক্তস্বল্পতা</string>
+    <string name="condition_other">অন্যান্য</string>
+
+    <!-- Time -->
+    <string name="time_now">এখন</string>
+    <plurals name="time_in_minutes">
+        <item quantity="one">%d মিনিটের মধ্যে</item>
+        <item quantity="other">%d মিনিটের মধ্যে</item>
+    </plurals>
+    <plurals name="time_in_hours">
+        <item quantity="one">%d ঘণ্টার মধ্যে</item>
+        <item quantity="other">%d ঘণ্টার মধ্যে</item>
+    </plurals>
+    <plurals name="time_in_days">
+        <item quantity="one">%d দিনের মধ্যে</item>
+        <item quantity="other">%d দিনের মধ্যে</item>
+    </plurals>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d মিনিট আগে</item>
+        <item quantity="other">%d মিনিট আগে</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d ঘণ্টা আগে</item>
+        <item quantity="other">%d ঘণ্টা আগে</item>
+    </plurals>
+    <plurals name="time_days_ago">
+        <item quantity="one">%d দিন আগে</item>
+        <item quantity="other">%d দিন আগে</item>
+    </plurals>
+
+    <!-- Request cards and Home -->
+    <plurals name="request_units">
+        <item quantity="one">%1$d ব্যাগ · %2$s</item>
+        <item quantity="other">%1$d ব্যাগ · %2$s</item>
+    </plurals>
+    <plurals name="request_units_plain">
+        <item quantity="one">%d ব্যাগ</item>
+        <item quantity="other">%d ব্যাগ</item>
+    </plurals>
+    <plurals name="request_offers_count">
+        <item quantity="one">%dটি প্রস্তাব</item>
+        <item quantity="other">%dটি প্রস্তাব</item>
+    </plurals>
+    <string name="request_needed_by">%1$s দরকার</string>
+    <string name="offline_banner">আপনি অফলাইনে আছেন। সংরক্ষিত তথ্য দেখানো হচ্ছে।</string>
+    <string name="home_urgent_near_you">কাছেই জরুরি</string>
+    <string name="home_no_group_title">আপনার রক্তের গ্রুপ যোগ করুন</string>
+    <string name="home_no_group_body">তাহলে কাছের যেসব অনুরোধে সাড়া দিতে পারবেন, সেগুলো দেখবেন।</string>
+    <string name="home_empty_title">এই মুহূর্তে কাছাকাছি কারও %1$s দরকার নেই</string>
+    <string name="home_empty_body">কারও দরকার হলে আমরা আপনাকে জানাব।</string>
+    <string name="home_change_area">এলাকা বদলান</string>
+    <string name="home_not_listed_title">আপনি রক্তদাতা হিসেবে তালিকায় নেই</string>
+    <string name="home_not_listed_body">তালিকায় নাম দিন, যাতে কাছাকাছি যাঁদের আপনার গ্রুপের রক্ত দরকার তাঁরা আপনাকে খুঁজে অ্যালার্ট পাঠাতে পারেন।</string>
+    <string name="home_list_me">রক্তদাতা হিসেবে তালিকায় নাম দিন</string>
+    <string name="home_ready_to_donate">রক্ত দিতে প্রস্তুত</string>
+    <string name="home_ready_on">কাছাকাছি মানুষ আপনাকে খুঁজে অ্যালার্ট পাঠাতে পারবেন।</string>
+    <string name="home_ready_off">আপনি অ্যালার্ট পাবেন না, আর রক্তদাতা খুঁজলে আপনাকে দেখা যাবে না।</string>
+    <string name="home_eligible_now">আপনি এখন রক্ত দিতে পারবেন</string>
+    <plurals name="home_eligible_in">
+        <item quantity="one">%d দিন পর আবার রক্ত দিতে পারবেন</item>
+        <item quantity="other">%d দিন পর আবার রক্ত দিতে পারবেন</item>
+    </plurals>
+
+    <!-- Requests tab -->
+    <string name="requests_tab_nearby">কাছাকাছি</string>
+    <string name="requests_tab_mine">আমার</string>
+    <string name="requests_tab_offers">আমার প্রস্তাব</string>
+    <string name="requests_nearby_empty_title">আপনার জেলায় কোনো চলমান অনুরোধ নেই</string>
+    <string name="requests_nearby_empty_body">আবার দেখতে নিচে টানুন।</string>
+    <string name="requests_mine_empty_title">আপনি রক্তের অনুরোধ করেননি</string>
+    <string name="requests_mine_empty_body">কারও রক্ত দরকার হলে অনুরোধ পোস্ট করুন, কাছাকাছি মানানসই রক্তদাতারা অ্যালার্ট পাবেন।</string>
+    <string name="requests_offers_empty_title">আপনি এখনো প্রস্তাব দেননি</string>
+    <string name="requests_offers_empty_body">রক্ত দেওয়ার প্রস্তাব দিলে অনুরোধটি এখানে পাবেন।</string>
+    <string name="requests_see_nearby">কাছের অনুরোধ দেখুন</string>
+
+    <!-- Posting a request -->
+    <string name="create_step">ধাপ %1$d / %2$d</string>
+    <string name="action_post_request">অনুরোধ পোস্ট করুন</string>
+    <string name="action_posting">পোস্ট হচ্ছে…</string>
+    <string name="create_limit_title">আপনার সর্বোচ্চ সংখ্যক চলমান অনুরোধ আছে</string>
+    <plurals name="create_limit_body">
+        <item quantity="one">একসঙ্গে %1$dটি চলমান অনুরোধ রাখা যায়। রক্ত পেয়ে গেলে বা আর দরকার না হলে সেটি বন্ধ করুন, তারপর আবার পোস্ট করুন।</item>
+        <item quantity="other">একসঙ্গে সর্বোচ্চ %1$dটি চলমান অনুরোধ রাখা যায়। রক্ত পাওয়া গেছে বা আর দরকার নেই এমন একটি বন্ধ করুন, তারপর আবার পোস্ট করুন।</item>
+    </plurals>
+    <string name="create_limit_body_new">নতুন অ্যাকাউন্ট প্রথম সপ্তাহে ১টি চলমান অনুরোধ রাখতে পারে। রক্ত পেয়ে গেলে বা আর দরকার না হলে সেটি বন্ধ করুন, তারপর আবার পোস্ট করুন।</string>
+    <string name="create_limit_action">আমার অনুরোধগুলো দেখুন</string>
+    <string name="create_patient_title">কার রক্ত দরকার?</string>
+    <string name="create_patient_group">রোগীর রক্তের গ্রুপ</string>
+    <string name="create_error_group">রোগীর রক্তের গ্রুপ বেছে নিন।</string>
+    <string name="create_component">কী দরকার</string>
+    <string name="create_units">কত ব্যাগ</string>
+    <plurals name="create_units_spoken">
+        <item quantity="one">%1$d ব্যাগ</item>
+        <item quantity="other">%1$d ব্যাগ</item>
+    </plurals>
+    <string name="create_units_less">কম ব্যাগ</string>
+    <string name="create_units_more">বেশি ব্যাগ</string>
+    <string name="create_condition">কারণ (ঐচ্ছিক)</string>
+    <string name="create_accept_compatible">মানানসই অন্য গ্রুপও চলবে</string>
+    <string name="create_accept_compatible_info">শুধু ডাক্তার রাজি থাকলে। আরও বেশি রক্তদাতাকে অ্যালার্ট পাঠানো হবে।</string>
+    <string name="create_compatible_list">%1$s গ্রুপের রক্তদাতাদেরও অনুরোধ করা হবে।</string>
+    <string name="create_compatible_none">অন্য কোনো গ্রুপ এটি দিতে পারে না। শুধু এই গ্রুপকেই অনুরোধ করা হবে।</string>
+    <string name="create_where_title">কোথায় ও কখন?</string>
+    <string name="create_hospital">হাসপাতাল</string>
+    <string name="create_hospital_hint">হাসপাতালের নাম লিখুন। আমাদের তালিকায় থাকলে সেটি বেছে নিন।</string>
+    <string name="create_error_hospital">হাসপাতালের নাম লিখুন।</string>
+    <string name="create_ward">ওয়ার্ড বা বেড (ঐচ্ছিক)</string>
+    <string name="create_private_hint">গোপন: শুধু আপনি আর প্রস্তাব দেওয়া রক্তদাতারা দেখতে পাবেন।</string>
+    <string name="create_urgency">কত তাড়াতাড়ি?</string>
+    <string name="create_urgency_critical_help">৬ ঘণ্টার মধ্যে দরকার।</string>
+    <string name="create_urgency_urgent_help">২৪ ঘণ্টার মধ্যে দরকার।</string>
+    <string name="create_urgency_planned_help">নির্দিষ্ট দিনের জন্য, যেমন পরিকল্পিত অস্ত্রোপচার বা থ্যালাসেমিয়া রোগীর রক্ত নেওয়া।</string>
+    <string name="create_error_urgency">কত তাড়াতাড়ি রক্ত দরকার, বেছে নিন।</string>
+    <string name="create_pick_time">তারিখ ও সময় বেছে নিন</string>
+    <string name="create_error_planned">এখন থেকে ১৫ মিনিট থেকে ৩০ দিনের মধ্যে একটি সময় বেছে নিন।</string>
+    <string name="create_contact_title">রক্তদাতারা কীভাবে আপনার সঙ্গে যোগাযোগ করবেন?</string>
+    <string name="create_contact_info">রক্ত দেওয়ার প্রস্তাব দিলে তবেই রক্তদাতারা এটি দেখতে পাবেন।</string>
+    <string name="create_contact_name">যোগাযোগের নাম</string>
+    <string name="create_contact_phone">যোগাযোগের মোবাইল নম্বর</string>
+    <string name="create_patient_name">রোগীর নাম (ঐচ্ছিক)</string>
+    <string name="create_notes">রক্তদাতাদের জন্য নোট (ঐচ্ছিক)</string>
+    <string name="create_notes_counter">%1$d / %2$d</string>
+    <string name="create_review">আপনার অনুরোধ মিলিয়ে দেখুন</string>
+
+    <!-- The request screen -->
+    <string name="action_share">শেয়ার</string>
+    <string name="action_more">আরও অপশন</string>
+    <string name="action_call">কল করুন</string>
+    <string name="action_copy">কপি</string>
+    <string name="detail_missing_title">এই অনুরোধটি পাওয়া যাচ্ছে না</string>
+    <string name="detail_missing_body">হয়তো সরিয়ে ফেলা হয়েছে, অথবা পোস্ট হয়নি।</string>
+    <string name="detail_waiting_network">নেটওয়ার্কের অপেক্ষায়। আপনার অনুরোধ এই ফোনে সংরক্ষিত আছে, অনলাইনে ফিরলে পোস্ট হবে।</string>
+    <plurals name="detail_units_progress">
+        <item quantity="one">%2$d ব্যাগের মধ্যে %1$d ব্যাগ পাওয়া গেছে</item>
+        <item quantity="other">%2$d ব্যাগের মধ্যে %1$d ব্যাগ পাওয়া গেছে</item>
+    </plurals>
+    <string name="detail_posted_by">%2$s %1$s পোস্ট করেছেন</string>
+    <string name="detail_posted_by_unsent">%1$s · এখনো পোস্ট হয়নি</string>
+    <string name="detail_ward">ওয়ার্ড বা বেড: %1$s</string>
+    <string name="detail_open_maps">ম্যাপে খুলুন</string>
+    <string name="detail_i_can_donate">আমি রক্ত দিতে পারি</string>
+    <string name="detail_your_offer">আপনার প্রস্তাব</string>
+    <string name="detail_donated_thanks">ধন্যবাদ! এই রক্তদান আপনার রক্তদানের ইতিহাসে আছে।</string>
+    <string name="detail_declined_info">অনুরোধকারী অন্য রক্তদাতা পেয়েছেন। প্রস্তাব দেওয়ার জন্য ধন্যবাদ।</string>
+    <string name="detail_withdraw">আমার প্রস্তাব প্রত্যাহার করুন</string>
+    <string name="detail_withdraw_title">প্রস্তাব প্রত্যাহার করবেন?</string>
+    <string name="detail_withdraw_body">অনুরোধকারী আর আপনার ওপর নির্ভর করবেন না। এই অনুরোধে আর প্রস্তাব দিতে পারবেন না।</string>
+    <string name="detail_block_closed">এই অনুরোধটি বন্ধ।</string>
+    <string name="detail_block_no_group">প্রস্তাব দিতে প্রোফাইলে আপনার রক্তের গ্রুপ যোগ করুন।</string>
+    <string name="detail_block_incompatible">আপনার রক্তের গ্রুপ এই অনুরোধে চলবে না।</string>
+    <plurals name="detail_block_rest">
+        <item quantity="one">%d দিন পর আবার রক্ত দিতে পারবেন।</item>
+        <item quantity="other">%d দিন পর আবার রক্ত দিতে পারবেন।</item>
+    </plurals>
+    <string name="detail_block_weight">রক্তদাতার ওজন অন্তত ৪৫ কেজি হতে হবে।</string>
+    <string name="detail_block_age">রক্তদাতার বয়স ১৮ থেকে ৬০ বছর হতে হবে।</string>
+    <string name="detail_contact">যোগাযোগ</string>
+    <string name="detail_patient">রোগী: %1$s</string>
+    <string name="detail_copied">নম্বর কপি হয়েছে</string>
+    <plurals name="detail_offers_title">
+        <item quantity="one">%dটি প্রস্তাব</item>
+        <item quantity="other">%dটি প্রস্তাব</item>
+    </plurals>
+    <string name="detail_no_offers_open">এখনো কোনো প্রস্তাব নেই। কাছাকাছি মানানসই রক্তদাতাদের অ্যালার্ট পাঠানো হয়েছে।</string>
+    <string name="detail_no_offers_unsent">এখনো কোনো প্রস্তাব নেই। অনুরোধ পোস্ট হলে কাছাকাছি মানানসই রক্তদাতাদের অ্যালার্ট পাঠানো হবে।</string>
+    <string name="detail_no_offers">এই অনুরোধে কেউ প্রস্তাব দেননি।</string>
+    <string name="detail_call_donor">%1$s-কে কল করুন</string>
+    <string name="detail_confirm">নিশ্চিত করুন</string>
+    <string name="detail_decline">প্রত্যাখ্যান</string>
+    <string name="detail_decline_title">এই প্রস্তাব প্রত্যাখ্যান করবেন?</string>
+    <string name="detail_decline_body">রক্তদাতাকে জানানো হবে যে এই অনুরোধে তাঁকে দরকার নেই।</string>
+    <string name="detail_mark_donated">রক্ত দিয়েছেন চিহ্নিত করুন</string>
+    <string name="detail_donated_title">এই রক্তদাতা কি রক্ত দিয়েছেন?</string>
+    <string name="detail_donated_body">এটি একটি পাওয়া ব্যাগ হিসেবে গণ্য হবে, আর যাচাইকৃত রক্তদান হিসেবে তাঁর ইতিহাসে যোগ হবে।</string>
+    <string name="detail_close_request">অনুরোধ বন্ধ করুন</string>
+    <string name="detail_close_title">এই অনুরোধ বন্ধ করুন</string>
+    <string name="detail_close_found">রক্ত পাওয়া গেছে</string>
+    <string name="detail_close_not_needed">আর দরকার নেই</string>
+    <string name="detail_close_reason">নোট (ঐচ্ছিক)</string>
+    <string name="detail_edit">অনুরোধ সম্পাদনা</string>
+    <string name="detail_edit_needed_by">কখন দরকার</string>
+    <string name="detail_not_for_me">আমার জন্য নয়</string>
+    <string name="detail_action_waiting">নেটওয়ার্কের অপেক্ষায়। অনলাইনে ফিরলে এটি শেষ হবে।</string>
+    <string name="detail_withdrawn">প্রস্তাব প্রত্যাহার করা হয়েছে</string>
+    <string name="detail_confirmed">রক্তদাতা নিশ্চিত</string>
+    <string name="detail_declined">প্রস্তাব প্রত্যাখ্যাত</string>
+    <string name="detail_marked_donated">রক্তদান রেকর্ড হয়েছে</string>
+    <string name="detail_closed">অনুরোধ বন্ধ হয়েছে</string>
+    <string name="detail_saved">অনুরোধ আপডেট হয়েছে</string>
+    <string name="detail_share_text">%1$s রক্ত দরকার: %3$s %2$s, %4$s, %5$s। %6$s-এর মধ্যে দরকার। আপনি কি সাহায্য করতে পারেন? LiquidLyf থেকে শেয়ার করা, বিনামূল্যের রক্তদান অ্যাপ।</string>
+
+    <!-- Notifications, the inbox, notification settings -->
+    <string name="channel_urgent_requests_name">জরুরি রক্তের অনুরোধ</string>
+    <string name="channel_urgent_requests_description">কাছাকাছি কারও আপনার গ্রুপের রক্ত দরকার হলে, বা কেউ আপনাকে রক্ত দিতে অনুরোধ করলে অ্যালার্ট।</string>
+    <string name="channel_request_updates_name">অনুরোধের আপডেট</string>
+    <string name="channel_request_updates_description">আপনি যুক্ত আছেন এমন অনুরোধের প্রস্তাব, নিশ্চিতকরণ ও পরিবর্তন।</string>
+    <string name="channel_reminders_name">রিমাইন্ডার</string>
+    <string name="channel_reminders_description">কখন আবার রক্ত দিতে পারবেন, আর কোন অনুরোধের মেয়াদ শেষ হতে চলেছে।</string>
+    <string name="channel_general_name">সাধারণ</string>
+    <string name="channel_general_description">LiquidLyf-এর অন্যান্য বার্তা।</string>
+    <string name="notification_new_request_title">কাছেই %1$s রক্ত দরকার</string>
+    <string name="notification_new_request_title_any">কাছেই রক্ত দরকার</string>
+    <string name="notification_new_request_body">কাছাকাছি কারও আপনার গ্রুপের রক্ত দরকার। অনুরোধটি দেখতে LiquidLyf খুলুন।</string>
+    <string name="notification_still_needed_title">এখনো দরকার: কাছেই %1$s রক্ত</string>
+    <string name="notification_still_needed_title_any">কাছেই এখনো রক্ত দরকার</string>
+    <string name="notification_request_body">%1$s · %2$s। অনুরোধটি দেখতে চাপুন।</string>
+    <string name="notification_new_offer_title">কেউ রক্ত দেওয়ার প্রস্তাব দিয়েছেন</string>
+    <string name="notification_new_offer_body">কে প্রস্তাব দিয়েছেন দেখতে আপনার অনুরোধটি খুলুন, আর তাঁকে কল করুন।</string>
+    <string name="notification_offer_confirmed_title">আপনার প্রস্তাব নিশ্চিত হয়েছে</string>
+    <string name="notification_offer_confirmed_body">অনুরোধকারী আপনার ওপর ভরসা করছেন। বিস্তারিত দেখতে অনুরোধটি খুলুন।</string>
+    <string name="notification_offer_declined_title">আপনার প্রস্তাব গ্রহণ করা হয়নি</string>
+    <string name="notification_offer_declined_body">প্রস্তাব দেওয়ার জন্য ধন্যবাদ। অনুরোধকারী অন্য ব্যবস্থা করেছেন।</string>
+    <string name="notification_donation_recorded_title">আপনার রক্তদান রেকর্ড হয়েছে</string>
+    <string name="notification_donation_recorded_body">ধন্যবাদ! এটি এখন আপনার রক্তদানের ইতিহাসে আছে।</string>
+    <string name="notification_request_fulfilled_title">আপনি যে অনুরোধে প্রস্তাব দিয়েছিলেন, সেখানে রক্ত পাওয়া গেছে</string>
+    <string name="notification_request_fulfilled_body">প্রস্তাব দেওয়ার জন্য ধন্যবাদ। আপনার যাওয়ার দরকার নেই।</string>
+    <string name="notification_request_cancelled_title">আপনি যে অনুরোধে প্রস্তাব দিয়েছিলেন, সেটি বন্ধ হয়েছে</string>
+    <string name="notification_request_cancelled_body">এটি আর দরকার নেই। প্রস্তাব দেওয়ার জন্য ধন্যবাদ।</string>
+    <string name="notification_asked_title">কেউ আপনাকে রক্ত দিতে অনুরোধ করেছেন</string>
+    <string name="notification_asked_body">আপনি সাহায্য করতে পারেন কি না দেখতে অনুরোধটি খুলুন।</string>
+    <string name="notification_eligible_again_title">আপনি আবার রক্ত দিতে পারবেন</string>
+    <string name="notification_eligible_again_body">আপনার বিশ্রামের সময় শেষ। কাছাকাছি কারও আপনার গ্রুপের রক্ত দরকার হলে আবার অ্যালার্ট পাবেন।</string>
+    <string name="notification_request_ending_title">আপনার অনুরোধ ২ ঘণ্টার মধ্যে শেষ হবে</string>
+    <string name="notification_request_ending_body">এখনো রক্ত দরকার? সময় বদলাতে অনুরোধটি খুলুন, আর রক্ত পেয়ে গেলে বন্ধ করে দিন।</string>
+    <string name="inbox_empty_title">এখনো কোনো নোটিফিকেশন নেই</string>
+    <string name="inbox_empty_body">কাছের অনুরোধের অ্যালার্ট, আর আপনার প্রস্তাব ও অনুরোধের খবর এখানে দেখাবে।</string>
+    <string name="inbox_new">নতুন</string>
+    <string name="inbox_just_now">এইমাত্র</string>
+    <string name="inbox_load_more">পুরোনোগুলো দেখুন</string>
+    <string name="inbox_load_failed">%1$s আবার চেষ্টা করতে চাপুন।</string>
+    <string name="action_open_notifications_unread">নোটিফিকেশন খুলুন, নতুন বার্তা আছে</string>
+    <string name="title_notification_settings">নোটিফিকেশন সেটিংস</string>
+    <string name="settings_notifications">নোটিফিকেশন</string>
+    <string name="settings_notifications_summary">অনুরোধের অ্যালার্ট, আপডেট ও রিমাইন্ডার</string>
+    <string name="notif_prefs_alerts_title">আমার কাছের রক্তের অনুরোধ</string>
+    <string name="notif_prefs_alerts_summary">কাছাকাছি কারও আপনার গ্রুপের রক্ত দরকার হলে একটি অ্যালার্ট।</string>
+    <string name="notif_prefs_updates_title">প্রস্তাব ও আপডেট</string>
+    <string name="notif_prefs_updates_summary">কেউ আপনার অনুরোধে প্রস্তাব দিলে, বা অনুরোধকারী আপনার প্রস্তাবের উত্তর দিলে। এগুলো ইনবক্সেও থাকে।</string>
+    <string name="notif_prefs_reminders_title">রিমাইন্ডার</string>
+    <string name="notif_prefs_reminders_summary">কখন আবার রক্ত দিতে পারবেন, আর আপনার অনুরোধ শেষ হওয়ার ২ ঘণ্টা আগে।</string>
+    <string name="notif_prefs_system_title">ফোনের নোটিফিকেশন সেটিংস</string>
+    <string name="notif_prefs_system_summary">শব্দ, ভাইব্রেশন ও আরও কিছু, ফোনের সেটিংসে।</string>
+    <string name="notif_off_title">নোটিফিকেশন বন্ধ আছে</string>
+    <string name="notif_off_body">কাছাকাছি কারও আপনার রক্ত দরকার হলে, বা কেউ আপনার অনুরোধে প্রস্তাব দিলে আপনি জানতে পারবেন না।</string>
+    <string name="notif_off_turn_on">চালু করুন</string>
+</resources>
