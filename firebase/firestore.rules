@@ -329,6 +329,8 @@ service cloud.firestore {
     // ================================================================
     // userStats/{uid}: owner-written; openRequests moves only by +1 with a request
     // created in the same batch, or -1 with one of my OPEN requests closing in it.
+    // A request hidden by reports (REMOVED) keeps its slot until an admin cancels it
+    // (the admin's batch gives the slot back) or the owner deletes their account (B15).
     // Must exist before the first request (create it in the profile-setup batch).
     // ================================================================
     match /userStats/{uid} {
@@ -337,10 +339,10 @@ service cloud.firestore {
                     && data().keys().hasOnly(['openRequests','totalRequests','lastRequestId'])
                     && data().openRequests == 0 && data().totalRequests == 0
                     && absent(data(), 'lastRequestId');
-      allow update: if isOwner(uid)
-                    && data().keys().hasOnly(['openRequests','totalRequests','lastRequestId'])
+      allow update: if data().keys().hasOnly(['openRequests','totalRequests','lastRequestId'])
                     && isId(data().lastRequestId)
-                    && (requestOpened() || requestClosed(uid));
+                    && ((isOwner(uid) && (requestOpened() || requestClosed(uid)))
+                        || (isAdmin() && adminCancelled(uid)));
       // Only at zero: deleting and re-creating must not reset the open-request count.
       allow delete: if isOwner(uid) && resource.data.openRequests == 0;
     }
@@ -360,10 +362,23 @@ service cloud.firestore {
           && d.openRequests == r.openRequests - 1 && d.openRequests >= 0
           && closedInThisBatch(p, uid);
     }
+    // Owner paths out of REMOVED: only the account-deletion anonymize (-> CANCELLED);
+    // ownerUpdate closes OPEN requests only.
     function closedInThisBatch(p, uid) {
       let was = get(p).data;
-      return was.requesterUid == uid && was.status == 'OPEN'
+      return was.requesterUid == uid && was.status in ['OPEN','REMOVED']
           && getAfter(p).data.status in ['CANCELLED','FULFILLED'];
+    }
+    // An admin cancelling one of uid's OPEN or hidden requests gives its slot back (-1).
+    function adminCancelled(uid) {
+      let d = request.resource.data;
+      let r = resource.data;
+      let p = requestPath(d.lastRequestId);
+      let was = get(p).data;
+      return changed().hasOnly(['openRequests','lastRequestId'])
+          && d.openRequests == r.openRequests - 1 && d.openRequests >= 0
+          && was.requesterUid == uid && was.status in ['OPEN','REMOVED']
+          && getAfter(p).data.status == 'CANCELLED';
     }
 
     // ================================================================
@@ -511,17 +526,30 @@ service cloud.firestore {
           && !exists(reportPath(me() + '_' + rid))
           && getAfter(reportPath(me() + '_' + rid)).data.targetType == 'REQUEST';
     }
-    // (d) an admin (custom claim) hiding or restoring a request.
-    function adminUpdate() {
+    // (d) an admin (custom claim): hide (OPEN -> REMOVED), restore (REMOVED -> OPEN), or
+    //     cancel (OPEN|REMOVED -> CANCELLED). A cancel gives the owner's slot back in the
+    //     same batch: userStats -1 naming this request (B15). Closed requests stay closed.
+    function adminUpdate(rid) {
+      let d = request.resource.data;
+      let r = resource.data;
       return isAdmin()
           && changed().hasOnly(['status','updatedAt'])
-          && request.resource.data.updatedAt == request.time
-          && request.resource.data.status in ['OPEN','REMOVED','CANCELLED'];
+          && d.updatedAt == request.time
+          && ((r.status == 'OPEN' && d.status == 'REMOVED')
+              || (r.status == 'REMOVED' && d.status == 'OPEN')
+              || (r.status in ['OPEN','REMOVED'] && d.status == 'CANCELLED' && slotReturned(rid, r.requesterUid)));
+    }
+    function slotReturned(rid, owner) {
+      let s = statsPath(owner);
+      return !exists(s)
+          || (getAfter(s).data.openRequests == get(s).data.openRequests - 1
+              && getAfter(s).data.get('lastRequestId', '') == rid);
     }
     // (e) account deletion (doc 06 §4.7, contract 16): fixed anonymizing edits only.
     //     No verified()/notBanned(): a suspended user may still delete their account.
     // The requester, any status: name -> 'Deleted user', notes and closedReason removed.
-    // An OPEN request is cancelled in the same write (userStats -1 in the same batch).
+    // An OPEN or hidden (REMOVED) request is cancelled in the same write (userStats -1 in
+    // the same batch), so the account's last step (userStats at 0) always succeeds (B15).
     function ownerAnonymize() {
       let d = request.resource.data;
       let r = resource.data;
@@ -530,7 +558,7 @@ service cloud.firestore {
           && d.requesterDisplayName == 'Deleted user'
           && absent(d, 'notes') && absent(d, 'closedReason') && d.flagged == false
           && d.updatedAt == request.time
-          && d.status == (r.status == 'OPEN' ? 'CANCELLED' : r.status);
+          && d.status == (r.status in ['OPEN','REMOVED'] ? 'CANCELLED' : r.status);
     }
     // A responder, any status: only my entry's name -> 'Deleted user'.
     function responderAnonymize() {
@@ -610,7 +638,7 @@ service cloud.firestore {
       allow read: if verified();
       allow create: if verified() && notBanned() && validNewRequest(data()) && openRequestSlot(rid);
       allow update: if ownerUpdate(rid) || offerUpdate(rid) || withdrawUpdate(rid)
-                    || reportUpdate(rid) || adminUpdate()
+                    || reportUpdate(rid) || adminUpdate(rid)
                     || ownerAnonymize() || responderAnonymize();
       allow delete: if false;   // history is kept (BUG-019)
 

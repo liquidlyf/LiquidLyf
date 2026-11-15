@@ -107,7 +107,7 @@ General:
        - delete `notes` and `closedReason`;
        - `flagged: false`, plus `updatedAt`.
 
-       An OPEN request also gets `status: CANCELLED` in the same write, plus `userStats.openRequests −1` with `lastRequestId: rid` in the same batch, so one open request per batch. Closed requests can share a batch.
+       An OPEN **or hidden (`REMOVED`)** request also gets `status: CANCELLED` in the same write, plus `userStats.openRequests −1` with `lastRequestId: rid` in the same batch, so one such request per batch (a hidden one still holds its slot, B15). Closed requests can share a batch.
     3. **Anonymize my offers**, in any status, one batch per request:
        - on the request: `responders.{me} = {name: 'Deleted user', group, status}`, with group and status unchanged, plus `updatedAt`;
        - on `responses/{me}`: `donorDisplayName: 'Deleted user'`, delete `donorPhone` and `message`, plus `updatedAt`. The status is unchanged.
@@ -121,7 +121,10 @@ General:
 
     Reports the user filed stay with the admins, keyed by uid.
 17. **Admin action** (custom claim `admin: true`; the hidden Moderation screen, phase-07 7.4–7.5), one batch:
-    - the action itself: request `status` to `OPEN` (restore), `REMOVED` or `CANCELLED`, plus `updatedAt`; or a report's `status`;
+    - the action itself, plus `updatedAt`, or a report's `status`. For a request:
+      - hide: `OPEN → REMOVED`; restore: `REMOVED → OPEN`;
+      - cancel: `OPEN` or `REMOVED → CANCELLED`, **plus the owner's `userStats/{owner}`: `openRequests −1` (`increment(-1)`) with `lastRequestId: rid`**, which gives the slot back (B15). Leave it out only if the owner's `userStats` no longer exists;
+      - closed requests stay closed: no other change is allowed;
     - plus `adminLog/{id}`: `adminUid` (me), `action` (`DISMISS_REPORT`, `ACTION_REPORT`, `REMOVE_REQUEST`, `RESTORE_REQUEST`, `CANCEL_REQUEST`), `targetType` (`REQUEST`, `USER`, `REPORT`), `targetId`, optional `reportId` and `note` (≤ 500), `createdAt` = server time.
 
     The log is create-only: nobody can edit or delete an entry from the app, not even an admin. Only admins read it.
@@ -143,4 +146,4 @@ Decisions made while turning doc 07's draft into tested rules:
 - **Removed:** the `devices`, `hiddenRequests` and `blocked` subcollections (replaced by topics and the `users` arrays) and `config/public` (Remote Config).
 - **`acceptedGroups` is checked against the compatibility table** in the rules (`backend/shared/blood-compatibility.json`, needs medical review). This means a request can never list an incompatible group.
 - **A new phone number resets `phoneVerified`.** The account `birthYear` must make the user 18–100.
-- **Left to the Worker** (service account, bypasses the rules): `fanoutTier`, `nextTierAt`, `EXPIRED`. When it expires a request it must also do `userStats.openRequests −1` in the same commit. A REMOVED request keeps counting toward its owner's limit until an admin acts.
+- **Left to the Worker** (service account, bypasses the rules): `fanoutTier`, `nextTierAt`, `EXPIRED`. When it expires a request it must also do `userStats.openRequests −1` in the same commit. A REMOVED request keeps counting toward its owner's limit until an admin cancels it (that batch gives the slot back) or the owner deletes their account (B15); a restore makes it OPEN again, still counted.

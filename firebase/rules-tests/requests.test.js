@@ -1,6 +1,6 @@
 // requests/{rid}, private/contact, userStats counters.
 // Doc 07 §5 tests 1 (contact), 2, 4, 6, 8; Spark tests 2, 3, 7, 9.
-import { describe, test, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, test, beforeAll, afterAll, beforeEach, expect } from 'vitest';
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, increment,
@@ -334,6 +334,8 @@ describe('requests: owner edits (doc 07 test 8)', () => {
     await assertSucceeds(updateDoc(doc(mod, 'requests/r1'), { status: 'REMOVED', updatedAt: serverTimestamp() }));
     await assertSucceeds(updateDoc(doc(mod, 'requests/r1'), { status: 'OPEN', updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(doc(mod, 'requests/r1'), { notes: 'x', updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(mod, 'requests/r1'), { status: 'OPEN', updatedAt: serverTimestamp() })); // no-op
+    await assertFails(updateDoc(doc(mod, 'requests/r1'), { status: 'FULFILLED', updatedAt: serverTimestamp() }));
   });
 
   test('askCount: +1 only, at most 10', async () => {
@@ -341,6 +343,70 @@ describe('requests: owner edits (doc 07 test 8)', () => {
     await assertSucceeds(updateDoc(doc(as('alice'), 'requests/r1'), { askCount: 1, lastAskedUid: 'bob', updatedAt: serverTimestamp() }));
     await seed(async (db) => updateDoc(doc(db, 'requests/r1'), { askCount: 10 }));
     await assertFails(updateDoc(doc(as('alice'), 'requests/r1'), { askCount: 11, lastAskedUid: 'carol', updatedAt: serverTimestamp() }));
+  });
+});
+
+describe('admin cancel gives the slot back; a hidden request keeps it until then (B15)', () => {
+  const mod = () => as('mod', { admin: true });
+  /** The admin's cancel batch: request -> CANCELLED (+ the owner's userStats change). */
+  function adminCancel(db, rid, owner, { stats = { openRequests: increment(-1), lastRequestId: rid } } = {}) {
+    const b = writeBatch(db);
+    b.update(doc(db, 'requests', rid), { status: 'CANCELLED', updatedAt: serverTimestamp() });
+    if (stats) b.update(doc(db, 'userStats', owner), stats);
+    return b.commit();
+  }
+  const openCount = async (uid) => (await getDoc(doc(as(uid), 'userStats', uid))).data().openRequests;
+
+  test('an admin cancels an OPEN request and the owner gets the slot back in the same batch', async () => {
+    await seedRequest('r1', 'alice');
+    await assertSucceeds(adminCancel(mod(), 'r1', 'alice'));
+    expect(await openCount('alice')).toBe(0);
+  });
+
+  test('a hidden (REMOVED) request: the owner cannot free its slot; an admin cancel does', async () => {
+    await seedRequest('r1', 'alice', { status: 'REMOVED', reportCount: 3 });
+    await assertFails(closeRequest(as('alice'), 'alice', 'r1'));
+    await assertFails(updateDoc(doc(as('alice'), 'userStats/alice'), { openRequests: increment(-1), lastRequestId: 'r1' }));
+    await assertSucceeds(adminCancel(mod(), 'r1', 'alice'));
+    expect(await openCount('alice')).toBe(0);
+  });
+
+  test('an admin cancel must give back exactly one slot, for this request', async () => {
+    await seedRequest('r2', 'alice', {}, 2);
+    await seedRequest('r1', 'alice', {}, 2);
+    await assertFails(adminCancel(mod(), 'r1', 'alice', { stats: false }));
+    await assertFails(adminCancel(mod(), 'r1', 'alice', { stats: { openRequests: increment(-2), lastRequestId: 'r1' } }));
+    await assertFails(adminCancel(mod(), 'r1', 'alice', { stats: { openRequests: increment(-1), lastRequestId: 'r2' } }));
+    await assertFails(adminCancel(mod(), 'r1', 'alice', { stats: { openRequests: increment(-1), totalRequests: 0, lastRequestId: 'r1' } }));
+    await assertSucceeds(adminCancel(mod(), 'r1', 'alice'));
+    expect(await openCount('alice')).toBe(1);
+  });
+
+  test("an admin can't move userStats without a cancel, or for someone else's request", async () => {
+    await seedRequest('r1', 'alice', {}, 1);
+    await assertFails(updateDoc(doc(mod(), 'userStats/alice'), { openRequests: increment(-1), lastRequestId: 'r1' }));
+    await seedRequest('r9', 'bob', {}, 1);
+    const db = mod();
+    const b = writeBatch(db);
+    b.update(doc(db, 'requests/r9'), { status: 'CANCELLED', updatedAt: serverTimestamp() });
+    b.update(doc(db, 'userStats/alice'), { openRequests: increment(-1), lastRequestId: 'r9' });
+    await assertFails(b.commit());
+    await assertFails(updateDoc(doc(as('eve'), 'userStats/alice'), { openRequests: increment(-1), lastRequestId: 'r1' }));
+  });
+
+  test('closed requests stay closed, for admins too', async () => {
+    for (const status of ['CANCELLED', 'FULFILLED', 'EXPIRED']) {
+      await seedRequest('r1', 'alice', { status }, 0);
+      await assertFails(updateDoc(doc(mod(), 'requests/r1'), { status: 'OPEN', updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(mod(), 'requests/r1'), { status: 'REMOVED', updatedAt: serverTimestamp() }));
+      await assertFails(adminCancel(mod(), 'r1', 'alice', { stats: false }));
+    }
+  });
+
+  test('an owner whose counters are already gone (deleted account): the cancel alone is enough', async () => {
+    await seedRequest('r1', 'alice', { status: 'REMOVED', reportCount: 3 });
+    await seed(async (db) => deleteDoc(doc(db, 'userStats/alice')));
+    await assertSucceeds(adminCancel(mod(), 'r1', 'alice', { stats: false }));
   });
 });
 

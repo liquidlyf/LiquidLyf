@@ -87,8 +87,19 @@ describe('account deletion: the requester anonymizes their requests', () => {
   });
 
   test('a suspended or unverified owner can still anonymize', async () => {
-    await seedRequest('r1', 'alice', { status: 'REMOVED' }, 0);
+    await seedRequest('r1', 'alice', { status: 'CANCELLED' }, 0);
     await assertSucceeds(anonymizeRequest(as('alice', { banned: true, email_verified: false }), 'alice', 'r1'));
+  });
+
+  test('a hidden (REMOVED) request is cancelled like an OPEN one, with userStats -1 (B15)', async () => {
+    await seedRequest('r1', 'alice', { status: 'REMOVED', reportCount: 3 });
+    const banned = as('alice', { banned: true });
+    await assertFails(anonymizeRequest(banned, 'alice', 'r1')); // can't stay hidden
+    await assertFails(anonymizeRequest(banned, 'alice', 'r1', { extra: { status: 'REMOVED' } }));
+    await assertSucceeds(anonymizeRequest(banned, 'alice', 'r1', { close: true }));
+    expect((await getDoc(doc(as('bob'), 'requests/r1'))).data().status).toBe('CANCELLED');
+    expect((await getDoc(doc(banned, 'userStats/alice'))).data().openRequests).toBe(0);
+    await assertSucceeds(deleteDoc(doc(banned, 'userStats/alice'))); // so the final batch can go
   });
 });
 
