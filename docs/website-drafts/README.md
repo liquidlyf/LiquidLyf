@@ -53,7 +53,7 @@ Switches in [`site/_config.yml`](site/_config.yml):
 | Switch | Off (now) | On |
 |---|---|---|
 | `released` (set by `--released`) | "Coming soon", and the short /download page | The download button and the full install guide |
-| `facebook` | The home page says "Follow the project on GitHub" | "Follow us on Facebook" and a Facebook link in the footer. Turn it on only after P confirms the page's auto-reply |
+| `facebook` | The home page offers release alerts on GitHub (Watch → Custom → Releases) | "Follow us on Facebook" and a Facebook link in the footer. Turn it on only after P confirms the page's auto-reply |
 | `bn_reviewed` | A notice on every Bangla page that the English applies | No notice (after C8) |
 
 A phone screenshot replaces the logo on the home page when its front matter has
