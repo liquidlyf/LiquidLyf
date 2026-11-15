@@ -37,5 +37,11 @@
     <string name="blocked_done">Blocked.</string>
     <string name="report_person_title">Report this person</string>
     <string name="detail_more_about">More about %1$s</string>
+    <!-- Money words (7.8) -->
+    <string name="money_warning_title">Your note mentions money</string>
+    <string name="money_warning_body">Blood must never be bought or sold. A request that mentions money (bKash, Nagad, taka, payment…) is marked for our team to check, and donors see a caution on it. Change the note, or post it as it is.</string>
+    <string name="action_change_note">Change note</string>
+    <string name="action_post_anyway">Post anyway</string>
+    <string name="detail_flagged_caution">This request mentions money. Never pay or take money for blood. If anyone asks, report the request.</string>
     <string name="reported_thanks">Thanks. Our team reviews every report. A request that 3 people report is hidden until it\'s checked.</string>
 </resources>

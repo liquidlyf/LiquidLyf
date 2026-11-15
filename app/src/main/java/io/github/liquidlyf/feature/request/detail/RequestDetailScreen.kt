@@ -266,6 +266,10 @@ private fun Banners(state: RequestDetailUiState) {
     if (state.notice == PostNotice.DAILY_ALERT_LIMIT) {
         NoticeCard(LLIcons.Warning, stringResource(R.string.error_daily_alert_limit))
     }
+    // 7.8: the notes mention money (the request is flagged for review).
+    if (state.request?.flagged == true) {
+        NoticeCard(LLIcons.Warning, stringResource(R.string.detail_flagged_caution))
+    }
 }
 
 @Composable

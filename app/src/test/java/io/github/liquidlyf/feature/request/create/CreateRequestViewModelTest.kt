@@ -159,6 +159,29 @@ class CreateRequestViewModelTest {
     }
 
     @Test
+    fun `a note that mentions money asks first, and is posted only on Post anyway`() = runTest(dispatcher) {
+        val vm = vm()
+        val events = events(vm)
+        advanceUntilIdle()
+        vm.fillAll()
+        vm.edit { copy(notes = "Pay via bKash after") }
+        vm.next()
+        advanceUntilIdle()
+        assertTrue("7.8: the warning shows", vm.uiState.value.moneyWarning)
+        assertTrue("nothing posted yet", requests.created.isEmpty())
+
+        vm.changeNote()
+        assertFalse(vm.uiState.value.moneyWarning)
+        vm.next()
+        assertTrue("still asks while the note mentions money", vm.uiState.value.moneyWarning)
+
+        vm.postAnyway()
+        advanceUntilIdle()
+        assertEquals("Pay via bKash after", requests.created.single().second.notes)
+        assertEquals(1, events.size)
+    }
+
+    @Test
     fun `posting writes one request, dispatches it and opens it`() = runTest(dispatcher) {
         val vm = vm()
         val events = events(vm)

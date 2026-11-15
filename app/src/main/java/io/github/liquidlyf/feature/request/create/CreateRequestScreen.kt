@@ -105,6 +105,15 @@ fun CreateRequestRoute(
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { e -> if (e is CreateRequestEvent.Posted) onPosted(e.requestId, e.notice) }
     }
+    if (state.moneyWarning) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = viewModel::changeNote,
+            title = { Text(stringResource(R.string.money_warning_title)) },
+            text = { Text(stringResource(R.string.money_warning_body)) },
+            confirmButton = { TextButton(onClick = viewModel::postAnyway) { Text(stringResource(R.string.action_post_anyway)) } },
+            dismissButton = { TextButton(onClick = viewModel::changeNote) { Text(stringResource(R.string.action_change_note)) } },
+        )
+    }
     BackHandler(enabled = state.step > 0 && !state.posting) { viewModel.back() }
     CreateRequestScreen(
         state = state,

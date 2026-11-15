@@ -109,6 +109,9 @@ data class CreateRequestUiState(
     val errors: Set<RequestField> = emptySet(),
     val hospitals: List<Hospital> = emptyList(),
     val posting: Boolean = false,
+    /** 7.8: the notes mention money; waiting for "Post anyway" or "Change note". */
+    val moneyWarning: Boolean = false,
+    val moneyAcknowledged: Boolean = false,
     @param:StringRes val formError: Int? = null,
 ) {
     val step: Int get() = form.step
@@ -211,8 +214,26 @@ class CreateRequestViewModel @Inject constructor(
             state.update { it.copy(errors = errors) }
             return
         }
-        if (s.isLastStep) post() else edit { copy(step = step + 1) }
+        if (!s.isLastStep) {
+            edit { copy(step = step + 1) }
+            return
+        }
+        // 7.8: a note that mentions money is posted flagged (the rules insist); say so first.
+        if (Validators.hasMoneyWords(s.form.notes) && !s.moneyAcknowledged) {
+            state.update { it.copy(moneyWarning = true) }
+            return
+        }
+        post()
     }
+
+    /** From the money warning: post as it is (the request is flagged for review). */
+    fun postAnyway() {
+        state.update { it.copy(moneyWarning = false, moneyAcknowledged = true) }
+        next()
+    }
+
+    /** From the money warning: back to the note. */
+    fun changeNote() = state.update { it.copy(moneyWarning = false) }
 
     /** Back inside the steps; false on the first step (the screen then closes). */
     fun back(): Boolean {
