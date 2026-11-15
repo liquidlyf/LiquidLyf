@@ -43,6 +43,40 @@
     <string name="suspended_mail_subject">My LiquidLyf account is suspended</string>
     <string name="suspended_body">LiquidLyf\'s team has suspended this account after reports. While it\'s suspended you can\'t post, offer or ask. If you think this is a mistake, write to %1$s.</string>
 
+    <!-- Moderation, admins only (7.4, 7.5) -->
+    <string name="title_moderation">Moderation</string>
+    <string name="settings_moderation_summary">Open reports (admins only)</string>
+    <string name="moderation_admins_only">Only admins can see this.</string>
+    <string name="moderation_empty_title">No open reports</string>
+    <string name="moderation_empty_body">New reports show here. Admin phones also get a notification.</string>
+    <string name="moderation_target_request">Request · %1$s · %2$s</string>
+    <string name="moderation_target_request_gone">A request that can\'t be read any more</string>
+    <string name="moderation_target_person">Person · %1$s</string>
+    <string name="moderation_unknown_person">Unknown person</string>
+    <plurals name="moderation_report_count">
+        <item quantity="one">%1$d report</item>
+        <item quantity="other">%1$d reports</item>
+    </plurals>
+    <string name="moderation_flagged">Mentions money</string>
+    <string name="moderation_reporter_offered">The reporter offered on it</string>
+    <string name="moderation_ban_hint">To ban this person, run revokeAndBan.mjs from backend/admin-scripts.</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_open_request">Open request</string>
+    <string name="action_dismiss">Dismiss</string>
+    <string name="action_hide">Hide</string>
+    <string name="action_restore">Restore</string>
+    <string name="action_cancel_request">Cancel request</string>
+    <string name="action_mark_handled">Mark handled</string>
+    <string name="moderation_confirm_dismiss">Dismiss this report? Nothing else changes.</string>
+    <string name="moderation_confirm_hide">Hide this request until it\'s reviewed? Donors stop seeing it.</string>
+    <string name="moderation_confirm_restore">Restore this request? It\'s open and visible again.</string>
+    <string name="moderation_confirm_cancel">Cancel this request for good? Its owner gets their posting slot back.</string>
+    <string name="moderation_confirm_handled">Mark this report handled? Do the ban or other action with the admin scripts.</string>
+    <string name="moderation_note">Note for the log (optional)</string>
+    <string name="notification_reports_title">Reports to review</string>
+    <string name="notification_reports_body">%1$s new. Open Moderation to act on them.</string>
+    <string name="moderation_done">Done. It\'s in the admin log.</string>
+
     <!-- Money words (7.8) -->
     <string name="money_warning_title">Your note mentions money</string>
     <string name="money_warning_body">Blood must never be bought or sold. A request that mentions money (bKash, Nagad, taka, payment…) is marked for our team to check, and donors see a caution on it. Change the note, or post it as it is.</string>

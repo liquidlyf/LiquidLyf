@@ -41,6 +41,16 @@ class AlertPolicyTest {
     }
 
     @Test
+    fun `the admins' new-report push carries only a count, and nothing else gets into the text`() {
+        assertEquals(PushMessage.AdminReports("3"), PushMessage.parse(mapOf("type" to "NEW_REPORTS", "count" to "3")))
+        assertEquals(PushMessage.AdminReports("100+"), PushMessage.parse(mapOf("type" to "NEW_REPORTS", "count" to "100+")))
+        assertEquals(PushMessage.AdminReports("1"), PushMessage.parse(mapOf("type" to "NEW_REPORTS", "count" to "Call +8801...")))
+        assertEquals(PushMessage.AdminReports("1"), PushMessage.parse(mapOf("type" to "NEW_REPORTS")))
+        // The policy never shows it: only the handler does, on an admin's phone.
+        assertTrue(AlertPolicy.decide(PushMessage.AdminReports("3"), "u1", false, null, emptyList(), 0) is AlertPolicy.Decision.Drop)
+    }
+
+    @Test
     fun `the first alert is new, the second still needed, and there is no third`() {
         assertEquals(Decision.ShowRequest(stillNeeded = false), decide(shown = 0))
         assertEquals(Decision.ShowRequest(stillNeeded = true), decide(shown = 1))

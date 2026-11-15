@@ -1,5 +1,6 @@
 package io.github.liquidlyf.core.data.push
 
+import io.github.liquidlyf.core.data.auth.AuthRepository
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.Tiers
 import io.github.liquidlyf.core.firebase.appResultOf
@@ -38,15 +39,18 @@ class PushTopicManager @Inject constructor(
     private val eligibility: EligibilityCalculator,
     private val clock: Clock,
     private val alertPrefs: AlertPrefsStore,
+    private val auth: AuthRepository,
 ) {
 
     /**
      * The topics [profile] should be subscribed to right now, given this phone's notification
      * settings ([prefs], phase-05 5.10). Empty when signed out.
      */
-    fun desiredTopics(profile: UserProfile?, prefs: AlertPrefs = AlertPrefs()): Set<String> {
+    fun desiredTopics(profile: UserProfile?, prefs: AlertPrefs = AlertPrefs(), admin: Boolean = false): Set<String> {
         if (profile == null) return emptySet()
         val topics = linkedSetOf<String>()
+        // Phase 7.3: admin phones get the Worker's new-report alerts, whatever the switches say.
+        if (admin) topics += ADMINS_TOPIC
         if (prefs.updates) topics += Tiers.userTopic(profile.uid)
         val group = profile.bloodGroup
         if (group != null && prefs.requestAlerts && isMatchable(profile)) {
@@ -71,7 +75,9 @@ class PushTopicManager @Inject constructor(
      * next sync retries it.
      */
     suspend fun sync(profile: UserProfile?, force: Boolean = false): AppResult<Unit> = appResultOf {
-        val desired = desiredTopics(profile, alertPrefs.current())
+        val claims = auth.claims.value
+        val admin = profile != null && claims.uid == profile.uid && claims.admin
+        val desired = desiredTopics(profile, alertPrefs.current(), admin)
         val current = store.get().toMutableSet()
         try {
             for (topic in current - desired) {
@@ -90,4 +96,9 @@ class PushTopicManager @Inject constructor(
     private fun isMatchable(p: UserProfile): Boolean =
         p.showInDonorSearch && p.available &&
             eligibility.evaluate(p.birthYear, p.weightOk, p.gender, p.lastDonationAt, clock.now()).eligibleNow
+
+    companion object {
+        /** The Worker's new-report alert goes here (B's reports cron); only admins subscribe. */
+        const val ADMINS_TOPIC = "admins"
+    }
 }

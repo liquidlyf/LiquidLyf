@@ -61,6 +61,27 @@ object EmulatorAccounts {
     }
 
     /**
+     * Custom claims through the Auth emulator's admin API, as the maintainer's setAdmin.mjs does
+     * in production. [claimsJson] is the claims object, e.g. `{"admin":true}`. The user must then
+     * refresh their ID token (`getIdToken(true)`) to carry them.
+     */
+    suspend fun setClaims(uid: String, claimsJson: String) = withContext(Dispatchers.IO) {
+        val url = URL("http://${BuildConfig.EMULATOR_HOST}:9099/identitytoolkit.googleapis.com/v1/projects/$PROJECT/accounts:update")
+        val http = url.openConnection() as HttpURLConnection
+        try {
+            http.requestMethod = "POST"
+            http.doOutput = true
+            http.setRequestProperty("Authorization", "Bearer owner")
+            http.setRequestProperty("Content-Type", "application/json")
+            val attributes = claimsJson.replace("\"", "\\\"")
+            http.outputStream.use { it.write("""{"localId":"$uid","customAttributes":"$attributes"}""".toByteArray()) }
+            check(http.responseCode == 200) { "Auth emulator refused claims for $uid: ${http.responseCode}" }
+        } finally {
+            http.disconnect()
+        }
+    }
+
+    /**
      * A second, independent Firebase client on the emulators, with its own signed-in user: the
      * other person in a two-person test, while the app's own session stays signed in.
      */

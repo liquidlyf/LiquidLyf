@@ -60,3 +60,4 @@ import kotlinx.serialization.Serializable
 @Serializable data object NotificationSettings
 @Serializable data object SafetyTips
 @Serializable data object BlockedPeople
+@Serializable data object Moderation

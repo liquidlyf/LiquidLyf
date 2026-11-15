@@ -51,7 +51,7 @@ class NotificationPrefsViewModelTest {
             this.topics = topics
         }
     }
-    private val push = PushTopicManager(messaging, store, EligibilityCalculator(), Clock { TestData.NOW }, prefs)
+    private val push = PushTopicManager(messaging, store, EligibilityCalculator(), Clock { TestData.NOW }, prefs, io.github.liquidlyf.testing.FakeAuthRepository())
 
     @Before
     fun setUp() = Dispatchers.setMain(dispatcher)

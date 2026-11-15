@@ -65,6 +65,7 @@ import io.github.liquidlyf.feature.auth.VerifyEmailRoute
 import io.github.liquidlyf.feature.donors.FindDonorsRoute
 import io.github.liquidlyf.feature.gallery.ComponentGalleryScreen
 import io.github.liquidlyf.feature.home.HomeRoute
+import io.github.liquidlyf.feature.moderation.ModerationRoute
 import io.github.liquidlyf.feature.notifications.InboxRoute
 import io.github.liquidlyf.feature.onboarding.OnboardingScreen
 import io.github.liquidlyf.feature.placeholder.PlaceholderScreen
@@ -85,6 +86,9 @@ import io.github.liquidlyf.feature.settings.SettingsScreen
 /** Used by the Phase 1 placeholders until real requests exist (Phase 4). */
 /** liquidlyf://request/{id} (the manifest declares the scheme and host). */
 const val REQUEST_DEEP_LINK = "liquidlyf://request"
+
+/** The admins' new-report notification opens Moderation (phase-07 7.3). */
+const val MODERATION_DEEP_LINK = "liquidlyf://moderation"
 
 /**
  * The whole app UI: one NavHost with the auth graph and the main graph. The main graph's
@@ -325,11 +329,18 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                     onAddPassword = { navController.navigate(AddPassword) { launchSingleTop = true } },
                     onOpenSafetyTips = { navController.navigate(SafetyTips) { launchSingleTop = true } },
                     onOpenBlockedPeople = { navController.navigate(BlockedPeople) { launchSingleTop = true } },
+                    onOpenModeration = { navController.navigate(Moderation) { launchSingleTop = true } },
                 )
             }
             composable<EditProfile> { EditProfileRoute(onDone = { navController.popBackStack() }) }
             composable<ChangePassword> { ChangePasswordRoute(onDone = { navController.popBackStack() }) }
             composable<AddPassword> { AddPasswordRoute(onDone = { navController.popBackStack() }) }
+            composable<Moderation>(deepLinks = listOf(navDeepLink<Moderation>(basePath = MODERATION_DEEP_LINK))) {
+                ModerationRoute(
+                    onBack = { navController.popBackStack() },
+                    onOpenRequest = { id -> navController.navigate(RequestDetail(id = id)) { launchSingleTop = true } },
+                )
+            }
             composable<DeleteAccount> { DeleteAccountRoute(onBack = { navController.popBackStack() }) }
             composable<ComponentGallery> {
                 ComponentGalleryScreen(onBack = { navController.popBackStack() })

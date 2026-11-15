@@ -47,6 +47,7 @@ fun SettingsScreen(
     onAddPassword: () -> Unit = {},
     onOpenSafetyTips: () -> Unit = {},
     onOpenBlockedPeople: () -> Unit = {},
+    onOpenModeration: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -64,6 +65,7 @@ fun SettingsScreen(
         onAddPassword = dropUnlessResumed(block = onAddPassword),
         onOpenSafetyTips = dropUnlessResumed(block = onOpenSafetyTips),
         onOpenBlockedPeople = dropUnlessResumed(block = onOpenBlockedPeople),
+        onOpenModeration = dropUnlessResumed(block = onOpenModeration),
     )
 }
 
@@ -84,6 +86,7 @@ internal fun SettingsContent(
     onAddPassword: () -> Unit = {},
     onOpenSafetyTips: () -> Unit = {},
     onOpenBlockedPeople: () -> Unit = {},
+    onOpenModeration: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -144,6 +147,15 @@ internal fun SettingsContent(
                     headlineContent = { Text(stringResource(R.string.title_add_password)) },
                     supportingContent = { Text(stringResource(R.string.settings_add_password_summary)) },
                     modifier = Modifier.clickable(role = Role.Button, onClick = onAddPassword),
+                )
+            }
+            if (uiState.admin) {
+                // 7.5: only with the admin claim (the rules check it too).
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.title_moderation)) },
+                    supportingContent = { Text(stringResource(R.string.settings_moderation_summary)) },
+                    leadingContent = { Icon(painterResource(LLIcons.Shield), contentDescription = null) },
+                    modifier = Modifier.clickable(role = Role.Button, onClick = onOpenModeration),
                 )
             }
             ListItem(

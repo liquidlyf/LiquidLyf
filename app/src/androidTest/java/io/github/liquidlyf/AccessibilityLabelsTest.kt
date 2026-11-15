@@ -238,6 +238,45 @@ class AccessibilityLabelsTest {
     }
 
     @Test
+    fun blockedPeople() {
+        show {
+            io.github.liquidlyf.feature.safety.BlockedPeopleScreen(
+                io.github.liquidlyf.feature.safety.BlockedPeopleUiState(
+                    people = listOf(io.github.liquidlyf.feature.safety.BlockedPerson("a", "Rahim U."), io.github.liquidlyf.feature.safety.BlockedPerson("b", null)),
+                ),
+                onUnblock = {}, onBack = {},
+            )
+        }
+        assertControlsAreLabelledAndBigEnough("Blocked people")
+    }
+
+    @Test
+    fun moderationWithReports() {
+        val report = { id: String, type: io.github.liquidlyf.core.model.ReportTarget, target: String ->
+            io.github.liquidlyf.core.model.Report(id, "rep", type, target, io.github.liquidlyf.core.model.ReportReason.ASKING_MONEY, "Asked for bKash",
+                TestData.NOW, io.github.liquidlyf.core.model.ReportStatus.OPEN)
+        }
+        val items = listOf(
+            io.github.liquidlyf.feature.moderation.ModerationItem(report("1", io.github.liquidlyf.core.model.ReportTarget.REQUEST, "req-1"),
+                request = TestData.request(id = "req-1").copy(flagged = true, reportCount = 2)),
+            io.github.liquidlyf.feature.moderation.ModerationItem(report("2", io.github.liquidlyf.core.model.ReportTarget.USER, "pest"), personName = "Pest P."),
+        )
+        show {
+            io.github.liquidlyf.feature.moderation.ModerationScreen(
+                io.github.liquidlyf.feature.moderation.ModerationUiState(admin = true, items = items),
+                onBack = {}, onRefresh = {}, onOpenRequest = {}, onDo = { _, _, _ -> }, now = TestData.NOW,
+            )
+        }
+        assertControlsAreLabelledAndBigEnough("Moderation")
+    }
+
+    @Test
+    fun suspendedAccount() {
+        show { io.github.liquidlyf.feature.session.SuspendedScreen(onSignOut = {}) }
+        assertControlsAreLabelledAndBigEnough("Suspended")
+    }
+
+    @Test
     fun safetyTips() {
         show { io.github.liquidlyf.feature.safety.SafetyTipsScreen(onBack = {}, onCallEmergency = {}) }
         assertControlsAreLabelledAndBigEnough("Safety tips")

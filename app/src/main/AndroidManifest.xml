@@ -40,6 +40,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="liquidlyf" android:host="request" />
+                <!-- liquidlyf://moderation: the admins' new-report notification (Phase 7). -->
+                <data android:scheme="liquidlyf" android:host="moderation" />
             </intent-filter>
         </activity>
 

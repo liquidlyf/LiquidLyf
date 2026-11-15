@@ -9,6 +9,8 @@ import io.github.liquidlyf.core.data.donor.DonorRepository
 import io.github.liquidlyf.core.data.donor.FirestoreDonorRepository
 import io.github.liquidlyf.core.data.inbox.FirestoreInboxRepository
 import io.github.liquidlyf.core.data.inbox.InboxRepository
+import io.github.liquidlyf.core.data.moderation.FirestoreModerationRepository
+import io.github.liquidlyf.core.data.moderation.ModerationRepository
 import io.github.liquidlyf.core.data.profile.FirestoreProfileRepository
 import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.request.FirestoreOfferRepository
@@ -39,6 +41,8 @@ abstract class DataModule {
     @Binds abstract fun safety(impl: FirestoreSafetyRepository): SafetyRepository
 
     @Binds abstract fun donors(impl: FirestoreDonorRepository): DonorRepository
+
+    @Binds abstract fun moderation(impl: FirestoreModerationRepository): ModerationRepository
 
     companion object {
         @Provides

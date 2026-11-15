@@ -45,6 +45,10 @@ class PushHandler @Inject constructor(
         val ready = readySession()
         val uid = ready?.user?.uid
         when (message) {
+            is PushMessage.AdminReports -> {
+                // The topic is admins-only, but a phone that just lost the claim may still get one.
+                if (ready?.admin == true) notifier.showAdminReports(message.count)
+            }
             is PushMessage.RequestAlert -> {
                 val blocked = ready?.profile?.blockedUids.orEmpty()
                 // The push has no requester; look it up only if I blocked someone (1 read).

@@ -54,3 +54,35 @@ fun TestData.donor(
     uid = uid, displayName = "Donor $uid", bloodGroup = group, area = area, available = available,
     eligibleFrom = eligibleFrom, donationCount = 2, verifiedDonations = 1, phoneVerified = false, lastActiveAt = NOW,
 )
+
+/** Open reports in memory; each action is recorded and closes its report. */
+class FakeModerationRepository : io.github.liquidlyf.core.data.moderation.ModerationRepository {
+    val reports = mutableListOf<io.github.liquidlyf.core.model.Report>()
+    val actions = mutableListOf<String>()
+
+    override suspend fun openReports(limit: Long) = AppResult.Success(reports.toList())
+
+    override suspend fun dismiss(adminUid: String, report: io.github.liquidlyf.core.model.Report, note: String?): AppResult<Unit> {
+        actions += "DISMISS ${report.id} by $adminUid"
+        reports.removeAll { it.id == report.id }
+        return AppResult.Success(Unit)
+    }
+
+    override suspend fun act(
+        adminUid: String,
+        action: io.github.liquidlyf.core.data.moderation.RequestAction,
+        request: io.github.liquidlyf.core.model.BloodRequest,
+        report: io.github.liquidlyf.core.model.Report?,
+        note: String?,
+    ): AppResult<Unit> {
+        actions += "$action ${request.id} by $adminUid"
+        report?.let { r -> reports.removeAll { it.id == r.id } }
+        return AppResult.Success(Unit)
+    }
+
+    override suspend fun markPersonHandled(adminUid: String, report: io.github.liquidlyf.core.model.Report, note: String?): AppResult<Unit> {
+        actions += "HANDLED ${report.id} by $adminUid"
+        reports.removeAll { it.id == report.id }
+        return AppResult.Success(Unit)
+    }
+}

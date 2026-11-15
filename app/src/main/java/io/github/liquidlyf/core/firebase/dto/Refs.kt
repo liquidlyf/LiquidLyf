@@ -30,3 +30,7 @@ fun FirebaseFirestore.inbox(uid: String): CollectionReference = userRef(uid).col
 fun FirebaseFirestore.donations(uid: String): CollectionReference = userRef(uid).collection(DonationDoc.COLLECTION)
 
 fun FirebaseFirestore.reportRef(id: String): DocumentReference = collection(ReportDoc.COLLECTION).document(id)
+
+fun FirebaseFirestore.reports(): CollectionReference = collection(ReportDoc.COLLECTION)
+
+fun FirebaseFirestore.newAdminLogRef(): DocumentReference = collection(AdminLogDoc.COLLECTION).document()

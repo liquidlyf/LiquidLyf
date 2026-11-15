@@ -38,6 +38,7 @@ import io.github.liquidlyf.testing.EmulatorAccounts
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -145,6 +146,33 @@ class PushHandlerTest {
         waitUntil("the confirm update") { manager.activeNotifications.any { it.id == "$rid:OFFER_CONFIRMED".hashCode() } }
         val update = manager.activeNotifications.first { it.id == "$rid:OFFER_CONFIRMED".hashCode() }
         assertEquals(NotificationChannels.REQUEST_UPDATES, update.notification.channelId)
+    }
+
+    @Test
+    fun newReportsShowOnlyOnAnAdminsPhoneAndTheTapOpensModeration() = runBlocking {
+        val uid = donor("push-admin")
+        val reports = mapOf("type" to "NEW_REPORTS", "count" to "2")
+        handler.handle(reports)
+        delay(1_000)
+        assertNull("Not an admin: nothing shown", manager.activeNotifications.firstOrNull { it.id == ADMIN_REPORTS_NOTIFICATION_ID })
+
+        // The claim, as setAdmin.mjs sets it; the app sees it with the next token.
+        EmulatorAccounts.setClaims(uid, """{"admin":true}""")
+        auth.currentUser!!.getIdToken(true).await()
+        withTimeout(20_000) { session.state.first { it is SessionState.Ready && it.user.uid == uid && it.admin } }
+        handler.handle(reports)
+        waitUntil("the new-reports notification") { manager.activeNotifications.any { it.id == ADMIN_REPORTS_NOTIFICATION_ID } }
+        val shown = manager.activeNotifications.first { it.id == ADMIN_REPORTS_NOTIFICATION_ID }
+        assertEquals(str(R.string.notification_reports_title), shown.title())
+        assertEquals(str(R.string.notification_reports_body, "2"), shown.text())
+        assertEquals(NotificationChannels.REQUEST_UPDATES, shown.notification.channelId)
+
+        // The tap opens Moderation (a fresh task, through its deep link).
+        shown.notification.contentIntent.send()
+        compose.waitUntil(20_000) { compose.onAllNodesWithText(str(R.string.title_moderation)).fetchSemanticsNodes().isNotEmpty() }
+        // The admin's view, not "Only admins can see this".
+        compose.waitUntil(20_000) { compose.onAllNodesWithText(str(R.string.moderation_admins_only)).fetchSemanticsNodes().isEmpty() }
+        auth.signOut()
     }
 
     @Test

@@ -1,11 +1,14 @@
 package io.github.liquidlyf.core.firebase.dto
 
+import io.github.liquidlyf.core.model.AdminAction
 import io.github.liquidlyf.core.model.BloodComponent
 import io.github.liquidlyf.core.model.Donation
 import io.github.liquidlyf.core.model.DonationSource
 import io.github.liquidlyf.core.model.InboxItem
 import io.github.liquidlyf.core.model.InboxType
+import io.github.liquidlyf.core.model.Report
 import io.github.liquidlyf.core.model.ReportReason
+import io.github.liquidlyf.core.model.ReportStatus
 import io.github.liquidlyf.core.model.ReportTarget
 import java.time.Instant
 
@@ -112,5 +115,35 @@ object ReportDoc {
             NOTE to note?.trim()?.ifEmpty { null },
             CREATED_AT to serverTime(),
             STATUS to "OPEN",
+        )
+
+    fun fromMap(id: String, m: Map<String, Any?>): Report? = Report(
+        id = id,
+        reporterUid = m.str(REPORTER_UID) ?: return null,
+        targetType = ReportTarget.fromCode(m.str(TARGET_TYPE)) ?: return null,
+        targetId = m.str(TARGET_ID) ?: return null,
+        reason = ReportReason.fromCode(m.str(REASON)) ?: ReportReason.OTHER,
+        note = m.str(NOTE),
+        createdAt = m.instant(CREATED_AT),
+        status = ReportStatus.fromCode(m.str(STATUS)) ?: ReportStatus.OPEN,
+    )
+}
+
+/**
+ * `adminLog/{id}` (contract 17): one entry per in-app admin action, created in the action's own
+ * batch. Create-only: nobody can edit or delete an entry from the app.
+ */
+object AdminLogDoc {
+    const val COLLECTION = "adminLog"
+
+    fun createMap(adminUid: String, action: AdminAction, targetType: String, targetId: String, reportId: String?, note: String?): Map<String, Any?> =
+        fields(
+            "adminUid" to adminUid,
+            "action" to action.code,
+            "targetType" to targetType,
+            "targetId" to targetId,
+            "reportId" to reportId,
+            "note" to note?.trim()?.ifEmpty { null },
+            "createdAt" to serverTime(),
         )
 }

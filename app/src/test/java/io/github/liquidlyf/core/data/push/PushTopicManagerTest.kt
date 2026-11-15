@@ -1,5 +1,6 @@
 package io.github.liquidlyf.core.data.push
 
+import io.github.liquidlyf.core.data.auth.Claims
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.Area
@@ -51,7 +52,8 @@ class PushTopicManagerTest {
     private val fcm = FakeMessaging()
     private val store = MemoryStore()
     private val prefs = FakeAlertPrefsStore()
-    private val manager = PushTopicManager(fcm, store, EligibilityCalculator(), Clock { now }, prefs)
+    private val auth = io.github.liquidlyf.testing.FakeAuthRepository()
+    private val manager = PushTopicManager(fcm, store, EligibilityCalculator(), Clock { now }, prefs, auth)
 
     private val donor = UserProfile(
         uid = "u1", fullName = "Karim Uddin", email = "k@example.test", phone = "+8801712345678", phoneVerified = false,
@@ -78,6 +80,26 @@ class PushTopicManagerTest {
             donor.copy(weightOk = false),
         ).forEach { assertEquals(it.toString(), setOf("usr_u1"), manager.desiredTopics(it)) }
         assertEquals(emptySet<String>(), manager.desiredTopics(null))
+    }
+
+    @Test
+    fun `an admin also gets the admins topic, whatever the alert settings say (7_3)`() = runTest {
+        assertEquals(setOf("usr_u1", "admins"), manager.desiredTopics(donor.copy(available = false), admin = true))
+
+        auth.claims.value = Claims(uid = "u1", admin = true)
+        manager.sync(donor)
+        assertTrue("admins" in fcm.subscribed)
+        // The claim is taken away: the next sync drops the topic.
+        auth.claims.value = Claims(uid = "u1")
+        manager.sync(donor)
+        assertTrue("admins" !in fcm.subscribed)
+        // A claim read for someone else (the person before, on this phone) doesn't count.
+        auth.claims.value = Claims(uid = "someone-else", admin = true)
+        manager.sync(donor)
+        assertTrue("admins" !in fcm.subscribed)
+        // Signed out: nothing at all.
+        manager.sync(null)
+        assertEquals(emptySet<String>(), fcm.subscribed)
     }
 
     @Test

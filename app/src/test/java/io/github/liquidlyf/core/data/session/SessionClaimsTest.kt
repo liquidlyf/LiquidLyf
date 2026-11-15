@@ -50,7 +50,7 @@ class SessionClaimsTest {
     private suspend fun TestScope.signedInSession(): AppSessionManager {
         auth.accounts["me@example.com"] = FakeAuthRepository.Account("me", "secret-pw", "Me", verified = true)
         val profiles = FakeProfileRepository().apply { profiles["me"] = TestData.profile(uid = "me") }
-        val push = PushTopicManager(messaging, store, EligibilityCalculator(), Clock { TestData.NOW }, FakeAlertPrefsStore())
+        val push = PushTopicManager(messaging, store, EligibilityCalculator(), Clock { TestData.NOW }, FakeAlertPrefsStore(), auth)
         val session = AppSessionManager(auth, profiles, push, FakeAccountDeleter(), FakeAlertStore(), notifications, FakeReminders(), backgroundScope)
         auth.signInEmail("me@example.com", "secret-pw")
         runCurrent() // the session runs in backgroundScope

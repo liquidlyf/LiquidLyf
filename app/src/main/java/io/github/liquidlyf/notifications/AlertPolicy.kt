@@ -26,11 +26,9 @@ enum class PersonalPush(val code: String) {
 
 /** A data-only FCM message from the Worker, parsed. Anything else is ignored. */
 sealed interface PushMessage {
-    val requestId: String
-
     /** The topic alert (doc 10 §6.3): `{type: NEW_REQUEST, requestId, bloodGroup, district, urgency, tier}`. */
     data class RequestAlert(
-        override val requestId: String,
+        val requestId: String,
         val bloodGroup: BloodGroup?,
         val district: String?,
         val urgency: Urgency?,
@@ -38,15 +36,25 @@ sealed interface PushMessage {
     ) : PushMessage
 
     /** `{type, requestId}` only: anyone could subscribe to someone's usr_ topic. */
-    data class Personal(val type: PersonalPush, override val requestId: String) : PushMessage
+    data class Personal(val type: PersonalPush, val requestId: String) : PushMessage
+
+    /** Phase 7.3, on the `admins` topic: `{type: NEW_REPORTS, count}` ("100+" at most). */
+    data class AdminReports(val count: String) : PushMessage
 
     companion object {
         const val TYPE_NEW_REQUEST = "NEW_REQUEST"
+        const val TYPE_NEW_REPORTS = "NEW_REPORTS"
+
+        /** "7" or "100+": it goes into the notification text, so nothing else. */
+        private val COUNT = Regex("^[0-9]{1,3}\\+?$")
 
         /** Firestore auto ids and the seed's ids; they also go into a deep-link URI. */
         private val ID = Regex("^[A-Za-z0-9_-]{1,128}$")
 
         fun parse(data: Map<String, String>): PushMessage? {
+            if (data["type"] == TYPE_NEW_REPORTS) {
+                return AdminReports(data["count"]?.takeIf { COUNT.matches(it) } ?: "1")
+            }
             val id = data["requestId"]?.takeIf { ID.matches(it) } ?: return null
             val type = data["type"]
             if (type == TYPE_NEW_REQUEST) {
@@ -94,6 +102,8 @@ object AlertPolicy {
     ): Decision {
         if (myUid == null) return Decision.Drop("signed out")
         return when (message) {
+            // Shown by the handler, and only on an admin's phone.
+            is PushMessage.AdminReports -> Decision.Drop("admin message")
             // 7.2: nothing from a requester I blocked (they can't offer or ask me any more: the rules).
             is PushMessage.Personal -> when {
                 message.type.fromRequester && requesterUid != null && requesterUid in blockedUids -> Decision.Drop("blocked requester")
