@@ -186,7 +186,6 @@
     <string name="detail_action_waiting">Waiting for network. This will finish when you\'re back online.</string>
     <string name="detail_offer_sent">Offer sent. The requester can now call you.</string>
     <string name="detail_withdrawn">Offer withdrawn</string>
-    <string name="detail_reported">Thanks. Our team will review it.</string>
     <string name="detail_confirmed">Donor confirmed</string>
     <string name="detail_declined">Offer declined</string>
     <string name="detail_marked_donated">Donation recorded</string>
