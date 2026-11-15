@@ -64,6 +64,15 @@ interface ProfileRepository {
      */
     suspend fun hideRequest(profile: UserProfile, requestId: String): AppResult<Unit>
 
+    /**
+     * 7.2 "Block this person": their requests, offers and asks no longer reach me. The list lives
+     * on my user doc (rules: at most 200, and the rules refuse their offers and asks), so the
+     * oldest entries drop off.
+     */
+    suspend fun block(profile: UserProfile, uid: String): AppResult<Unit>
+
+    suspend fun unblock(profile: UserProfile, uid: String): AppResult<Unit>
+
     suspend fun donations(uid: String): AppResult<List<Donation>>
 
     /**
@@ -153,6 +162,18 @@ class FirestoreProfileRepository @Inject constructor(
         if (requestId in profile.hiddenRequestIds) return AppResult.Success(Unit)
         val ids = (profile.hiddenRequestIds + requestId).takeLast(Validators.MAX_HIDDEN_OR_BLOCKED)
         return writeProfile(profile, profile.copy(hiddenRequestIds = ids))
+    }
+
+    override suspend fun block(profile: UserProfile, uid: String): AppResult<Unit> {
+        if (uid == profile.uid) return AppResult.Failure(AppError.InvalidInput)
+        if (uid in profile.blockedUids) return AppResult.Success(Unit)
+        val ids = (profile.blockedUids + uid).takeLast(Validators.MAX_HIDDEN_OR_BLOCKED)
+        return writeProfile(profile, profile.copy(blockedUids = ids))
+    }
+
+    override suspend fun unblock(profile: UserProfile, uid: String): AppResult<Unit> {
+        if (uid !in profile.blockedUids) return AppResult.Success(Unit)
+        return writeProfile(profile, profile.copy(blockedUids = profile.blockedUids - uid))
     }
 
     override suspend fun donations(uid: String): AppResult<List<Donation>> = appResultOf {

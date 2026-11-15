@@ -258,6 +258,16 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
         AppResult.Success(Unit)
     }
 
+    override suspend fun block(profile: UserProfile, uid: String) = result {
+        profiles[profile.uid] = profile.copy(blockedUids = (profile.blockedUids + uid).distinct())
+        AppResult.Success(Unit)
+    }
+
+    override suspend fun unblock(profile: UserProfile, uid: String) = result {
+        profiles[profile.uid] = profile.copy(blockedUids = profile.blockedUids - uid)
+        AppResult.Success(Unit)
+    }
+
     override suspend fun deleteSelfDonation(profile: UserProfile, donation: Donation) = result {
         donationList[profile.uid]?.removeAll { it.id == donation.id }
         profiles[profile.uid] = profile.copy(donationCount = (profile.donationCount - 1).coerceAtLeast(0), lastDonationId = donation.id)

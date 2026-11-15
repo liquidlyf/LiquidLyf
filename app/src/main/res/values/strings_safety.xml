@@ -19,4 +19,22 @@
     <string name="action_call_999">Call 999</string>
     <string name="action_safety_tips">Safety tips</string>
     <string name="settings_safety_tips_summary">How to give and get blood safely</string>
+
+    <!-- Blocking (7.2) -->
+    <string name="title_blocked_people">Blocked people</string>
+    <string name="settings_blocked_summary">People whose requests, offers and asks you don\'t see</string>
+    <string name="blocked_empty_title">You haven\'t blocked anyone</string>
+    <string name="blocked_empty_body">Block someone from their request, their offer or their donor card. You can unblock them here.</string>
+    <string name="blocked_someone">Someone you blocked</string>
+    <string name="action_unblock">Unblock</string>
+    <string name="blocked_unblocked">Unblocked.</string>
+    <string name="action_block_person">Block this person</string>
+    <string name="action_report_person">Report this person</string>
+    <string name="block_title">Block this person?</string>
+    <string name="block_body">You won\'t see their requests, offers or asks, and they can\'t offer on your requests or ask you to donate. They aren\'t told. You can unblock them in Settings.</string>
+    <string name="block_body_offer">Their offer on this request is declined too, so they no longer see your number. You won\'t see their requests, offers or asks, and they aren\'t told. You can unblock them in Settings.</string>
+    <string name="action_block">Block</string>
+    <string name="blocked_done">Blocked.</string>
+    <string name="report_person_title">Report this person</string>
+    <string name="reported_thanks">Thanks. Our team reviews every report. A request that 3 people report is hidden until it\'s checked.</string>
 </resources>

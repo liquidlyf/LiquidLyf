@@ -76,6 +76,7 @@ import io.github.liquidlyf.feature.request.list.RequestsRoute
 import io.github.liquidlyf.feature.session.NotificationPermissionScreen
 import io.github.liquidlyf.feature.session.SessionProblemScreen
 import io.github.liquidlyf.feature.session.needsNotificationPermission
+import io.github.liquidlyf.feature.safety.BlockedPeopleRoute
 import io.github.liquidlyf.feature.safety.SafetyTipsRoute
 import io.github.liquidlyf.feature.settings.NotificationPrefsRoute
 import io.github.liquidlyf.feature.settings.SettingsScreen
@@ -321,6 +322,7 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                     onOpenNotificationSettings = { navController.navigate(NotificationSettings) { launchSingleTop = true } },
                     onAddPassword = { navController.navigate(AddPassword) { launchSingleTop = true } },
                     onOpenSafetyTips = { navController.navigate(SafetyTips) { launchSingleTop = true } },
+                    onOpenBlockedPeople = { navController.navigate(BlockedPeople) { launchSingleTop = true } },
                 )
             }
             composable<EditProfile> { EditProfileRoute(onDone = { navController.popBackStack() }) }
@@ -362,5 +364,6 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
         }
         composable<NotificationSettings> { NotificationPrefsRoute(onBack = { navController.popBackStack() }) }
         composable<SafetyTips> { SafetyTipsRoute(onBack = { navController.popBackStack() }) }
+        composable<BlockedPeople> { BlockedPeopleRoute(onBack = { navController.popBackStack() }) }
     }
 }

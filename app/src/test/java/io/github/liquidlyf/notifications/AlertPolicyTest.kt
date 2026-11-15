@@ -4,6 +4,7 @@ import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.notifications.AlertPolicy.Decision
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -52,6 +53,17 @@ class AlertPolicyTest {
         assertTrue(decide(requester = "me") is Decision.Drop)
         assertTrue(decide(requester = "pest", blocked = listOf("pest")) is Decision.Drop)
         assertEquals(Decision.ShowRequest(false), decide(requester = "someone", blocked = listOf("pest")))
+    }
+
+    @Test
+    fun `a requester I blocked sends me nothing personal, and a donor's offer is unaffected`() {
+        val asked = PushMessage.Personal(PersonalPush.ASKED_TO_DONATE, "r1")
+        assertTrue(decide(asked, requester = "pest", blocked = listOf("pest")) is Decision.Drop)
+        assertTrue(decide(PushMessage.Personal(PersonalPush.OFFER_CONFIRMED, "r1"), requester = "pest", blocked = listOf("pest")) is Decision.Drop)
+        assertEquals(Decision.ShowPersonal, decide(asked, requester = "someone", blocked = listOf("pest")))
+        // A NEW_OFFER comes from a donor, not the requester: the requester lookup doesn't apply.
+        assertFalse(PersonalPush.NEW_OFFER.fromRequester)
+        assertEquals(Decision.ShowPersonal, decide(PushMessage.Personal(PersonalPush.NEW_OFFER, "r1"), requester = "pest", blocked = listOf("pest")))
     }
 
     @Test

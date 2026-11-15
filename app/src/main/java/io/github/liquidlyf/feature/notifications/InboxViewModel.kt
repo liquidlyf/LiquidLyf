@@ -91,7 +91,8 @@ class InboxViewModel @Inject constructor(
     val uiState: StateFlow<InboxUiState> = combine(remote, alerts.alerts, geo) { r, local, g ->
         val items = r.items
         InboxUiState(
-            entries = items?.let { merge(it, local) },
+            // 7.2: nothing from people I blocked.
+            entries = items?.let { all -> merge(all.filter { it.fromUid !in me?.blockedUids.orEmpty() }, local) },
             seenAt = me?.inboxSeenAt,
             loadingMore = r.loadingMore,
             endReached = r.endReached,

@@ -74,7 +74,17 @@ class PushHandler @Inject constructor(
             }
             is PushMessage.Personal -> {
                 if (uid == null) return null
-                notifier.showPersonal(message.type, message.requestId)
+                val blocked = ready?.profile?.blockedUids.orEmpty()
+                val requesterUid = if (blocked.isEmpty() || !message.type.fromRequester) {
+                    null
+                } else {
+                    withTimeoutOrNull(LOOKUP_TIMEOUT_MS) {
+                        (requests.byIds(listOf(message.requestId)) as? AppResult.Success)?.data?.firstOrNull()?.requesterUid
+                    }
+                }
+                val decision = AlertPolicy.decide(message, uid, false, requesterUid, blocked, 0)
+                // A donation is still my history: it's recorded below even when the note stays quiet.
+                if (decision is AlertPolicy.Decision.ShowPersonal) notifier.showPersonal(message.type, message.requestId)
                 if (message.type == PersonalPush.DONATION_RECORDED) {
                     return scope.launch {
                         val written = donations.recordIfMissing(uid, message.requestId)

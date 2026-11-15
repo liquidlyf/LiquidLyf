@@ -190,6 +190,18 @@ class RequestDetailViewModelTest {
     }
 
     @Test
+    fun `offers from people I blocked stay hidden`() = runTest(dispatcher) {
+        val pest = TestData.profile(uid = "pest").copy(fullName = "Pest Person")
+        profiles.profiles["pest"] = pest
+        offers.offer(requests.requests.value.getValue("r1"), donor, null)
+        offers.offer(requests.requests.value.getValue("r1"), pest, null)
+        signInAs(requester.copy(blockedUids = listOf("pest")))
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(listOf("donor"), vm.uiState.value.responses.map { it.donorUid })
+    }
+
+    @Test
     fun `only the donation that fills the request tells the other waiting donors`() = runTest(dispatcher) {
         requests.put(TestData.request(id = "r2", group = BloodGroup.B_POS).copy(unitsNeeded = 2))
         val donor2 = TestData.profile(uid = "donor2").copy(fullName = "Rina Begum")

@@ -36,6 +36,9 @@ interface DonorRepository {
     /** How many cards match (1 read per 1000). */
     suspend fun count(filters: DonorSearch, now: Instant): AppResult<Long>
 
+    /** The cards that exist for these uids (an unlisted person has none), for names in lists. */
+    suspend fun cards(uids: List<String>): AppResult<List<DonorCard>>
+
     companion object {
         const val PAGE_SIZE = 20L
     }
@@ -54,6 +57,14 @@ class FirestoreDonorRepository @Inject constructor(private val db: FirebaseFires
 
     override suspend fun count(filters: DonorSearch, now: Instant): AppResult<Long> = appResultOf {
         query(filters, now).count().get(AggregateSource.SERVER).await().count
+    }
+
+    override suspend fun cards(uids: List<String>): AppResult<List<DonorCard>> = appResultOf {
+        // whereIn takes at most 30 values.
+        uids.distinct().chunked(30).flatMap { chunk ->
+            db.collection(DonorDoc.COLLECTION).whereIn(FieldPath.documentId(), chunk).get().await().documents
+                .mapNotNull { d -> d.data?.let { DonorDoc.fromMap(d.id, it) } }
+        }
     }
 
     private fun query(f: DonorSearch, now: Instant): Query {

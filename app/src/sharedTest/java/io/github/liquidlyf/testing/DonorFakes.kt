@@ -31,6 +31,9 @@ class FakeDonorRepository : DonorRepository {
         return AppResult.Success(all.drop(start).take(limit.toInt()))
     }
 
+    override suspend fun cards(uids: List<String>): AppResult<List<DonorCard>> =
+        AppResult.Success(cards.filter { it.uid in uids })
+
     override suspend fun count(filters: DonorSearch, now: Instant): AppResult<Long> {
         counts++
         return AppResult.Success(matching(filters, now).size.toLong())

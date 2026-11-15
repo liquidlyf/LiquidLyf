@@ -190,7 +190,9 @@ class RequestDetailViewModel @Inject constructor(
         listeningToResponses = true
         viewModelScope.launch {
             offers.responders(requestId, myUid).endOnListenError("responders").collect { list ->
-                state.update { it.copy(responses = list.sortedWith(compareBy({ order(it.status) }, { it.createdAt }))) }
+                val blocked = me?.blockedUids.orEmpty().toSet() // 7.2: offers from people I blocked stay hidden
+                val shown = list.filter { it.donorUid !in blocked }
+                state.update { it.copy(responses = shown.sortedWith(compareBy({ order(it.status) }, { it.createdAt }))) }
             }
         }
     }

@@ -16,6 +16,9 @@ enum class PersonalPush(val code: String) {
     ASKED_TO_DONATE("ASKED_TO_DONATE"),
     ;
 
+    /** Sent because of something the requester did (all but a donor's NEW_OFFER). */
+    val fromRequester: Boolean get() = this != NEW_OFFER
+
     companion object {
         fun fromCode(code: String?): PersonalPush? = entries.firstOrNull { it.code == code }
     }
@@ -91,7 +94,11 @@ object AlertPolicy {
     ): Decision {
         if (myUid == null) return Decision.Drop("signed out")
         return when (message) {
-            is PushMessage.Personal -> Decision.ShowPersonal
+            // 7.2: nothing from a requester I blocked (they can't offer or ask me any more: the rules).
+            is PushMessage.Personal -> when {
+                message.type.fromRequester && requesterUid != null && requesterUid in blockedUids -> Decision.Drop("blocked requester")
+                else -> Decision.ShowPersonal
+            }
             is PushMessage.RequestAlert -> when {
                 isMyRequest || requesterUid == myUid -> Decision.Drop("my own request")
                 requesterUid != null && requesterUid in blockedUids -> Decision.Drop("blocked requester")

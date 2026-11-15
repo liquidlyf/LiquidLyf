@@ -46,6 +46,7 @@ fun SettingsScreen(
     onOpenNotificationSettings: () -> Unit,
     onAddPassword: () -> Unit = {},
     onOpenSafetyTips: () -> Unit = {},
+    onOpenBlockedPeople: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -62,6 +63,7 @@ fun SettingsScreen(
         onOpenNotificationSettings = dropUnlessResumed(block = onOpenNotificationSettings),
         onAddPassword = dropUnlessResumed(block = onAddPassword),
         onOpenSafetyTips = dropUnlessResumed(block = onOpenSafetyTips),
+        onOpenBlockedPeople = dropUnlessResumed(block = onOpenBlockedPeople),
     )
 }
 
@@ -81,6 +83,7 @@ internal fun SettingsContent(
     onOpenNotificationSettings: () -> Unit = {},
     onAddPassword: () -> Unit = {},
     onOpenSafetyTips: () -> Unit = {},
+    onOpenBlockedPeople: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -143,6 +146,11 @@ internal fun SettingsContent(
                     modifier = Modifier.clickable(role = Role.Button, onClick = onAddPassword),
                 )
             }
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.title_blocked_people)) },
+                supportingContent = { Text(stringResource(R.string.settings_blocked_summary)) },
+                modifier = Modifier.clickable(role = Role.Button, onClick = onOpenBlockedPeople),
+            )
             ListItem(
                 headlineContent = { Text(stringResource(R.string.action_sign_out)) },
                 modifier = Modifier.clickable(role = Role.Button, onClick = onSignOut),
