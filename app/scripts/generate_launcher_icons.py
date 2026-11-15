@@ -92,8 +92,9 @@ tip = (max(ys) - cy + OPTICAL_DY) * R_FG / rmax
 print(f"optical shift {OPTICAL_DY} units = {OPTICAL_DY * R_FG / rmax:.2f} dp; farthest point {shifted:.2f} dp from the centre (tip {tip:.2f} dp); safe radius 33")
 assert shifted <= 33, "the shifted mark leaves the adaptive icon's safe zone"
 out = {
-    # The app icon (option a, chosen by the maintainer on 13 Nov 2026): white mark on red.
-    "drawable/ic_launcher_foreground_white.xml": vector(108, 108, R_FG, mono, "#FFFFFF", note),
+    # The app icon (the maintainer's choice on 15 Nov 2026, replacing A1's white-on-red): the
+    # full-colour mark on a white background.
+    "drawable/ic_launcher_foreground.xml": vector(108, 108, R_FG, mark, comment=note),
     "drawable/ic_launcher_monochrome.xml": vector(108, 108, R_FG, mono, "#000000", note),         # Android 13+ themed icon
     # Splash (Android 12+ masks the icon to a 160dp circle of a 240dp canvas; same 108dp geometry scales fine)
     "drawable/ic_splash_logo.xml": vector(108, 108, R_FG, mark, comment=note),
@@ -129,11 +130,11 @@ def adaptive(bg_color_res, fg):
             '</adaptive-icon>\n')
 
 more = {
-    # Red background, white mark (option a, chosen 13 Nov 2026).
-    res / "mipmap-anydpi-v26/ic_launcher.xml": adaptive("ic_launcher_red", "ic_launcher_foreground_white"),
-    res / "mipmap-anydpi-v26/ic_launcher_round.xml": adaptive("ic_launcher_red", "ic_launcher_foreground_white"),
-    res / "mipmap-anydpi/ic_launcher.xml": legacy("#DE2027", mono, "#FFFFFF"),
-    res / "mipmap-anydpi/ic_launcher_round.xml": legacy("#DE2027", mono, "#FFFFFF"),
+    # White background, full-colour mark (15 Nov 2026).
+    res / "mipmap-anydpi-v26/ic_launcher.xml": adaptive("ic_launcher_white", "ic_launcher_foreground"),
+    res / "mipmap-anydpi-v26/ic_launcher_round.xml": adaptive("ic_launcher_white", "ic_launcher_foreground"),
+    res / "mipmap-anydpi/ic_launcher.xml": legacy("#FFFFFF", mark),
+    res / "mipmap-anydpi/ic_launcher_round.xml": legacy("#FFFFFF", mark),
 }
 for path, xml in more.items():
     path.parent.mkdir(parents=True, exist_ok=True)
