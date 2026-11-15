@@ -58,7 +58,8 @@ licences.
   - in a city, a donor chooses the whole city corporation, not their thana, so the first round of
     alerts goes to the whole city corporation.
 - **Follow-ups:**
-  - a native Bangla speaker reviews the 67 names, together with the website's Bangla pages (Phase 8);
+  - a native Bangla speaker reviews the 67 names, together with the website's Bangla pages (Phase 8;
+    the list is in [docs/translation/bangla-area-names.md](../translation/bangla-area-names.md));
   - the About screen credits "Area data: BBS via UN OCHA HDX (CC BY-IGO)", and the Open-source
     licences screen includes the MIT notice of the Bangla name list;
   - when BBS publishes a new version, rebuild the file with the script. Never change or reuse an
