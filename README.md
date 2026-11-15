@@ -35,6 +35,23 @@ The new app is being tested and isn't released yet. It:
 - **Lets you leave:** delete your account and its data in the app, or by email.
 - **Costs nothing:** free for everyone, with no ads. It runs on free plans of Firebase and Cloudflare.
 
+### Screenshots
+
+From a test build, with made-up people and example data.
+
+| Home | A request | Find donors | Profile |
+|---|---|---|---|
+| <img src="docs/screenshots/en/home.png" width="180" alt="Home: you can donate now, and an urgent request nearby"> | <img src="docs/screenshots/en/request.png" width="180" alt="A blood request as a donor sees it, with the I can donate button"> | <img src="docs/screenshots/en/find-donors.png" width="180" alt="Find donors: three B+ donors nearby, with no phone numbers shown"> | <img src="docs/screenshots/en/profile.png" width="180" alt="Profile: the next donation date, the donor's impact and badges"> |
+
+<details>
+<summary>In Bangla (বাংলা)</summary>
+
+| হোম | একটি অনুরোধ | রক্তদাতা খুঁজুন | প্রোফাইল |
+|---|---|---|---|
+| <img src="docs/screenshots/bn/home.png" width="180" alt="হোম: আপনি এখন রক্ত দিতে পারবেন, আর কাছেই একটি জরুরি অনুরোধ"> | <img src="docs/screenshots/bn/request.png" width="180" alt="রক্তদাতা যেভাবে একটি রক্তের অনুরোধ দেখেন, আমি রক্ত দিতে পারি বাটনসহ"> | <img src="docs/screenshots/bn/find-donors.png" width="180" alt="রক্তদাতা খুঁজুন: কাছের তিনজন B+ রক্তদাতা, কোনো ফোন নম্বর ছাড়া"> | <img src="docs/screenshots/bn/profile.png" width="180" alt="প্রোফাইল: পরের রক্তদানের তারিখ, অবদান আর ব্যাজ"> |
+
+</details>
+
 ## Download
 
 Not available yet. When v1.0 is ready, the signed APK will be on
