@@ -1,0 +1,16 @@
+{
+  "name": "liquidlyf-admin-scripts",
+  "private": true,
+  "description": "LiquidLyf maintainer scripts (Firebase Admin SDK, run locally): admin and coordinator claims, bans, deletion requests",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "test": "cd ../../firebase && npx firebase emulators:exec --only auth,firestore --project demo-liquidlyf \"node --test ../backend/admin-scripts/test/*.test.mjs\""
+  },
+  "dependencies": {
+    "firebase-admin": "14.5.0"
+  }
+}
