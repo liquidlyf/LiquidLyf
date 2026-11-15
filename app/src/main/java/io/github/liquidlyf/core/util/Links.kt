@@ -6,6 +6,9 @@ import io.github.liquidlyf.core.model.AppLocale
 object Links {
     private const val SITE = "https://liquidlyf.github.io"
 
+    /** The project's public contact (never a maintainer's personal address). */
+    const val SUPPORT_EMAIL = "liquidlyf@gmail.com"
+
     /**
      * Stored with each profile as `termsVersion`. Change it when the Terms change in a way users
      * must accept again (Phase 8 asks them). The published Terms have no effective date yet.

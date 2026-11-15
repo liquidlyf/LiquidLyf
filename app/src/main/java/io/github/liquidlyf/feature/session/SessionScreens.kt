@@ -32,11 +32,14 @@ import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.util.AppError
+import io.github.liquidlyf.core.util.Links
+import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 
-/** Signed in, but the profile can't be read (offline on a new phone): Retry or sign out. */
 /** Phase 7: the `banned` claim. The rules refuse every write; the person can sign out or write to us. */
 @Composable
 fun SuspendedScreen(onSignOut: () -> Unit) {
+    val links = rememberSafeIntentLauncher()
+    val subject = stringResource(R.string.suspended_mail_subject)
     Surface(Modifier.fillMaxSize()) {
         Column(
             Modifier
@@ -49,17 +52,16 @@ fun SuspendedScreen(onSignOut: () -> Unit) {
             EmptyState(
                 icon = LLIcons.Block,
                 title = stringResource(R.string.suspended_title),
-                body = stringResource(R.string.suspended_body, SUPPORT_EMAIL),
-                actionLabel = stringResource(R.string.action_sign_out),
-                onAction = onSignOut,
+                body = stringResource(R.string.suspended_body, Links.SUPPORT_EMAIL),
+                actionLabel = stringResource(R.string.action_write_to_us),
+                onAction = { links.email(Links.SUPPORT_EMAIL, subject) },
             )
+            TextButton(onClick = onSignOut) { Text(stringResource(R.string.action_sign_out)) }
         }
     }
 }
 
-/** The project's public contact (never a maintainer's personal address). */
-private const val SUPPORT_EMAIL = "liquidlyf@gmail.com"
-
+/** Signed in, but the profile can't be read (offline on a new phone): Retry or sign out. */
 @Composable
 fun SessionProblemScreen(error: AppError, onRetry: () -> Unit, onSignOut: () -> Unit) {
     Surface(Modifier.fillMaxSize()) {

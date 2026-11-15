@@ -44,6 +44,10 @@ object SafeIntents {
     fun openEmailApp(context: Context): Boolean =
         context.tryStart(Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_EMAIL))
 
+    /** A new email to [to] in the phone's email app (mailto:, so only email apps answer). */
+    fun email(context: Context, to: String, subject: String): Boolean =
+        context.tryStart(Intent(Intent.ACTION_SENDTO, mailtoUri(to, subject).toUri()))
+
     /** The phone's notification settings for this app (Android 8+), or the app's info page. */
     fun openNotificationSettings(context: Context): Boolean {
         if (android.os.Build.VERSION.SDK_INT >= 26) {
@@ -65,6 +69,8 @@ object SafeIntents {
     // Pure helpers, unit-tested. Numbers use Locale.ROOT so Bangla digits never reach a URI.
 
     fun telUri(phone: String): String = "tel:" + phone.filter { it.isDigit() || it == '+' }
+
+    fun mailtoUri(to: String, subject: String): String = "mailto:${to.trim()}?subject=${encode(subject)}"
 
     fun geoUri(lat: Double, lng: Double, label: String? = null): String {
         val point = coordinates(lat, lng)
@@ -114,6 +120,8 @@ class SafeIntentLauncher internal constructor(
     fun openUrl(url: String) = run(R.string.intent_no_browser) { SafeIntents.openUrl(context, url) }
 
     fun openEmailApp() = run(R.string.intent_no_email_app) { SafeIntents.openEmailApp(context) }
+
+    fun email(to: String, subject: String) = run(R.string.intent_no_email_app) { SafeIntents.email(context, to, subject) }
 
     fun openNotificationSettings() = run(R.string.intent_no_settings) { SafeIntents.openNotificationSettings(context) }
 

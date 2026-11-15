@@ -29,6 +29,14 @@ class SafeIntentsTest {
     }
 
     @Test
+    fun `mailto uri encodes the subject`() {
+        assertEquals(
+            "mailto:liquidlyf@gmail.com?subject=My%20account%20%26%20you",
+            SafeIntents.mailtoUri(" liquidlyf@gmail.com ", "My account & you"),
+        )
+    }
+
+    @Test
     fun `geo uri uses ascii digits and encodes the label`() {
         assertEquals(
             "geo:23.810332,90.412518?q=23.810332,90.412518(Dhaka%20Medical%20College)",
