@@ -152,8 +152,10 @@ def main() -> None:
     # Everything in site/assets: the stylesheet, the icons, the share images and the PNG icons.
     assets = HERE / "site" / "assets"
     for f in sorted(assets.rglob("*")):
-        if f.is_file():
-            write(pathlib.Path("assets") / f.relative_to(assets), f.read_bytes())
+        rel = f.relative_to(assets)
+        # The app screenshots appear only after the release (the maintainer, 16 Nov 2026).
+        if f.is_file() and (a.released or rel.parts[0] != "screens"):
+            write(pathlib.Path("assets") / rel, f.read_bytes())
     for logo in LOGOS:
         write(pathlib.Path("assets") / logo, (REPO / "branding" / logo).read_bytes())
 

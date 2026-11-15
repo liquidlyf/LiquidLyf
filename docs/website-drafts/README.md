@@ -56,8 +56,11 @@ Switches in [`site/_config.yml`](site/_config.yml):
 | `facebook` | The home page offers release alerts on GitHub (Watch → Custom → Releases) | "Follow us on Facebook" and a Facebook link in the footer. Turn it on only after P confirms the page's auto-reply |
 | `bn_reviewed` | A notice on every Bangla page that the English applies | No notice (after C8) |
 
-A phone screenshot replaces the logo on the home page when its front matter has
-`screenshot: /assets/screens/home-en.png` (and `-bn` for Bangla), with the image in `site/assets/screens/`.
+After the release (`--released`), a phone screenshot replaces the logo on the home page: its front
+matter has `screenshot: /assets/screens/home-en.png` (and `-bn` for Bangla), with the image in
+`site/assets/screens/`. Until then the hero shows the logo and the build leaves `assets/screens/` out,
+so the example data can't be taken for a real request (the maintainer, 16 Nov 2026). Re-take the
+screenshots from the release build in Phase 10.3.
 
 [`make_images.py`](make_images.py) makes the PNG images: the share cards that Facebook, Messenger and
 WhatsApp show for a link (`share-en.png`, `share-bn.png`, 1200 × 630), the 32 px browser icon and the

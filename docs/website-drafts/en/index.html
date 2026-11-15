@@ -14,7 +14,9 @@ status: draft
      layout is the same on GitHub Pages and in a local preview; Jekyll still runs the Liquid tags.
      Switches in site/_config.yml: `released` (download button), `facebook` (the Facebook link, on only
      after P confirms the page's auto-reply). `screenshot:` in the front matter shows a phone
-     screenshot instead of the logo; leave it out until A's demo screenshot exists.
+     screenshot instead of the logo, but only once `released` is on: until v1.0 the hero shows the
+     logo, so nobody looks for the app or takes the example request for a real one (the maintainer,
+     16 Nov 2026). Re-take the screenshots from the release build in Phase 10.3.
      Everything here must match the app: change it when the app changes. -->
 
 <section class="hero">
@@ -44,7 +46,7 @@ status: draft
       </aside>
     </div>
     <div class="hero-art">
-      {%- if page.screenshot %}
+      {%- if site.released and page.screenshot %}
       <img class="phone" src="{{ page.screenshot }}" width="540" height="1200"
         alt="The LiquidLyf home screen: an urgent request near the user for 2 units of B+ blood at Dhaka Medical College Hospital (example data)">
       {%- else %}
