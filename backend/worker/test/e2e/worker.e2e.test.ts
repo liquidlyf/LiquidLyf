@@ -2,7 +2,7 @@
 // Firestore emulators, over real HTTP. FCM is a logged dry run in emulator mode.
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { unstable_dev, type Unstable_DevWorker } from "wrangler";
-import { clearFirestore, getDoc, newRequest, putDoc, signedInUser } from "./emulators";
+import { FIRESTORE, clearFirestore, getDoc, newRequest, putDoc, signedInUser } from "./emulators";
 
 let worker: Unstable_DevWorker;
 let alice: string;
@@ -13,6 +13,8 @@ beforeAll(async () => {
   worker = await unstable_dev("src/index.ts", {
     config: "wrangler.jsonc",
     env: "local",
+    // The same Firestore emulator as the test's own helpers (emulators:exec may use other ports).
+    vars: { FIRESTORE_EMULATOR_HOST: FIRESTORE },
     ip: "127.0.0.1",
     logLevel: "warn",
     experimental: { disableExperimentalWarning: true },
