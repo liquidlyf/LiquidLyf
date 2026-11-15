@@ -25,8 +25,8 @@ people as we can, and explain everything here in plain words.
 
 ## 1. Who we are
 
-LiquidLyf is an open-source project run by volunteers. The app is published by **[PUBLISHER]**,
-[COUNTRY OR POSTAL ADDRESS], which is responsible for your data under this policy.
+LiquidLyf is an open-source project run by volunteers. The app is published by **[PUBLISHER]**
+([COUNTRY OR POSTAL ADDRESS]), who are responsible for your data under this policy.
 
 **Privacy contact:** liquidlyf@gmail.com (please write "Privacy" in the subject).
 

@@ -49,7 +49,7 @@ from other sites.
 
 | Placeholder | Filled in when |
 |---|---|
-| `[PUBLISHER]`, `[COUNTRY OR POSTAL ADDRESS]` | Decided by the maintainer (C11). The privacy policy must name whoever is responsible for the data |
+| `[PUBLISHER]`, `[COUNTRY OR POSTAL ADDRESS]` | "the LiquidLyf maintainers", Bangladesh (C11, 15 Nov 2026), until the lawyer (C7) says more is needed. No personal name or address on a public page. The privacy policy must name whoever is responsible for the data |
 | `[EFFECTIVE DATE]` | By `build_site.py --date`, on the day the page goes live or changes |
 | `[SHA-256 FINGERPRINT]` | After the release signing key exists (Phase 10.1) |
 | `[QR CODE]` | An image of the download link (Phase 10.3) |

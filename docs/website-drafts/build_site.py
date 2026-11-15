@@ -5,8 +5,9 @@ Privacy Policy here too, and this script publishes the result into a clone of th
 
 Usage, from the app repo's root:
 
-    python docs/website-drafts/build_site.py ../liquidlyf.github.io --date 2026-11-16 \
-        --publisher "Name of the publisher" --address "Bangladesh" --address-bn "বাংলাদেশ"
+    python docs/website-drafts/build_site.py ../liquidlyf.github.io --date 2026-11-15 \
+        --publisher "the LiquidLyf maintainers" --publisher-bn "LiquidLyf-এর মেইনটেইনাররা" \
+        --address "Bangladesh" --address-bn "বাংলাদেশ"
 
 Options:
     --released            v1.0 is on GitHub Releases: publish the full download page and the home
@@ -76,6 +77,7 @@ def main() -> None:
     ap.add_argument("out", type=pathlib.Path, help="the website repo's folder")
     ap.add_argument("--date", required=True, help="effective date of the Privacy Policy and Terms, YYYY-MM-DD")
     ap.add_argument("--publisher", default="")
+    ap.add_argument("--publisher-bn", default="", help="the publisher in Bangla (default: --publisher)")
     ap.add_argument("--address", default="")
     ap.add_argument("--address-bn", default="")
     ap.add_argument("--released", action="store_true")
@@ -108,7 +110,7 @@ def main() -> None:
             print(f"  {src.relative_to(HERE)}: {c}")
         page = publish_page(text, {
             "[EFFECTIVE DATE]": long_date(date, lang),
-            "[PUBLISHER]": a.publisher,
+            "[PUBLISHER]": (a.publisher_bn or a.publisher) if lang == "bn" else a.publisher,
             "[COUNTRY OR POSTAL ADDRESS]": (a.address_bn or a.address) if lang == "bn" else a.address,
         })
         left = sorted(set(PLACEHOLDER.findall(page)))
