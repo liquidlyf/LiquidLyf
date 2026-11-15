@@ -63,6 +63,22 @@ io/github/liquidlyf/
 └─ notifications/     notification channels and the push-message service
 ```
 
+| Feature folder | Screens |
+|---|---|
+| `onboarding/` | The three first-launch slides, with the "never pay for blood" pledge |
+| `auth/` | Sign in, sign up, verify email, forgot password |
+| `profilesetup/` | Profile set-up after sign-up, in four steps: blood group, about you, area, then phone, last donation and the donor-listing choice |
+| `session/` | Between sign-in and Home: the notification permission, and Retry or sign out when the profile can't load |
+| `home/` | The Home feed, with availability and eligibility |
+| `request/` | `create/`, `detail/` and `list/`: post a request, view one, and your own requests |
+| `donors/` | Find donors: filters, results without phone numbers, and the "Ask to donate" sheet |
+| `profile/` | The Profile tab: eligibility ring, impact, badges, donation history, adding a past donation, sharing the app |
+| `notifications/` | The inbox behind the bell |
+| `settings/` | Settings, and which notifications this phone gets |
+| `account/` | Edit profile, change password, add a password (`AddPassword.kt`, for Google-only accounts), delete account |
+| `gallery/` | Debug builds only: every design-system component, to check themes, Bangla and large fonts on a phone |
+| `placeholder/` | A stand-in for a screen a later phase builds (now only phone verification, v1.1) |
+
 | Elsewhere in the repo | What's there |
 |---|---|
 | `app/src/test/`, `app/src/androidTest/` | Unit tests; UI tests that run on a phone |
@@ -130,12 +146,18 @@ scarcest resource, so:
 - Static data, such as districts and hospitals, ships inside the app.
 - Use `count()` for a single number, not a query that loads every document.
 - Settings that change without an app release go in Remote Config, not in a Firestore document.
+  The switches are in `core/data/config/FeatureFlags.kt`. For example, `donor_search_enabled` turns
+  off Find donors when the read budget runs low. A key that isn't set, or an error, counts as "on",
+  and the `demo` flavor has every switch on.
 - **Talk to a maintainer before adding a listener or a query without a limit.**
 
 ### Privacy
 
 - A phone number is never listed publicly. A donor's number reaches a requester only after that donor
   offers to help, and the requester's number reaches only the donors who offered.
+- Find donors shows no phone numbers. A requester reaches a listed donor only with "Ask to donate":
+  an inbox item with no free text, and a push with only the type and the request ID. The donor
+  answers by offering.
 - Never log phone numbers or other personal data, and never send personal data to analytics or crash
   reports.
 - Never commit secrets: keys, a real `google-services.json`, service-account files, `.env` or `.dev.vars`.

@@ -19,6 +19,8 @@
 
 - **Alerts the right donors:** a request reaches donors who are eligible, available and have a
   compatible blood group near the hospital. If nobody responds, the search area widens step by step.
+- **Lets you search for donors:** find listed donors by blood group and area, and ask them to
+  donate, without seeing their phone numbers.
 - **Protects phone numbers:** numbers are never listed publicly. They are shared only when a donor
   offers to help, and only with that requester.
 - **Knows when you can donate:** it counts the rest period after each donation for you.
