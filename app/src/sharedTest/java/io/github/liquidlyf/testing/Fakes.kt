@@ -227,10 +227,30 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
 
     override suspend fun donations(uid: String) = result { AppResult.Success(donationList[uid].orEmpty().toList()) }
 
-    override suspend fun addSelfDonation(profile: UserProfile, donatedAt: Instant, component: BloodComponent, hospitalName: String?) =
-        result { AppResult.Success(Unit) }
+    override suspend fun addSelfDonation(
+        profile: UserProfile,
+        donatedAt: Instant,
+        component: BloodComponent,
+        hospitalName: String?,
+        updateEligibility: Boolean,
+    ) = result {
+        val id = "self-${donationList[profile.uid].orEmpty().size + 1}"
+        donationList.getOrPut(profile.uid) { mutableListOf() } +=
+            Donation(id, donatedAt, component, hospitalName, requestId = null, verified = false, source = DonationSource.SELF, createdAt = now)
+        val newer = profile.lastDonationAt == null || donatedAt.isAfter(profile.lastDonationAt)
+        profiles[profile.uid] = profile.copy(
+            donationCount = profile.donationCount + 1,
+            lastDonationId = id,
+            lastDonationAt = if (updateEligibility && newer) donatedAt else profile.lastDonationAt,
+        )
+        AppResult.Success(Unit)
+    }
 
-    override suspend fun deleteSelfDonation(profile: UserProfile, donation: Donation) = result { AppResult.Success(Unit) }
+    override suspend fun deleteSelfDonation(profile: UserProfile, donation: Donation) = result {
+        donationList[profile.uid]?.removeAll { it.id == donation.id }
+        profiles[profile.uid] = profile.copy(donationCount = (profile.donationCount - 1).coerceAtLeast(0), lastDonationId = donation.id)
+        AppResult.Success(Unit)
+    }
 
     val verifiedRecorded = mutableListOf<Pair<String, String>>()
 

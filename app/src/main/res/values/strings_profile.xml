@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 6: the Profile tab (6.3), "Add a past donation" (6.4), badges (6.5) and "Share LiquidLyf" (6.6). -->
+<resources>
+    <!-- Header -->
+    <string name="profile_email_verified">Email verified</string>
+    <string name="profile_phone_verified">Phone verified</string>
+    <string name="profile_not_listed">Not in Find donors</string>
+
+    <!-- Eligibility -->
+    <string name="profile_eligibility_title">Your next donation</string>
+    <string name="profile_next_eligible">From %1$s</string>
+
+    <!-- Impact -->
+    <string name="profile_impact_title">Your impact</string>
+    <string name="profile_impact_donations">Donations</string>
+    <string name="profile_impact_verified">Verified</string>
+    <string name="profile_impact_requests">Requests helped</string>
+    <plurals name="profile_impact_lives">
+        <item quantity="one">Up to %1$d life helped</item>
+        <item quantity="other">Up to %1$d lives helped</item>
+    </plurals>
+    <string name="profile_impact_lives_info">One whole-blood donation can help up to 3 people, so this is the most it could be.</string>
+
+    <!-- Badges -->
+    <string name="profile_badges_title">Badges</string>
+    <string name="profile_badges_none">Your first donation earns the First drop badge.</string>
+    <string name="badge_first_drop">First drop</string>
+    <string name="badge_first_drop_desc">Your first donation</string>
+    <string name="badge_life_saver">Life saver</string>
+    <string name="badge_life_saver_desc">3 donations</string>
+    <string name="badge_hero">Hero</string>
+    <string name="badge_hero_desc">5 donations</string>
+    <string name="badge_legend">Legend</string>
+    <string name="badge_legend_desc">10 donations</string>
+    <string name="badge_rapid_responder">Rapid responder</string>
+    <string name="badge_rapid_responder_desc">Offered within 15 minutes of a request</string>
+    <string name="badge_regular">Regular</string>
+    <string name="badge_regular_desc">Donated in each of your last 3 eligible windows</string>
+
+    <!-- Donation history -->
+    <string name="profile_history_title">Donation history</string>
+    <string name="profile_history_empty">No donations yet. Add your past donations, so your next eligible date is right.</string>
+    <string name="profile_history_verified">Verified</string>
+    <string name="profile_history_self">Self-reported</string>
+    <string name="profile_history_error">Couldn\'t load your donations.</string>
+    <string name="action_add_past_donation">Add past donation</string>
+    <string name="action_remove_donation">Remove this donation</string>
+    <string name="profile_remove_title">Remove this donation?</string>
+    <string name="profile_remove_body">It leaves your history and your count. Your next eligible date stays as it is; you can change it in Edit profile.</string>
+    <string name="action_remove">Remove</string>
+    <string name="profile_donation_removed">Donation removed.</string>
+
+    <!-- Add a past donation (6.4) -->
+    <string name="add_donation_title">Add a past donation</string>
+    <string name="add_donation_date">Date</string>
+    <string name="add_donation_pick_date">Pick the date</string>
+    <string name="add_donation_component">What you gave</string>
+    <string name="add_donation_place">Where (optional)</string>
+    <string name="add_donation_place_hint">Hospital or blood bank</string>
+    <string name="add_donation_save">Add donation</string>
+    <string name="add_donation_date_required">Pick the date of the donation.</string>
+    <string name="add_donation_error_future">The date can\'t be in the future.</string>
+    <string name="add_donation_error_too_early">That\'s before you turned 18.</string>
+    <string name="add_donation_added">Donation added.</string>
+    <string name="add_donation_update_title">Update your eligibility?</string>
+    <string name="add_donation_update_body">This is your latest donation. You could then donate again from %1$s, and request alerts pause until then.</string>
+    <string name="add_donation_update_yes">Update</string>
+    <string name="add_donation_update_no">Keep as is</string>
+
+    <!-- Share (6.6) -->
+    <string name="action_share_app">Share LiquidLyf</string>
+    <string name="share_app_text">I\'m a blood donor on LiquidLyf, a free app that alerts nearby donors when someone needs blood. Join me: %1$s</string>
+</resources>

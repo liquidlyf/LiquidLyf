@@ -16,6 +16,9 @@ object Links {
 
     fun privacy(locale: AppLocale): String = page(locale, "privacy")
 
+    /** The download page (Phase 10.3) that "Share LiquidLyf" links to. */
+    fun download(locale: AppLocale): String = page(locale, "download")
+
     private fun page(locale: AppLocale, path: String) =
         if (locale == AppLocale.BN) "$SITE/bn/$path" else "$SITE/$path"
 }

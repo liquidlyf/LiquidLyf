@@ -66,12 +66,16 @@ interface ProfileRepository {
 
     suspend fun donations(uid: String): AppResult<List<Donation>>
 
-    /** Contract 13: a donation the donor types in. Never verified. */
+    /**
+     * Contract 13: a donation the donor types in. Never verified. [updateEligibility]: when it's
+     * newer than `lastDonationAt`, the donor chose to restart the rest period from it (6.4).
+     */
     suspend fun addSelfDonation(
         profile: UserProfile,
         donatedAt: Instant,
         component: BloodComponent,
         hospitalName: String?,
+        updateEligibility: Boolean = true,
     ): AppResult<Unit>
 
     /** Removes a self-reported donation, and its count. Verified ones stay. */
@@ -161,6 +165,7 @@ class FirestoreProfileRepository @Inject constructor(
         donatedAt: Instant,
         component: BloodComponent,
         hospitalName: String?,
+        updateEligibility: Boolean,
     ): AppResult<Unit> {
         if (donatedAt.isAfter(clock.now()) || !Validators.fitsOptional(hospitalName, Validators.HOSPITAL_NAME_MAX)) {
             return AppResult.Failure(AppError.InvalidInput)
@@ -169,7 +174,7 @@ class FirestoreProfileRepository @Inject constructor(
         val after = profile.copy(
             donationCount = profile.donationCount + 1,
             lastDonationId = ref.id,
-            lastDonationAt = latest(profile.lastDonationAt, donatedAt),
+            lastDonationAt = if (updateEligibility) latest(profile.lastDonationAt, donatedAt) else profile.lastDonationAt,
         )
         return writeProfile(profile, after) { batch ->
             batch.set(ref, DonationDoc.selfMap(donatedAt, component, hospitalName))

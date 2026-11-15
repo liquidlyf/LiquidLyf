@@ -237,6 +237,29 @@ class AccessibilityLabelsTest {
     }
 
     @Test
+    fun profileWithHistoryAndBadges() {
+        val me = TestData.profile().copy(phoneVerified = true, lastDonationAt = TestData.NOW.minus(java.time.Duration.ofDays(30)), donationCount = 2)
+        val eligibility = EligibilityCalculator().evaluate(me.birthYear, me.weightOk, me.gender, me.lastDonationAt, TestData.NOW)
+        val history = listOf(
+            io.github.liquidlyf.core.model.Donation("r1", TestData.NOW.minus(java.time.Duration.ofDays(30)), io.github.liquidlyf.core.model.BloodComponent.WHOLE_BLOOD,
+                "Dhaka Medical College Hospital", requestId = "r1", verified = true, source = io.github.liquidlyf.core.model.DonationSource.REQUEST, createdAt = TestData.NOW),
+            io.github.liquidlyf.core.model.Donation("s1", TestData.NOW.minus(java.time.Duration.ofDays(400)), io.github.liquidlyf.core.model.BloodComponent.PLATELETS,
+                null, requestId = null, verified = false, source = io.github.liquidlyf.core.model.DonationSource.SELF, createdAt = TestData.NOW),
+        )
+        val calc = io.github.liquidlyf.core.domain.BadgeCalculator()
+        show {
+            io.github.liquidlyf.feature.profile.ProfileScreen(
+                io.github.liquidlyf.feature.profile.ProfileUiState(
+                    profile = me, eligibility = eligibility, donations = history, geo = geo,
+                    badges = calc.badges(history, me.gender, rapidResponder = true, TestData.NOW), impact = calc.impact(history),
+                ),
+                onEditProfile = {}, onOpenSettings = {}, onAddDonation = {}, onRemoveDonation = {}, onShare = {}, onRetry = {}, now = TestData.NOW,
+            )
+        }
+        assertControlsAreLabelledAndBigEnough("Profile")
+    }
+
+    @Test
     fun homeWithNotificationsOff() {
         val me = TestData.profile()
         val eligibility = EligibilityCalculator().evaluate(me.birthYear, me.weightOk, me.gender, me.lastDonationAt, TestData.NOW)

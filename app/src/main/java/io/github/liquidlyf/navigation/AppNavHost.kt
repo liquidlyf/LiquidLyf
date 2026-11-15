@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
@@ -67,7 +66,7 @@ import io.github.liquidlyf.feature.home.HomeRoute
 import io.github.liquidlyf.feature.notifications.InboxRoute
 import io.github.liquidlyf.feature.onboarding.OnboardingScreen
 import io.github.liquidlyf.feature.placeholder.PlaceholderScreen
-import io.github.liquidlyf.feature.profile.BloodGroupReminder
+import io.github.liquidlyf.feature.profile.ProfileRoute
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupRoute
 import io.github.liquidlyf.feature.request.create.CreateRequestRoute
 import io.github.liquidlyf.feature.request.detail.RequestDetailRoute
@@ -303,20 +302,9 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
         }
         navigation<ProfileGraph>(startDestination = Profile) {
             composable<Profile> {
-                PlaceholderScreen(
-                    title = stringResource(R.string.nav_profile),
-                    phase = 6,
-                    header = {
-                        // P1: no blood group yet → not a donor; remind and point to Edit profile.
-                        if (session is SessionState.Ready && session.profile.bloodGroup == null) {
-                            BloodGroupReminder(onAdd = dropUnlessResumed { navController.navigate(EditProfile) { launchSingleTop = true } })
-                        }
-                    },
-                    topBarActions = {
-                        IconButton(onClick = dropUnlessResumed { navController.navigate(Settings) { launchSingleTop = true } }) {
-                            Icon(painterResource(LLIcons.Settings), contentDescription = stringResource(R.string.action_open_settings))
-                        }
-                    },
+                ProfileRoute(
+                    onEditProfile = dropUnlessResumed { navController.navigate(EditProfile) { launchSingleTop = true } },
+                    onOpenSettings = dropUnlessResumed { navController.navigate(Settings) { launchSingleTop = true } },
                 )
             }
             composable<Settings> {

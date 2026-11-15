@@ -48,3 +48,12 @@ fun dateTimeText(instant: Instant): String {
         .withLocale(locale)
         .format(instant.atZone(ZoneId.systemDefault()))
 }
+
+/** A date in the phone's time zone and the app's language, e.g. "14 Nov 2026". */
+@Composable
+fun dateText(instant: Instant): String {
+    val locale = LocalConfiguration.current.locales[0]
+    return DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+        .withLocale(locale)
+        .format(instant.atZone(ZoneId.systemDefault()))
+}
