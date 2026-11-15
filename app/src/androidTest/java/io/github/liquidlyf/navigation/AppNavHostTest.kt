@@ -230,6 +230,16 @@ class AppNavHostTest {
     }
 
     @Test
+    fun aLiftedSuspensionLeavesTheSuspendedScreen() {
+        launch(GateZone.SUSPENDED, SessionState.Suspended(TestData.user()))
+        assertOnScreen(R.string.suspended_title)
+
+        setSession(ready)
+        assertOnScreen(R.string.nav_home)
+        assertTrue(compose.onAllNodesWithText(str(R.string.suspended_title)).fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
     fun lastTabIsRestoredWhenTheAppOpens() {
         launch(GateZone.MAIN, ready, initialTab = TopLevelDestination.DONORS)
         assertOnScreen(R.string.nav_donors)

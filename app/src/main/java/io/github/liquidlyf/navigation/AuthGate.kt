@@ -73,6 +73,7 @@ fun NavDestination.zone(): GateZone = when {
     hasRoute(NotificationPermission::class) -> GateZone.NOTIFICATION_PERMISSION
     hasRoute(SessionProblem::class) -> GateZone.SESSION_PROBLEM
     hasRoute(DeletingAccount::class) -> GateZone.DELETING_ACCOUNT
+    hasRoute(Suspended::class) -> GateZone.SUSPENDED
     hierarchy.any { it.hasRoute(AuthGraph::class) } -> GateZone.SIGNED_OUT
     else -> GateZone.MAIN
 }
