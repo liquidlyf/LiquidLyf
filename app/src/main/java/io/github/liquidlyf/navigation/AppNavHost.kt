@@ -194,8 +194,9 @@ fun AppNavHost(
     }
 }
 
+/** Internal for the README and website screenshots (StoreScreenshotsTest), which draw it around a tab. */
 @Composable
-private fun AppNavigationBar(currentTab: TopLevelDestination, onSelect: (TopLevelDestination) -> Unit) {
+internal fun AppNavigationBar(currentTab: TopLevelDestination, onSelect: (TopLevelDestination) -> Unit) {
     NavigationBar {
         TopLevelDestination.entries.forEach { tab ->
             val selected = tab == currentTab
