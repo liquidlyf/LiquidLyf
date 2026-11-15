@@ -6,7 +6,7 @@ alternate: /
 status: draft, needs native review
 ---
 
-> **Draft: needs native review.** Translated from the English draft (`en/index.md`).
+<!-- Needs native review (C8). Translated from the English draft (`en/index.md`). -->
 
 # LiquidLyf
 
@@ -15,7 +15,8 @@ status: draft, needs native review
 LiquidLyf একটি বিনামূল্যের Android অ্যাপ, যা বাংলাদেশে রক্তদাতাদের সাথে রক্তের প্রয়োজন এমন মানুষদের
 যোগাযোগ করিয়ে দেয়।
 
-**[⬇ Android-এর জন্য ডাউনলোড করুন](/bn/download)**
+{% if site.released %}**[⬇ Android-এর জন্য ডাউনলোড করুন](/bn/download)**{% else %}**শিগগিরই আসছে:** অ্যাপটি এখন পরীক্ষা করা হচ্ছে,
+তাই এখনো ডাউনলোড করা যায় না ([আরও জানুন](/bn/download))।{% endif %}
 
 ## কীভাবে কাজ করে
 
@@ -49,7 +50,3 @@ LiquidLyf স্বেচ্ছাসেবকদের হাতে তৈর�
 
 **LiquidLyf জরুরি সেবা নয়।** কারো জরুরি রক্ত দরকার হলে এখনই হাসপাতাল বা লাইসেন্সপ্রাপ্ত ব্লাড ব্যাংকে
 যোগাযোগ করুন, অথবা ৯৯৯-এ ফোন করুন।
-
-[গোপনীয়তা নীতি](/bn/privacy) · [শর্তাবলি ও কমিউনিটি নির্দেশিকা](/bn/terms) ·
-[অ্যাকাউন্ট মুছে ফেলুন](/bn/delete-account) · [সোর্স কোড](https://github.com/liquidlyf/LiquidLyf) ·
-যোগাযোগ: liquidlyf@gmail.com

@@ -72,7 +72,7 @@ it does with your data.
   blood group (for example, "Savar, B+"), through Google's Firebase Cloud Messaging. We don't
   store a device token. You can stop alerts at any time (section 7).
 - **App Check:** Google Play services checks that requests come from the genuine LiquidLyf app on a
-  real phone. This helps stop bots and fake apps.
+  real phone. This helps us spot bots and fake apps.
 - **Crash reports:** if the app crashes, Firebase Crashlytics receives the technical details: phone
   model, Android version, app version, what the app was doing and a random installation ID. They
   contain no names, phone numbers or blood groups.
@@ -210,13 +210,13 @@ that Act.
 - All connections between the app, our services and Google use encryption (HTTPS/TLS).
 - Database security rules decide who may read and write each piece of data. They are public in our
   source code, and automated tests check them on every change.
-- App Check blocks requests that don't come from the genuine app.
+- App Check helps us recognise requests that don't come from the genuine app.
 - Moderator access needs a special permission that only maintainers can grant.
 
-<!-- CHECK (15 Nov 2026, ADR 0003 test 6): App Check isn't working yet. The Worker only logs a missing
-     token, and on 15 Nov the release-signed app sent none (Play Integrity and App Check APIs off, no
-     SHA-256 registered). Publish the App Check lines here and in section 2 only once test 6 passes and
-     the Worker and Firestore enforce App Check. -->
+<!-- CHECK (Phase 9): App Check runs, but isn't enforced yet: the Worker only logs a missing or invalid
+     token (valid tokens in the A16 and A17 production tests, 15 Nov 2026). So section 2 says "spot" and
+     this section "recognise". When the Worker and Firestore enforce App Check, they can say "stop"
+     and "blocks" (EN and BN). -->
 
 No system is perfect. If a breach puts you at risk, we will tell you in the app and by email, and
 inform the authorities when the law requires it. To report a security problem, see our

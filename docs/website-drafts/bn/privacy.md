@@ -6,9 +6,9 @@ alternate: /privacy
 status: draft, needs native review, needs legal review
 ---
 
-> **Draft: needs native review.** Translated from the English draft (`en/privacy.md`). A native Bangla
-> speaker must check the wording, and the app's menu names must match `values-bn/strings.xml`.
-> If the two versions differ, the English version applies until this one is reviewed.
+<!-- Needs native review (C8). Translated from the English draft (`en/privacy.md`). A native Bangla
+    speaker must check the wording, and the app's menu names must match `values-bn/strings.xml`. If
+    the two versions differ, the English version applies until this one is reviewed. -->
 
 <!-- DRAFT. Placeholders in [BRACKETS] are listed in docs/website-drafts/README.md. -->
 
@@ -74,7 +74,7 @@ LiquidLyf স্বেচ্ছাসেবকদের চালানো এ�
   গ্রুপের নামে কিছু নোটিফিকেশন "টপিক"-এ যুক্ত হয় (যেমন "সাভার, B+")। আমরা কোনো ডিভাইস টোকেন রাখি না।
   আপনি যেকোনো সময় অ্যালার্ট বন্ধ করতে পারেন (৭ নম্বর অংশ)।
 - **App Check:** Google Play services যাচাই করে যে অনুরোধগুলো আসল LiquidLyf অ্যাপ থেকে, আসল ফোন থেকে
-  আসছে। এতে বট ও নকল অ্যাপ আটকানো যায়।
+  আসছে। এতে বট ও নকল অ্যাপ চেনা যায়।
 - **ক্র্যাশ রিপোর্ট:** অ্যাপ হঠাৎ বন্ধ হয়ে গেলে Firebase Crashlytics কারিগরি তথ্য পায়: ফোনের মডেল,
   Android সংস্করণ, অ্যাপের সংস্করণ, অ্যাপ তখন কী করছিল, এবং একটি এলোমেলো ইনস্টলেশন আইডি। এতে কোনো নাম,
   ফোন নম্বর বা রক্তের গ্রুপ থাকে না।
@@ -179,13 +179,13 @@ LiquidLyf চালাতে আমরা কয়েকটি সেবা ব
 - অ্যাপ, আমাদের সেবা ও Google-এর মধ্যে সব সংযোগ এনক্রিপ্ট করা (HTTPS/TLS)।
 - ডেটাবেসের নিরাপত্তা নিয়ম ঠিক করে কে কোন তথ্য পড়তে ও লিখতে পারে। নিয়মগুলো আমাদের সোর্স কোডে সবার জন্য
   খোলা, আর প্রতিটি পরিবর্তনে স্বয়ংক্রিয় পরীক্ষা সেগুলো যাচাই করে।
-- App Check আসল অ্যাপ ছাড়া অন্য কোথাও থেকে আসা অনুরোধ আটকায়।
+- App Check আসল অ্যাপ ছাড়া অন্য কোথাও থেকে আসা অনুরোধ চিনতে সাহায্য করে।
 - মডারেটরের অনুমতি শুধু রক্ষণাবেক্ষণকারীরা দিতে পারেন।
 
-<!-- CHECK (15 Nov 2026, ADR 0003 test 6): App Check isn't working yet. The Worker only logs a missing
-     token, and on 15 Nov the release-signed app sent none (Play Integrity and App Check APIs off, no
-     SHA-256 registered). Publish the App Check lines here and in section 2 only once test 6 passes and
-     the Worker and Firestore enforce App Check. -->
+<!-- CHECK (Phase 9): App Check runs, but isn't enforced yet: the Worker only logs a missing or invalid
+     token (valid tokens in the A16 and A17 production tests, 15 Nov 2026). So section 2 says "spot" and
+     this section "recognise". When the Worker and Firestore enforce App Check, they can say "stop"
+     and "blocks" (EN and BN). -->
 
 কোনো ব্যবস্থাই নিখুঁত নয়। তথ্য ফাঁস হয়ে আপনি ঝুঁকিতে পড়লে আমরা অ্যাপে ও ইমেইলে আপনাকে জানাব, আর আইন
 অনুযায়ী প্রয়োজন হলে কর্তৃপক্ষকে জানাব। নিরাপত্তা সমস্যা জানাতে আমাদের

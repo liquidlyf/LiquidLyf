@@ -6,8 +6,9 @@ alternate: /delete-account
 status: draft, needs native review
 ---
 
-> **Draft: needs native review.** Translated from the English draft (`en/delete-account.md`). A native
-> Bangla speaker must check the wording, and the menu names must match the app's `values-bn/strings.xml`.
+<!-- Needs native review (C8). Translated from the English draft (`en/delete-account.md`). A native
+    Bangla speaker must check the wording, and the menu names must match the app's
+    `values-bn/strings.xml`. -->
 
 # LiquidLyf অ্যাকাউন্ট মুছে ফেলুন
 

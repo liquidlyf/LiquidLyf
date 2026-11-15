@@ -6,9 +6,9 @@ alternate: /terms
 status: draft, needs native review, needs legal review
 ---
 
-> **Draft: needs native review.** Translated from the English draft (`en/terms.md`). A native Bangla
-> speaker must check the wording, and a lawyer must review sections ৯ and ১১ in both languages.
-> If the two versions differ, the English version applies until this one is reviewed.
+<!-- Needs native review (C8). Translated from the English draft (`en/terms.md`). A native Bangla
+    speaker must check the wording, and a lawyer must review sections ৯ and ১১ in both languages. If
+    the two versions differ, the English version applies until this one is reviewed. -->
 
 # LiquidLyf শর্তাবলি ও কমিউনিটি নির্দেশিকা
 

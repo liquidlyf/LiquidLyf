@@ -6,9 +6,9 @@ alternate: /download
 status: draft, needs native review
 ---
 
-> **Draft: needs native review.** Translated from the English draft (`en/download.md`). A native
-> Bangla speaker must check the wording. The Android button names below must match what a phone set
-> to Bangla really shows: check them on a real phone and take the screenshots in Bangla.
+<!-- Needs native review (C8). Translated from the English draft (`en/download.md`). A native Bangla
+    speaker must check the wording. The Android button names below must match what a phone set to
+    Bangla really shows: check them on a real phone and take the screenshots in Bangla. -->
 
 # LiquidLyf ডাউনলোড করুন
 

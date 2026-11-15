@@ -6,8 +6,9 @@ alternate: /bn/
 status: draft
 ---
 
-<!-- DRAFT for the site's home page (Phase 8.2), written for the v1.0 launch. Until then, replace the
-     download button with "Coming soon" and a link to the GitHub repo. -->
+<!-- The site's home page (Phase 8.2). Until v1.0 is released, site.released is false and the download
+     button says "Coming soon" (build_site.py --released switches it). The footer links come from the
+     site layout (site/_layouts/default.html). -->
 
 # LiquidLyf
 
@@ -15,7 +16,8 @@ status: draft
 
 LiquidLyf is a free Android app that connects blood donors with people who need blood in Bangladesh.
 
-**[⬇ Download for Android](/download)**
+{% if site.released %}**[⬇ Download for Android](/download)**{% else %}**Coming soon:** the app is being tested and isn't
+available to download yet ([more](/download)).{% endif %}
 
 ## How it works
 
@@ -50,7 +52,3 @@ LiquidLyf is built by volunteers. Developers, translators, designers and testers
 
 **LiquidLyf is not an emergency service.** If someone needs blood urgently, contact the hospital or a
 licensed blood bank now, or call 999.
-
-[Privacy Policy](/privacy) · [Terms and Community Guidelines](/terms) ·
-[Delete your account](/delete-account) · [Source code](https://github.com/liquidlyf/LiquidLyf) ·
-Contact: liquidlyf@gmail.com
