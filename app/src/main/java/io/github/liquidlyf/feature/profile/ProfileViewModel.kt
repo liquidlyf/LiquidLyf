@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -88,6 +89,14 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             val geo = geoRepository.geo()
             state.update { it.copy(geo = geo) }
+        }
+        // The session reads the profile cache-first, but some fields only the server writes (the
+        // Worker's rapidResponder; A17 showed the badge late). One server read per open: if it
+        // differs, refresh the session, whose cache-first read then sees the new copy.
+        viewModelScope.launch {
+            val cached = profileFlow.first()
+            val fresh = profiles.profile(cached.uid, refresh = true)
+            if (fresh is AppResult.Success && fresh.data != null && fresh.data != cached) session.refresh()
         }
         viewModelScope.launch {
             profileFlow.collect { p -> state.update { recompute(it.copy(profile = p)) } }

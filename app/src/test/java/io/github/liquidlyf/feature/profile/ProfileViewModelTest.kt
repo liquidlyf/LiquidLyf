@@ -73,7 +73,9 @@ class ProfileViewModelTest {
     @Test
     fun `the profile shows eligibility, impact and badges from the history`() = runTest(dispatcher) {
         profiles.donationList["me"] = mutableListOf(verified("r2", 30), verified("r1", 400))
-        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(donationCount = 2, lastDonationAt = daysAgo(30)))
+        val withHistory = me.copy(donationCount = 2, lastDonationAt = daysAgo(30))
+        profiles.profiles["me"] = withHistory // the server has the same copy as the session
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), withHistory)
         val vm = vm()
         advanceUntilIdle()
         val s = vm.uiState.value
@@ -87,7 +89,17 @@ class ProfileViewModelTest {
     }
 
     @Test
+    fun `opening the profile reads it from the server once, so a Worker-set flag shows`() = runTest(dispatcher) {
+        // The session's copy is cached; on the server the Worker has since set rapidResponder.
+        profiles.profiles["me"] = me.copy(rapidResponder = true)
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(listOf(Badge.RAPID_RESPONDER), vm.uiState.value.badges)
+    }
+
+    @Test
     fun `the Rapid responder badge follows the profile's flag from the Worker`() = runTest(dispatcher) {
+        profiles.profiles["me"] = me.copy(rapidResponder = true)
         session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(rapidResponder = true))
         val vm = vm()
         advanceUntilIdle()
