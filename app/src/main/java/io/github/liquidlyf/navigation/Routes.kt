@@ -47,6 +47,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object Settings
 @Serializable data object EditProfile
 @Serializable data object ChangePassword
+@Serializable data object AddPassword
 @Serializable data object DeleteAccount
 @Serializable data object ComponentGallery
 

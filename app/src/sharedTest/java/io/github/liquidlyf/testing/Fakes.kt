@@ -148,6 +148,18 @@ class FakeAuthRepository : AuthRepository {
         AppResult.Success(Unit)
     }
 
+    /** A Google token re-authenticates only the Google account that's signed in (like ERROR_USER_MISMATCH). */
+    override suspend fun reauthenticateWithGoogle(idToken: String) = result {
+        if (current == "google-$idToken@example.test") AppResult.Success(Unit) else AppResult.Failure(AppError.InvalidCredentials)
+    }
+
+    override suspend fun addPassword(password: String) = result {
+        val email = current ?: return@result AppResult.Failure(AppError.PermissionDenied)
+        val a = accounts.getValue(email)
+        accounts[email] = a.copy(password = password, providers = a.providers + "password")
+        AppResult.Success(publish()!!)
+    }
+
     val emailChanges = mutableListOf<String>()
 
     override suspend fun changeEmail(newEmail: String) = result {

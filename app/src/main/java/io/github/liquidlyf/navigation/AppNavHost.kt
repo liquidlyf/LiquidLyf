@@ -56,6 +56,7 @@ import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.feature.account.ChangePasswordRoute
 import io.github.liquidlyf.feature.account.DeleteAccountRoute
 import io.github.liquidlyf.feature.account.DeletingAccountRoute
+import io.github.liquidlyf.feature.account.AddPasswordRoute
 import io.github.liquidlyf.feature.account.EditProfileRoute
 import io.github.liquidlyf.feature.auth.ForgotPasswordRoute
 import io.github.liquidlyf.feature.auth.SignInRoute
@@ -317,10 +318,12 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                     onDeleteAccount = { navController.navigate(DeleteAccount) { launchSingleTop = true } },
                     onSignOut = onSignOut,
                     onOpenNotificationSettings = { navController.navigate(NotificationSettings) { launchSingleTop = true } },
+                    onAddPassword = { navController.navigate(AddPassword) { launchSingleTop = true } },
                 )
             }
             composable<EditProfile> { EditProfileRoute(onDone = { navController.popBackStack() }) }
             composable<ChangePassword> { ChangePasswordRoute(onDone = { navController.popBackStack() }) }
+            composable<AddPassword> { AddPasswordRoute(onDone = { navController.popBackStack() }) }
             composable<DeleteAccount> { DeleteAccountRoute(onBack = { navController.popBackStack() }) }
             composable<ComponentGallery> {
                 ComponentGalleryScreen(onBack = { navController.popBackStack() })

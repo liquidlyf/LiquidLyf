@@ -80,6 +80,7 @@ class EmulatorBatchesTest {
     @Inject lateinit var inbox: InboxRepository
     @Inject lateinit var safety: SafetyRepository
     @Inject lateinit var donors: io.github.liquidlyf.core.data.donor.DonorRepository
+    @Inject lateinit var authRepo: io.github.liquidlyf.core.data.auth.AuthRepository
 
     private val dhakaSouth = Area("BD30", "BD3026", "BD30262000")
 
@@ -315,6 +316,30 @@ class EmulatorBatchesTest {
         assertEquals(donorUid, db.requestRef(rid).get(Source.SERVER).await().getString(RequestDoc.LAST_ASKED_UID))
         // The ask's id is fixed per donor and request: asking again is refused.
         assertEquals(AppResult.Failure(io.github.liquidlyf.core.util.AppError.PermissionDenied), safety.askToDonate(serverRequest(rid), card))
+    }
+
+    // ---- P3: add a password to a Google-only account ----
+
+    @Test
+    fun aGoogleAccountAddsAPasswordAndCanSignInWithIt() = runBlocking {
+        // The Auth emulator takes any well-formed JSON as a Google ID token.
+        val email = "it-google-${System.nanoTime()}@example.test"
+        val token = """{"sub":"g-${System.nanoTime()}","email":"$email","email_verified":true}"""
+        auth.signOut()
+        val google = authRepo.signInWithGoogle(token).ok()
+        assertTrue(google.providers.toString(), "google.com" in google.providers && "password" !in google.providers)
+        assertFalse(google.hasPassword)
+
+        authRepo.reauthenticateWithGoogle(token).ok()
+        val linked = authRepo.addPassword("p3-password-123").ok()
+        assertTrue(linked.hasPassword)
+        assertEquals(google.uid, linked.uid)
+
+        authRepo.signOut()
+        val again = authRepo.signInEmail(email, "p3-password-123").ok()
+        assertEquals("the same account, now with a password too", google.uid, again.uid)
+        assertTrue(again.providers.containsAll(setOf("google.com", "password")))
+        authRepo.signOut()
     }
 
     private fun <T> AppResult<T>.ok(): T = when (this) {

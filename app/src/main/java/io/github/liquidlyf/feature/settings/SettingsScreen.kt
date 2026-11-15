@@ -44,6 +44,7 @@ fun SettingsScreen(
     onDeleteAccount: () -> Unit,
     onSignOut: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
+    onAddPassword: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -58,6 +59,7 @@ fun SettingsScreen(
         onSignOut = dropUnlessResumed(block = onSignOut),
         showDeveloperOptions = BuildConfig.DEBUG,
         onOpenNotificationSettings = dropUnlessResumed(block = onOpenNotificationSettings),
+        onAddPassword = dropUnlessResumed(block = onAddPassword),
     )
 }
 
@@ -75,6 +77,7 @@ internal fun SettingsContent(
     showDeveloperOptions: Boolean,
     modifier: Modifier = Modifier,
     onOpenNotificationSettings: () -> Unit = {},
+    onAddPassword: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -123,6 +126,13 @@ internal fun SettingsContent(
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.title_change_password)) },
                     modifier = Modifier.clickable(role = Role.Button, onClick = onChangePassword),
+                )
+            } else {
+                // P3: a Google-only account can add a password; then "Change password" shows instead.
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.title_add_password)) },
+                    supportingContent = { Text(stringResource(R.string.settings_add_password_summary)) },
+                    modifier = Modifier.clickable(role = Role.Button, onClick = onAddPassword),
                 )
             }
             ListItem(

@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -234,6 +235,30 @@ class AccessibilityLabelsTest {
     fun notificationSettingsAndTheNotificationsOffBanner() {
         show { NotificationPrefsScreen(NotificationPrefsUiState(loaded = true), systemEnabled = false, onChange = {}, onOpenSystemSettings = {}, onBack = {}) }
         assertControlsAreLabelledAndBigEnough("Notification settings")
+    }
+
+    @Test
+    fun settingsForAGoogleOnlyAccount() {
+        show {
+            io.github.liquidlyf.feature.settings.SettingsContent(
+                uiState = io.github.liquidlyf.feature.settings.SettingsUiState(hasPassword = false),
+                onBack = {}, onThemeModeChange = {}, onOpenComponentGallery = {}, onEditProfile = {}, onChangePassword = {},
+                onDeleteAccount = {}, onSignOut = {}, showDeveloperOptions = false, onAddPassword = {},
+            )
+        }
+        compose.onNodeWithText(str(R.string.title_add_password)).assertExists()
+        assertControlsAreLabelledAndBigEnough("Settings, Google-only account")
+    }
+
+    @Test
+    fun addAPassword() {
+        show {
+            io.github.liquidlyf.feature.account.AddPasswordScreen(
+                io.github.liquidlyf.feature.account.AddPasswordUiState(email = "someone@gmail.com", confirmError = R.string.error_passwords_differ),
+                onPassword = {}, onConfirm = {}, onAdd = {}, onBack = {},
+            )
+        }
+        assertControlsAreLabelledAndBigEnough("Add a password")
     }
 
     @Test

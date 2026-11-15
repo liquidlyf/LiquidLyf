@@ -2,12 +2,15 @@ package io.github.liquidlyf.core.data.auth
 
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.userProfileChangeRequest
 import io.github.liquidlyf.core.firebase.appResultOf
+import io.github.liquidlyf.core.firebase.toAppError
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,6 +64,15 @@ interface AuthRepository {
     suspend fun reauthenticate(password: String): AppResult<Unit>
 
     suspend fun changePassword(newPassword: String): AppResult<Unit>
+
+    /** P3: a Google-only account confirms who they are with a fresh Google ID token. */
+    suspend fun reauthenticateWithGoogle(idToken: String): AppResult<Unit>
+
+    /**
+     * P3: links an email password to the same account (needs a recent sign-in), so the user can
+     * sign in with Google or with their email and this password.
+     */
+    suspend fun addPassword(password: String): AppResult<AuthUser>
 
     /** Sends a link to [newEmail]; the email changes only when the user opens it. */
     suspend fun changeEmail(newEmail: String): AppResult<Unit>
@@ -143,6 +155,36 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
     override suspend fun changePassword(newPassword: String): AppResult<Unit> {
         val user = auth.currentUser ?: return AppResult.Failure(AppError.PermissionDenied)
         return appResultOf { user.updatePassword(newPassword).await() }
+    }
+
+    override suspend fun reauthenticateWithGoogle(idToken: String): AppResult<Unit> {
+        val user = auth.currentUser ?: return AppResult.Failure(AppError.PermissionDenied)
+        return appResultOf { user.reauthenticate(GoogleAuthProvider.getCredential(idToken, null)).await() }
+    }
+
+    override suspend fun addPassword(password: String): AppResult<AuthUser> {
+        val user = auth.currentUser ?: return AppResult.Failure(AppError.PermissionDenied)
+        val email = user.email ?: return AppResult.Failure(AppError.InvalidEmail)
+        return try {
+            try {
+                user.linkWithCredential(EmailAuthProvider.getCredential(email, password)).await()
+            } catch (e: FirebaseAuthException) {
+                when (e.errorCode) {
+                    // Already linked (say, from another phone): the account has a password, the goal.
+                    "ERROR_PROVIDER_ALREADY_LINKED" -> Unit
+                    // With one account per email, "in use" can only mean this same account. The Auth
+                    // emulator answers so; setting the password directly adds the provider instead.
+                    "ERROR_EMAIL_ALREADY_IN_USE" -> user.updatePassword(password).await()
+                    else -> throw e
+                }
+            }
+            user.reload().await()
+            AppResult.Success(publish()!!)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            AppResult.Failure(e.toAppError())
+        }
     }
 
     override suspend fun changeEmail(newEmail: String): AppResult<Unit> {
