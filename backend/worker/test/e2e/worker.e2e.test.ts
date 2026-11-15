@@ -137,3 +137,27 @@ describe("ask notify in workerd + emulators", () => {
     expect(at.status).toBe(202);
   });
 });
+
+// "Rapid responder" badge (phase-06): the donor's NEW_OFFER notify within 15 min of the post.
+describe("rapid responder badge in workerd + emulators", () => {
+  test("a fast offer sets users/{donor}.rapidResponder; a slow one doesn't", async () => {
+    const bob = await signedInUser("e2e-bob");
+    const dave = await signedInUser("e2e-dave");
+    const posted = new Date(Date.now() - 20 * 60_000);
+    await putDoc("requests/r1", newRequest("e2e-alice", { createdAt: posted }));
+    for (const [uid, minutes] of [["e2e-bob", 3], ["e2e-dave", 18]] as const) {
+      await putDoc(`users/${uid}`, { fullName: "Donor D." });
+      await putDoc(`requests/r1/responses/${uid}`, {
+        donorUid: uid, requestId: "r1", requesterUid: "e2e-alice", status: "OFFERED",
+        createdAt: new Date(posted.getTime() + minutes * 60_000),
+      });
+    }
+    const notify = (uid: string, token: string) =>
+      worker.fetch(`/v1/requests/r1/responses/${uid}/notify`, { method: "POST", headers: { authorization: `Bearer ${token}` } });
+    expect((await notify("e2e-bob", bob)).status).toBe(202);
+    expect((await notify("e2e-dave", dave)).status).toBe(202);
+    expect((await getDoc("users/e2e-bob")).fields.rapidResponder).toEqual({ booleanValue: true });
+    expect((await getDoc("users/e2e-bob")).fields.fullName).toEqual({ stringValue: "Donor D." }); // nothing else touched
+    expect((await getDoc("users/e2e-dave")).fields.rapidResponder).toBeUndefined();
+  });
+});

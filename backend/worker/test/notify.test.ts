@@ -21,7 +21,45 @@ describe("POST .../responses/{uid}/notify", () => {
     expect(await res.json()).toEqual({ accepted: true, type: "NEW_OFFER" });
     expect(calls.fcm[0].condition).toBe("'usr_alice' in topics");
     expect(calls.fcm[0].data).toEqual({ type: "NEW_OFFER", requestId: RID }); // nothing personal
+    expect(calls.reads).toEqual([`requests/${RID}/responses/bob`, `requests/${RID}`]); // + the post time, for the badge
+  });
+
+  test("an offer within 15 min of the post marks the donor a rapid responder (server times only)", async () => {
+    const posted = new Date(Date.now() - 20 * 60_000);
+    const offer = (minutes: number) => requestRest({
+      donorUid: "bob", requesterUid: "alice", status: "OFFERED", createdAt: new Date(posted.getTime() + minutes * 60_000),
+    });
+    let calls = await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest({ createdAt: posted }), [`requests/${RID}/responses/bob`]: offer(14) } });
+    expect((await call(notifyPath, "bob")).status).toBe(202);
+    expect(calls.writes).toHaveLength(1);
+    expect(calls.writes[0]).toEqual([{
+      update: { name: expect.stringMatching(/\/documents\/users\/bob$/), fields: { rapidResponder: { booleanValue: true } } },
+      updateMask: { fieldPaths: ["rapidResponder"] },
+      currentDocument: { exists: true },
+    }]);
+    resetCaches();
+    calls = await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest({ createdAt: posted }), [`requests/${RID}/responses/bob`]: offer(16) } });
+    expect((await call(notifyPath, "bob")).status).toBe(202);
+    expect(calls.writes).toHaveLength(0); // too slow: no badge
+  });
+
+  test("the badge is best effort: a failed write still answers 202 (the push went)", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const posted = new Date(Date.now() - 5 * 60_000);
+    const calls = await fakeGoogle({
+      docs: { [`requests/${RID}`]: requestRest({ createdAt: posted }), [`requests/${RID}/responses/bob`]: requestRest({ donorUid: "bob", requesterUid: "alice", status: "OFFERED", createdAt: new Date() }) },
+      commitError: { status: 404, grpc: "NOT_FOUND" },
+    });
+    expect((await call(notifyPath, "bob")).status).toBe(202);
+    expect(calls.fcm).toHaveLength(1);
+    expect(err.mock.calls.some(([m]) => String(m).includes("rapidResponder"))).toBe(true);
+  });
+
+  test("the requester's decisions don't touch the badge", async () => {
+    const calls = await fakeGoogle({ docs: { [`requests/${RID}/responses/bob`]: responseRest("CONFIRMED") } });
+    expect((await call(notifyPath, "alice")).status).toBe(202);
     expect(calls.reads).toHaveLength(1);
+    expect(calls.writes).toHaveLength(0);
   });
 
   test.each([["CONFIRMED", "OFFER_CONFIRMED"], ["DECLINED", "OFFER_DECLINED"], ["DONATED", "DONATION_RECORDED"]])(

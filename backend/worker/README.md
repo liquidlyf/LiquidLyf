@@ -71,6 +71,8 @@ The Worker re-reads the doc (1 read) and checks the caller's role against the **
 
 Responses: 202 `{accepted, type}`. 403 means it isn't your request or offer; 409 means there's nothing to announce in this state. Other codes are as in the table above.
 
+**"Rapid responder" badge (Phase 6).** On `NEW_OFFER`, the Worker also reads the request's `createdAt`. If the offer came within 15 minutes of the post (both are server times), it sets `users/{donor}.rapidResponder = true`. Only the Worker can write that field; the rules refuse it from the app. It's best effort: the push has already gone, so a failed write is only logged. Cost: +1 read per offer, +1 write for a fast one.
+
 **Ask to donate (Phase 6, write contract 14).** After the ask batch commits (`users/{donor}/notifications/ask_{rid}` + `askCount +1`):
 
 ```

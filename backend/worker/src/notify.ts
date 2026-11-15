@@ -8,7 +8,7 @@
 // because anyone could subscribe to someone's usr_ topic. Rate-limited per uid (auth.ts).
 import type { Env } from "./env";
 import { sendToCondition } from "./fcm";
-import { Firestore, fieldsOf } from "./firestore";
+import { Firestore, fieldsOf, updateWrite } from "./firestore";
 import { getAccessToken } from "./google-auth";
 import { HttpError, json } from "./http";
 import { toConditions } from "./tiers";
@@ -42,7 +42,7 @@ export async function send(env: Env, token: string, topics: string[], data: Reco
 export async function notifyResponse(env: Env, user: FirebaseUser, rid: string, donorUid: string): Promise<Response> {
   const token = await getAccessToken(env);
   const fs = new Firestore(env, token);
-  const doc = await fs.get(`requests/${rid}/responses/${donorUid}`, ["donorUid", "requesterUid", "status"]); // 1 read
+  const doc = await fs.get(`requests/${rid}/responses/${donorUid}`, ["donorUid", "requesterUid", "status", "createdAt"]); // 1 read
   if (!doc) throw new HttpError(404, "no such response");
   const r = fieldsOf(doc);
 
@@ -62,7 +62,30 @@ export async function notifyResponse(env: Env, user: FirebaseUser, rid: string, 
 
   await send(env, token, [personalTopic(target)], { type, requestId: rid }, `${rid}:${type}`);
   console.log(JSON.stringify({ notify: rid, type }));
+  if (type === "NEW_OFFER") await markRapidResponder(fs, rid, donorUid, r.createdAt);
   return json({ accepted: true, type }, 202);
+}
+
+/** The profile's "Rapid responder" badge (phase-06): an offer within 15 minutes of the post. */
+export const RAPID_RESPONSE_MS = 15 * 60_000;
+
+/**
+ * Sets users/{donor}.rapidResponder = true when this offer came within RAPID_RESPONSE_MS of the
+ * request being posted. Both times are server times (the rules make them request.time), so
+ * neither app can fake them. The rules let only the Worker write the field. Best effort:
+ * the push has already gone, so a failure here is only logged. Cost: 1 read, +1 write if fast.
+ */
+async function markRapidResponder(fs: Firestore, rid: string, donorUid: string, offeredAt: unknown) {
+  try {
+    const req = await fs.get(`requests/${rid}`, ["createdAt"]);
+    const posted = req ? fieldsOf(req).createdAt : undefined;
+    if (!(posted instanceof Date) || !(offeredAt instanceof Date)) return;
+    if (offeredAt.getTime() - posted.getTime() > RAPID_RESPONSE_MS) return;
+    await fs.commit([updateWrite(fs.docName(`users/${donorUid}`), ["rapidResponder"], { rapidResponder: true }, { exists: true })]);
+    console.log(JSON.stringify({ rapidResponder: rid }));
+  } catch (e) {
+    console.error(JSON.stringify({ rapidResponder: "failed", error: String(e) }));
+  }
 }
 
 export async function notifyResponders(env: Env, user: FirebaseUser, rid: string): Promise<Response> {

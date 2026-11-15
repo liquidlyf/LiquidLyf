@@ -1,6 +1,6 @@
 // users/{uid}, donors/{uid}, userStats/{uid} create, donations.
 // Doc 07 §5 tests 1 (users part) and 3; Spark tests 1 and 8; verified-donation counters.
-import { describe, test, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, test, beforeAll, afterAll, beforeEach, expect } from 'vitest';
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, increment, deleteField,
@@ -137,6 +137,16 @@ describe('users: protected fields (doc 07 test 3)', () => {
 
   test('a normal profile edit works', async () => {
     await assertSucceeds(updateProfile(as('alice'), 'alice', { fullName: 'Alice Renamed', locale: 'bn' }));
+  });
+
+  test('rapidResponder is the Worker\'s: nobody sets, changes or removes it, and other edits keep working', async () => {
+    await assertFails(profileSetup(as('zed'), 'zed', newUserDoc('zed', { rapidResponder: true })));
+    await assertFails(updateProfile(as('alice'), 'alice', { rapidResponder: true }));
+    await seed(async (db) => updateDoc(doc(db, 'users/alice'), { rapidResponder: true })); // as the Worker
+    await assertSucceeds(updateProfile(as('alice'), 'alice', { fullName: 'Alice Renamed' }));
+    await assertFails(updateProfile(as('alice'), 'alice', { rapidResponder: false }));
+    await assertFails(updateProfile(as('alice'), 'alice', { rapidResponder: deleteField() }));
+    expect((await getDoc(doc(as('alice'), 'users/alice'))).data().rapidResponder).toBe(true);
   });
 
   test('updatedAt must be the server time', async () => {

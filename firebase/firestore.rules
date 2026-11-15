@@ -129,7 +129,9 @@ service cloud.firestore {
               'division','district','upazila','available','lastDonationAt','showInDonorSearch','consentAt',
               'locale','termsVersion','termsAcceptedAt','createdAt','updatedAt','role',
               'hiddenRequestIds','blockedUids','inboxSeenAt','lastRequestAt','lastActiveAt',
-              'donationCount','verifiedDonations','lastDonationId'];
+              'donationCount','verifiedDonations','lastDonationId',
+              // Set only by the Worker (phase-06 badge): an offer within 15 min of the post.
+              'rapidResponder'];
     }
     function validUser(d) {
       return d.keys().hasOnly(userKeys())
@@ -219,12 +221,12 @@ service cloud.firestore {
                     && data().get('phoneVerified', false) == false
                     && absent(data(), 'role')
                     && data().donationCount == 0 && data().verifiedDonations == 0
-                    && absent(data(), 'lastDonationId')
+                    && absent(data(), 'lastDonationId') && absent(data(), 'rapidResponder')
                     && (absent(data(), 'lastActiveAt') || data().lastActiveAt == request.time)
                     && donorCardSynced(uid, data());
       allow update: if isOwner(uid) && verified() && validUser(data())
                     && data().updatedAt == request.time
-                    && !changed().hasAny(['createdAt','email','role'])
+                    && !changed().hasAny(['createdAt','email','role','rapidResponder'])
                     && phoneVerifiedOk()
                     && lastActiveOk()
                     && donationCountersOk(uid)
