@@ -98,10 +98,12 @@ class FirestoreAccountDeleter @Inject constructor(
             }
             onProgress(DeletionStep.OFFERS_WITHDRAWN)
 
-            // 2. My requests: anonymized; an OPEN one is cancelled with its userStats −1 (one per batch).
+            // 2. My requests: anonymized; an OPEN or hidden (REMOVED) one is cancelled with its
+            //    userStats −1 (one per batch). A hidden request still holds its slot (B15), so
+            //    without this the last step (userStats at 0) could never succeed.
             val requests = myRequests(uid)
             for (request in requests) {
-                val open = request.status == RequestStatus.OPEN
+                val open = request.status == RequestStatus.OPEN || request.status == RequestStatus.REMOVED
                 if (request.requesterDisplayName == RequestDoc.DELETED_NAME && !open) continue
                 val fields = mutableMapOf<String, Any>(
                     RequestDoc.REQUESTER_DISPLAY_NAME to RequestDoc.DELETED_NAME,

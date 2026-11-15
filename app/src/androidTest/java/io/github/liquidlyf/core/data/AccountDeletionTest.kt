@@ -59,6 +59,7 @@ class AccountDeletionTest {
     @Inject lateinit var requests: RequestRepository
     @Inject lateinit var offers: OfferRepository
     @Inject lateinit var deleter: AccountDeleter
+    @Inject lateinit var safety: io.github.liquidlyf.core.data.safety.SafetyRepository
 
     @Before
     fun setUp() {
@@ -134,6 +135,30 @@ class AccountDeletionTest {
         assertEquals(RequestStatus.CANCELLED, afterRequester.status)
         assertNull(afterRequester.notes)
         assertFalse(afterRequester.flagged)
+    }
+
+    @Test
+    fun aRequestHiddenByReportsIsCancelledSoTheDeletionFinishes() = runBlocking {
+        // B15: a REMOVED request still holds its owner's slot; deletion must give it back.
+        val (requesterEmail, requesterUid) = newProfile("hid-req", BloodGroup.B_POS, listed = false)
+        val rid = requests.create(profiles.profile(requesterUid, refresh = true).ok()!!, draft()).ok()
+        repeat(3) { i ->
+            val (_, reporterUid) = newProfile("hid-rep$i", BloodGroup.O_POS, listed = false)
+            val current = RequestDoc.fromMap(rid, db.requestRef(rid).get(Source.SERVER).await().data!!)!!
+            safety.reportRequest(current, reporterUid, io.github.liquidlyf.core.model.ReportReason.FAKE_REQUEST, null).ok()
+        }
+        val hidden = RequestDoc.fromMap(rid, db.requestRef(rid).get(Source.SERVER).await().data!!)!!
+        assertEquals("the third report hides it", RequestStatus.REMOVED, hidden.status)
+
+        EmulatorAccounts.signIn(auth, requesterEmail)
+        deleter.start(requesterUid)
+        deleter.run(requesterUid).ok()
+        assertNull(auth.currentUser)
+
+        EmulatorAccounts.newVerifiedUser(auth, "hid-viewer")
+        val after = RequestDoc.fromMap(rid, db.requestRef(rid).get(Source.SERVER).await().data!!)!!
+        assertEquals(RequestStatus.CANCELLED, after.status)
+        assertEquals(RequestDoc.DELETED_NAME, after.requesterDisplayName)
     }
 
     @Test
