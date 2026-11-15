@@ -210,8 +210,16 @@ private fun FiltersCard(state: FindDonorsUiState, locale: AppLocale, actions: Fi
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Text(stringResource(R.string.donors_filter_groups), style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                BloodGroup.entries.forEach { g -> BloodGroupChip(g, selected = g in f.groups, onClick = { actions.onToggleGroup(g) }) }
+            // A 4×2 grid, like the profile's picker, but several groups can be picked.
+            BloodGroup.entries.chunked(4).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                    row.forEach { g ->
+                        BloodGroupChip(
+                            g, selected = g in f.groups, onClick = { actions.onToggleGroup(g) },
+                            modifier = Modifier.weight(1f), role = Role.Checkbox,
+                        )
+                    }
+                }
             }
             if (geo != null) {
                 val divisions = geo.divisions.map { it.code to it.name.localized(locale) }.sortedBy { it.second }

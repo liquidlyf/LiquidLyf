@@ -48,6 +48,8 @@ fun BloodGroupChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /** [Role.Checkbox] where several groups can be picked (Find donors). */
+    role: Role = Role.RadioButton,
 ) {
     val spoken = stringResource(group.spokenLabelRes)
     Box(modifier) {
@@ -69,7 +71,7 @@ fun BloodGroupChip(
                 .heightIn(min = Spacing.minTouchTarget)
                 .semantics {
                     contentDescription = spoken
-                    role = Role.RadioButton
+                    this.role = role
                     this.selected = selected
                 },
         )
