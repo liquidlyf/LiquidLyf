@@ -89,7 +89,7 @@ fun ComponentGalleryScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     LLTextField(
                         value = phone,
                         onValueChange = { phone = it },
-                        label = stringResource(R.string.phone_number),
+                        label = stringResource(R.string.label_phone),
                         supportingText = stringResource(R.string.gallery_field_supporting),
                         errorText = if (phone.isNotEmpty() && !phone.matches(Regex("01\\d{9}"))) {
                             stringResource(R.string.gallery_field_error)
@@ -102,7 +102,7 @@ fun ComponentGalleryScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     LLTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = stringResource(R.string.password),
+                        label = stringResource(R.string.label_password),
                         isPassword = true,
                         contentType = ContentType.Password,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
