@@ -9,7 +9,9 @@
 //        notify -> OFFER_CONFIRMED to the donor. Without --donor: the one OFFERED offer
 //   node scripts/live-request.mjs --email <test email> --donated <requestId> [--donor <uid>]
 //        mark the CONFIRMED donor as having donated (contract 11: DONATED, unitsFulfilled +1,
-//        the donor's inbox item), then notify -> DONATION_RECORDED. Without --donor: the one CONFIRMED
+//        the donor's inbox item), then notify -> DONATION_RECORDED. Without --donor: the one CONFIRMED.
+//        As in the app, the donation that reaches unitsNeeded also closes the request (FULFILLED,
+//        userStats -1), then notify-responders -> REQUEST_FULFILLED to donors still waiting
 //   node scripts/live-request.mjs --email <test email> --ask <requestId> --donor <uid>
 //        ask a listed donor to donate (contract 14: the inbox item, askCount +1, and the donor
 //        named in this account's own userStats), then the Worker pushes ASKED_TO_DONATE
@@ -192,23 +194,35 @@ if (confirming || donating) {
   if (entry?.status !== d.from) fail(`donor ${donor}'s offer is ${entry?.status ?? "missing"}, not ${d.from}`);
   const resp = await call(`${DOCS}/requests/${rid}/responses/${donor}`, undefined, bearer);
   if (!resp.ok) fail(`couldn't read the offer: ${err(resp)}`);
+  // As the app (OfferRepository.decide): the donation that reaches unitsNeeded also closes the
+  // request as FULFILLED in the same batch, with userStats -1 naming it (contract 7).
+  const fills = d.to === "DONATED" && (r.unitsFulfilled ?? 0) + 1 >= (r.unitsNeeded ?? 1);
 
   const res = await commit([
     { update: { name: name(`requests/${rid}/responses/${donor}`), fields: fields({ status: d.to }) },
       updateMask: { fieldPaths: ["status"] }, updateTransforms: serverTime("updatedAt"),
       currentDocument: { updateTime: resp.json.updateTime } },
     { update: { name: name(`requests/${rid}`), fields: fields({
-        responders: { [donor]: { name: entry.name, group: entry.group, status: d.to } }, lastResponderUid: donor }) },
-      updateMask: { fieldPaths: [`responders.\`${donor}\``, "lastResponderUid"] },
+        responders: { [donor]: { name: entry.name, group: entry.group, status: d.to } }, lastResponderUid: donor,
+        ...(fills ? { status: "FULFILLED" } : {}) }) },
+      updateMask: { fieldPaths: [`responders.\`${donor}\``, "lastResponderUid", ...(fills ? ["status"] : [])] },
       updateTransforms: [...serverTime("updatedAt"),
         ...(d.to === "DONATED" ? [{ fieldPath: "unitsFulfilled", increment: { integerValue: "1" } }] : [])] },
+    ...(fills ? [{ update: { name: name(`userStats/${uid}`), fields: fields({ lastRequestId: rid }) },
+      updateMask: { fieldPaths: ["lastRequestId"] },
+      updateTransforms: [{ fieldPath: "openRequests", increment: { integerValue: "-1" } }] }] : []),
     { update: { name: name(`users/${donor}/notifications/${d.inbox}_${rid}`),
         fields: fields({ type: d.inbox, fromUid: uid, requestId: rid }) },
       updateTransforms: serverTime("createdAt"), currentDocument: { exists: false } },
   ]);
   if (!res.ok) fail(`${d.done} refused by the rules: ${err(res)}`);
-  console.log(`PASS  offer from ${donor} on ${rid} ${d.done} through the rules (+ the donor's inbox item)`);
+  console.log(`PASS  offer from ${donor} on ${rid} ${d.done} through the rules (+ the donor's inbox item)${fills ? "; the request is FULFILLED (userStats -1)" : ""}`);
   const n = await workerPost(`/v1/requests/${rid}/responses/${donor}/notify`);
+  if (fills) {
+    // Donors still OFFERED or CONFIRMED learn it's fulfilled (REQUEST_FULFILLED), as after a close.
+    const nr = await workerPost(`/v1/requests/${rid}/notify-responders`);
+    process.exit((n && n.status !== 202) || (nr && nr.status !== 202) ? 1 : 0);
+  }
   console.log(`      to close it later: node scripts/live-request.mjs --email ${args.email} --cancel ${rid}`);
   process.exit(n && n.status !== 202 ? 1 : 0);
 }
