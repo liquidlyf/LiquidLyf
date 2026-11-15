@@ -93,7 +93,8 @@ class StoreScreenshotsTest {
     private val geo by lazy { target.assets.open("bd-geo.json").bufferedReader().use { BdGeoParser.parse(it.readText()) } }
     private val now: Instant = Instant.now()
 
-    private val me = TestData.profile(uid = "me").copy(fullName = "Nusrat Jahan", phoneVerified = true)
+    // phoneVerified false: phone verification is v1.1 (the Worker sets it), so no v1.0 user shows that badge.
+    private val me = TestData.profile(uid = "me").copy(fullName = "Nusrat Jahan", phoneVerified = false)
     private val request = TestData.request(id = "r1", neededBy = now.plus(Duration.ofHours(5)))
         .copy(urgency = Urgency.URGENT, unitsNeeded = 2, condition = PatientCondition.THALASSEMIA, createdAt = now.minus(Duration.ofMinutes(12)))
 
@@ -184,7 +185,7 @@ class StoreScreenshotsTest {
     fun findDonors() {
         val card = { uid: String, name: String, donations: Int, verified: Int -> DonorCard(
             uid, name, BloodGroup.B_POS, TestData.DHAKA_SOUTH, available = true,
-            eligibleFrom = Instant.EPOCH, donationCount = donations, verifiedDonations = verified, phoneVerified = true, lastActiveAt = now,
+            eligibleFrom = Instant.EPOCH, donationCount = donations, verifiedDonations = verified, phoneVerified = false, lastActiveAt = now,
         ) }
         val filters = DonorFilters(groups = setOf(BloodGroup.B_POS), division = me.area.division, district = me.area.district)
         val results = listOf(card("a", "Rahim U.", 5, 3), card("b", "Sadia A.", 2, 1), card("c", "Tanvir H.", 1, 0))
