@@ -1,5 +1,6 @@
 package io.github.liquidlyf.core.data.profile
 
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.WriteBatch
@@ -112,7 +113,10 @@ class FirestoreProfileRepository @Inject constructor(
 
     override suspend fun profile(uid: String, refresh: Boolean): AppResult<UserProfile?> = appResultOf {
         val snap = db.userRef(uid).getCacheFirst(refresh)
-        snap.data?.let { UserDoc.fromMap(uid, it) }
+        // ESTIMATE: right after a write, a server timestamp the server hasn't set yet reads as the
+        // local time, not null. Null lastActiveAt made the session "touch" a profile it had just
+        // created, a write the rules refuse (3 days between touches).
+        snap.getData(DocumentSnapshot.ServerTimestampBehavior.ESTIMATE)?.let { UserDoc.fromMap(uid, it) }
     }
 
     override suspend fun stats(uid: String, refresh: Boolean): AppResult<UserStats?> = appResultOf {
