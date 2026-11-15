@@ -19,6 +19,7 @@ import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
+import io.github.liquidlyf.core.domain.StatusTransitions
 import io.github.liquidlyf.core.firebase.endOnListenError
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.DonorResponse
@@ -257,9 +258,20 @@ class RequestDetailViewModel @Inject constructor(
 
     private fun decide(response: DonorResponse, to: ResponseStatus, @StringRes done: Int) = act(done) { r, _ ->
         offers.decide(r, response, to).also { result ->
-            if (result is AppResult.Success) viewModelScope.launch { worker.notifyOffer(r.id, response.donorUid) }
+            if (result is AppResult.Success) {
+                viewModelScope.launch {
+                    worker.notifyOffer(r.id, response.donorUid)
+                    // The last unit closes the request, like "Found blood": tell donors still waiting.
+                    if (fillsRequest(r, to)) worker.notifyResponders(r.id)
+                }
+            }
         }
     }
+
+    /** The same rule as OfferRepository.decide: this donation brings an OPEN request to FULFILLED. */
+    private fun fillsRequest(r: BloodRequest, to: ResponseStatus): Boolean =
+        to == ResponseStatus.DONATED && r.status == RequestStatus.OPEN &&
+            StatusTransitions.statusAfterDonation(r.unitsFulfilled + 1, r.unitsNeeded) == RequestStatus.FULFILLED
 
     /** "Found blood" (FULFILLED) or "No longer needed" (CANCELLED); donors still waiting are told. */
     fun close(status: RequestStatus, reason: String?) = act(R.string.detail_closed) { r, _ ->

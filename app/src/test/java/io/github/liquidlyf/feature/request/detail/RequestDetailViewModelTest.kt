@@ -185,6 +185,34 @@ class RequestDetailViewModelTest {
         assertEquals(RequestStatus.FULFILLED, r.status)
         assertEquals(listOf(ResponseStatus.CONFIRMED, ResponseStatus.DONATED), offers.decisions.map { it.third })
         assertEquals(listOf("r1" to "donor", "r1" to "donor"), worker.offerNotices)
+        // The last unit closed the request: donors still waiting are told, as on "Found blood".
+        assertEquals(listOf("r1"), worker.responderNotices)
+    }
+
+    @Test
+    fun `only the donation that fills the request tells the other waiting donors`() = runTest(dispatcher) {
+        requests.put(TestData.request(id = "r2", group = BloodGroup.B_POS).copy(unitsNeeded = 2))
+        val donor2 = TestData.profile(uid = "donor2").copy(fullName = "Rina Begum")
+        profiles.profiles["donor2"] = donor2
+        offers.offer(requests.requests.value.getValue("r2"), donor, null)
+        offers.offer(requests.requests.value.getValue("r2"), donor2, null)
+        signInAs(requester)
+        val vm = vm("r2")
+        advanceUntilIdle()
+
+        vm.confirm(vm.uiState.value.responses.first { it.donorUid == "donor" })
+        advanceUntilIdle()
+        vm.markDonated(vm.uiState.value.responses.first { it.donorUid == "donor" })
+        advanceUntilIdle()
+        assertEquals(RequestStatus.OPEN, vm.uiState.value.request!!.status)
+        assertEquals("1 of 2 units: still open, nobody else told", emptyList<String>(), worker.responderNotices)
+
+        vm.confirm(vm.uiState.value.responses.first { it.donorUid == "donor2" })
+        advanceUntilIdle()
+        vm.markDonated(vm.uiState.value.responses.first { it.donorUid == "donor2" })
+        advanceUntilIdle()
+        assertEquals(RequestStatus.FULFILLED, vm.uiState.value.request!!.status)
+        assertEquals(listOf("r2"), worker.responderNotices)
     }
 
     @Test
