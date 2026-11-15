@@ -226,7 +226,8 @@ class FirestoreDocsTest {
             .forEach { assertEquals(it, 0, m[it]) }
         assertEquals(emptyMap<String, Any?>(), m[RequestDoc.RESPONDERS])
         listOf(RequestDoc.NEXT_TIER_AT, RequestDoc.CREATED_AT, RequestDoc.UPDATED_AT).forEach { assertTrue(it, isServerTime(m[it])) }
-        listOf(RequestDoc.CLOSED_REASON, RequestDoc.LAST_RESPONDER_UID, RequestDoc.LAST_ASKED_UID, RequestDoc.UPAZILA,
+        // "lastAskedUid" lives on the requester's own stats now: a request never names whom they asked.
+        listOf(RequestDoc.CLOSED_REASON, RequestDoc.LAST_RESPONDER_UID, "lastAskedUid", RequestDoc.UPAZILA,
             RequestDoc.HOSPITAL_ID, RequestDoc.HOSPITAL_ADDRESS).forEach { assertFalse(it, it in m) }
     }
 

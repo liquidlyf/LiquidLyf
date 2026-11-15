@@ -56,7 +56,6 @@ object RequestDoc {
     const val UPDATED_AT = "updatedAt"
     const val EXPIRES_AT = "expiresAt"
     const val LAST_RESPONDER_UID = "lastResponderUid"
-    const val LAST_ASKED_UID = "lastAskedUid"
 
     private const val LAT = "lat"
     private const val LNG = "lng"

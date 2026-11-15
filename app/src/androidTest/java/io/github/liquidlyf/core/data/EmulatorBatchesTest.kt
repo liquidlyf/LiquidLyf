@@ -16,6 +16,7 @@ import io.github.liquidlyf.core.firebase.dto.DonorDoc
 import io.github.liquidlyf.core.firebase.dto.RequestDoc
 import io.github.liquidlyf.core.firebase.dto.donorRef
 import io.github.liquidlyf.core.firebase.dto.requestRef
+import io.github.liquidlyf.core.firebase.dto.statsRef
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodComponent
@@ -313,7 +314,11 @@ class EmulatorBatchesTest {
         val request = serverRequest(rid)
         safety.askToDonate(request, card).ok()
         assertEquals(1, serverRequest(rid).askCount)
-        assertEquals(donorUid, db.requestRef(rid).get(Source.SERVER).await().getString(RequestDoc.LAST_ASKED_UID))
+        // Whom I asked is on my own stats, not on the public request (B's d6b9d74).
+        val stats = db.statsRef(requesterUid).get(Source.SERVER).await()
+        assertEquals(donorUid, stats.getString(io.github.liquidlyf.core.firebase.dto.UserStatsDoc.LAST_ASKED_UID))
+        assertEquals(rid, stats.getString(io.github.liquidlyf.core.firebase.dto.UserStatsDoc.LAST_ASK_RID))
+        assertFalse(db.requestRef(rid).get(Source.SERVER).await().contains("lastAskedUid"))
         // The ask's id is fixed per donor and request: asking again is refused.
         assertEquals(AppResult.Failure(io.github.liquidlyf.core.util.AppError.PermissionDenied), safety.askToDonate(serverRequest(rid), card))
     }

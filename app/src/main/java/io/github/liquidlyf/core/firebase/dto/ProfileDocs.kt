@@ -248,6 +248,13 @@ object UserStatsDoc {
     const val TOTAL_REQUESTS = "totalRequests"
     const val LAST_REQUEST_ID = "lastRequestId"
 
+    /**
+     * Whom I asked last, for which request (contract 14, B's d6b9d74). On my own stats, which only
+     * I and admins can read: on the request it would tell everyone which donor was asked.
+     */
+    const val LAST_ASKED_UID = "lastAskedUid"
+    const val LAST_ASK_RID = "lastAskRid"
+
     fun fromMap(m: Map<String, Any?>): UserStats = UserStats(
         openRequests = m.int(OPEN_REQUESTS) ?: 0,
         totalRequests = m.int(TOTAL_REQUESTS) ?: 0,

@@ -8,9 +8,11 @@ import io.github.liquidlyf.core.firebase.appResultOf
 import io.github.liquidlyf.core.firebase.dto.InboxDoc
 import io.github.liquidlyf.core.firebase.dto.ReportDoc
 import io.github.liquidlyf.core.firebase.dto.RequestDoc
+import io.github.liquidlyf.core.firebase.dto.UserStatsDoc
 import io.github.liquidlyf.core.firebase.dto.inbox
 import io.github.liquidlyf.core.firebase.dto.reportRef
 import io.github.liquidlyf.core.firebase.dto.requestRef
+import io.github.liquidlyf.core.firebase.dto.statsRef
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.DonorCard
 import io.github.liquidlyf.core.model.InboxType
@@ -95,9 +97,13 @@ class FirestoreSafetyRepository @Inject constructor(private val db: FirebaseFire
                 db.requestRef(request.id),
                 mapOf(
                     RequestDoc.ASK_COUNT to FieldValue.increment(1),
-                    RequestDoc.LAST_ASKED_UID to donor.uid,
                     RequestDoc.UPDATED_AT to FieldValue.serverTimestamp(),
                 ),
+            )
+            // Whom I asked goes on my own stats (owner and admins only), never on the public request.
+            batch.update(
+                db.statsRef(request.requesterUid),
+                mapOf(UserStatsDoc.LAST_ASKED_UID to donor.uid, UserStatsDoc.LAST_ASK_RID to request.id),
             )
             batch.commit().await()
         }
