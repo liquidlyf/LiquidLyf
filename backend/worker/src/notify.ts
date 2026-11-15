@@ -2,6 +2,7 @@
 // the inbox item through the rules; this sends the push that wakes the other person's phone.
 //   POST /v1/requests/{rid}/responses/{donorUid}/notify   one response changed state
 //   POST /v1/requests/{rid}/notify-responders             the requester closed the request
+//   (asks to donate: src/asks.ts)
 // The Worker re-reads the doc and checks the caller's role for its CURRENT state, so a caller
 // can only announce something that really happened. Payload: {type, requestId}, nothing else,
 // because anyone could subscribe to someone's usr_ topic. Rate-limited per uid (auth.ts).
@@ -29,7 +30,8 @@ export const personalTopic = (uid: string) => {
   return `usr_${uid}`;
 };
 
-async function send(env: Env, token: string, topics: string[], data: Record<string, string>, collapseKey: string) {
+/** Sends one push to each condition of up to 5 topics; any FCM failure is a 503 (the app retries). */
+export async function send(env: Env, token: string, topics: string[], data: Record<string, string>, collapseKey: string) {
   for (const condition of toConditions(topics)) {
     if (await sendToCondition(env, token, { condition, data, collapseKey }) !== "ok") {
       throw new HttpError(503, "push service unavailable, try again");

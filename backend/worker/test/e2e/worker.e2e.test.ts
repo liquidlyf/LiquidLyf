@@ -99,3 +99,41 @@ describe("Worker in workerd + emulators", () => {
     expect(await (await dispatch("r2", alice)).json()).toMatchObject({ tier: 3 });
   });
 });
+
+// Ask to donate (phase-06 6.2): the push for an ask already written through the rules, with the
+// per-uid daily cap counted by a collection-group query over every inbox.
+describe("ask notify in workerd + emulators", () => {
+  const askNotify = (rid: string, donor: string, token: string) =>
+    worker.fetch(`/v1/requests/${rid}/asks/${donor}/notify`, { method: "POST", headers: { authorization: `Bearer ${token}` } });
+  const askItem = (rid: string, from = "e2e-alice", createdAt = new Date()) =>
+    ({ type: "ASKED_TO_DONATE", fromUid: from, requestId: rid, createdAt });
+
+  test("an ask that exists is pushed (202); a missing one is 409; a stranger 403", async () => {
+    await putDoc("requests/r1", newRequest("e2e-alice", { askCount: 1, lastAskedUid: "e2e-bob" }));
+    await putDoc("users/e2e-bob/notifications/ask_r1", askItem("r1"));
+    const ok = await askNotify("r1", "e2e-bob", alice);
+    expect(ok.status).toBe(202);
+    expect(await ok.json()).toEqual({ accepted: true, type: "ASKED_TO_DONATE" });
+    expect((await askNotify("r1", "e2e-carol", alice)).status).toBe(409);
+    expect((await askNotify("r1", "e2e-bob", mallory)).status).toBe(403);
+  });
+
+  test("the 31st ask in 24 hours is refused with dailyAskCap; older asks and other people's don't count", async () => {
+    // Fresh askers: the per-uid rate limit (10 calls/min) must not mix with the other tests.
+    const ask1 = await signedInUser("e2e-asker1");
+    const ask2 = await signedInUser("e2e-asker2");
+    for (let i = 0; i < 30; i++) await putDoc(`users/d${i}/notifications/ask_x${i}`, askItem(`x${i}`, "e2e-asker1", new Date(Date.now() - i * 60_000)));
+    await putDoc("users/old/notifications/ask_y", askItem("y", "e2e-asker2", new Date(Date.now() - 25 * 3_600_000)));
+    for (let i = 0; i < 29; i++) await putDoc(`users/e${i}/notifications/ask_w${i}`, askItem(`w${i}`, "e2e-asker2"));
+    await putDoc("users/z/notifications/ask_z", askItem("z", "e2e-mallory"));
+    await putDoc("requests/r1", newRequest("e2e-asker1", { askCount: 1, lastAskedUid: "e2e-bob" }));
+    await putDoc("users/e2e-bob/notifications/ask_r1", askItem("r1", "e2e-asker1"));
+    await putDoc("requests/r2", newRequest("e2e-asker2", { askCount: 1, lastAskedUid: "e2e-bob" }));
+    await putDoc("users/e2e-bob/notifications/ask_r2", askItem("r2", "e2e-asker2"));
+    const over = await askNotify("r1", "e2e-bob", ask1); // 31 in 24 h
+    expect(over.status).toBe(429);
+    expect(await over.json()).toEqual({ error: "daily ask limit reached", dailyAskCap: true });
+    const at = await askNotify("r2", "e2e-bob", ask2);   // 30 in 24 h (+1 older than a day)
+    expect(at.status).toBe(202);
+  });
+});

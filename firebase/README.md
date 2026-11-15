@@ -98,7 +98,7 @@ General:
 13. **Self-reported donation:** `donations/{id}` with `source SELF`, `verified false` + `donationCount +1`, `lastDonationId: id`. Deleting it needs `donationCount −1` with `lastDonationId: id`.
 
 ### Trust and safety
-14. **Ask to donate (requester):** `users/{donor}/notifications/ask_{rid}` + request `askCount +1` (max 10), `lastAskedUid: donor`. The donor must be listed, in `acceptedGroups`, and must not have blocked you.
+14. **Ask to donate (requester):** `users/{donor}/notifications/ask_{rid}` (`type: ASKED_TO_DONATE`) + request `askCount +1` (max 10), `lastAskedUid: donor`. The donor must be listed, in `acceptedGroups`, and must not have blocked you. Then call the Worker's `POST /v1/requests/{rid}/asks/{donor}/notify`, which pushes it and applies the daily cap of 30 asks (`backend/worker/README.md`).
 15. **Report a request:** `reports/{myUid}_{rid}` + request `reportCount +1`. When the new count is ≥ 3, the same batch may set `status: REMOVED`. A user report (`targetType USER`) is the report doc alone.
 16. **Account deletion** (doc 06 §4.7). These paths don't check `verified` or `banned`, so a suspended user can still delete their account. On resume, re-read the server state before each step: for example, only a request that is still OPEN gets the `userStats −1`.
     1. **Withdraw my active offers:** batch 10 for each OFFERED or CONFIRMED response.
@@ -135,6 +135,7 @@ General:
 - **Responders (requester):** `requests/{rid}/responses` **must** filter `where('requesterUid', '==', myUid)`.
 - **My offers:** `collectionGroup('responses')` **must** filter `where('donorUid', '==', myUid)`.
 - **Inbox:** `users/{me}/notifications` (owner only). Items are immutable; "seen" is `users.inboxSeenAt`.
+- **Find donors (phase-06 6.1):** `donors` where `district == X` (or `upazila == Y` for the area filter), `bloodGroup in [chips]`, `available == true`, plus `eligibleFrom <= now` for "Eligible now", `orderBy('eligibleFrom')`, `limit 20`, paged with `startAfter`; the header uses `count()`. Indexes: `(district | upazila, bloodGroup, available, eligibleFrom)`. Donor cards carry no phone number.
 
 ## Design notes
 

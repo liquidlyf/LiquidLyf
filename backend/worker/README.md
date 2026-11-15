@@ -71,6 +71,17 @@ The Worker re-reads the doc (1 read) and checks the caller's role against the **
 
 Responses: 202 `{accepted, type}`. 403 means it isn't your request or offer; 409 means there's nothing to announce in this state. Other codes are as in the table above.
 
+**Ask to donate (Phase 6, write contract 14).** After the ask batch commits (`users/{donor}/notifications/ask_{rid}` + `askCount +1`):
+
+```
+POST {worker_base_url}/v1/requests/{requestId}/asks/{donorUid}/notify
+```
+
+- The Worker checks that the caller owns the request, that it's `OPEN`, and that the inbox item exists with `type ASKED_TO_DONATE`, `fromUid` = the caller and `createdAt` at most 10 minutes ago. The rules already checked the rest when the ask was written: a listed, compatible donor who hasn't blocked you, and at most 10 asks per request.
+- It sends `{type: "ASKED_TO_DONATE", requestId}` to `usr_{donorUid}`, collapse key `{requestId}:ASKED_TO_DONATE`.
+- **Daily cap: 30 asks per person in any 24 hours**, counted over every inbox (collection-group index `notifications (fromUid, type, createdAt)`). Over the cap: 429 `{error, dailyAskCap: true}`. The ask stays in the donor's inbox but isn't pushed: tell the user they've reached today's limit.
+- 202 `{accepted, type}`; 403 not your request; 404 no request; 409 closed, no such ask, or too old. Cost: 3 reads + 1 push.
+
 **The push the donor's phone receives:**
 - data-only, high priority, collapse key = `requestId`;
 - data: `{type: "NEW_REQUEST", requestId, bloodGroup, district, urgency, tier}`.

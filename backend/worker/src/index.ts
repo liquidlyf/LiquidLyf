@@ -1,6 +1,7 @@
 // LiquidLyf Worker (Cloudflare Workers Free).
-//   HTTP: GET /health; POST dispatch (tier 1), notify (one response), notify-responders.
+//   HTTP: GET /health; POST dispatch (tier 1), notify (one response), notify-responders, ask notify.
 //   Crons (wrangler.jsonc triggers): escalation sweep, expiry, retention clean-up, report alerts.
+import { notifyAsk } from "./asks";
 import { authenticate } from "./auth";
 import { dispatch } from "./dispatch";
 import type { Env } from "./env";
@@ -15,6 +16,7 @@ const ID = "([A-Za-z0-9_-]{1,128})";
 const DISPATCH = new RegExp(`^/v1/requests/${ID}/dispatch$`);
 const NOTIFY = new RegExp(`^/v1/requests/${ID}/responses/${ID}/notify$`);
 const NOTIFY_RESPONDERS = new RegExp(`^/v1/requests/${ID}/notify-responders$`);
+const NOTIFY_ASK = new RegExp(`^/v1/requests/${ID}/asks/${ID}/notify$`);
 
 /** Must match wrangler.jsonc "triggers.crons" (test/wiring.test.ts checks). */
 export const CRONS = {
@@ -35,11 +37,13 @@ export default {
       const d = DISPATCH.exec(pathname);
       const n = NOTIFY.exec(pathname);
       const nr = NOTIFY_RESPONDERS.exec(pathname);
-      if (!d && !n && !nr) throw new HttpError(404, "not found");
+      const na = NOTIFY_ASK.exec(pathname);
+      if (!d && !n && !nr && !na) throw new HttpError(404, "not found");
       if (req.method !== "POST") throw new HttpError(405, "method not allowed");
       const user = await authenticate(req, env);
       if (d) return await dispatch(env, user, d[1]);
       if (n) return await notifyResponse(env, user, n[1], n[2]);
+      if (na) return await notifyAsk(env, user, na[1], na[2]);
       return await notifyResponders(env, user, nr![1]);
     } catch (e) {
       if (e instanceof HttpError) return json({ error: e.message }, e.status);
