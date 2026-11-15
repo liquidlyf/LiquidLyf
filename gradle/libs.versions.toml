@@ -29,6 +29,7 @@ work = "2.12.0"
 firebaseBom = "35.2.0"
 
 # Other libraries
+aboutLibraries = "15.3.0"
 desugarJdkLibs = "2.1.5"
 googleid = "1.2.1"
 kotlinxCoroutines = "1.11.0"
@@ -63,6 +64,7 @@ androidx-hilt-lifecycle-viewmodel-compose = { group = "androidx.hilt", name = "h
 
 # App support
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+aboutlibraries-compose-m3 = { group = "com.mikepenz", name = "aboutlibraries-compose-m3", version.ref = "aboutLibraries" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
@@ -114,3 +116,5 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }
+# Settings → About → Open-source licences: generates res/raw/aboutlibraries.json from the dependencies.
+aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutLibraries" }

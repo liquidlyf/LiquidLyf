@@ -34,6 +34,10 @@ class SafeIntentsTest {
             "mailto:liquidlyf@gmail.com?subject=My%20account%20%26%20you",
             SafeIntents.mailtoUri(" liquidlyf@gmail.com ", "My account & you"),
         )
+        assertEquals(
+            "mailto:liquidlyf@gmail.com?subject=Hi&body=App%20version%3A%201.0%0AAndroid%3A%2011",
+            SafeIntents.mailtoUri("liquidlyf@gmail.com", "Hi", "App version: 1.0\nAndroid: 11"),
+        )
     }
 
     @Test

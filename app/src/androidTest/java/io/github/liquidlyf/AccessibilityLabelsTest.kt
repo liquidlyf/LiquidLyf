@@ -14,7 +14,10 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -298,6 +301,35 @@ class AccessibilityLabelsTest {
         compose.onNodeWithText(str(R.string.language_bangla)).assertExists()
         compose.onNodeWithText(str(R.string.settings_list_me)).assertExists()
         assertControlsAreLabelledAndBigEnough("Settings, Google-only account")
+    }
+
+    @Test
+    fun aboutCarriesTheLegalNotices() {
+        show {
+            io.github.liquidlyf.feature.about.AboutScreen(
+                version = "1.0.0", onBack = {}, onOpenPrivacy = {}, onOpenTerms = {}, onOpenDeletionPage = {},
+                onOpenMedicalDisclaimer = {}, onOpenHowMatchingWorks = {}, onOpenLicences = {}, onOpenSourceCode = {},
+                onContact = {}, onSendFeedback = {},
+            )
+        }
+        // AGPL 7(b): forks must keep this line (LICENSING.md); and the source-code link (section 13).
+        compose.onNodeWithText(str(R.string.about_based_on)).assertExists()
+        compose.onNodeWithText(str(R.string.about_source_code)).assertExists()
+        assertControlsAreLabelledAndBigEnough("About")
+    }
+
+    @Test
+    fun licencesShowTheAreaDataAndTheLibraries() {
+        show { io.github.liquidlyf.feature.about.LicencesScreen(onBack = {}) }
+        compose.onNodeWithText(str(R.string.licences_area_title)).assertExists()
+        // The list the AboutLibraries plugin generated from the build loads (Firestore is in it, further down).
+        compose.waitUntil(10_000) {
+            runCatching {
+                compose.onNode(androidx.compose.ui.test.hasScrollAction())
+                    .performScrollToNode(androidx.compose.ui.test.hasText("firebase-firestore", substring = true))
+            }.isSuccess
+        }
+        compose.onAllNodesWithText("firebase-firestore", substring = true).onFirst().assertExists()
     }
 
     @Test

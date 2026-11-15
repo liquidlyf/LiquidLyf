@@ -42,6 +42,7 @@ import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.SectionHeader
 import io.github.liquidlyf.core.designsystem.screenGutter
+import io.github.liquidlyf.feature.about.versionLabel
 import kotlinx.coroutines.launch
 
 /** Phase 8.1: every setting here changes real behaviour and is saved. */
@@ -58,6 +59,8 @@ fun SettingsScreen(
     onOpenSafetyTips: () -> Unit = {},
     onOpenBlockedPeople: () -> Unit = {},
     onOpenModeration: () -> Unit = {},
+    onOpenAbout: () -> Unit = {},
+    onOpenHowMatchingWorks: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -81,6 +84,8 @@ fun SettingsScreen(
         onOpenSafetyTips = dropUnlessResumed(block = onOpenSafetyTips),
         onOpenBlockedPeople = dropUnlessResumed(block = onOpenBlockedPeople),
         onOpenModeration = dropUnlessResumed(block = onOpenModeration),
+        onOpenAbout = dropUnlessResumed(block = onOpenAbout),
+        onOpenHowMatchingWorks = dropUnlessResumed(block = onOpenHowMatchingWorks),
         onLanguageChange = viewModel::setLanguage,
         onListedChange = viewModel::setListed,
         onAvailableChange = viewModel::setAvailable,
@@ -108,6 +113,8 @@ internal fun SettingsContent(
     onLanguageChange: (AppLanguage) -> Unit = {},
     onListedChange: (Boolean) -> Unit = {},
     onAvailableChange: (Boolean) -> Unit = {},
+    onOpenAbout: () -> Unit = {},
+    onOpenHowMatchingWorks: () -> Unit = {},
 ) {
     var askListing by remember { mutableStateOf(false) }
     Scaffold(
@@ -169,6 +176,11 @@ internal fun SettingsContent(
                 supportingContent = { Text(stringResource(R.string.settings_safety_tips_summary)) },
                 modifier = Modifier.clickable(role = Role.Button, onClick = onOpenSafetyTips),
             )
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.title_how_matching_works)) },
+                supportingContent = { Text(stringResource(R.string.settings_how_matching_summary)) },
+                modifier = Modifier.clickable(role = Role.Button, onClick = onOpenHowMatchingWorks),
+            )
 
             // Logout (BUG-003): alerts stop, the session ends and the gate clears the back stack.
             SectionHeader(stringResource(R.string.settings_account), sectionPadding)
@@ -205,6 +217,14 @@ internal fun SettingsContent(
             ListItem(
                 headlineContent = { Text(stringResource(R.string.title_delete_account), color = MaterialTheme.colorScheme.error) },
                 modifier = Modifier.clickable(role = Role.Button, onClick = onDeleteAccount),
+            )
+
+            // 8.1 About: the legal pages, the licences, the source code (AGPL) and how to reach us.
+            SectionHeader(stringResource(R.string.settings_about), sectionPadding)
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.title_about)) },
+                supportingContent = { Text(stringResource(R.string.about_version, versionLabel())) },
+                modifier = Modifier.clickable(role = Role.Button, onClick = onOpenAbout),
             )
 
             if (showDeveloperOptions) {

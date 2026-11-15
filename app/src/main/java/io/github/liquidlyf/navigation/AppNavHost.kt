@@ -53,10 +53,14 @@ import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.windowWidth
 import io.github.liquidlyf.core.util.AppError
+import io.github.liquidlyf.feature.about.AboutRoute
+import io.github.liquidlyf.feature.about.HowMatchingWorksScreen
+import io.github.liquidlyf.feature.about.LicencesScreen
+import io.github.liquidlyf.feature.about.MedicalDisclaimerScreen
+import io.github.liquidlyf.feature.account.AddPasswordRoute
 import io.github.liquidlyf.feature.account.ChangePasswordRoute
 import io.github.liquidlyf.feature.account.DeleteAccountRoute
 import io.github.liquidlyf.feature.account.DeletingAccountRoute
-import io.github.liquidlyf.feature.account.AddPasswordRoute
 import io.github.liquidlyf.feature.account.EditProfileRoute
 import io.github.liquidlyf.feature.auth.ForgotPasswordRoute
 import io.github.liquidlyf.feature.auth.SignInRoute
@@ -74,12 +78,12 @@ import io.github.liquidlyf.feature.profilesetup.ProfileSetupRoute
 import io.github.liquidlyf.feature.request.create.CreateRequestRoute
 import io.github.liquidlyf.feature.request.detail.RequestDetailRoute
 import io.github.liquidlyf.feature.request.list.RequestsRoute
+import io.github.liquidlyf.feature.safety.BlockedPeopleRoute
+import io.github.liquidlyf.feature.safety.SafetyTipsRoute
 import io.github.liquidlyf.feature.session.NotificationPermissionScreen
 import io.github.liquidlyf.feature.session.SessionProblemScreen
 import io.github.liquidlyf.feature.session.SuspendedScreen
 import io.github.liquidlyf.feature.session.needsNotificationPermission
-import io.github.liquidlyf.feature.safety.BlockedPeopleRoute
-import io.github.liquidlyf.feature.safety.SafetyTipsRoute
 import io.github.liquidlyf.feature.settings.NotificationPrefsRoute
 import io.github.liquidlyf.feature.settings.SettingsScreen
 
@@ -334,8 +338,21 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                     onOpenSafetyTips = { navController.navigate(SafetyTips) { launchSingleTop = true } },
                     onOpenBlockedPeople = { navController.navigate(BlockedPeople) { launchSingleTop = true } },
                     onOpenModeration = { navController.navigate(Moderation) { launchSingleTop = true } },
+                    onOpenAbout = { navController.navigate(About) { launchSingleTop = true } },
+                    onOpenHowMatchingWorks = { navController.navigate(HowMatchingWorks) { launchSingleTop = true } },
                 )
             }
+            composable<About> {
+                AboutRoute(
+                    onBack = { navController.popBackStack() },
+                    onOpenMedicalDisclaimer = dropUnlessResumed { navController.navigate(MedicalDisclaimer) { launchSingleTop = true } },
+                    onOpenHowMatchingWorks = dropUnlessResumed { navController.navigate(HowMatchingWorks) { launchSingleTop = true } },
+                    onOpenLicences = dropUnlessResumed { navController.navigate(Licences) { launchSingleTop = true } },
+                )
+            }
+            composable<MedicalDisclaimer> { MedicalDisclaimerScreen(onBack = { navController.popBackStack() }) }
+            composable<HowMatchingWorks> { HowMatchingWorksScreen(onBack = { navController.popBackStack() }) }
+            composable<Licences> { LicencesScreen(onBack = { navController.popBackStack() }) }
             composable<EditProfile> { EditProfileRoute(onDone = { navController.popBackStack() }) }
             composable<ChangePassword> { ChangePasswordRoute(onDone = { navController.popBackStack() }) }
             composable<AddPassword> { AddPasswordRoute(onDone = { navController.popBackStack() }) }

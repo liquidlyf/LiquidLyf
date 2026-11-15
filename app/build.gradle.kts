@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.aboutlibraries.android)
 }
 
 // Blood compatibility and fan-out test vectors, shared with firebase/ and backend/worker/.
@@ -208,6 +209,7 @@ dependencies {
 
     // App support
     implementation(libs.androidx.appcompat)
+    implementation(libs.aboutlibraries.compose.m3)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.datastore.preferences)

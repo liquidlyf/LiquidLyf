@@ -61,3 +61,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object SafetyTips
 @Serializable data object BlockedPeople
 @Serializable data object Moderation
+@Serializable data object About
+@Serializable data object MedicalDisclaimer
+@Serializable data object HowMatchingWorks
+@Serializable data object Licences

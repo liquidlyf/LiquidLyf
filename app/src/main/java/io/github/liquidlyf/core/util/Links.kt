@@ -19,6 +19,12 @@ object Links {
 
     fun privacy(locale: AppLocale): String = page(locale, "privacy")
 
+    /** How account deletion works, for people without the app (Phase 8.2). */
+    fun deleteAccount(locale: AppLocale): String = page(locale, "delete-account")
+
+    /** AGPL section 13: the official app's source. A fork must point this to its own source. */
+    const val SOURCE_CODE = "https://github.com/liquidlyf/LiquidLyf"
+
     /** The download page (Phase 10.3) that "Share LiquidLyf" links to. */
     fun download(locale: AppLocale): String = page(locale, "download")
 

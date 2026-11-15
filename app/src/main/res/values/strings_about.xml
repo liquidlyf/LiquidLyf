@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 8.1/8.3: Settings → About, the medical disclaimer, "How matching works", the licences. -->
+<resources>
+    <string name="settings_about">About</string>
+    <string name="title_about">About LiquidLyf</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_tagline">LiquidLyf helps people in Bangladesh find voluntary blood donors nearby, and lets donors help when someone near them needs blood.</string>
+    <string name="about_privacy">Privacy Policy</string>
+    <string name="about_terms">Terms and Community Guidelines</string>
+    <string name="about_deletion_page">Account deletion</string>
+    <string name="about_deletion_page_summary">What is deleted, and how to ask without the app</string>
+    <string name="about_contact">Contact us</string>
+    <string name="about_contact_summary" translatable="false">liquidlyf@gmail.com</string>
+    <string name="about_feedback">Send feedback</string>
+    <string name="about_feedback_subject">LiquidLyf feedback</string>
+    <string name="about_feedback_body">App version: %1$s\nAndroid: %2$s\n\n</string>
+    <string name="about_source_code">Source code</string>
+    <string name="about_source_code_summary">LiquidLyf is free software (GNU AGPL-3.0-or-later)</string>
+
+    <!-- The Appropriate Legal Notices (AGPL). Forks must keep about_based_on (LICENSING.md, 7(b)). -->
+    <string name="about_legal_copyright" translatable="false">Copyright © 2025–2026 The LiquidLyf contributors</string>
+    <string name="about_legal_licence">LiquidLyf is free software: you can share and change it under the GNU Affero General Public License, version 3 or later. It comes with no warranty.</string>
+    <string name="about_based_on" translatable="false">Based on LiquidLyf — https://github.com/liquidlyf/LiquidLyf</string>
+    <string name="about_trademark">The LiquidLyf name and logo are not covered by that licence.</string>
+    <string name="about_area_credit">Area data: BBS via UN OCHA HDX (CC BY-IGO). Bangla area names: bangladesh-geojson (MIT).</string>
+
+    <string name="title_licences">Open-source licences</string>
+    <string name="licences_area_title">Bangladesh area list</string>
+    <string name="licences_area_hdx">Codes and English names of the divisions, districts and upazilas: Bangladesh Bureau of Statistics (BBS), via UN OCHA\'s Humanitarian Data Exchange (cod-ab-bgd), under the CC BY-IGO licence.</string>
+    <string name="licences_area_bn">Bangla names: bangladesh-geojson by Fahim Reza and contributors, under the MIT licence:</string>
+    <string name="licence_mit_bangladesh_geojson" translatable="false">MIT License\n\nCopyright (c) 2026 Fahim Reza and contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</string>
+
+    <!-- 8.3: the full medical disclaimer (research/play-store-compliance.md §2.11). -->
+    <string name="title_medical_disclaimer">Medical disclaimer</string>
+    <string name="medical_disclaimer_full">LiquidLyf is a community tool that helps people find voluntary blood donors. It is not a medical device and does not diagnose, treat, cure, or prevent any medical condition.\n\nLiquidLyf does not collect, test, store, or supply blood, and does not verify donors\' health or identity. Blood must be donated only at a licensed hospital or blood transfusion centre, where it will be screened.\n\nAlways consult a doctor or other qualified healthcare professional for medical advice. Never pay or accept money for blood. In an emergency, call 999.</string>
+
+    <!-- 8.1 Safety: "How matching works". Kept true to the Worker's tiers; no fixed minutes, they can change. -->
+    <string name="title_how_matching_works">How matching works</string>
+    <string name="settings_how_matching_summary">Who gets alerted, and when your number is shared</string>
+    <string name="matching_intro">When someone posts a blood request, LiquidLyf alerts suitable donors nearby, nearest first. Nobody is alerted more than they need to be.</string>
+    <string name="matching_who_title">Who gets an alert</string>
+    <string name="matching_who_body">Donors who are listed, ready to donate and able to donate now: 18 to 60 years old, with at least 4 months since their last donation, and a blood group the patient can receive.</string>
+    <string name="matching_nearest_title">Nearest first</string>
+    <string name="matching_nearest_body">Alerts start in the hospital\'s upazila. If not enough donors offer, they widen step by step: other suitable blood groups nearby (if the requester accepts them), then the whole district, then the neighbouring districts. Rh-negative requests start with the district, then the whole division. When the offers cover the units needed, the next step waits.</string>
+    <string name="matching_limits_title">No more than needed</string>
+    <string name="matching_limits_body">You get at most two alerts for the same request: when it\'s posted, and once more if it\'s still needed. Each person can send alerts for only a few requests a day.</string>
+    <string name="matching_find_title">Find donors</string>
+    <string name="matching_find_body">A requester can also search listed donors by blood group and area, and ask one to donate. Each person can ask only a limited number of donors a day.</string>
+    <string name="matching_contact_title">Your phone number</string>
+    <string name="matching_contact_body">Your phone number is never listed. It\'s shared with a requester only when you offer to donate on their request. A request\'s contact details are shown only to donors who offered, and they\'re hidden again if the offer is withdrawn or declined.</string>
+    <string name="matching_pause_title">Pause any time</string>
+    <string name="matching_pause_body">Turn off \"Ready to donate\" to pause alerts, or stop being listed in Settings → Privacy. After you donate, alerts stop by themselves until you can donate again.</string>
+</resources>
