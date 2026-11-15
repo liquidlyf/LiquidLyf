@@ -224,6 +224,14 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
 
     val availabilityWrites = mutableListOf<Boolean>()
 
+    val listingWrites = mutableListOf<Boolean>()
+
+    override suspend fun setListed(profile: UserProfile, listed: Boolean) = result {
+        listingWrites += listed
+        profiles[profile.uid] = (profiles[profile.uid] ?: profile).copy(showInDonorSearch = listed)
+        AppResult.Success(Unit)
+    }
+
     override suspend fun setAvailable(profile: UserProfile, available: Boolean) = result {
         availabilityWrites += available
         profiles[profile.uid] = (profiles[profile.uid] ?: profile).copy(available = available)

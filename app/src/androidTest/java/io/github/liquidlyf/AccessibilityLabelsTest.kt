@@ -286,12 +286,17 @@ class AccessibilityLabelsTest {
     fun settingsForAGoogleOnlyAccount() {
         show {
             io.github.liquidlyf.feature.settings.SettingsContent(
-                uiState = io.github.liquidlyf.feature.settings.SettingsUiState(hasPassword = false),
+                uiState = io.github.liquidlyf.feature.settings.SettingsUiState(
+                    hasPassword = false, listed = true, available = true, bloodGroup = io.github.liquidlyf.core.model.BloodGroup.B_POS,
+                ),
                 onBack = {}, onThemeModeChange = {}, onOpenComponentGallery = {}, onEditProfile = {}, onChangePassword = {},
                 onDeleteAccount = {}, onSignOut = {}, showDeveloperOptions = false, onAddPassword = {},
             )
         }
         compose.onNodeWithText(str(R.string.title_add_password)).assertExists()
+        // 8.1: the language choice and the privacy switches (each row is one toggle).
+        compose.onNodeWithText(str(R.string.language_bangla)).assertExists()
+        compose.onNodeWithText(str(R.string.settings_list_me)).assertExists()
         assertControlsAreLabelledAndBigEnough("Settings, Google-only account")
     }
 

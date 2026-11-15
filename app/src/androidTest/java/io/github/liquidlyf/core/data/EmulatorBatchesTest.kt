@@ -116,6 +116,26 @@ class EmulatorBatchesTest {
         profiles.markInboxSeen(me).ok()
     }
 
+    /** 8.1 Settings → Privacy: the switch's own write passes the rules both ways. */
+    @Test
+    fun theListMeSwitchRecordsConsentAndAddsOrRemovesTheCard() = runBlocking {
+        val email = newVerifiedUser("listing")
+        val uid = auth.uid!!
+        profiles.create(uid, email, profileDraft(BloodGroup.A_POS, listed = false)).ok()
+        var me = profiles.profile(uid, refresh = true).ok()!!
+        assertFalse(cardExists(uid))
+
+        profiles.setListed(me, true).ok()
+        assertTrue(cardExists(uid))
+        assertTrue("consent time recorded", db.collection("users").document(uid).get(Source.SERVER).await().getTimestamp("consentAt") != null)
+        me = profiles.profile(uid, refresh = true).ok()!!
+        assertTrue(me.showInDonorSearch)
+
+        profiles.setListed(me, false).ok()
+        assertFalse(cardExists(uid))
+        assertFalse(profiles.profile(uid, refresh = true).ok()!!.showInDonorSearch)
+    }
+
     @Test
     fun selfReportedDonationCountsAndUncounts() = runBlocking {
         val email = newVerifiedUser("self")

@@ -30,6 +30,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
@@ -43,7 +46,6 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.EligibilityRing
-import io.github.liquidlyf.core.designsystem.components.eligibilityText
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.LLExtendedFab
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
@@ -52,16 +54,18 @@ import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.RequestCard
 import io.github.liquidlyf.core.designsystem.components.SectionHeader
+import io.github.liquidlyf.core.designsystem.components.eligibilityText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.profile.BloodGroupReminder
+import io.github.liquidlyf.feature.settings.ListMeDialog
 import io.github.liquidlyf.feature.settings.NotificationsOffBanner
 import io.github.liquidlyf.feature.settings.rememberNotificationsEnabled
-import java.time.Instant
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 @Composable
 fun HomeRoute(
@@ -79,7 +83,7 @@ fun HomeRoute(
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { e -> if (e is HomeEvent.Message) launch { snackbar.showSnackbar(resources.getString(e.text)) } }
     }
-    HomeScreen(state, online, viewModel::onAvailableToggled, onOpenRequest, onCreateRequest, onOpenNotifications, onEditProfile, unreadInbox)
+    HomeScreen(state, online, viewModel::onAvailableToggled, onOpenRequest, onCreateRequest, onOpenNotifications, onEditProfile, unreadInbox, onListMe = viewModel::listMe)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,6 +98,7 @@ internal fun HomeScreen(
     onEditProfile: () -> Unit,
     unreadInbox: Boolean = false,
     notificationsEnabled: Boolean = rememberNotificationsEnabled(),
+    onListMe: () -> Unit = {},
 ) {
     val now by rememberNow()
     val launcher = rememberSafeIntentLauncher()
@@ -132,7 +137,7 @@ internal fun HomeScreen(
                     if (!notificationsEnabled) {
                         item(key = "notifications-off") { NotificationsOffBanner(onTurnOn = launcher::openNotificationSettings) }
                     }
-                    item(key = "availability") { AvailabilityCard(state, onAvailableToggled, onEditProfile) }
+                    item(key = "availability") { AvailabilityCard(state, onAvailableToggled, onEditProfile, onListMe) }
                     item(key = "header") { SectionHeader(stringResource(R.string.home_urgent_near_you)) }
                     val list = state.requests
                     val group = state.profile?.bloodGroup
@@ -174,7 +179,7 @@ private val FAB_CLEARANCE = 88.dp
 
 /** Availability and eligibility (doc 04 §4): the whole row toggles, for TalkBack too. */
 @Composable
-private fun AvailabilityCard(state: HomeUiState, onAvailableToggled: (Boolean) -> Unit, onEditProfile: () -> Unit) {
+private fun AvailabilityCard(state: HomeUiState, onAvailableToggled: (Boolean) -> Unit, onEditProfile: () -> Unit, onListMe: () -> Unit) {
     val p = state.profile ?: return
     when {
         p.bloodGroup == null -> BloodGroupReminder(onAdd = onEditProfile)
@@ -182,7 +187,19 @@ private fun AvailabilityCard(state: HomeUiState, onAvailableToggled: (Boolean) -
             Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 Text(stringResource(R.string.home_not_listed_title), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(R.string.home_not_listed_body), style = MaterialTheme.typography.bodyMedium)
-                TextButton(onClick = onEditProfile) { Text(stringResource(R.string.home_list_me)) }
+                var asking by remember { mutableStateOf(false) }
+                TextButton(onClick = { asking = true }) { Text(stringResource(R.string.home_list_me)) }
+                val group = p.bloodGroup
+                if (asking && group != null) {
+                    ListMeDialog(
+                        bloodGroup = group,
+                        onConfirm = {
+                            asking = false
+                            onListMe()
+                        },
+                        onDismiss = { asking = false },
+                    )
+                }
             }
         }
         else -> Card {

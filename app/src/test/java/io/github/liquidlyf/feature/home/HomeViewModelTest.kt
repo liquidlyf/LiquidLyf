@@ -141,6 +141,19 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `List me lists an unlisted donor and the session reads it again`() = runTest(dispatcher) {
+        val unlisted = me.copy(showInDonorSearch = false)
+        profiles.profiles["me"] = unlisted
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), unlisted)
+        val vm = vm()
+        advanceUntilIdle()
+        vm.listMe()
+        advanceUntilIdle()
+        assertEquals(listOf(true), profiles.listingWrites)
+        assertEquals(1, session.refreshes)
+    }
+
+    @Test
     fun `eligibility counts down the rest period`() = runTest(dispatcher) {
         session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(lastDonationAt = TestData.NOW.minus(Duration.ofDays(100))))
         val vm = vm()

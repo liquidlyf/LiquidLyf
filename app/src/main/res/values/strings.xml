@@ -151,6 +151,16 @@
     <string name="label_password">Password</string>
     <string name="action_sign_in">Sign in</string>
     <string name="action_signing_in">Signing in…</string>
+    <string name="settings_language">Language</string>
+    <string name="language_system">Phone\'s language</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_bangla" translatable="false">বাংলা</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_safety">Safety</string>
+    <string name="settings_list_me">List me as a donor</string>
+    <string name="settings_list_me_summary">People nearby who need your blood group can find you in Find donors and alert you. Your phone number is never listed.</string>
+    <string name="settings_list_me_needs_group">Add your blood group in Edit profile first.</string>
+    <string name="list_me_title">List me as a donor?</string>
     <string name="signing_out">Signing out…</string>
     <string name="action_forgot_password">Forgot password?</string>
     <string name="action_create_account">Create account</string>

@@ -59,6 +59,12 @@ interface ProfileRepository {
     suspend fun setAvailable(profile: UserProfile, available: Boolean): AppResult<Unit>
 
     /**
+     * 8.1 Privacy, "List me as a donor": on records the consent time (server time) and writes the
+     * public card; off withdraws it and deletes the card. Needs a blood group to turn on.
+     */
+    suspend fun setListed(profile: UserProfile, listed: Boolean): AppResult<Unit>
+
+    /**
      * "Not for me" (Phase 4.5): hides a request from Home on every device. The list lives on the
      * user doc (rules: at most 200), so the oldest entries drop off.
      */
@@ -157,6 +163,12 @@ class FirestoreProfileRepository @Inject constructor(
 
     override suspend fun setAvailable(profile: UserProfile, available: Boolean): AppResult<Unit> =
         if (profile.available == available) AppResult.Success(Unit) else writeProfile(profile, profile.copy(available = available))
+
+    override suspend fun setListed(profile: UserProfile, listed: Boolean): AppResult<Unit> = when {
+        profile.showInDonorSearch == listed -> AppResult.Success(Unit)
+        listed && profile.bloodGroup == null -> AppResult.Failure(AppError.InvalidInput)
+        else -> writeProfile(profile, profile.copy(showInDonorSearch = listed), if (listed) setOf(UserDoc.CONSENT_AT) else emptySet())
+    }
 
     override suspend fun hideRequest(profile: UserProfile, requestId: String): AppResult<Unit> {
         if (requestId in profile.hiddenRequestIds) return AppResult.Success(Unit)

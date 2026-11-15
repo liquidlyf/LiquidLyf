@@ -19,6 +19,9 @@ abstract class SettingsModule {
     @Binds
     abstract fun bindSettingsRepository(impl: DataStoreSettingsRepository): SettingsRepository
 
+    @Binds
+    abstract fun bindAppLanguageStore(impl: AppCompatLanguageStore): AppLanguageStore
+
     companion object {
         @Provides
         @Singleton

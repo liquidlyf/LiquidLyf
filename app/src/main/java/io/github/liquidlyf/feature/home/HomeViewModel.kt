@@ -160,6 +160,17 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /** Home's "List me", after the consent dialog (8.1): the same write as Settings → Privacy. */
+    fun listMe() {
+        val p = (session.state.value as? SessionState.Ready)?.profile ?: return
+        viewModelScope.launch {
+            when (val result = profiles.setListed(p, true)) {
+                is AppResult.Success -> session.refresh()
+                is AppResult.Failure -> events.send(HomeEvent.Message(result.error.messageRes))
+            }
+        }
+    }
+
     private fun visible(all: List<BloodRequest>, p: UserProfile?): List<BloodRequest> {
         val now = clock.now()
         val hidden = p?.hiddenRequestIds.orEmpty().toSet()
