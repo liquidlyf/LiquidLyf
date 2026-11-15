@@ -45,6 +45,7 @@ fun SettingsScreen(
     onSignOut: () -> Unit,
     onOpenNotificationSettings: () -> Unit,
     onAddPassword: () -> Unit = {},
+    onOpenSafetyTips: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -60,6 +61,7 @@ fun SettingsScreen(
         showDeveloperOptions = BuildConfig.DEBUG,
         onOpenNotificationSettings = dropUnlessResumed(block = onOpenNotificationSettings),
         onAddPassword = dropUnlessResumed(block = onAddPassword),
+        onOpenSafetyTips = dropUnlessResumed(block = onOpenSafetyTips),
     )
 }
 
@@ -78,6 +80,7 @@ internal fun SettingsContent(
     modifier: Modifier = Modifier,
     onOpenNotificationSettings: () -> Unit = {},
     onAddPassword: () -> Unit = {},
+    onOpenSafetyTips: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
@@ -114,6 +117,11 @@ internal fun SettingsContent(
                 headlineContent = { Text(stringResource(R.string.title_notification_settings)) },
                 supportingContent = { Text(stringResource(R.string.settings_notifications_summary)) },
                 modifier = Modifier.clickable(role = Role.Button, onClick = onOpenNotificationSettings),
+            )
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.title_safety_tips)) },
+                supportingContent = { Text(stringResource(R.string.settings_safety_tips_summary)) },
+                modifier = Modifier.clickable(role = Role.Button, onClick = onOpenSafetyTips),
             )
 
             // Logout (BUG-003): alerts stop, the session ends and the gate clears the back stack.

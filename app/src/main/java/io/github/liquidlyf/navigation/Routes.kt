@@ -57,3 +57,4 @@ import kotlinx.serialization.Serializable
 @Serializable data object CreateRequest
 @Serializable data object Notifications
 @Serializable data object NotificationSettings
+@Serializable data object SafetyTips

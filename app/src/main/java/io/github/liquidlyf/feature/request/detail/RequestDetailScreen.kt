@@ -95,7 +95,7 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 
 @Composable
-fun RequestDetailRoute(onBack: () -> Unit, viewModel: RequestDetailViewModel = hiltViewModel()) {
+fun RequestDetailRoute(onBack: () -> Unit, onOpenSafetyTips: () -> Unit = {}, viewModel: RequestDetailViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val online by viewModel.online.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbarHostState.current
@@ -108,12 +108,18 @@ fun RequestDetailRoute(onBack: () -> Unit, viewModel: RequestDetailViewModel = h
             }
         }
     }
-    RequestDetailScreen(state, online, viewModel, onBack)
+    RequestDetailScreen(state, online, viewModel, onBack, onOpenSafetyTips)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RequestDetailScreen(state: RequestDetailUiState, online: Boolean, vm: RequestDetailViewModel, onBack: () -> Unit) {
+private fun RequestDetailScreen(
+    state: RequestDetailUiState,
+    online: Boolean,
+    vm: RequestDetailViewModel,
+    onBack: () -> Unit,
+    onOpenSafetyTips: () -> Unit,
+) {
     val request = state.request
     var menuOpen by rememberSaveable { mutableStateOf(false) }
     var dialog by rememberSaveable { mutableStateOf<DetailDialog?>(null) }
@@ -190,7 +196,7 @@ private fun RequestDetailScreen(state: RequestDetailUiState, online: Boolean, vm
                     }
                     Header(request)
                     WhereCard(request, state, onOpenMaps = { r -> r.location?.let { launcher.openMaps(it.lat, it.lng, r.hospitalName) } })
-                    SafetyBanner()
+                    SafetyBanner(onOpenSafetyTips)
                     when (state.role) {
                         ViewerRole.DONOR -> DonorSection(state, vm, onCall = launcher::dial, onWithdraw = { dialog = DetailDialog.WITHDRAW })
                         ViewerRole.REQUESTER -> RequesterSection(
@@ -302,10 +308,15 @@ private fun WhereCard(r: BloodRequest, state: RequestDetailUiState, onOpenMaps: 
 }
 
 @Composable
-private fun SafetyBanner() {
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalAlignment = Alignment.CenterVertically) {
-        Icon(painterResource(LLIcons.Shield), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-        Text(stringResource(R.string.detail_safety), style = MaterialTheme.typography.bodyMedium)
+private fun SafetyBanner(onOpenSafetyTips: () -> Unit) {
+    Column {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalAlignment = Alignment.CenterVertically) {
+            Icon(painterResource(LLIcons.Shield), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.detail_safety), style = MaterialTheme.typography.bodyMedium)
+        }
+        TextButton(onClick = onOpenSafetyTips, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+            Text(stringResource(R.string.action_safety_tips))
+        }
     }
 }
 

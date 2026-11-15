@@ -238,6 +238,12 @@ class AccessibilityLabelsTest {
     }
 
     @Test
+    fun safetyTips() {
+        show { io.github.liquidlyf.feature.safety.SafetyTipsScreen(onBack = {}, onCallEmergency = {}) }
+        assertControlsAreLabelledAndBigEnough("Safety tips")
+    }
+
+    @Test
     fun settingsForAGoogleOnlyAccount() {
         show {
             io.github.liquidlyf.feature.settings.SettingsContent(

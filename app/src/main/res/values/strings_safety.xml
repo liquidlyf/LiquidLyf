@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 7: safety tips (7.6), reporting (7.1), blocking (7.2), money warnings (7.8), moderation (7.5). -->
+<resources>
+    <!-- Safety tips (7.6) -->
+    <string name="title_safety_tips">Safety tips</string>
+    <string name="safety_intro">Giving and finding blood should be safe. A few simple rules keep it that way.</string>
+    <string name="safety_tip_money_title">Never pay or take money</string>
+    <string name="safety_tip_money_body">Giving blood is free. Anyone who asks for money, or offers it, is breaking the rules: report them.</string>
+    <string name="safety_tip_place_title">Meet at the hospital</string>
+    <string name="safety_tip_place_body">Go to the hospital or blood bank named in the request, never to a private place.</string>
+    <string name="safety_tip_company_title">Bring someone with you</string>
+    <string name="safety_tip_company_body">If you can, go with a friend or family member, and tell someone where you\'re going.</string>
+    <string name="safety_tip_screening_title">The hospital checks you</string>
+    <string name="safety_tip_screening_body">The blood bank screens every donor and every unit. Follow their advice, even if it means you can\'t donate today.</string>
+    <string name="safety_tip_report_title">Report anything wrong</string>
+    <string name="safety_tip_report_body">Fake requests, money, abuse or spam: use Report on the request or the person. You can also block them.</string>
+    <string name="safety_tip_emergency_title">In an emergency, call 999</string>
+    <string name="safety_tip_emergency_body">999 is Bangladesh\'s free national emergency number: police, fire service and ambulance.</string>
+    <string name="action_call_999">Call 999</string>
+    <string name="action_safety_tips">Safety tips</string>
+    <string name="settings_safety_tips_summary">How to give and get blood safely</string>
+</resources>
