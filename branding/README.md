@@ -8,7 +8,7 @@ The logo and the name are **not** open-licensed; see [TRADEMARKS.md](../TRADEMAR
 | File | What it is | Use it for |
 |---|---|---|
 | [logo-mark.svg](logo-mark.svg) | The heart and drop, full colour, 512 × 512 | App icon foreground, avatars, favicon, small spaces |
-| [logo-mark-mono.svg](logo-mark-mono.svg) | The same mark as **one flat shape**: the drop ring and highlight are cut out, with no fold | Android's monochrome (themed) icon layer, a white mark on red, single-colour printing |
+| [logo-mark-mono.svg](logo-mark-mono.svg) | The same mark as **one flat shape**: the drop ring and highlight are cut out, with no fold | Android's monochrome (themed) icon layer, single-colour printing (for example a white mark on red) |
 | [logo-full.svg](logo-full.svg) | The mark above the "LiquidLyf" wordmark, for **light** backgrounds | README, website, documents |
 | [logo-full-dark.svg](logo-full-dark.svg) | The same, for **dark** backgrounds | Dark mode, dark slides |
 
@@ -36,11 +36,25 @@ allows this. You don't need the font to use the logo.
 
 ## Android app icon (Phase 1.4b)
 
-- **Foreground:** `logo-mark.svg`, with no text. Keep it inside the 66 dp safe zone of the 108 dp canvas.
-- **Background:** a solid colour. Two options to try on the phone:
-  - **(a)** red `#DE2027` background, with `logo-mark-mono.svg` filled white as the foreground;
-  - **(b)** white background, with the full-colour `logo-mark.svg`.
+- **Background:** solid **white** `#FFFFFF` (the maintainer's choice, 15 Nov 2026). It replaces the
+  red background with a white mark, chosen on 13 Nov.
+- **Foreground:** the full-colour `logo-mark.svg`, with no text, inside the 66 dp safe zone of the
+  108 dp canvas: with the shift below, its farthest point is 28.9 dp from the centre (the limit is 33).
 - **Monochrome layer:** `logo-mark-mono.svg` (Android 13+ themed icons).
+- **Built by** [app/scripts/generate_launcher_icons.py](../app/scripts/generate_launcher_icons.py), with
+  the launcher, themed and splash icons. Re-run it after the logo files change.
+
+### Optical centring
+
+A heart is heavier at the top: its area centre is at y 220.5, the box centre at 256. Centred by its
+box, the mark looks too high. So in **every square use** (the launcher icon, the splash screen,
+avatars) the mark sits **18 units lower** in the 512 × 512 grid, half that gap. It stays centred
+horizontally.
+
+The SVG files in this folder are **not** shifted: their mark is centred on (256, 256). Add the shift
+when you place the mark in a square. In the icon generator it's `OPTICAL_DY = 18`, which is 2.2 dp on
+the 108 dp canvas. Keep using the unshifted mark in the full logo and anywhere it isn't alone in a
+square.
 
 ## Using the logo
 
