@@ -11,6 +11,8 @@ The logo and the name are **not** open-licensed; see [TRADEMARKS.md](../TRADEMAR
 | [logo-mark-mono.svg](logo-mark-mono.svg) | The same mark as **one flat shape**: the drop ring and highlight are cut out, with no fold | Android's monochrome (themed) icon layer, single-colour printing (for example a white mark on red) |
 | [logo-full.svg](logo-full.svg) | The mark above the "LiquidLyf" wordmark, for **light** backgrounds | README, website, documents |
 | [logo-full-dark.svg](logo-full-dark.svg) | The same, for **dark** backgrounds | Dark mode, dark slides |
+| [logo-horizontal.svg](logo-horizontal.svg) | The mark **beside** the wordmark, for light backgrounds | Website header, share images, wide spaces |
+| [logo-horizontal-dark.svg](logo-horizontal-dark.svg) | The same, for dark backgrounds | The website header in dark mode |
 
 All files are flat: filled paths only, with no gradients, shadows, filters, transforms or live text, and a
 transparent background. Android Studio's **Vector Asset** tool imports them as they are.
@@ -60,7 +62,7 @@ square.
 
 - Keep the proportions and colours as they are. Don't stretch, rotate, outline, or add shadows or gradients.
 - Leave clear space around the logo of at least the height of the "L" in the wordmark (or 1/8 of the mark's width).
-- Smallest sizes: the mark at 24 px, the full logo at 120 px wide.
+- Smallest sizes: the mark at 24 px, the full logo at 120 px wide, the side-by-side logo at 24 px tall.
 - Use `logo-full-dark.svg` on dark backgrounds, not the light version.
 - Never combine the logo with a red cross or a red crescent. Those emblems are protected by law.
 
@@ -72,7 +74,12 @@ the gap below the heart) is a one-line edit:
 ```bash
 pip install fonttools
 python build_logo.py path/to/Montserrat[wght].ttf .
+python build_horizontal.py
 ```
 
-`build_logo.py` is code under the project's AGPL licence. The logo files it produces are covered by
+[build_horizontal.py](build_horizontal.py) makes the side-by-side logos from the full ones, without the
+font: it moves the same paths. The mark is twice the wordmark's cap height, and its optical centre (see
+"Optical centring") lines up with the middle of the capitals.
+
+`build_logo.py` and `build_horizontal.py` are code under the project's AGPL licence. The logo files it produces are covered by
 [TRADEMARKS.md](../TRADEMARKS.md).
