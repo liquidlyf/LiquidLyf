@@ -131,6 +131,23 @@ class PushHandlerTest {
     }
 
     @Test
+    fun anAskToDonatePopsUpOnTheUrgentChannelAndUpdatesStayQuiet() = runBlocking {
+        val (requesterSide, requesterRequests, _) = requester("push-ask")
+        val rid = requesterRequests.create(requesterSide.first, requestDraft()).ok()
+        donor("push-ask-d")
+
+        handler.handle(mapOf("type" to "ASKED_TO_DONATE", "requestId" to rid))
+        val ask = waitForNotification(rid)
+        assertEquals(str(R.string.notification_asked_title), ask.title())
+        assertEquals("A18: an ask pops up like an area alert", NotificationChannels.URGENT_REQUESTS, ask.notification.channelId)
+
+        handler.handle(mapOf("type" to "OFFER_CONFIRMED", "requestId" to rid))
+        waitUntil("the confirm update") { manager.activeNotifications.any { it.id == "$rid:OFFER_CONFIRMED".hashCode() } }
+        val update = manager.activeNotifications.first { it.id == "$rid:OFFER_CONFIRMED".hashCode() }
+        assertEquals(NotificationChannels.REQUEST_UPDATES, update.notification.channelId)
+    }
+
+    @Test
     fun donationRecordedRecordsTheDonationWithoutOpeningTheRequest() = runBlocking {
         val (requesterSide, requesterRequests, requesterOffers) = requester("push-c")
         val (aProfile, aUid) = requesterSide

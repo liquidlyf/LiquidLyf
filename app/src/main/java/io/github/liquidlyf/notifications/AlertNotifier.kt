@@ -70,13 +70,15 @@ class AlertNotifier @Inject constructor(
 
     fun showPersonal(type: PersonalPush, requestId: String) {
         val (title, body) = PERSONAL.getValue(type)
+        // A18 (15 Nov 2026): a requester picked this donor, so an ask pops up like an area alert.
+        val urgent = type == PersonalPush.ASKED_TO_DONATE
         post(
             id = notificationId(requestId, type.code),
-            channel = NotificationChannels.REQUEST_UPDATES,
+            channel = if (urgent) NotificationChannels.URGENT_REQUESTS else NotificationChannels.REQUEST_UPDATES,
             title = context.getString(title),
             body = context.getString(body),
             requestId = requestId,
-            priority = NotificationCompat.PRIORITY_DEFAULT,
+            priority = if (urgent) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT,
         )
     }
 

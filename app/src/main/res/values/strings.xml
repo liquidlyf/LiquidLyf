@@ -114,7 +114,7 @@
 
     <!-- Notification channels (Phase 5 sends to them) -->
     <string name="channel_urgent_requests_name">Urgent blood requests</string>
-    <string name="channel_urgent_requests_description">Alerts when someone near you needs your blood group.</string>
+    <string name="channel_urgent_requests_description">Alerts when someone near you needs your blood group, or asks you to donate.</string>
     <string name="channel_request_updates_name">Request updates</string>
     <string name="channel_request_updates_description">Offers, confirmations and changes to requests you are part of.</string>
     <string name="channel_reminders_name">Reminders</string>
