@@ -13,15 +13,13 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.mikepenz.aboutlibraries.util.withJson
 import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.push.LocalAlert
@@ -322,14 +320,13 @@ class AccessibilityLabelsTest {
     fun licencesShowTheAreaDataAndTheLibraries() {
         show { io.github.liquidlyf.feature.about.LicencesScreen(onBack = {}) }
         compose.onNodeWithText(str(R.string.licences_area_title)).assertExists()
-        // The list the AboutLibraries plugin generated from the build loads (Firestore is in it, further down).
-        compose.waitUntil(10_000) {
-            runCatching {
-                compose.onNode(androidx.compose.ui.test.hasScrollAction())
-                    .performScrollToNode(androidx.compose.ui.test.hasText("firebase-firestore", substring = true))
-            }.isSuccess
-        }
-        compose.onAllNodesWithText("firebase-firestore", substring = true).onFirst().assertExists()
+        // The list the AboutLibraries plugin generated from the build is in the APK and loads, as
+        // the screen reads it (the lazy list only draws what's on screen, under the long MIT text).
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val libraries = com.mikepenz.aboutlibraries.Libs.Builder().withJson(context, R.raw.aboutlibraries).build().libraries
+        assertTrue("${libraries.size} libraries", libraries.size > 100)
+        assertTrue(libraries.any { "firebase-firestore" in it.uniqueId })
+        assertTrue("every library has its licence", libraries.all { it.licenses.isNotEmpty() })
     }
 
     @Test

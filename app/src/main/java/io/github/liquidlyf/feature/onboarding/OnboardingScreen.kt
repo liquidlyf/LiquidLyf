@@ -47,6 +47,8 @@ private val pages = listOf(
     OnboardingPage(LLIcons.Notifications, R.string.onboarding_alert_title, R.string.onboarding_alert_body),
     // The "never pay for blood" pledge (doc 06 §4.6): paid donation is a known scam in Bangladesh.
     OnboardingPage(LLIcons.Block, R.string.onboarding_money_title, R.string.onboarding_money_body),
+    // 8.3: the short medical disclaimer, which everyone sees before using the app (Skip leads here).
+    OnboardingPage(LLIcons.Hospital, R.string.onboarding_medical_title, R.string.onboarding_medical_body),
 )
 
 /** Three slides, shown once on the first launch (Phase 3.1). Skip or finish both go to sign-in. */
@@ -65,7 +67,11 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                if (!last) TextButton(onClick = onFinished) { Text(stringResource(R.string.action_skip)) }
+                if (!last) {
+                    TextButton(onClick = { scope.launch { pagerState.animateScrollToPage(pages.lastIndex) } }) {
+                        Text(stringResource(R.string.action_skip))
+                    }
+                }
             }
             HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { index ->
                 val page = pages[index]
@@ -111,7 +117,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             PageDots(count = pages.size, current = pagerState.currentPage)
             Spacer(Modifier.size(Spacing.lg))
             LLPrimaryButton(
-                text = stringResource(if (last) R.string.action_get_started else R.string.action_next),
+                text = stringResource(if (last) R.string.action_i_understand else R.string.action_next),
                 onClick = {
                     if (last) onFinished() else scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
                 },

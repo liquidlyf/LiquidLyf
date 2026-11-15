@@ -405,6 +405,8 @@ private fun DonorSection(state: RequestDetailUiState, vm: RequestDetailViewModel
                     singleLine = false,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 )
+                // 8.3: the donor's part of the medical disclaimer.
+                IconLine(LLIcons.Hospital, stringResource(R.string.detail_offer_disclaimer))
                 Text(stringResource(R.string.detail_offer_consent), style = MaterialTheme.typography.bodyMedium)
                 LLPrimaryButton(
                     text = stringResource(R.string.detail_offer_confirm),

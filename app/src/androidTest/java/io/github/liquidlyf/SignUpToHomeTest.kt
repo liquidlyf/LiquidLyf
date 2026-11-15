@@ -139,7 +139,12 @@ class SignUpToHomeTest {
             compose.onAllNodesWithText(str(R.string.action_skip)).fetchSemanticsNodes().isNotEmpty() ||
                 compose.onAllNodesWithText(str(R.string.action_create_account)).fetchSemanticsNodes().isNotEmpty()
         }
-        if (compose.onAllNodesWithText(str(R.string.action_skip)).fetchSemanticsNodes().isNotEmpty()) tap(R.string.action_skip)
+        if (compose.onAllNodesWithText(str(R.string.action_skip)).fetchSemanticsNodes().isNotEmpty()) {
+            // Skip leads to the medical disclaimer (8.3), which "I understand" closes.
+            tap(R.string.action_skip)
+            waitFor(str(R.string.onboarding_medical_title))
+            tap(R.string.action_i_understand)
+        }
 
         // Sign up
         tap(R.string.action_create_account)

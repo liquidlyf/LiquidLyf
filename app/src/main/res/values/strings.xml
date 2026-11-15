@@ -28,7 +28,6 @@
 
     <!-- Common actions -->
     <string name="action_back">Back</string>
-    <string name="action_get_started">Get started</string>
     <string name="action_retry">Retry</string>
     <string name="action_request_blood">Request blood</string>
     <string name="action_open_notifications">Open notifications</string>
@@ -141,6 +140,9 @@
     <string name="onboarding_alert_body">List yourself as a donor, and you\'ll hear when someone near you needs your blood group.</string>
     <string name="onboarding_money_title">Never pay or take money for blood</string>
     <string name="onboarding_money_body">Giving blood is free. If anyone asks for money, report the request.</string>
+    <string name="onboarding_medical_title">LiquidLyf is not a medical service</string>
+    <string name="onboarding_medical_body">It helps you find voluntary donors. It doesn\'t test or supply blood, or check donors\' health. Donate only at a licensed hospital or blood centre, and ask a doctor for medical advice. In an emergency, call 999.</string>
+    <string name="action_i_understand">I understand</string>
     <string name="onboarding_page">Page %1$d of %2$d</string>
     <string name="action_next">Next</string>
     <string name="action_skip">Skip</string>

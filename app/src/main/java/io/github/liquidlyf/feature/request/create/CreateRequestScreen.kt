@@ -488,6 +488,13 @@ private fun ContactStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> 
 
     ReviewCard(state)
 
+    // 8.3: one line of the medical disclaimer, where the request is made.
+    Text(
+        stringResource(R.string.create_disclaimer),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
     Row(
         Modifier
             .fillMaxWidth()

@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -132,7 +133,9 @@ class AppNavHostTest {
         tab(R.string.nav_profile).performClick()
         compose.onNode(hasClickAction() and hasContentDescription(str(R.string.action_open_settings))).performClick()
         compose.waitForIdle()
-        clickButton(R.string.action_sign_out)
+        // Phase 8 put Privacy, Safety and About above it: scroll down to it first.
+        compose.onNode(hasText(str(R.string.action_sign_out)) and hasClickAction()).performScrollTo().performClick()
+        compose.waitForIdle()
         assertEquals(1, signOuts)
         setSession(SessionState.SignedOut)
         assertOnScreen(R.string.title_sign_in)
@@ -157,7 +160,10 @@ class AppNavHostTest {
         assertOnScreen(R.string.onboarding_alert_title)
         clickButton(R.string.action_next)
         assertOnScreen(R.string.onboarding_money_title)
-        clickButton(R.string.action_get_started)
+        clickButton(R.string.action_next)
+        // 8.3: the medical disclaimer closes onboarding.
+        assertOnScreen(R.string.onboarding_medical_title)
+        clickButton(R.string.action_i_understand)
         assertOnScreen(R.string.title_sign_in)
         assertTrue(onboardingFinished)
 
