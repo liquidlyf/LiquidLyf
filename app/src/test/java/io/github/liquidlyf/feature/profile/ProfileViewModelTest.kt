@@ -87,6 +87,14 @@ class ProfileViewModelTest {
     }
 
     @Test
+    fun `the Rapid responder badge follows the profile's flag from the Worker`() = runTest(dispatcher) {
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(rapidResponder = true))
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(listOf(Badge.RAPID_RESPONDER), vm.uiState.value.badges)
+    }
+
+    @Test
     fun `a newer past donation asks first, and updating restarts the rest period`() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()

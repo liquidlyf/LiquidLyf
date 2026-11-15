@@ -187,6 +187,19 @@ class FirestoreDocsTest {
     }
 
     @Test
+    fun `rapidResponder is read, but a profile write never carries it`() {
+        val doc = resolve(UserDoc.createMap(profileDraft, "rahim@example.test"))
+        val p = UserDoc.fromMap(uid, doc)!!
+        assertFalse("absent reads as false", p.rapidResponder)
+        assertFalse(UserDoc.RAPID_RESPONDER in doc.keys)
+        val earned = UserDoc.fromMap(uid, doc + (UserDoc.RAPID_RESPONDER to true))!!
+        assertTrue(earned.rapidResponder)
+        // Only the Worker sets it (the rules refuse the app): an edit leaves it out even when it differs.
+        assertEquals(setOf(UserDoc.UPDATED_AT), UserDoc.updateMap(p, p.copy(rapidResponder = true)).keys)
+        assertEquals(setOf(UserDoc.UPDATED_AT), UserDoc.updateMap(earned, earned.copy(rapidResponder = false)).keys)
+    }
+
+    @Test
     fun `server-time fields are written as the server time even when unchanged`() {
         val p = UserDoc.fromMap(uid, resolve(UserDoc.createMap(profileDraft, "rahim@example.test")))!!
         val m = UserDoc.updateMap(p, p, serverTimeFields = setOf(UserDoc.LAST_ACTIVE_AT))

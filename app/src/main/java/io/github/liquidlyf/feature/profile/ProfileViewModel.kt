@@ -182,8 +182,8 @@ class ProfileViewModel @Inject constructor(
         val history = s.donations.orEmpty()
         return s.copy(
             eligibility = eligibility.evaluate(p.birthYear, p.weightOk, p.gender, p.lastDonationAt, now),
-            // Rapid responder needs the offer's timing on the server (asked of session B); off until then.
-            badges = badgeCalculator.badges(history, p.gender, rapidResponder = false, now),
+            // Set by the Worker when one of my offers came within 15 minutes of its request.
+            badges = badgeCalculator.badges(history, p.gender, p.rapidResponder, now),
             impact = badgeCalculator.impact(history),
         )
     }

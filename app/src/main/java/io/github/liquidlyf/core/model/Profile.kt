@@ -38,6 +38,11 @@ data class UserProfile(
     val donationCount: Int,
     val verifiedDonations: Int,
     val lastDonationId: String?,
+    /**
+     * Phase 6 "Rapid responder" badge: the Worker sets it once an offer of mine came within 15
+     * minutes of its request. Read-only for the app (the rules refuse any change), sticky once set.
+     */
+    val rapidResponder: Boolean = false,
 )
 
 /** Division, district and upazila or city-corporation thana codes from the bundled geo data. */

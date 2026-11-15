@@ -45,6 +45,8 @@ object UserDoc {
     const val DONATION_COUNT = "donationCount"
     const val VERIFIED_DONATIONS = "verifiedDonations"
     const val LAST_DONATION_ID = "lastDonationId"
+    /** Written by the Worker only (B's e798bc7); never in [editable], so profile writes leave it alone. */
+    const val RAPID_RESPONDER = "rapidResponder"
 
     fun fromMap(uid: String, m: Map<String, Any?>): UserProfile? = UserProfile(
         uid = uid,
@@ -79,6 +81,7 @@ object UserDoc {
         donationCount = m.int(DONATION_COUNT) ?: 0,
         verifiedDonations = m.int(VERIFIED_DONATIONS) ?: 0,
         lastDonationId = m.str(LAST_DONATION_ID),
+        rapidResponder = m.bool(RAPID_RESPONDER) ?: false,
     )
 
     /**
