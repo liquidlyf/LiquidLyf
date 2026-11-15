@@ -19,7 +19,7 @@ people as we can, and explain everything here in plain words.
 
 **In short:**
 - Your phone number is **never shown publicly**. A requester sees it only if you offer to donate for
-  their request, and you see a requester's number only after you offer.
+  their request, and you see a requester's number only after you offer, while your offer is active.
 - We don't sell your data, we don't show ads, and we don't use advertising or analytics trackers.
 - You can delete your account and its data at any time, in the app or by email.
 
@@ -115,7 +115,7 @@ We use your data only for these purposes. Your data is never used for advertisin
 | Donation history | You see all of it. Others see only how many times you donated |
 | Your badges | Only you |
 | A request's blood group, units, hospital, area, urgency and notes | Signed-in users with a verified email |
-| A request's contact name and phone, patient name and ward | The requester, and donors who offered for that request |
+| A request's contact name and phone, patient name and ward | The requester, and donors with an active offer for that request. A donor loses access when they withdraw the offer or the requester declines it |
 | Reports you send | Only the LiquidLyf moderators. The person you report isn't told who reported them |
 
 <!-- Confirmed with session B, 15 Nov 2026 (d6b9d74): a request shows only how many donors were asked
@@ -186,10 +186,13 @@ serious harm.
 - **Stop being listed as a donor:** Settings → Privacy. Your donor card is removed at once, and you
   stop getting request alerts.
 - **Pause alerts:** turn off "Available to donate", or turn off notifications in Android settings.
-- **Withdraw an offer** at any time before you donate. The requester can still see the number you
+- **Withdraw an offer** at any time before you donate. You then no longer see the request's contact
+  details. The requester can still see the number you
   shared with that offer until it is deleted, 90 days after the request closes (section 6), and may
   have written it down.
-- **Block someone:** you stop seeing their requests, and they can't ask you to donate.
+- **Block someone:** you stop seeing their requests, and they can't ask you to donate or offer on
+  your requests. If they had already offered, decline that offer, so they stop seeing your
+  request's contact details.
 - **Delete your account:** in the app under Settings → Delete account, or without the app at
   [liquidlyf.github.io/delete-account](/delete-account).
 - **Get a copy of your data,** or ask any question about it: email liquidlyf@gmail.com from the email

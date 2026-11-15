@@ -67,7 +67,8 @@ Don't:
 
 - Use **Report** on any request or person that breaks these rules. Choose a reason, such as "asking
   for money" or "fake request".
-- Use **Block** to stop seeing someone's requests and stop them asking you to donate.
+- Use **Block** to stop seeing someone's requests, and to stop them asking you to donate or offering
+  on your requests.
 - A request reported by several different people is hidden automatically until a moderator reviews it.
 - Our volunteer moderators aim to review reports **within 24 hours**.
 

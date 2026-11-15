@@ -154,7 +154,9 @@ scarcest resource, so:
 ### Privacy
 
 - A phone number is never listed publicly. A donor's number reaches a requester only after that donor
-  offers to help, and the requester's number reaches only the donors who offered.
+  offers to help. The request's private contact reaches only donors whose offer is active (offered,
+  confirmed or donated): a donor who withdraws, or whose offer is declined, loses it, and someone
+  the requester blocked can't offer.
 - Find donors shows no phone numbers. A requester reaches a listed donor only with "Ask to donate":
   an inbox item with no free text, and a push with only the type and the request ID. The donor
   answers by offering.
