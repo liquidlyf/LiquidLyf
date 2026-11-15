@@ -298,13 +298,16 @@ service cloud.firestore {
                              'DONATION_RECORDED': 'DONATED'}[n.type];
     }
     // Requester -> listed donor: my OPEN request, a compatible group, not blocked by
-    // them, and askCount +1 (max 10) in the same batch with lastAskedUid == uid.
+    // them, and askCount +1 (max 10) in the same batch. Which donor that +1 is for is named
+    // in my own userStats (lastAskedUid + lastAskRid), which only I and admins can read,
+    // not on the public request: nobody else learns whom I asked.
     function askState(uid, n) {
       let rq = get(requestPath(n.requestId)).data;
       let rqAfter = getAfter(requestPath(n.requestId)).data;
+      let mine = getAfter(statsPath(me())).data;
       return rq.requesterUid == me() && rq.status == 'OPEN'
           && rqAfter.askCount == rq.askCount + 1 && rqAfter.askCount <= 10
-          && rqAfter.get('lastAskedUid', '') == uid
+          && mine.get('lastAskedUid', '') == uid && mine.get('lastAskRid', '') == n.requestId
           && get(donorPath(uid)).data.bloodGroup in rq.acceptedGroups
           && !(me() in listOrEmpty(get(userPath(uid)).data, 'blockedUids'));
     }
@@ -338,15 +341,28 @@ service cloud.firestore {
     match /userStats/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow create: if isOwner(uid)
-                    && data().keys().hasOnly(['openRequests','totalRequests','lastRequestId'])
+                    && data().keys().hasOnly(statsKeys())
                     && data().openRequests == 0 && data().totalRequests == 0
-                    && absent(data(), 'lastRequestId');
-      allow update: if data().keys().hasOnly(['openRequests','totalRequests','lastRequestId'])
+                    && absent(data(), 'lastRequestId')
+                    && absent(data(), 'lastAskedUid') && absent(data(), 'lastAskRid');
+      allow update: if data().keys().hasOnly(statsKeys())
                     && isId(data().lastRequestId)
-                    && ((isOwner(uid) && (requestOpened() || requestClosed(uid)))
+                    && ((isOwner(uid) && (requestOpened() || requestClosed(uid) || askNamed()))
                         || (isAdmin() && adminCancelled(uid)));
       // Only at zero: deleting and re-creating must not reset the open-request count.
       allow delete: if isOwner(uid) && resource.data.openRequests == 0;
+    }
+    function statsKeys() {
+      return ['openRequests','totalRequests','lastRequestId','lastAskedUid','lastAskRid'];
+    }
+    // Ask to donate (contract 14): name the donor and request of the ask_{rid} inbox item
+    // created in this same batch, so one askCount +1 can't cover two donors.
+    function askNamed() {
+      let d = request.resource.data;
+      let p = /databases/$(database)/documents/users/$(d.lastAskedUid)/notifications/$('ask_' + d.lastAskRid);
+      return changed().hasOnly(['lastAskedUid','lastAskRid'])
+          && isId(d.lastAskedUid) && isId(d.lastAskRid)
+          && existsAfter(p) && !exists(p);
     }
     function requestOpened() {
       let d = request.resource.data;
@@ -391,7 +407,7 @@ service cloud.firestore {
               'acceptedGroups','unitsNeeded','unitsFulfilled','condition','hospitalId','hospitalName',
               'hospitalAddress','division','district','upazila','location','urgency','neededBy','notes',
               'flagged','status','closedReason','responseCount','reportCount','askCount','responders',
-              'fanoutTier','nextTierAt','createdAt','updatedAt','expiresAt','lastResponderUid','lastAskedUid'];
+              'fanoutTier','nextTierAt','createdAt','updatedAt','expiresAt','lastResponderUid'];
     }
     function acceptedGroupsOk(d) {
       return d.acceptedGroups is list && d.acceptedGroups.size() >= 1
@@ -431,7 +447,7 @@ service cloud.firestore {
           && optStr(d, 'notes', 500)
           && d.flagged == moneyWords(notesOf(d))
           && d.createdAt == request.time && d.updatedAt == request.time
-          && absent(d, 'closedReason') && absent(d, 'lastResponderUid') && absent(d, 'lastAskedUid');
+          && absent(d, 'closedReason') && absent(d, 'lastResponderUid');
     }
     // The same batch must bump my userStats.openRequests by exactly 1, name this
     // request in lastRequestId (so one +1 can't cover two requests), and stay within
@@ -453,7 +469,7 @@ service cloud.firestore {
       return isOwner(r.requesterUid) && verified() && notBanned()
           && changed().hasOnly(['status','closedReason','notes','flagged','neededBy','expiresAt',
                                 'unitsNeeded','updatedAt','responders','unitsFulfilled',
-                                'lastResponderUid','askCount','lastAskedUid'])
+                                'lastResponderUid','askCount'])
           && d.updatedAt == request.time
           && (d.status == r.status || (r.status == 'OPEN' && d.status in ['CANCELLED','FULFILLED']))
           && d.unitsNeeded is int && d.unitsNeeded >= 1 && d.unitsNeeded <= 10
@@ -463,8 +479,7 @@ service cloud.firestore {
               || (r.status == 'OPEN' && d.neededBy is timestamp && d.neededBy > request.time
                   && d.neededBy < r.createdAt + duration.value(30, 'd')
                   && d.expiresAt == d.neededBy + duration.value(24, 'h')))
-          && (!changed().hasAny(['askCount','lastAskedUid'])
-              || (d.askCount == r.askCount + 1 && d.askCount <= 10 && isId(d.lastAskedUid)))
+          && (!('askCount' in changed()) || (d.askCount == r.askCount + 1 && d.askCount <= 10))
           && (!changed().hasAny(['responders','unitsFulfilled','lastResponderUid'])
               || ownerResponderChange(rid, d, r));
     }

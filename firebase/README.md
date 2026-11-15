@@ -98,7 +98,7 @@ General:
 13. **Self-reported donation:** `donations/{id}` with `source SELF`, `verified false` + `donationCount +1`, `lastDonationId: id`. Deleting it needs `donationCount −1` with `lastDonationId: id`.
 
 ### Trust and safety
-14. **Ask to donate (requester):** `users/{donor}/notifications/ask_{rid}` (`type: ASKED_TO_DONATE`) + request `askCount +1` (max 10), `lastAskedUid: donor`. The donor must be listed, in `acceptedGroups`, and must not have blocked you. Then call the Worker's `POST /v1/requests/{rid}/asks/{donor}/notify`, which pushes it and applies the daily cap of 30 asks (`backend/worker/README.md`).
+14. **Ask to donate (requester):** `users/{donor}/notifications/ask_{rid}` (`type: ASKED_TO_DONATE`) + request `askCount +1` (max 10) + **my `userStats/{me}`: `lastAskedUid: donor, lastAskRid: rid`** (private, so nobody else learns whom I asked; the request has no `lastAskedUid`). The donor must be listed, in `acceptedGroups`, and must not have blocked you. Then call the Worker's `POST /v1/requests/{rid}/asks/{donor}/notify`, which pushes it and applies the daily cap of 30 asks (`backend/worker/README.md`).
 15. **Report a request:** `reports/{myUid}_{rid}` + request `reportCount +1`. When the new count is ≥ 3, the same batch may set `status: REMOVED`. A user report (`targetType USER`) is the report doc alone.
 16. **Account deletion** (doc 06 §4.7). These paths don't check `verified` or `banned`, so a suspended user can still delete their account. On resume, re-read the server state before each step: for example, only a request that is still OPEN gets the `userStats −1`.
     1. **Withdraw my active offers:** batch 10 for each OFFERED or CONFIRMED response.
@@ -141,7 +141,7 @@ General:
 
 Decisions made while turning doc 07's draft into tested rules:
 - **Requests are readable in every status** by verified users. The delta-sync feed (doc 10 §5.2) has no status filter, and it must see closed and REMOVED requests to drop them. The app shows only OPEN, unexpired ones.
-- **`responders` is a map keyed by uid**, not an array. The rules can only address one entry by key. `lastResponderUid` and `lastAskedUid` name the entry that a batch changes, so one counter move can't cover two docs (the same idea as `userStats.lastRequestId`).
+- **`responders` is a map keyed by uid**, not an array. The rules can only address one entry by key. `lastResponderUid` names the entry that a batch changes, so one counter move can't cover two docs (the same idea as `userStats.lastRequestId`). For asks, the donor is named in the requester's own `userStats` (`lastAskedUid` + `lastAskRid`), which only they and admins can read, so the public request never shows whom they asked.
 - **Inbox items carry no free text:** `{type, fromUid, requestId, createdAt}`. The app renders the localized message, so nobody can write a scam message into someone else's inbox.
 - **Donation counters live on `users`** (mirrored to the card). They move by +1/−1 only with a donation doc created or deleted in the same batch, so `verifiedDonations` can't be faked.
 - **Removed:** the `devices`, `hiddenRequests` and `blocked` subcollections (replaced by topics and the `users` arrays) and `config/public` (Remote Config).

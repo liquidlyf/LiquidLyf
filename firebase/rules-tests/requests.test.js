@@ -338,11 +338,12 @@ describe('requests: owner edits (doc 07 test 8)', () => {
     await assertFails(updateDoc(doc(mod, 'requests/r1'), { status: 'FULFILLED', updatedAt: serverTimestamp() }));
   });
 
-  test('askCount: +1 only, at most 10', async () => {
-    await assertFails(updateDoc(doc(as('alice'), 'requests/r1'), { askCount: 5, lastAskedUid: 'bob', updatedAt: serverTimestamp() }));
-    await assertSucceeds(updateDoc(doc(as('alice'), 'requests/r1'), { askCount: 1, lastAskedUid: 'bob', updatedAt: serverTimestamp() }));
+  test('askCount: +1 only, at most 10; no donor uid on the request', async () => {
+    await assertFails(updateDoc(doc(as('alice'), 'requests/r1'), { askCount: 5, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as('alice'), 'requests/r1'), { askCount: 1, lastAskedUid: 'bob', updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(as('alice'), 'requests/r1'), { askCount: 1, updatedAt: serverTimestamp() }));
     await seed(async (db) => updateDoc(doc(db, 'requests/r1'), { askCount: 10 }));
-    await assertFails(updateDoc(doc(as('alice'), 'requests/r1'), { askCount: 11, lastAskedUid: 'carol', updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as('alice'), 'requests/r1'), { askCount: 11, updatedAt: serverTimestamp() }));
   });
 });
 

@@ -1,5 +1,5 @@
 // users/{uid}/notifications/{nid}: the whitelisted cross-user inbox (Spark test 5).
-import { describe, test, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, test, beforeAll, afterAll, beforeEach, expect } from 'vitest';
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, increment,
@@ -23,11 +23,15 @@ function item(type, fromUid, requestId = 'r1', o = {}) {
   return { type, fromUid, requestId, createdAt: serverTimestamp(), ...o };
 }
 
-/** Ask a listed donor: inbox item ask_{rid} + askCount +1 naming them. */
-function ask(db, uid, rid = 'r1', { count = 1 } = {}) {
+/**
+ * Ask a listed donor (contract 14): inbox item ask_{rid} + the request's askCount +1, with the
+ * donor named in alice's own userStats (private), not on the public request.
+ */
+function ask(db, uid, rid = 'r1', { count = 1, named = uid, namedRid = rid } = {}) {
   const b = writeBatch(db);
   b.set(doc(db, 'users', uid, 'notifications', `ask_${rid}`), item('ASKED_TO_DONATE', 'alice', rid));
-  b.update(doc(db, 'requests', rid), { askCount: increment(count), lastAskedUid: uid, updatedAt: serverTimestamp() });
+  b.update(doc(db, 'requests', rid), { askCount: increment(count), updatedAt: serverTimestamp() });
+  b.update(doc(db, 'userStats', 'alice'), { lastAskedUid: named, lastAskRid: namedRid });
   return b.commit();
 }
 
@@ -123,13 +127,35 @@ describe('ASKED_TO_DONATE', () => {
     await assertSucceeds(ask(as('alice'), 'bob'));
   });
 
-  test('fails without the askCount +1, or with a +1 naming someone else', async () => {
+  test('fails without the askCount +1, or with the +1 named for another donor or request', async () => {
     await assertFails(setDoc(doc(as('alice'), 'users/bob/notifications/ask_r1'), item('ASKED_TO_DONATE', 'alice')));
+    await assertFails(ask(as('alice'), 'bob', 'r1', { count: 0 }));
+    await assertFails(ask(as('alice'), 'bob', 'r1', { named: 'carol' }));
+    await assertFails(ask(as('alice'), 'bob', 'r1', { namedRid: 'r2' }));
+  });
+
+  test('two asks cannot share one +1 (only one donor can be named)', async () => {
+    await seedUsers({ dan: { ...users.bob, fullName: 'Dan D.' } });
     const db = as('alice');
     const b = writeBatch(db);
     b.set(doc(db, 'users/bob/notifications/ask_r1'), item('ASKED_TO_DONATE', 'alice'));
-    b.update(doc(db, 'requests/r1'), { askCount: increment(1), lastAskedUid: 'carol', updatedAt: serverTimestamp() });
+    b.set(doc(db, 'users/dan/notifications/ask_r1'), item('ASKED_TO_DONATE', 'alice'));
+    b.update(doc(db, 'requests/r1'), { askCount: increment(1), updatedAt: serverTimestamp() });
+    b.update(doc(db, 'userStats/alice'), { lastAskedUid: 'bob', lastAskRid: 'r1' });
     await assertFails(b.commit());
+    await assertSucceeds(ask(as('alice'), 'bob'));
+    await assertSucceeds(ask(as('alice'), 'dan')); // the next ask, its own batch: askCount 2
+  });
+
+  test('nobody else can see whom the requester asked; the request carries no donor uid', async () => {
+    await assertSucceeds(ask(as('alice'), 'bob'));
+    const rq = (await getDoc(doc(as('eve'), 'requests/r1'))).data();
+    expect(rq.askCount).toBe(1);
+    expect(rq.lastAskedUid).toBeUndefined();
+    await assertFails(getDoc(doc(as('eve'), 'userStats/alice')));
+    await assertFails(updateDoc(doc(as('alice'), 'requests/r1'), { lastAskedUid: 'bob', updatedAt: serverTimestamp() }));
+    // userStats names an ask only with that new inbox item in the same batch
+    await assertFails(updateDoc(doc(as('alice'), 'userStats/alice'), { lastAskedUid: 'carol', lastAskRid: 'r1' }));
   });
 
   test('fails for an incompatible or unlisted user', async () => {
@@ -153,7 +179,8 @@ describe('ASKED_TO_DONATE', () => {
     const db = as('eve');
     const b = writeBatch(db);
     b.set(doc(db, 'users/bob/notifications/ask_r1'), item('ASKED_TO_DONATE', 'eve'));
-    b.update(doc(db, 'requests/r1'), { askCount: increment(1), lastAskedUid: 'bob', updatedAt: serverTimestamp() });
+    b.update(doc(db, 'requests/r1'), { askCount: increment(1), updatedAt: serverTimestamp() });
+    b.update(doc(db, 'userStats/eve'), { lastAskedUid: 'bob', lastAskRid: 'r1' });
     await assertFails(b.commit());
   });
 });

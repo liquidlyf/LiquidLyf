@@ -109,7 +109,7 @@ describe("ask notify in workerd + emulators", () => {
     ({ type: "ASKED_TO_DONATE", fromUid: from, requestId: rid, createdAt });
 
   test("an ask that exists is pushed (202); a missing one is 409; a stranger 403", async () => {
-    await putDoc("requests/r1", newRequest("e2e-alice", { askCount: 1, lastAskedUid: "e2e-bob" }));
+    await putDoc("requests/r1", newRequest("e2e-alice", { askCount: 1 }));
     await putDoc("users/e2e-bob/notifications/ask_r1", askItem("r1"));
     const ok = await askNotify("r1", "e2e-bob", alice);
     expect(ok.status).toBe(202);
@@ -126,9 +126,9 @@ describe("ask notify in workerd + emulators", () => {
     await putDoc("users/old/notifications/ask_y", askItem("y", "e2e-asker2", new Date(Date.now() - 25 * 3_600_000)));
     for (let i = 0; i < 29; i++) await putDoc(`users/e${i}/notifications/ask_w${i}`, askItem(`w${i}`, "e2e-asker2"));
     await putDoc("users/z/notifications/ask_z", askItem("z", "e2e-mallory"));
-    await putDoc("requests/r1", newRequest("e2e-asker1", { askCount: 1, lastAskedUid: "e2e-bob" }));
+    await putDoc("requests/r1", newRequest("e2e-asker1", { askCount: 1 }));
     await putDoc("users/e2e-bob/notifications/ask_r1", askItem("r1", "e2e-asker1"));
-    await putDoc("requests/r2", newRequest("e2e-asker2", { askCount: 1, lastAskedUid: "e2e-bob" }));
+    await putDoc("requests/r2", newRequest("e2e-asker2", { askCount: 1 }));
     await putDoc("users/e2e-bob/notifications/ask_r2", askItem("r2", "e2e-asker2"));
     const over = await askNotify("r1", "e2e-bob", ask1); // 31 in 24 h
     expect(over.status).toBe(429);
