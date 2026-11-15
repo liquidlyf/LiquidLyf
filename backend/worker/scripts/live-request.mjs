@@ -7,6 +7,12 @@
 //   node scripts/live-request.mjs --email <test email> --confirm <requestId> [--donor <uid>]
 //        confirm the offer on it, as the app does (contract 11 + the donor's inbox item), then
 //        notify -> OFFER_CONFIRMED to the donor. Without --donor: the one OFFERED offer
+//   node scripts/live-request.mjs --email <test email> --donated <requestId> [--donor <uid>]
+//        mark the CONFIRMED donor as having donated (contract 11: DONATED, unitsFulfilled +1,
+//        the donor's inbox item), then notify -> DONATION_RECORDED. Without --donor: the one CONFIRMED
+//   node scripts/live-request.mjs --email <test email> --ask <requestId> --donor <uid>
+//        ask a listed donor to donate (contract 14: the inbox item, askCount +1, and the donor
+//        named in this account's own userStats), then the Worker pushes ASKED_TO_DONATE
 //   node scripts/live-request.mjs --email <test email> --cancel <requestId>   close it again,
 //        then notify-responders -> REQUEST_CANCELLED to donors still OFFERED or CONFIRMED
 //   node scripts/live-request.mjs --email <test email> --delete-account       remove the test
@@ -29,13 +35,16 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) =>
 const emulator = args.emulator === true;
 const deleting = args["delete-account"] === true;
 const confirming = args.confirm !== undefined;
-const posting = !args.cancel && !deleting && !confirming;
+const donating = args.donated !== undefined;
+const asking = args.ask !== undefined;
+const posting = !args.cancel && !deleting && !confirming && !donating && !asking;
 if (!args.email) usage("--email is required");
 if (posting && !(args.division && args.district && args.group)) usage("--division, --district and --group are required");
+if (asking && args.donor === undefined) usage("--ask needs --donor <uid>");
 function usage(msg) { console.error(`${msg}\nSee the comment at the top of scripts/live-request.mjs.`); process.exit(2); }
 
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
-for (const k of ["confirm", "cancel", "donor"]) if (args[k] !== undefined && !ID.test(String(args[k]))) usage(`--${k} needs an ID`);
+for (const k of ["confirm", "donated", "ask", "cancel", "donor"]) if (args[k] !== undefined && !ID.test(String(args[k]))) usage(`--${k} needs an ID`);
 const CODE = /^[A-Za-z0-9_-]{1,40}$/;
 const GROUPS = ["A_POS", "A_NEG", "B_POS", "B_NEG", "AB_POS", "AB_NEG", "O_POS", "O_NEG"];
 for (const k of ["division", "district", "upazila"]) if (args[k] && !CODE.test(args[k])) usage(`bad --${k}`);
@@ -155,37 +164,77 @@ const commit = (writes) => call(`${DOCS}:commit`, { writes }, bearer);
 const name = (path) => `${ROOT}/${path}`;
 const pathOf = (docName) => docName.slice(ROOT.length + 1);
 
-// ---------------------------------------------------------------- confirm an offer (contract 11)
-if (confirming) {
-  const rid = String(args.confirm);
+/** This account's OPEN request, or exit with the reason. */
+async function myOpenRequest(rid) {
   const reqDoc = await call(`${DOCS}/requests/${rid}`, undefined, bearer);
   if (!reqDoc.ok) fail(`couldn't read request ${rid}: ${err(reqDoc)}`);
   const r = fieldsOf(reqDoc.json);
   if (r.requesterUid !== uid) fail(`request ${rid} isn't this account's`);
   if (r.status !== "OPEN") fail(`request ${rid} is ${r.status}, not OPEN`);
-  const offered = Object.entries(r.responders ?? {}).filter(([, v]) => v?.status === "OFFERED").map(([k]) => k);
-  const donor = args.donor ? String(args.donor) : offered.length === 1 ? offered[0] : null;
-  if (!donor) fail(offered.length ? `${offered.length} offers are OFFERED (${offered.join(", ")}): pick one with --donor <uid>` : "no offer is OFFERED yet");
+  return r;
+}
+
+// ------------------------------------------- confirm an offer / record a donation (contract 11)
+// One batch, as the app: the response, its mirror on the request (DONATED also adds
+// unitsFulfilled +1), and the donor's inbox item. Then the Worker tells the donor.
+const DECISIONS = {
+  confirm: { from: "OFFERED", to: "CONFIRMED", inbox: "OFFER_CONFIRMED", done: "confirmed" },
+  donated: { from: "CONFIRMED", to: "DONATED", inbox: "DONATION_RECORDED", done: "marked DONATED" },
+};
+if (confirming || donating) {
+  const d = DECISIONS[confirming ? "confirm" : "donated"];
+  const rid = String(confirming ? args.confirm : args.donated);
+  const r = await myOpenRequest(rid);
+  const waiting = Object.entries(r.responders ?? {}).filter(([, v]) => v?.status === d.from).map(([k]) => k);
+  const donor = args.donor ? String(args.donor) : waiting.length === 1 ? waiting[0] : null;
+  if (!donor) fail(waiting.length ? `${waiting.length} offers are ${d.from} (${waiting.join(", ")}): pick one with --donor <uid>` : `no offer is ${d.from} yet`);
   const entry = r.responders?.[donor];
-  if (entry?.status !== "OFFERED") fail(`donor ${donor}'s offer is ${entry?.status ?? "missing"}, not OFFERED`);
+  if (entry?.status !== d.from) fail(`donor ${donor}'s offer is ${entry?.status ?? "missing"}, not ${d.from}`);
   const resp = await call(`${DOCS}/requests/${rid}/responses/${donor}`, undefined, bearer);
   if (!resp.ok) fail(`couldn't read the offer: ${err(resp)}`);
 
-  // One batch, as the app: the response, its mirror on the request, and the donor's inbox item.
   const res = await commit([
-    { update: { name: name(`requests/${rid}/responses/${donor}`), fields: fields({ status: "CONFIRMED" }) },
+    { update: { name: name(`requests/${rid}/responses/${donor}`), fields: fields({ status: d.to }) },
       updateMask: { fieldPaths: ["status"] }, updateTransforms: serverTime("updatedAt"),
       currentDocument: { updateTime: resp.json.updateTime } },
     { update: { name: name(`requests/${rid}`), fields: fields({
-        responders: { [donor]: { name: entry.name, group: entry.group, status: "CONFIRMED" } }, lastResponderUid: donor }) },
-      updateMask: { fieldPaths: [`responders.\`${donor}\``, "lastResponderUid"] }, updateTransforms: serverTime("updatedAt") },
-    { update: { name: name(`users/${donor}/notifications/OFFER_CONFIRMED_${rid}`),
-        fields: fields({ type: "OFFER_CONFIRMED", fromUid: uid, requestId: rid }) },
+        responders: { [donor]: { name: entry.name, group: entry.group, status: d.to } }, lastResponderUid: donor }) },
+      updateMask: { fieldPaths: [`responders.\`${donor}\``, "lastResponderUid"] },
+      updateTransforms: [...serverTime("updatedAt"),
+        ...(d.to === "DONATED" ? [{ fieldPath: "unitsFulfilled", increment: { integerValue: "1" } }] : [])] },
+    { update: { name: name(`users/${donor}/notifications/${d.inbox}_${rid}`),
+        fields: fields({ type: d.inbox, fromUid: uid, requestId: rid }) },
       updateTransforms: serverTime("createdAt"), currentDocument: { exists: false } },
   ]);
-  if (!res.ok) fail(`confirm refused by the rules: ${err(res)}`);
-  console.log(`PASS  offer from ${donor} on ${rid} confirmed through the rules (+ the donor's inbox item)`);
+  if (!res.ok) fail(`${d.done} refused by the rules: ${err(res)}`);
+  console.log(`PASS  offer from ${donor} on ${rid} ${d.done} through the rules (+ the donor's inbox item)`);
   const n = await workerPost(`/v1/requests/${rid}/responses/${donor}/notify`);
+  console.log(`      to close it later: node scripts/live-request.mjs --email ${args.email} --cancel ${rid}`);
+  process.exit(n && n.status !== 202 ? 1 : 0);
+}
+
+// ---------------------------------------------------------------- ask a donor (contract 14)
+// One batch, as the app: the donor's inbox item, the request's askCount +1, and the donor
+// named in this account's own userStats (private). The rules check the donor is listed, has
+// an accepted group and hasn't blocked this account. Then the Worker pushes ASKED_TO_DONATE.
+if (asking) {
+  const rid = String(args.ask);
+  const donor = String(args.donor);
+  const r = await myOpenRequest(rid);
+  if ((r.askCount ?? 0) >= 10) fail(`request ${rid} already asked 10 donors (the limit)`);
+  const res = await commit([
+    { update: { name: name(`users/${donor}/notifications/ask_${rid}`),
+        fields: fields({ type: "ASKED_TO_DONATE", fromUid: uid, requestId: rid }) },
+      updateTransforms: serverTime("createdAt"), currentDocument: { exists: false } },
+    { update: { name: name(`requests/${rid}`), fields: {} }, updateMask: { fieldPaths: [] },
+      updateTransforms: [{ fieldPath: "askCount", increment: { integerValue: "1" } }, ...serverTime("updatedAt")],
+      currentDocument: { exists: true } },
+    { update: { name: name(`userStats/${uid}`), fields: fields({ lastAskedUid: donor, lastAskRid: rid }) },
+      updateMask: { fieldPaths: ["lastAskedUid", "lastAskRid"] }, currentDocument: { exists: true } },
+  ]);
+  if (!res.ok) fail(`ask refused by the rules (listed? accepted group? blocked? asked before?): ${err(res)}`);
+  console.log(`PASS  donor ${donor} asked for ${rid} through the rules (askCount ${(r.askCount ?? 0) + 1})`);
+  const n = await workerPost(`/v1/requests/${rid}/asks/${donor}/notify`);
   console.log(`      to close it later: node scripts/live-request.mjs --email ${args.email} --cancel ${rid}`);
   process.exit(n && n.status !== 202 ? 1 : 0);
 }
