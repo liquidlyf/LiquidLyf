@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Bangla, review set 4: Profile and badges, Find donors, About and licences, Moderation (Phase 8.4).
+    NEEDS NATIVE REVIEW: first drafts, not yet checked by a native speaker. When the maintainer
+    has reviewed this set on the phone, change this line to "Reviewed by the maintainer, <date>".
+    Licence names, "GNU AGPL", file and script names stay in Latin letters.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="bn">
+    <!-- Profile -->
+    <string name="profile_email_verified">ইমেইল যাচাই করা</string>
+    <string name="profile_phone_verified">ফোন যাচাই করা</string>
+    <string name="profile_not_listed">\"রক্তদাতা খুঁজুন\"-এ নেই</string>
+    <string name="profile_eligibility_title">আপনার পরের রক্তদান</string>
+    <string name="profile_next_eligible">%1$s থেকে</string>
+    <string name="profile_impact_title">আপনার অবদান</string>
+    <string name="profile_impact_donations">রক্তদান</string>
+    <string name="profile_impact_verified">যাচাইকৃত</string>
+    <string name="profile_impact_requests">সাহায্য করা অনুরোধ</string>
+    <plurals name="profile_impact_lives">
+        <item quantity="one">সর্বোচ্চ %1$d জনকে সাহায্য</item>
+        <item quantity="other">সর্বোচ্চ %1$d জনকে সাহায্য</item>
+    </plurals>
+    <string name="profile_impact_lives_info">এক ব্যাগ পূর্ণ রক্ত সর্বোচ্চ ৩ জনকে সাহায্য করতে পারে, তাই এটি সর্বোচ্চ সম্ভাব্য সংখ্যা।</string>
+    <string name="profile_badges_title">ব্যাজ</string>
+    <string name="profile_badges_none">প্রথম রক্তদানে আপনি \"প্রথম ফোঁটা\" ব্যাজ পাবেন।</string>
+    <string name="badge_first_drop">প্রথম ফোঁটা</string>
+    <string name="badge_first_drop_desc">আপনার প্রথম রক্তদান</string>
+    <string name="badge_life_saver">জীবন রক্ষাকারী</string>
+    <string name="badge_life_saver_desc">৩ বার রক্তদান</string>
+    <string name="badge_hero">বীর</string>
+    <string name="badge_hero_desc">৫ বার রক্তদান</string>
+    <string name="badge_legend">কিংবদন্তি</string>
+    <string name="badge_legend_desc">১০ বার রক্তদান</string>
+    <string name="badge_rapid_responder">দ্রুত সাড়াদাতা</string>
+    <string name="badge_rapid_responder_desc">অনুরোধের ১৫ মিনিটের মধ্যে প্রস্তাব দিয়েছেন</string>
+    <string name="badge_regular">নিয়মিত</string>
+    <string name="badge_regular_desc">রক্ত দেওয়ার শেষ ৩টি সুযোগের প্রতিটিতেই রক্ত দিয়েছেন</string>
+    <string name="profile_history_title">রক্তদানের ইতিহাস</string>
+    <string name="profile_history_empty">এখনো কোনো রক্তদান নেই। আগের রক্তদানগুলো যোগ করুন, যাতে পরের রক্তদানের তারিখ ঠিক থাকে।</string>
+    <string name="profile_history_verified">যাচাইকৃত</string>
+    <string name="profile_history_self">নিজে যোগ করা</string>
+    <string name="profile_history_error">আপনার রক্তদানের তথ্য লোড করা যায়নি।</string>
+    <string name="action_add_past_donation">আগের রক্তদান যোগ করুন</string>
+    <string name="action_remove_donation">এই রক্তদান সরান</string>
+    <string name="profile_remove_title">এই রক্তদান সরাবেন?</string>
+    <string name="profile_remove_body">এটি আপনার ইতিহাস ও গণনা থেকে সরে যাবে। পরের রক্তদানের তারিখ যেমন আছে তেমনই থাকবে; \"প্রোফাইল সম্পাদনা\" থেকে বদলাতে পারবেন।</string>
+    <string name="action_remove">সরান</string>
+    <string name="profile_donation_removed">রক্তদান সরানো হয়েছে।</string>
+    <string name="add_donation_title">আগের রক্তদান যোগ করুন</string>
+    <string name="add_donation_date">তারিখ</string>
+    <string name="add_donation_pick_date">তারিখ বেছে নিন</string>
+    <string name="add_donation_component">কী দিয়েছিলেন</string>
+    <string name="add_donation_place">কোথায় (ঐচ্ছিক)</string>
+    <string name="add_donation_place_hint">হাসপাতাল বা ব্লাড ব্যাংক</string>
+    <string name="add_donation_save">রক্তদান যোগ করুন</string>
+    <string name="add_donation_date_required">রক্তদানের তারিখ বেছে নিন।</string>
+    <string name="add_donation_error_future">তারিখটি ভবিষ্যতের হতে পারে না।</string>
+    <string name="add_donation_error_too_early">এটি আপনার ১৮ বছর হওয়ার আগের তারিখ।</string>
+    <string name="add_donation_added">রক্তদান যোগ হয়েছে।</string>
+    <string name="add_donation_update_title">পরের রক্তদানের তারিখ বদলাবেন?</string>
+    <string name="add_donation_update_body">এটিই আপনার সর্বশেষ রক্তদান। তাহলে %1$s থেকে আবার রক্ত দিতে পারবেন, আর ততদিন অনুরোধের অ্যালার্ট বন্ধ থাকবে।</string>
+    <string name="add_donation_update_body_past">এটিই আপনার সর্বশেষ রক্তদান। এর বিশ্রামের সময় %1$s তারিখে শেষ হয়েছে, তাই আপনি এখনই রক্ত দিতে পারেন।</string>
+    <string name="add_donation_update_yes">বদলান</string>
+    <string name="add_donation_update_no">যেমন আছে থাক</string>
+    <string name="action_share_app">LiquidLyf শেয়ার করুন</string>
+    <string name="share_app_text">আমি LiquidLyf-এ একজন রক্তদাতা। এটি একটি বিনামূল্যের অ্যাপ, কারও রক্ত দরকার হলে কাছের রক্তদাতাদের অ্যালার্ট পাঠায়। আপনিও যোগ দিন: %1$s</string>
+
+    <!-- Find donors -->
+    <string name="donors_paused_title">রক্তদাতা খোঁজা আপাতত বন্ধ</string>
+    <string name="donors_paused_body">বিনামূল্যের প্ল্যানের সীমার মধ্যে থাকতে রক্তদাতা খোঁজা আপাতত বন্ধ রাখা হয়েছে। এর বদলে একটি অনুরোধ পোস্ট করুন: আমরা কাছের মানানসই রক্তদাতাদের অ্যালার্ট পাঠাব।</string>
+    <string name="donors_filter_groups">যে রক্তের গ্রুপ দরকার</string>
+    <string name="donors_filter_eligible">শুধু যাঁরা এখন দিতে পারেন</string>
+    <string name="donors_filter_eligible_summary">যাঁরা এখনো বিশ্রামের সময়ে আছেন, তাঁদের লুকান</string>
+    <string name="donors_any_upazila">পুরো জেলা</string>
+    <string name="donors_pick_group">অন্তত একটি রক্তের গ্রুপ বেছে নিন।</string>
+    <string name="action_search">খুঁজুন</string>
+    <string name="action_change_filters">ফিল্টার বদলান</string>
+    <string name="donors_summary_eligible">এখন দিতে পারেন</string>
+    <plurals name="donors_count">
+        <item quantity="one">%1$d জন রক্তদাতা মিলেছে</item>
+        <item quantity="other">%1$d জন রক্তদাতা মিলেছে</item>
+    </plurals>
+    <string name="donors_eligible_now">এখন দিতে পারেন</string>
+    <plurals name="donors_eligible_in">
+        <item quantity="one">%1$d দিন পর দিতে পারবেন</item>
+        <item quantity="other">%1$d দিন পর দিতে পারবেন</item>
+    </plurals>
+    <plurals name="donors_donations">
+        <item quantity="one">%1$d বার রক্তদান</item>
+        <item quantity="other">%1$d বার রক্তদান</item>
+    </plurals>
+    <string name="donors_active_week">এই সপ্তাহে সক্রিয়</string>
+    <string name="donors_empty_title">কোনো রক্তদাতা পাওয়া যায়নি</string>
+    <string name="donors_empty_body">একটি অনুরোধ পোস্ট করুন: রক্তদাতারা দিতে পারার সময় হলে আমরা তাঁদের অ্যালার্ট পাঠাব।</string>
+    <string name="action_show_more">আরও দেখুন</string>
+    <string name="donors_ask_title">%1$s-কে রক্ত দিতে অনুরোধ করুন</string>
+    <string name="donors_ask_body">তিনি একটি নোটিফিকেশন পাবেন এবং আপনার অনুরোধে প্রস্তাব দিতে পারবেন। এখন কোনো ফোন নম্বর শেয়ার হয় না: তিনি প্রস্তাব দিলে তবেই আপনার নম্বর দেখবেন।</string>
+    <string name="donors_ask_pick">কোন অনুরোধের জন্য?</string>
+    <string name="donors_ask_no_requests">আপনার কোনো চলমান অনুরোধ নেই। আগে একটি পোস্ট করুন, তারপর সরাসরি রক্তদাতাদের অনুরোধ করতে পারবেন।</string>
+    <string name="donors_ask_none_compatible">আপনার কোনো চলমান অনুরোধে %1$s রক্ত চলবে না।</string>
+    <string name="action_ask_to_donate">রক্ত দিতে অনুরোধ করুন</string>
+    <string name="action_asking">অনুরোধ পাঠানো হচ্ছে…</string>
+    <string name="donors_asked_label">অনুরোধ করা হয়েছে</string>
+    <string name="donors_asked">অনুরোধ পাঠানো হয়েছে। %1$s একটি নোটিফিকেশন পাবেন।</string>
+    <string name="donors_ask_already">এই অনুরোধের জন্য আপনি এই রক্তদাতাকে আগেই অনুরোধ করেছেন।</string>
+    <string name="donors_ask_request_full">এই অনুরোধের জন্য ইতিমধ্যে ১০ জনকে অনুরোধ করা হয়েছে।</string>
+    <string name="donors_ask_no_alert">আপনার অনুরোধ তাঁর নোটিফিকেশনে আছে, কিন্তু অ্যালার্ট পাঠানো যায়নি।</string>
+    <string name="detail_more_about">%1$s সম্পর্কে আরও</string>
+
+    <!-- About and licences -->
+    <string name="settings_about">অ্যাপ সম্পর্কে</string>
+    <string name="title_about">LiquidLyf সম্পর্কে</string>
+    <string name="about_version">সংস্করণ %1$s</string>
+    <string name="about_tagline">LiquidLyf বাংলাদেশের মানুষকে কাছের স্বেচ্ছাসেবী রক্তদাতা খুঁজে পেতে সাহায্য করে, আর কাছের কারও রক্ত দরকার হলে রক্তদাতাদের সাহায্য করার সুযোগ দেয়।</string>
+    <string name="about_privacy">গোপনীয়তা নীতি</string>
+    <string name="about_terms">শর্তাবলি ও কমিউনিটি নির্দেশিকা</string>
+    <string name="about_deletion_page">অ্যাকাউন্ট মুছে ফেলা</string>
+    <string name="about_deletion_page_summary">কী মুছে যায়, আর অ্যাপ ছাড়া কীভাবে অনুরোধ করবেন</string>
+    <string name="about_contact">যোগাযোগ করুন</string>
+    <string name="about_feedback">মতামত পাঠান</string>
+    <string name="about_feedback_subject">LiquidLyf মতামত</string>
+    <string name="about_feedback_body">অ্যাপ সংস্করণ: %1$s\nAndroid: %2$s\n\n</string>
+    <string name="about_source_code">সোর্স কোড</string>
+    <string name="about_source_code_summary">LiquidLyf একটি মুক্ত সফটওয়্যার (GNU AGPL-3.0-or-later)</string>
+    <string name="about_legal_licence">LiquidLyf একটি মুক্ত সফটওয়্যার: GNU Affero General Public License-এর সংস্করণ ৩ বা পরবর্তী সংস্করণের অধীনে আপনি এটি শেয়ার ও পরিবর্তন করতে পারেন। এর কোনো ওয়ারেন্টি নেই।</string>
+    <string name="about_trademark">LiquidLyf নাম ও লোগো ওই লাইসেন্সের আওতায় পড়ে না।</string>
+    <string name="about_area_credit">এলাকার তথ্য: BBS, UN OCHA HDX-এর মাধ্যমে (CC BY-IGO)। এলাকার বাংলা নাম: bangladesh-geojson (MIT)।</string>
+    <string name="title_licences">ওপেন-সোর্স লাইসেন্স</string>
+    <string name="licences_area_title">বাংলাদেশের এলাকার তালিকা</string>
+    <string name="licences_area_hdx">বিভাগ, জেলা ও উপজেলার কোড ও ইংরেজি নাম: বাংলাদেশ পরিসংখ্যান ব্যুরো (BBS), UN OCHA-র Humanitarian Data Exchange (cod-ab-bgd)-এর মাধ্যমে, CC BY-IGO লাইসেন্সে।</string>
+    <string name="licences_area_bn">বাংলা নাম: Fahim Reza ও অবদানকারীদের bangladesh-geojson, MIT লাইসেন্সে:</string>
+
+    <!-- Moderation (admins only) -->
+    <string name="title_moderation">মডারেশন</string>
+    <string name="settings_moderation_summary">খোলা রিপোর্ট (শুধু অ্যাডমিন)</string>
+    <string name="moderation_admins_only">শুধু অ্যাডমিনরা এটি দেখতে পারেন।</string>
+    <string name="moderation_empty_title">কোনো খোলা রিপোর্ট নেই</string>
+    <string name="moderation_empty_body">নতুন রিপোর্ট এখানে দেখাবে। অ্যাডমিনদের ফোনে নোটিফিকেশনও যায়।</string>
+    <string name="moderation_target_request">অনুরোধ · %1$s · %2$s</string>
+    <string name="moderation_target_request_gone">এমন একটি অনুরোধ, যা আর পড়া যায় না</string>
+    <string name="moderation_target_person">ব্যক্তি · %1$s</string>
+    <string name="moderation_unknown_person">অজানা ব্যক্তি</string>
+    <plurals name="moderation_report_count">
+        <item quantity="one">%1$dটি রিপোর্ট</item>
+        <item quantity="other">%1$dটি রিপোর্ট</item>
+    </plurals>
+    <string name="moderation_flagged">টাকার কথা আছে</string>
+    <string name="moderation_reporter_offered">রিপোর্টকারী এতে প্রস্তাব দিয়েছিলেন</string>
+    <string name="moderation_ban_hint">এই ব্যক্তিকে নিষিদ্ধ করতে backend/admin-scripts থেকে revokeAndBan.mjs চালান।</string>
+    <string name="action_refresh">রিফ্রেশ</string>
+    <string name="action_open_request">অনুরোধ খুলুন</string>
+    <string name="action_dismiss">খারিজ</string>
+    <string name="action_hide">লুকান</string>
+    <string name="action_restore">ফিরিয়ে আনুন</string>
+    <string name="action_cancel_request">অনুরোধ বাতিল করুন</string>
+    <string name="action_mark_handled">সমাধান হয়েছে</string>
+    <string name="moderation_confirm_dismiss">এই রিপোর্ট খারিজ করবেন? আর কিছু বদলাবে না।</string>
+    <string name="moderation_confirm_hide">যাচাই না হওয়া পর্যন্ত এই অনুরোধ লুকাবেন? রক্তদাতারা আর এটি দেখবেন না।</string>
+    <string name="moderation_confirm_restore">এই অনুরোধ ফিরিয়ে আনবেন? এটি আবার চলমান ও দৃশ্যমান হবে।</string>
+    <string name="moderation_confirm_cancel">এই অনুরোধ স্থায়ীভাবে বাতিল করবেন? এর মালিক আবার অনুরোধ পোস্ট করার সুযোগ ফিরে পাবেন।</string>
+    <string name="moderation_confirm_handled">এই রিপোর্ট সমাধান হয়েছে চিহ্নিত করবেন? নিষেধাজ্ঞা বা অন্য ব্যবস্থা অ্যাডমিন স্ক্রিপ্ট দিয়ে নিন।</string>
+    <string name="moderation_note">লগের জন্য নোট (ঐচ্ছিক)</string>
+    <string name="notification_reports_title">যাচাইয়ের জন্য রিপোর্ট</string>
+    <string name="notification_reports_body">নতুন: %1$s। ব্যবস্থা নিতে মডারেশন খুলুন।</string>
+    <string name="moderation_done">হয়েছে। এটি অ্যাডমিন লগে আছে।</string>
+</resources>
