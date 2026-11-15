@@ -11,17 +11,23 @@ status: draft, needs legal review
 
 # LiquidLyf Privacy Policy
 
-**Effective date:** [EFFECTIVE DATE] · [বাংলা](/bn/privacy)
+**Effective date:** [EFFECTIVE DATE]
 
 LiquidLyf is a free app that connects blood donors with people who need blood in Bangladesh. You trust
 us with your phone number and your blood group, so we collect as little as we can, show it to as few
 people as we can, and explain everything here in plain words.
 
-**In short:**
+<div class="glance" markdown="1">
+
+**At a glance**
 - Your phone number is **never shown publicly**. A requester sees it only if you offer to donate for
   their request, and you see a requester's number only after you offer, while your offer is active.
 - We don't sell your data, we don't show ads, and we don't use advertising or analytics trackers.
 - You can delete your account and its data at any time, in the app or by email.
+
+</div>
+
+[CONTENTS]
 
 ## 1. Who we are
 
@@ -110,8 +116,8 @@ We use your data only for these purposes. Your data is never used for advertisin
 | Phone number | Only you, **plus** the requester of a request you offered to donate for |
 | Blood group and area | Other signed-in users, if you chose to be listed as a donor or when you post or offer on a request |
 | Whether you're available to donate, and when you last used the app | Other signed-in users, if you chose to be listed as a donor. Find donors shows only available donors, and shows "Active this week" instead of a date |
-| Gender, birth year, weight answer | Only you. Others may see "can donate now" or "can donate in N days" |
-| Last donation date | Only you. Others see only "can donate now" or "in N days" |
+| Gender, birth year, weight answer | Only you. Others may see "Eligible now" or "Eligible in N days" |
+| Last donation date | Only you. Others see only "Eligible now" or "Eligible in N days" |
 | Donation history | You see all of it. Others see only how many times you donated |
 | Your badges | Only you |
 | A request's blood group, units, hospital, area, urgency and notes | Signed-in users with a verified email |
@@ -193,7 +199,8 @@ serious harm.
 - **See and correct** your profile at any time in the app.
 - **Stop being listed as a donor:** Settings → Privacy. Your donor card is removed at once, and you
   stop getting request alerts.
-- **Pause alerts:** turn off "Available to donate", or turn off notifications in Android settings.
+- **Pause alerts:** turn off "Ready to donate now" in your profile, or turn off notifications in
+  Android settings.
 - **Withdraw an offer** at any time before you donate. You then no longer see the request's contact
   details. The requester can still see the number you
   shared with that offer until it is deleted, 90 days after the request closes (section 6), and may
@@ -201,7 +208,7 @@ serious harm.
 - **Block someone:** you stop seeing their requests, and they can't ask you to donate or offer on
   your requests. If they had already offered, decline that offer, so they stop seeing your
   request's contact details. Once their donation is recorded, the offer can't be declined.
-- **Delete your account:** in the app under Settings → Delete account, or without the app at
+- **Delete your account:** in the app under Settings → Delete your account, or without the app at
   [liquidlyf.github.io/delete-account](/delete-account).
 - **Get a copy of your data,** or ask any question about it: email liquidlyf@gmail.com from the email
   address of your account. We reply within 30 days.
@@ -236,6 +243,9 @@ LiquidLyf is only for people aged **18 or older**. We don't knowingly collect da
 believe a child has an account, email us and we will delete it.
 
 ## 10. Changes to this policy
+
+<!-- CHECK (session A, before the first change after launch): the app doesn't yet ask existing users to
+     accept a new version (see the same note in terms.md §12). -->
 
 When we change this policy, we update the effective date at the top. For important changes, the app
 asks you to read and accept the new version. Earlier versions stay in the website's public history.

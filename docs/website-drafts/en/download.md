@@ -11,8 +11,6 @@ status: draft
 
 # Download LiquidLyf
 
-[বাংলা](/bn/download)
-
 Free. No ads. Find blood donors near you, and get alerted when someone nearby needs your blood group.
 
 **[⬇ Download LiquidLyf (APK)](https://github.com/liquidlyf/LiquidLyf/releases/latest/download/LiquidLyf.apk)**

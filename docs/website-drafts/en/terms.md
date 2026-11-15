@@ -11,10 +11,24 @@ status: draft, needs legal review
 
 # LiquidLyf Terms and Community Guidelines
 
-**Effective date:** [EFFECTIVE DATE] · [বাংলা](/bn/terms)
+**Effective date:** [EFFECTIVE DATE]
 
 These terms are the rules for using the LiquidLyf app. By creating an account, you agree to them and to
 our [Privacy Policy](/privacy). They are written to keep donors, patients and their families safe.
+
+<div class="glance" markdown="1">
+
+**At a glance**
+- LiquidLyf **only connects people**. It isn't a blood bank, a hospital or an emergency service.
+- You must be **18 or older**, and use your real name, number and blood group.
+- **Blood is never for sale.** Never pay or accept money for it, and donate only at a licensed hospital
+  or blood transfusion centre.
+- Fake requests, scams and harassment can get your account suspended or banned.
+- You can delete your account at any time.
+
+</div>
+
+[CONTENTS]
 
 ## 1. What LiquidLyf is, and what it isn't
 
@@ -65,8 +79,8 @@ Don't:
 
 ## 5. Reporting and blocking
 
-- Use **Report** on any request or person that breaks these rules. Choose a reason, such as "asking
-  for money" or "fake request".
+- Use **Report** on any request or person that breaks these rules. Choose a reason, such as "It asks
+  for money" or "It's fake".
 - Use **Block** to stop seeing someone's requests, and to stop them asking you to donate or offering
   on your requests.
 - A request reported by several different people is hidden automatically until a moderator reviews it.
@@ -134,6 +148,10 @@ These terms are governed by the laws of Bangladesh.
 <!-- CHECK with a lawyer: governing law, courts, and whether to name a jurisdiction. -->
 
 ## 12. Changes and ending your account
+
+<!-- CHECK (session A, before the first change after launch): the app records the accepted version
+     (Links.TERMS_VERSION) for new profiles, but doesn't yet ask existing users to accept a new one.
+     Build that prompt before these terms first change after launch, or change this sentence. -->
 
 We may update these terms. We change the effective date at the top, and for important changes the app
 asks you to accept the new version. If you don't agree, you can stop using LiquidLyf and

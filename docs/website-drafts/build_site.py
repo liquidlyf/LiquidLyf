@@ -16,8 +16,10 @@ Options:
 
 What it does to each page: removes HTML comments (the CHECK notes and other notes for maintainers,
 which must never reach the public page), removes the draft-only `status:` front-matter line, and
-fills [EFFECTIVE DATE], [PUBLISHER] and [COUNTRY OR POSTAL ADDRESS]. It stops if any other
-[PLACEHOLDER] is left, and it lists the CHECK notes still open in the sources.
+fills [EFFECTIVE DATE], [PUBLISHER] and [COUNTRY OR POSTAL ADDRESS]. Where a page has [CONTENTS], it
+puts a list of the page's numbered sections ("## 1. …") there, and gives each of them an anchor
+(#s1, #s2…, the same in both languages). It stops if any other [PLACEHOLDER] is left, and it lists
+the CHECK notes still open in the sources.
 
 It never deletes anything in the output folder. Files there that this build didn't write are listed
 at the end, to remove by hand if they're stale.
@@ -27,18 +29,23 @@ pages it publishes are CC BY 4.0, and the logo files are covered by TRADEMARKS.m
 """
 import argparse
 import datetime as dt
+import html
 import pathlib
 import re
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-PAGES = ["index", "privacy", "terms", "delete-account"]
-LOGOS = ["logo-full.svg", "logo-full-dark.svg", "logo-mark.svg"]
+# The home page is HTML (Liquid, no Markdown); the others are Markdown.
+PAGES = ["index.html", "privacy.md", "terms.md", "delete-account.md"]
+LOGOS = ["logo-full.svg", "logo-full-dark.svg", "logo-mark.svg", "logo-horizontal.svg",
+         "logo-horizontal-dark.svg"]
 
 COMMENT = re.compile(r"<!--.*?-->\n?", re.S)
 PLACEHOLDER = re.compile(r"\[[A-Z][A-Z0-9]*(?:[ \-–][A-Z0-9]+)*\]")
 BN_DIGITS = str.maketrans("0123456789", "০১২৩৪৫৬৭৮৯")
+ASCII_DIGITS = str.maketrans("০১২৩৪৫৬৭৮৯", "0123456789")
+SECTION = re.compile(r"(?m)^## (([0-9০-৯]+)\. .+?)[ \t]*$")
 BN_MONTHS = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট",
              "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"]
 
@@ -58,7 +65,25 @@ def open_checks(text: str) -> list[str]:
     return out
 
 
-def publish_page(text: str, values: dict[str, str]) -> str:
+def add_contents(text: str, lang: str) -> str:
+    """Replaces [CONTENTS] with a list of the numbered sections, and gives each one an anchor."""
+    if "[CONTENTS]" not in text:
+        return text
+    items = []
+
+    def heading(m: re.Match) -> str:
+        title = html.escape(m.group(1).replace("'", "’"), quote=False)
+        anchor = "s" + m.group(2).translate(ASCII_DIGITS)
+        items.append((anchor, title))
+        return f'<h2 id="{anchor}">{title}</h2>'
+
+    text = SECTION.sub(heading, text)
+    label = "এই পাতায় যা আছে" if lang == "bn" else "On this page"
+    links = "".join(f'<li><a href="#{a}">{t}</a></li>' for a, t in items)
+    return text.replace("[CONTENTS]", f'<nav class="toc" aria-label="{label}"><h2>{label}</h2><ol>{links}</ol></nav>')
+
+
+def publish_page(text: str, values: dict[str, str], lang: str = "en") -> str:
     text = COMMENT.sub("", text)
     head, sep, body = text.partition("\n---\n")
     if not text.startswith("---\n") or not sep:
@@ -68,6 +93,7 @@ def publish_page(text: str, values: dict[str, str]) -> str:
     for key, value in values.items():
         if value:
             text = text.replace(key, value)
+    text = add_contents(text, lang)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.lstrip("\n")
 
@@ -92,7 +118,7 @@ def main() -> None:
     sources: dict[pathlib.Path, pathlib.Path] = {}
     for lang, prefix in (("en", ""), ("bn", "bn/")):
         for name in PAGES:
-            sources[pathlib.Path(prefix + name + ".md")] = HERE / lang / (name + ".md")
+            sources[pathlib.Path(prefix + name)] = HERE / lang / name
         sources[pathlib.Path(prefix + "download.md")] = (
             HERE / lang / "download.md" if a.released else HERE / "site" / "prerelease" / lang / "download.md")
 
@@ -112,7 +138,7 @@ def main() -> None:
             "[EFFECTIVE DATE]": long_date(date, lang),
             "[PUBLISHER]": (a.publisher_bn or a.publisher) if lang == "bn" else a.publisher,
             "[COUNTRY OR POSTAL ADDRESS]": (a.address_bn or a.address) if lang == "bn" else a.address,
-        })
+        }, lang)
         left = sorted(set(PLACEHOLDER.findall(page)))
         if left:
             problems.append(f"{rel}: {', '.join(left)}")
@@ -121,8 +147,13 @@ def main() -> None:
     config = (HERE / "site" / "_config.yml").read_text(encoding="utf-8")
     config = re.sub(r"(?m)^released: \w+$", f"released: {'true' if a.released else 'false'}", config)
     write(pathlib.Path("_config.yml"), config)
-    for rel in ("_layouts/default.html", "assets/site.css", "404.md", "README.md"):
+    for rel in ("_layouts/default.html", "404.md", "README.md"):
         write(pathlib.Path(rel), (HERE / "site" / rel).read_text(encoding="utf-8"))
+    # Everything in site/assets: the stylesheet, the icons, the share images and the PNG icons.
+    assets = HERE / "site" / "assets"
+    for f in sorted(assets.rglob("*")):
+        if f.is_file():
+            write(pathlib.Path("assets") / f.relative_to(assets), f.read_bytes())
     for logo in LOGOS:
         write(pathlib.Path("assets") / logo, (REPO / "branding" / logo).read_bytes())
 

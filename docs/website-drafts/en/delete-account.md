@@ -6,11 +6,11 @@ alternate: /bn/delete-account
 status: draft
 ---
 
-<!-- DRAFT. The steps must match the app's Settings → Delete account screen (Phase 8). -->
+<!-- DRAFT. The steps must match the app's Settings → Delete your account screen
+     (feature/account/AccountScreens.kt and AccountViewModels.kt: the word DELETE or মুছুন, the
+     password if the account has one, then the "Deleting your account…" screen). Checked 15 Nov 2026. -->
 
 # Delete your LiquidLyf account
-
-[বাংলা](/bn/delete-account)
 
 You can delete your **LiquidLyf** account and its data at any time. You don't need a reason.
 
@@ -18,11 +18,12 @@ Uninstalling the app does **not** delete your account. Use one of the two ways b
 
 ## In the app (fastest)
 
-1. Open **LiquidLyf** and go to **Settings → Delete account**.
-2. Read what will be deleted, then tap **Delete my account**.
-3. Confirm it's you: enter your password, or choose your Google account again.
-4. Wait a few seconds until you see "Account deleted". If the connection drops, open the app again and
-   it finishes the deletion.
+1. Open **LiquidLyf** and go to **Settings → Delete your account**.
+2. Read what will be deleted. Type **DELETE** in the box, and enter your password if your account has
+   one.
+3. Tap **Delete my account**.
+4. Keep the app open while it shows "Deleting your account…". It takes a few seconds. If the app closes
+   or the connection drops, the deletion carries on the next time you open LiquidLyf.
 
 Your account is deleted at once.
 
