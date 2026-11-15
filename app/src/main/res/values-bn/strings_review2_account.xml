@@ -182,8 +182,8 @@
     <!-- Delete account -->
     <string name="title_delete_account">আপনার অ্যাকাউন্ট মুছে ফেলুন</string>
     <string name="delete_account_body">এতে আপনার প্রোফাইল, রক্তদাতা কার্ড, রক্তদানের ইতিহাস ও বার্তা স্থায়ীভাবে মুছে যাবে। আপনার অনুরোধ ও প্রস্তাব সংশ্লিষ্টদের জন্য থেকে যাবে, তবে সেখানে \"মুছে ফেলা ব্যবহারকারী\" দেখাবে এবং কোনো ফোন নম্বর থাকবে না। এটি আর ফেরানো যাবে না।</string>
-    <string name="delete_account_type">নিশ্চিত করতে %1$s লিখুন</string>
-    <string name="error_confirm_word">হুবহু %1$s লিখুন।</string>
+    <string name="delete_account_type">নিশ্চিত করতে %1$s বা মুছুন লিখুন</string>
+    <string name="error_confirm_word">হুবহু %1$s বা মুছুন লিখুন।</string>
     <string name="delete_account_password_hint">এটা যে আপনি, নিশ্চিত করতে পাসওয়ার্ড দিন।</string>
     <string name="action_delete_account">আমার অ্যাকাউন্ট মুছে ফেলুন</string>
     <string name="deleting_title">আপনার অ্যাকাউন্ট মুছে ফেলা হচ্ছে…</string>

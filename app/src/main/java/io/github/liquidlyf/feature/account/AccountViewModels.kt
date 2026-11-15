@@ -118,12 +118,13 @@ class DeleteAccountViewModel @Inject constructor(
 
     fun onPasswordChange(v: String) = state.update { it.copy(password = v, passwordError = null, formError = null) }
 
-    /** [expectedWord] is the localized confirmation word the screen shows ("DELETE" or its Bangla). */
-    fun confirm(expectedWord: String) {
+    /** A23: the confirmation word is DELETE (any case) or its Bangla, মুছুন, whatever the app's language. */
+    fun confirm() {
         val s = state.value
         val uid = auth.authState.value?.uid ?: return
         if (s.working) return
-        val wordOk = s.word.trim().equals(expectedWord, ignoreCase = true)
+        val typed = s.word.trim()
+        val wordOk = typed.equals(DELETE_WORD, ignoreCase = true) || typed == DELETE_WORD_BN
         val passwordError = if (s.needsPassword && s.password.isEmpty()) R.string.error_password_required else null
         if (!wordOk || passwordError != null) {
             state.update { it.copy(wordError = !wordOk, passwordError = passwordError) }
@@ -340,3 +341,7 @@ class EditProfileViewModel @Inject constructor(
 
     fun onMessageShown() = state.update { it.copy(message = null, messageArg = null) }
 }
+
+/** The account-deletion confirmation words (A23). The screen shows DELETE; Bangla names both. */
+internal const val DELETE_WORD = "DELETE"
+internal const val DELETE_WORD_BN = "মুছুন"

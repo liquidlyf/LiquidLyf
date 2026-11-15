@@ -123,7 +123,7 @@ fun DeleteAccountRoute(onBack: () -> Unit, viewModel: DeleteAccountViewModel = h
         }
         FormError(state.formError)
         OutlinedButton(
-            onClick = { viewModel.confirm(word) },
+            onClick = { viewModel.confirm() },
             enabled = !state.working,
             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
             modifier = Modifier.fillMaxWidth(),

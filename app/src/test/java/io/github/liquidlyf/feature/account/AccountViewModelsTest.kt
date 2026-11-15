@@ -78,6 +78,18 @@ class AccountViewModelsTest {
     // ---- delete account ----
 
     @Test
+    fun `the Bangla word also confirms the deletion, in any app language (A23)`() = test {
+        val uid = signedIn()
+        val session = FakeSessionManager(SessionState.Ready(TestData.user(uid), TestData.profile(uid)))
+        val vm = DeleteAccountViewModel(auth, deleter, session)
+        vm.onWordChange(" মুছুন ")
+        vm.onPasswordChange("old-password")
+        vm.confirm()
+        advanceUntilIdle()
+        assertEquals(uid, deleter.pendingUid)
+    }
+
+    @Test
     fun `delete needs the exact word and the password, then starts and hands over to the session`() = test {
         val uid = signedIn()
         val session = FakeSessionManager(SessionState.Ready(TestData.user(uid), TestData.profile(uid)))
@@ -85,19 +97,19 @@ class AccountViewModelsTest {
         assertTrue(vm.uiState.value.needsPassword)
 
         vm.onWordChange("delet")
-        vm.confirm("DELETE")
+        vm.confirm()
         assertTrue(vm.uiState.value.wordError)
         assertEquals(R.string.error_password_required, vm.uiState.value.passwordError)
 
         vm.onWordChange(" delete ")
         vm.onPasswordChange("wrong")
-        vm.confirm("DELETE")
+        vm.confirm()
         advanceUntilIdle()
         assertEquals(R.string.error_invalid_credentials, vm.uiState.value.passwordError)
         assertNull(deleter.pendingUid)
 
         vm.onPasswordChange("old-password")
-        vm.confirm("DELETE")
+        vm.confirm()
         advanceUntilIdle()
         assertEquals(uid, deleter.pendingUid)
         assertEquals(1, session.refreshes)
