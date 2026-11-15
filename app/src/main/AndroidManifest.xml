@@ -22,9 +22,12 @@
         android:theme="@style/Theme.LiquidLyf"
         tools:targetApi="33">
 
+        <!-- singleTop: after a notification tap opened the app, a launcher tap reuses that screen
+             instead of stacking a second MainActivity on it (A16, 15 Nov 2026). -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.LiquidLyf.Starting"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>

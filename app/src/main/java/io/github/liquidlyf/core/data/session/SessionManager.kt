@@ -102,11 +102,7 @@ class AppSessionManager @Inject constructor(
         scope.launch {
             var signedIn = false
             state.collect { s ->
-                if (s is SessionState.SignedOut && signedIn) {
-                    alerts.clear()
-                    notifications.cancelAll()
-                    reminders.cancelAll()
-                }
+                if (s is SessionState.SignedOut && signedIn) forgetThisPerson()
                 if (s !is SessionState.Loading) signedIn = s !is SessionState.SignedOut
             }
         }
@@ -118,7 +114,17 @@ class AppSessionManager @Inject constructor(
 
     override suspend fun signOut() {
         push.sync(null)
+        // Also done here, before the sign-out itself, so nothing is left behind if the app stops
+        // right after it. The watcher in init still covers sign-outs that don't come through
+        // here (account deleted elsewhere, session revoked).
+        forgetThisPerson()
         auth.signOut()
+    }
+
+    private suspend fun forgetThisPerson() {
+        alerts.clear()
+        notifications.cancelAll()
+        reminders.cancelAll()
     }
 
     private suspend fun resolve(user: AuthUser?): SessionState = when {

@@ -1,6 +1,7 @@
 package io.github.liquidlyf.feature.request.detail
 
 import androidx.lifecycle.SavedStateHandle
+import com.google.firebase.firestore.FirebaseFirestoreException
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.BdGeoParser
@@ -245,5 +246,20 @@ class RequestDetailViewModelTest {
         assertFalse(missing.uiState.value.loading)
         assertNull(missing.uiState.value.request)
         assertTrue(missing.uiState.value.responses.isEmpty())
+    }
+
+    @Test
+    fun `a listener closed by Firestore shows the request as not available instead of crashing`() = runTest(dispatcher) {
+        // A16: signed out while the requester's view still listened to the request and its offers.
+        signInAs(requester)
+        requests.put(TestData.request(id = "r1", group = BloodGroup.B_POS))
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(ViewerRole.REQUESTER, vm.uiState.value.role)
+
+        requests.listenFailure.value = FirebaseFirestoreException("Missing or insufficient permissions.", FirebaseFirestoreException.Code.PERMISSION_DENIED)
+        advanceUntilIdle() // uncaught, this failed the test (and crashed the app)
+        assertFalse(vm.uiState.value.loading)
+        assertNull(vm.uiState.value.request)
     }
 }

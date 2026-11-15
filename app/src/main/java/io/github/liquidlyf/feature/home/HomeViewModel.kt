@@ -14,6 +14,7 @@ import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.domain.Eligibility
 import io.github.liquidlyf.core.domain.EligibilityCalculator
+import io.github.liquidlyf.core.firebase.endOnListenError
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.model.UserProfile
@@ -85,7 +86,11 @@ class HomeViewModel @Inject constructor(
         .distinctUntilChanged()
         .flatMapLatest { key ->
             val group = key?.third
-            if (key == null || group == null) flowOf(emptyList()) else requests.feed(key.second, group)
+            if (key == null || group == null) {
+                flowOf(emptyList())
+            } else {
+                requests.feed(key.second, group).endOnListenError("feed") { emit(emptyList()) }
+            }
         }
 
     val uiState: StateFlow<HomeUiState> = combine(profileFlow, feed, pendingAvailable, geo) { p, list, pending, g ->

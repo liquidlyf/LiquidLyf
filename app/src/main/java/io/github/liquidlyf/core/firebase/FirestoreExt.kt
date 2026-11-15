@@ -1,20 +1,37 @@
 package io.github.liquidlyf.core.firebase
 
+import android.util.Log
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Source
+import io.github.liquidlyf.core.util.AppError
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.tasks.await
 
 /*
  * Firestore listeners as Flows. The listener is removed as soon as the collector stops
  * (screen left, ViewModel cleared), so listeners can no longer pile up (BUG-008).
- * Errors close the flow; repositories turn them into AppError with toAppError().
+ * Errors close the flow: every collector ends it with [endOnListenError].
  */
+
+/**
+ * Ends a listener flow quietly when Firestore closes it with an error, instead of crashing the
+ * collecting coroutine: logs the kind of error and runs [onError], which may emit a last value.
+ * The usual case is PERMISSION_DENIED for a screen still listening while the user signs out
+ * (A16, 15 Nov 2026: that crashed the app).
+ */
+fun <T> Flow<T>.endOnListenError(what: String, onError: suspend FlowCollector<T>.(AppError) -> Unit = {}): Flow<T> =
+    catch { e ->
+        val error = e.toAppError()
+        Log.w("LiquidLyfFirestore", "$what listener stopped: $error")
+        onError(error)
+    }
 
 /** Emits the mapped document on every change, or null while it doesn't exist. */
 fun <T> DocumentReference.snapshots(mapper: (DocumentSnapshot) -> T?): Flow<T?> = callbackFlow {

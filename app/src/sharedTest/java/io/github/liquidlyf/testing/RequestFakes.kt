@@ -29,6 +29,7 @@ import io.github.liquidlyf.core.util.NetworkMonitor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import java.time.Duration
@@ -44,6 +45,11 @@ class FakeRequestRepository(private val now: Instant = TestData.NOW) : RequestRe
     /** create() calls that started, including ones still held by [createGate]. */
     var createStarted = 0
     var failNext: AppError? = null
+    /**
+     * Set to make every open listener (feed, observe, and the offer fake's responders) fail, like
+     * Firestore's listeners after sign-out (PERMISSION_DENIED).
+     */
+    val listenFailure = MutableStateFlow<Throwable?>(null)
     private var nextId = 1
 
     fun put(vararg r: BloodRequest) = requests.update { all -> all + r.associateBy { it.id } }
@@ -51,10 +57,15 @@ class FakeRequestRepository(private val now: Instant = TestData.NOW) : RequestRe
     private fun <T> result(block: () -> AppResult<T>): AppResult<T> =
         failNext?.let { failNext = null; AppResult.Failure(it) } ?: block()
 
+    internal fun <T> Flow<T>.failingOnRequest(): Flow<T> = combine(listenFailure) { value, failure ->
+        if (failure != null) throw failure
+        value
+    }
+
     override fun feed(district: String, group: BloodGroup): Flow<List<BloodRequest>> = requests.map { all ->
         all.values.filter { it.status == RequestStatus.OPEN && it.district == district && group in it.acceptedGroups }
             .sortedBy { it.neededBy }
-    }
+    }.failingOnRequest()
 
     override suspend fun nearby(district: String, after: BloodRequest?, limit: Long) = result {
         val all = requests.value.values.filter { it.status == RequestStatus.OPEN && it.district == district }.sortedBy { it.neededBy }
@@ -62,7 +73,7 @@ class FakeRequestRepository(private val now: Instant = TestData.NOW) : RequestRe
         AppResult.Success(all.drop(start).take(limit.toInt()))
     }
 
-    override fun observe(requestId: String): Flow<BloodRequest?> = requests.map { it[requestId] }
+    override fun observe(requestId: String): Flow<BloodRequest?> = requests.map { it[requestId] }.failingOnRequest()
 
     override suspend fun byIds(ids: List<String>) = result { AppResult.Success(ids.mapNotNull { requests.value[it] }) }
 
@@ -128,7 +139,7 @@ class FakeOfferRepository(private val requests: FakeRequestRepository) : OfferRe
         failNext?.let { failNext = null; AppResult.Failure(it) } ?: block()
 
     override fun responders(requestId: String, requesterUid: String): Flow<List<DonorResponse>> =
-        responses.map { all -> all.values.filter { it.requestId == requestId && it.requesterUid == requesterUid } }
+        with(requests) { responses.map { all -> all.values.filter { it.requestId == requestId && it.requesterUid == requesterUid } }.failingOnRequest() }
 
     override suspend fun myOffer(requestId: String, donorUid: String) = result { AppResult.Success(responses.value[requestId to donorUid]) }
 

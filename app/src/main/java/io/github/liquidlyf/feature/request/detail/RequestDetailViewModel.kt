@@ -19,6 +19,7 @@ import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
+import io.github.liquidlyf.core.firebase.endOnListenError
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.DonorResponse
 import io.github.liquidlyf.core.model.ReportReason
@@ -133,7 +134,8 @@ class RequestDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val geo = geoRepository.geo()
             state.update { it.copy(geo = geo) }
-            requests.observe(requestId).collect(::onRequest)
+            // Unreadable from now on (signed out, or hidden by an admin): shown as not available.
+            requests.observe(requestId).endOnListenError("request") { emit(null) }.collect(::onRequest)
         }
     }
 
@@ -186,7 +188,7 @@ class RequestDetailViewModel @Inject constructor(
         if (listeningToResponses) return
         listeningToResponses = true
         viewModelScope.launch {
-            offers.responders(requestId, myUid).collect { list ->
+            offers.responders(requestId, myUid).endOnListenError("responders").collect { list ->
                 state.update { it.copy(responses = list.sortedWith(compareBy({ order(it.status) }, { it.createdAt }))) }
             }
         }

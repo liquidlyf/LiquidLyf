@@ -1,5 +1,6 @@
 package io.github.liquidlyf.feature.home
 
+import com.google.firebase.firestore.FirebaseFirestoreException
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.BdGeoParser
@@ -173,5 +174,17 @@ class HomeViewModelTest {
         session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(inboxSeenAt = TestData.NOW.minusSeconds(1)))
         advanceUntilIdle()
         assertTrue(vm.unreadInbox.value)
+    }
+
+    @Test
+    fun `a feed listener closed by Firestore shows an empty list instead of crashing`() = runTest(dispatcher) {
+        requests.put(TestData.request(id = "r1"))
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(listOf("r1"), vm.uiState.value.requests?.map { it.id })
+
+        requests.listenFailure.value = FirebaseFirestoreException("Missing or insufficient permissions.", FirebaseFirestoreException.Code.PERMISSION_DENIED)
+        advanceUntilIdle() // uncaught, this failed the test (and crashed the app in A16)
+        assertEquals(emptyList<String>(), vm.uiState.value.requests?.map { it.id })
     }
 }
