@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.localDateText
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.labelRes
@@ -41,8 +42,6 @@ import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.model.BloodComponent
 import java.time.LocalDate
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 /**
  * 6.4: date (not in the future, not before the donor turned 18), what they gave, and where.
@@ -84,7 +83,7 @@ fun AddDonationSheet(
             OutlinedButton(onClick = { showPicker = true }, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
                 Icon(painterResource(LLIcons.Event), contentDescription = null)
                 Text(
-                    date?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)) ?: stringResource(R.string.add_donation_pick_date),
+                    date?.let { localDateText(it) } ?: stringResource(R.string.add_donation_pick_date),
                     Modifier.padding(start = Spacing.xs),
                 )
             }

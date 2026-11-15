@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.localDateText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
 import io.github.liquidlyf.core.designsystem.components.ChoiceRow
 import io.github.liquidlyf.core.designsystem.components.DropdownField
@@ -68,8 +69,6 @@ import io.github.liquidlyf.feature.auth.FormError
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import java.time.LocalDate
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 @Composable
 fun ProfileSetupRoute(viewModel: ProfileSetupViewModel = hiltViewModel()) {
@@ -283,7 +282,7 @@ private fun ContactStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Se
 
     Text(stringResource(R.string.setup_last_donation), style = MaterialTheme.typography.labelLarge)
     val pickedLabel = d.lastDonationEpochDay?.takeIf { d.neverDonated == false }?.let {
-        stringResource(R.string.last_donation_on, LocalDate.ofEpochDay(it).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)))
+        stringResource(R.string.last_donation_on, localDateText(LocalDate.ofEpochDay(it)))
     }
     ChoiceRow(
         options = listOf("never" to stringResource(R.string.last_donation_never), "date" to (pickedLabel ?: stringResource(R.string.last_donation_pick))),

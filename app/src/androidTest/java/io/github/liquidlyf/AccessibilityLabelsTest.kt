@@ -5,15 +5,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
@@ -96,13 +99,41 @@ class AccessibilityLabelsTest {
     @get:Rule
     val compose = createComposeRule()
 
+    /**
+     * Phase 8: `-Pandroid.testInstrumentationRunnerArguments.locale=bn` runs every check in that
+     * language (Bangla text is longer: labels and 48 dp must still hold), and `screenshots=true`
+     * saves each checked screen to the app's files folder (`a11y-<locale>/`), e.g. for the README.
+     */
+    private val arguments = InstrumentationRegistry.getArguments()
+    private val localeTag: String? = arguments.getString("locale")
+    private val target = InstrumentationRegistry.getInstrumentation().targetContext
+    private val context: android.content.Context = localeTag?.let { tag ->
+        target.createConfigurationContext(android.content.res.Configuration(target.resources.configuration).apply { setLocale(java.util.Locale.forLanguageTag(tag)) })
+    } ?: target
+
+    /** Place names follow the test's language too. */
+    private val appLocale = if (localeTag == "bn") io.github.liquidlyf.core.model.AppLocale.BN else io.github.liquidlyf.core.model.AppLocale.EN
+
     private fun show(content: @Composable () -> Unit) {
         compose.setContent {
-            CompositionLocalProvider(LocalSnackbarHostState provides SnackbarHostState()) {
+            CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalContext provides context,
+                androidx.compose.ui.platform.LocalConfiguration provides context.resources.configuration,
+                androidx.compose.ui.platform.LocalResources provides context.resources,
+                LocalSnackbarHostState provides SnackbarHostState(),
+            ) {
                 LiquidLyfTheme { content() }
             }
         }
         compose.waitForIdle()
+    }
+
+    private fun saveScreenshot(screen: String) {
+        if (arguments.getString("screenshots") != "true") return
+        val image = runCatching { compose.onRoot().captureToImage().asAndroidBitmap() }.getOrNull() ?: return
+        val dir = java.io.File(target.getExternalFilesDir(null), "a11y-${localeTag ?: "en"}").apply { mkdirs() }
+        val name = screen.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
+        java.io.File(dir, "$name.png").outputStream().use { image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
     }
 
     private fun SemanticsNode.label(): String? =
@@ -127,6 +158,7 @@ class AccessibilityLabelsTest {
                 problems += "smaller than 48 dp (${width.toInt()}x${height.toInt()} px): \"$label\""
             }
         }
+        saveScreenshot(screen)
         assertTrue("$screen:\n" + problems.joinToString("\n"), problems.isEmpty())
     }
 
@@ -168,7 +200,7 @@ class AccessibilityLabelsTest {
         val step = mutableIntStateOf(0)
         show {
             val state = ProfileSetupUiState(draft = draft.copy(step = step.intValue), geo = geo, loaded = true, needsTerms = true)
-            ProfileSetupScreen(state, AppLocale.EN, {}, {}, {}, {}, {})
+            ProfileSetupScreen(state, appLocale, {}, {}, {}, {}, {})
         }
         for (s in 0..3) {
             compose.runOnUiThread { step.intValue = s }
@@ -481,5 +513,5 @@ class AccessibilityLabelsTest {
         assertControlsAreLabelledAndBigEnough("Request detail, requester menu")
     }
 
-    private fun str(id: Int) = InstrumentationRegistry.getInstrumentation().targetContext.getString(id)
+    private fun str(id: Int) = context.getString(id)
 }

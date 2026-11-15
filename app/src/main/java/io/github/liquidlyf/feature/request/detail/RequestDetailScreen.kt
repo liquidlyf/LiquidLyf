@@ -518,11 +518,12 @@ private fun ResponderRow(
     Column(Modifier.padding(vertical = Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             BloodGroupBadge(response.donorBloodGroup, size = 40.dp)
-            Column(Modifier.weight(1f)) {
+            // The status sits under the name, so a long label (Bangla, large text) can't squeeze it.
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                 Text(response.donorDisplayName, style = MaterialTheme.typography.titleMedium)
                 response.message?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                StatusPill(response.status)
             }
-            StatusPill(response.status)
             // 7.1/7.2: report or block this person.
             Box {
                 IconButton(onClick = { menuOpen = true }, enabled = enabled) {

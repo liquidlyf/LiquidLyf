@@ -10,10 +10,9 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.util.RelativeSpan
 import io.github.liquidlyf.core.util.RelativeTime
 import kotlinx.coroutines.delay
+import android.icu.text.DateFormat
 import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+import java.util.Date
 
 /** The current time, ticking every [periodMillis] so countdowns stay fresh while a screen is open. */
 @Composable
@@ -40,20 +39,28 @@ fun relativeTimeText(target: Instant, now: Instant): String {
     }
 }
 
-/** A date and time in the phone's time zone and the app's language, e.g. "14 Nov 2026, 3:30 pm". */
+/**
+ * A date and time in the phone's time zone and the app's language, e.g. "14 Nov 2026, 3:30 pm".
+ * Android's ICU formatter, not java.time: java.time keeps ASCII digits, so Bangla came out as
+ * "১৩ নভেম্বর, ২০২৬ 6:00 PM" (8.4: Bangla digits throughout).
+ */
 @Composable
 fun dateTimeText(instant: Instant): String {
     val locale = LocalConfiguration.current.locales[0]
-    return DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
-        .withLocale(locale)
-        .format(instant.atZone(ZoneId.systemDefault()))
+    return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale).format(Date.from(instant))
 }
 
 /** A date in the phone's time zone and the app's language, e.g. "14 Nov 2026". */
 @Composable
 fun dateText(instant: Instant): String {
     val locale = LocalConfiguration.current.locales[0]
-    return DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-        .withLocale(locale)
-        .format(instant.atZone(ZoneId.systemDefault()))
+    return DateFormat.getDateInstance(DateFormat.MEDIUM, locale).format(Date.from(instant))
+}
+
+/** A calendar date (no time zone shift) in the app's language, e.g. a donation date picked in a date picker. */
+@Composable
+fun localDateText(date: java.time.LocalDate): String {
+    val locale = LocalConfiguration.current.locales[0]
+    val format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale).apply { timeZone = android.icu.util.TimeZone.GMT_ZONE }
+    return format.format(Date.from(date.atStartOfDay(java.time.ZoneOffset.UTC).toInstant()))
 }
