@@ -106,11 +106,13 @@ class ModerationEmulatorTest {
         val requestReport = open.single { it.targetType == ReportTarget.REQUEST }
         val personReport = open.single { it.targetType == ReportTarget.USER }
 
-        moderation.act(adminUid, RequestAction.HIDE, request(rid), requestReport, "checking").ok()
+        moderation.act(adminUid, RequestAction.HIDE, request(rid), listOf(requestReport), "checking").ok()
         assertEquals(RequestStatus.REMOVED, request(rid).status)
-        moderation.act(adminUid, RequestAction.RESTORE, request(rid), null, null).ok()
+        assertTrue("hidden is not decided: the report stays open", requestReport.id in moderation.openReports().ok().map { it.id })
+        moderation.act(adminUid, RequestAction.RESTORE, request(rid), listOf(requestReport), null).ok()
         assertEquals(RequestStatus.OPEN, request(rid).status)
-        moderation.act(adminUid, RequestAction.CANCEL, request(rid), null, "fake after all").ok()
+        assertEquals("DISMISSED", db.collection("reports").document(requestReport.id).get(Source.SERVER).await().getString("status"))
+        moderation.act(adminUid, RequestAction.CANCEL, request(rid), emptyList(), "fake after all").ok()
         assertEquals(RequestStatus.CANCELLED, request(rid).status)
         val slotsAfter = db.statsRef(ownerUid).get(Source.SERVER).await().getLong(UserStatsDoc.OPEN_REQUESTS)!!
         assertEquals("the cancel gives the owner's slot back (B15)", slotsBefore - 1, slotsAfter)

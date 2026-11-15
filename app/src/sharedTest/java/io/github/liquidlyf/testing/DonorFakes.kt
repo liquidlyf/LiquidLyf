@@ -72,13 +72,17 @@ class FakeModerationRepository : io.github.liquidlyf.core.data.moderation.Modera
         adminUid: String,
         action: io.github.liquidlyf.core.data.moderation.RequestAction,
         request: io.github.liquidlyf.core.model.BloodRequest,
-        report: io.github.liquidlyf.core.model.Report?,
+        reports: List<io.github.liquidlyf.core.model.Report>,
         note: String?,
     ): AppResult<Unit> {
         actions += "$action ${request.id} by $adminUid"
-        report?.let { r -> reports.removeAll { it.id == r.id } }
+        decided[request.id] = reports.map { it.id }
+        if (action.closesReportsAs != null) this.reports.removeAll { r -> reports.any { it.id == r.id } }
         return AppResult.Success(Unit)
     }
+
+    /** Per request: the report ids its last action was given. */
+    val decided = mutableMapOf<String, List<String>>()
 
     override suspend fun markPersonHandled(adminUid: String, report: io.github.liquidlyf.core.model.Report, note: String?): AppResult<Unit> {
         actions += "HANDLED ${report.id} by $adminUid"

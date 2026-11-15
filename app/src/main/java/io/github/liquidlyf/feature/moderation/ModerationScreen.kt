@@ -53,6 +53,7 @@ import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.relativeTimeText
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.ReportTarget
+import io.github.liquidlyf.core.model.RequestStatus
 import kotlinx.coroutines.launch
 import java.time.Instant
 
@@ -194,7 +195,8 @@ private fun ReportCard(item: ModerationItem, now: Instant, enabled: Boolean, onO
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 val req = item.request
                 if (req != null) Button(R.string.action_open_request, enabled = true) { onOpenRequest(req.id) }
-                Button(Kind.DISMISS.label, enabled) { onPick(Kind.DISMISS) }
+                // A hidden request is decided with Restore or Cancel, so it can't be left hidden by a dismiss.
+                if (req?.status != RequestStatus.REMOVED) Button(Kind.DISMISS.label, enabled) { onPick(Kind.DISMISS) }
                 if (r.targetType == ReportTarget.USER) Button(Kind.HANDLED.label, enabled) { onPick(Kind.HANDLED) }
                 if (req != null) {
                     if (RequestAction.HIDE.allowedFrom(req.status)) Button(Kind.HIDE.label, enabled) { onPick(Kind.HIDE) }

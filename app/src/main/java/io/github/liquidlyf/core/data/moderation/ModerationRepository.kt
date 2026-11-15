@@ -25,16 +25,19 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** What an admin can do to a reported request (contract 17). */
-enum class RequestAction(val log: AdminAction, val to: RequestStatus) {
-    /** OPEN → REMOVED: hidden until reviewed. */
-    HIDE(AdminAction.REMOVE_REQUEST, RequestStatus.REMOVED),
+/**
+ * What an admin can do to a reported request (contract 17), and what that does to the
+ * request's open reports: null leaves them open.
+ */
+enum class RequestAction(val log: AdminAction, val to: RequestStatus, val closesReportsAs: ReportStatus?) {
+    /** OPEN → REMOVED: hidden until reviewed. The reports stay open, so it stays in the list for Restore or Cancel. */
+    HIDE(AdminAction.REMOVE_REQUEST, RequestStatus.REMOVED, null),
 
-    /** REMOVED → OPEN. */
-    RESTORE(AdminAction.RESTORE_REQUEST, RequestStatus.OPEN),
+    /** REMOVED → OPEN: reviewed and fine, so the reports are dismissed. */
+    RESTORE(AdminAction.RESTORE_REQUEST, RequestStatus.OPEN, ReportStatus.DISMISSED),
 
     /** OPEN or REMOVED → CANCELLED, giving the owner's open-request slot back (B15). */
-    CANCEL(AdminAction.CANCEL_REQUEST, RequestStatus.CANCELLED),
+    CANCEL(AdminAction.CANCEL_REQUEST, RequestStatus.CANCELLED, ReportStatus.ACTIONED),
     ;
 
     fun allowedFrom(status: RequestStatus): Boolean = when (this) {
@@ -46,7 +49,7 @@ enum class RequestAction(val log: AdminAction, val to: RequestStatus) {
 
 /**
  * Phase 7.4/7.5, for admins only (the `admin` claim; the rules refuse everyone else). Each
- * action is one batch: the change, the report's new status, and one `adminLog` entry.
+ * action is one batch: the change, the reports' new status, and one `adminLog` entry.
  */
 interface ModerationRepository {
     /** Newest first; the screen re-orders by priority. */
@@ -54,7 +57,8 @@ interface ModerationRepository {
 
     suspend fun dismiss(adminUid: String, report: Report, note: String?): AppResult<Unit>
 
-    suspend fun act(adminUid: String, action: RequestAction, request: BloodRequest, report: Report?, note: String?): AppResult<Unit>
+    /** [reports]: the request's open reports, closed together as [RequestAction.closesReportsAs] says. */
+    suspend fun act(adminUid: String, action: RequestAction, request: BloodRequest, reports: List<Report>, note: String?): AppResult<Unit>
 
     /**
      * A report about a person, handled outside the app (a ban is the maintainer's
@@ -89,7 +93,7 @@ class FirestoreModerationRepository @Inject constructor(private val db: Firebase
         adminUid: String,
         action: RequestAction,
         request: BloodRequest,
-        report: Report?,
+        reports: List<Report>,
         note: String?,
     ): AppResult<Unit> {
         if (!action.allowedFrom(request.status)) return AppResult.Failure(AppError.InvalidInput)
@@ -103,8 +107,8 @@ class FirestoreModerationRepository @Inject constructor(private val db: Firebase
                 mapOf(RequestDoc.STATUS to action.to.code, RequestDoc.UPDATED_AT to FieldValue.serverTimestamp()),
             )
             if (giveSlotBack) batch.update(ownerStats, FirestoreRequestRepository.openRequestsDown(request.id))
-            report?.let { batch.update(db.reportRef(it.id), ReportDoc.STATUS, ReportStatus.ACTIONED.code) }
-            batch.set(db.newAdminLogRef(), AdminLogDoc.createMap(adminUid, action.log, TARGET_REQUEST, request.id, report?.id, note))
+            action.closesReportsAs?.let { closed -> reports.forEach { batch.update(db.reportRef(it.id), ReportDoc.STATUS, closed.code) } }
+            batch.set(db.newAdminLogRef(), AdminLogDoc.createMap(adminUid, action.log, TARGET_REQUEST, request.id, reports.firstOrNull()?.id, note))
             batch.commit().await()
         }
     }

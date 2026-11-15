@@ -94,7 +94,12 @@ class ModerationViewModel @Inject constructor(
 
     fun act(item: ModerationItem, action: RequestAction, note: String?) {
         val request = item.request ?: return
-        run { admin -> moderation.act(admin, action, request, item.report, note) }
+        // Every open report on this request is decided together, not just the one tapped.
+        val reports = state.value.items.orEmpty()
+            .map { it.report }
+            .filter { it.targetType == ReportTarget.REQUEST && it.targetId == request.id }
+            .ifEmpty { listOf(item.report) }
+        run { admin -> moderation.act(admin, action, request, reports, note) }
     }
 
     fun markHandled(item: ModerationItem, note: String?) = run { admin -> moderation.markPersonHandled(admin, item.report, note) }

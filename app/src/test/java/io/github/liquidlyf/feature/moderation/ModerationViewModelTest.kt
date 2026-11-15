@@ -92,6 +92,20 @@ class ModerationViewModelTest {
         vm.markHandled(byId.getValue("3"), "banned with the script")
         advanceUntilIdle()
         assertEquals(listOf("HIDE r1 by admin", "CANCEL r2 by admin", "HANDLED 3 by admin"), moderation.actions)
-        assertEquals(emptyList<String>(), vm.uiState.value.items!!.map { it.report.id })
+        // Hidden is not decided: its report stays in the list for Restore or Cancel.
+        assertEquals(listOf("1"), vm.uiState.value.items!!.map { it.report.id })
+    }
+
+    @Test
+    fun `all of a request's open reports are decided together`() = runTest(dispatcher) {
+        requests.put(TestData.request(id = "r1", status = RequestStatus.REMOVED), TestData.request(id = "r2"))
+        moderation.reports += listOf(report("1", "r1"), report("2", "r1"), report("3", "r1"), report("4", "r2"))
+        val vm = ModerationViewModel(FakeSessionManager(admin), moderation, requests, profiles)
+        advanceUntilIdle()
+
+        vm.act(vm.uiState.value.items!!.first { it.report.id == "2" }, RequestAction.RESTORE, "fine")
+        advanceUntilIdle()
+        assertEquals(listOf("1", "2", "3"), moderation.decided.getValue("r1").sorted())
+        assertEquals(listOf("4"), vm.uiState.value.items!!.map { it.report.id })
     }
 }
