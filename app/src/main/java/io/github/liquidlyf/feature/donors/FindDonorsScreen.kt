@@ -62,6 +62,7 @@ import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.StatusPill
+import io.github.liquidlyf.core.designsystem.components.bloodGroupsPerRow
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
 import io.github.liquidlyf.core.designsystem.labelRes
@@ -232,7 +233,7 @@ private fun FiltersCard(state: FindDonorsUiState, locale: AppLocale, actions: Fi
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Text(stringResource(R.string.donors_filter_groups), style = MaterialTheme.typography.labelLarge)
             // A 4×2 grid, like the profile's picker, but several groups can be picked.
-            BloodGroup.entries.chunked(4).forEach { row ->
+            BloodGroup.entries.chunked(bloodGroupsPerRow()).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                     row.forEach { g ->
                         BloodGroupChip(

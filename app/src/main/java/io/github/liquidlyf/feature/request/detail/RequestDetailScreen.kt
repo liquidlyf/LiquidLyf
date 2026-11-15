@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -527,7 +528,7 @@ private fun ResponderRow(
             }
             // 7.1/7.2: report or block this person.
             Box {
-                IconButton(onClick = { menuOpen = true }, enabled = enabled) {
+                IconButton(onClick = { menuOpen = true }, enabled = enabled, modifier = Modifier.size(Spacing.minTouchTarget)) {
                     Icon(painterResource(LLIcons.MoreVert), contentDescription = stringResource(R.string.detail_more_about, response.donorDisplayName))
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
@@ -546,7 +547,7 @@ private fun ResponderRow(
         }
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             response.donorPhone?.takeIf { response.status != ResponseStatus.WITHDRAWN }?.let { phone ->
-                IconButton(onClick = { onCall(phone) }) {
+                IconButton(onClick = { onCall(phone) }, modifier = Modifier.size(Spacing.minTouchTarget)) {
                     Icon(painterResource(LLIcons.Call), contentDescription = stringResource(R.string.detail_call_donor, response.donorDisplayName))
                 }
             }
@@ -613,11 +614,11 @@ private fun EditDialog(r: BloodRequest, onDismiss: () -> Unit, onSave: (String?,
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(R.string.create_units), modifier = Modifier.weight(1f))
-                    IconButton(onClick = { units-- }, enabled = units > minUnits) {
+                    IconButton(onClick = { units-- }, enabled = units > minUnits, modifier = Modifier.size(Spacing.minTouchTarget)) {
                         Icon(painterResource(LLIcons.Remove), contentDescription = stringResource(R.string.create_units_less))
                     }
                     Text(numberText(units), style = MaterialTheme.typography.titleMedium)
-                    IconButton(onClick = { units++ }, enabled = units < Validators.UNITS_MAX) {
+                    IconButton(onClick = { units++ }, enabled = units < Validators.UNITS_MAX, modifier = Modifier.size(Spacing.minTouchTarget)) {
                         Icon(painterResource(LLIcons.Add), contentDescription = stringResource(R.string.create_units_more))
                     }
                 }

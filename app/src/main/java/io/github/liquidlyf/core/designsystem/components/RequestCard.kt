@@ -2,7 +2,9 @@ package io.github.liquidlyf.core.designsystem.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -47,13 +49,20 @@ fun RequestCard(
         Row(Modifier.padding(Spacing.md), horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
             BloodGroupBadge(request.bloodGroup)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                // 8.5: side by side when they fit; with large text or a long label, the pill wraps below.
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xxs),
+                ) {
                     Text(
                         unitsText(request.unitsNeeded, stringResource(request.component.labelRes)),
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.align(Alignment.CenterVertically).padding(end = Spacing.xs),
                     )
-                    if (request.status == RequestStatus.OPEN) UrgencyBadge(request.urgency) else StatusPill(request.status)
+                    Box(Modifier.align(Alignment.CenterVertically)) {
+                        if (request.status == RequestStatus.OPEN) UrgencyBadge(request.urgency) else StatusPill(request.status)
+                    }
                 }
                 IconLine(LLIcons.Hospital, request.hospitalName)
                 IconLine(LLIcons.Location, placeText)

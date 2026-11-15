@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -294,7 +295,8 @@ private fun UnitsStepper(units: Int, onChange: (Int) -> Unit) {
     val description = pluralStringResource(R.plurals.create_units_spoken, units, units)
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         Text(stringResource(R.string.create_units), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
-        IconButton(onClick = { onChange(units - 1) }, enabled = units > Validators.UNITS_MIN) {
+        // 8.5: the whole 48 dp is the button, next to large text too.
+        IconButton(onClick = { onChange(units - 1) }, enabled = units > Validators.UNITS_MIN, modifier = Modifier.size(Spacing.minTouchTarget)) {
             Icon(painterResource(LLIcons.Remove), contentDescription = stringResource(R.string.create_units_less))
         }
         Text(
@@ -302,7 +304,7 @@ private fun UnitsStepper(units: Int, onChange: (Int) -> Unit) {
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.clearAndSetSemantics { contentDescription = description },
         )
-        IconButton(onClick = { onChange(units + 1) }, enabled = units < Validators.UNITS_MAX) {
+        IconButton(onClick = { onChange(units + 1) }, enabled = units < Validators.UNITS_MAX, modifier = Modifier.size(Spacing.minTouchTarget)) {
             Icon(painterResource(LLIcons.Add), contentDescription = stringResource(R.string.create_units_more))
         }
     }

@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -104,7 +105,7 @@ fun BloodGroupPicker(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Column(modifier = Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            BloodGroup.entries.chunked(4).forEach { row ->
+            BloodGroup.entries.chunked(bloodGroupsPerRow()).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                     row.forEach { group ->
                         BloodGroupChip(
@@ -122,6 +123,13 @@ fun BloodGroupPicker(
         }
     }
 }
+
+/** 8.5: four chips a row, or two with large text, so "AB+" is never cut. */
+@Composable
+fun bloodGroupsPerRow(): Int = if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) 2 else 4
+
+/** From here on, text is "large" (Android's 130% step and above). */
+const val LARGE_FONT_SCALE = 1.3f
 
 /** A blood group shown as a circle badge (doc 04 §3), e.g. on a request card. */
 @Composable

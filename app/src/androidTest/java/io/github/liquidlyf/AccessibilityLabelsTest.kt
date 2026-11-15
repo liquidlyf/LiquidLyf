@@ -121,6 +121,11 @@ class AccessibilityLabelsTest {
                 androidx.compose.ui.platform.LocalConfiguration provides context.resources.configuration,
                 androidx.compose.ui.platform.LocalResources provides context.resources,
                 LocalSnackbarHostState provides SnackbarHostState(),
+                // 8.5: fontScale=2 draws every screen at 200% text size (no clipped text; it scrolls).
+                androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(
+                    androidx.compose.ui.platform.LocalDensity.current.density,
+                    arguments.getString("fontScale")?.toFloatOrNull() ?: androidx.compose.ui.platform.LocalDensity.current.fontScale,
+                ),
             ) {
                 LiquidLyfTheme { content() }
             }
@@ -131,7 +136,8 @@ class AccessibilityLabelsTest {
     private fun saveScreenshot(screen: String) {
         if (arguments.getString("screenshots") != "true") return
         val image = runCatching { compose.onRoot().captureToImage().asAndroidBitmap() }.getOrNull() ?: return
-        val dir = java.io.File(target.getExternalFilesDir(null), "a11y-${localeTag ?: "en"}").apply { mkdirs() }
+        val scale = arguments.getString("fontScale")?.let { "-fs$it" }.orEmpty()
+        val dir = java.io.File(target.getExternalFilesDir(null), "a11y-${localeTag ?: "en"}$scale").apply { mkdirs() }
         val name = screen.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
         java.io.File(dir, "$name.png").outputStream().use { image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
     }
@@ -144,8 +150,18 @@ class AccessibilityLabelsTest {
     private fun assertControlsAreLabelledAndBigEnough(screen: String) {
         val problems = mutableListOf<String>()
         val minPx = with(compose.density) { 48.dp.toPx() } - 1f // rounding
-        val controls = compose.onAllNodes(hasClickAction() or hasSetTextAction()).fetchSemanticsNodes()
-        assertTrue("$screen: found no controls at all, so the check proves nothing", controls.size >= 2)
+        val all = compose.onAllNodes(hasClickAction() or hasSetTextAction()).fetchSemanticsNodes()
+        // With enlarged text (fontScale) much of a screen is below the fold: check what is fully on
+        // screen. A control cut by the screen edge has clipped touch bounds and would measure small.
+        val scaled = (arguments.getString("fontScale")?.toFloatOrNull() ?: 1f) > 1f
+        // The display, not one root: an open menu or dialog is a second window.
+        val screenWidth = target.resources.displayMetrics.widthPixels
+        val screenHeight = target.resources.displayMetrics.heightPixels
+        val controls = if (!scaled) all else all.filter { n ->
+            val b = n.boundsInRoot
+            b.left >= 0f && b.top >= 0f && b.right <= screenWidth && b.bottom <= screenHeight
+        }
+        assertTrue("$screen: found no controls at all, so the check proves nothing", controls.size >= if (scaled) 1 else 2)
         for (node in controls) {
             val label = node.label()
             if (label == null) problems += "no label: node ${node.id} ${node.config}"
