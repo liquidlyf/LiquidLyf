@@ -190,6 +190,41 @@ class RequestDetailViewModelTest {
     }
 
     @Test
+    fun `blocking a donor declines their open offer and hides them, and a person can be reported`() = runTest(dispatcher) {
+        offers.offer(requests.requests.value.getValue("r1"), donor, null)
+        signInAs(requester)
+        profiles.profiles["requester-1"] = requester
+        val vm = vm()
+        val events = events(vm)
+        advanceUntilIdle()
+        val offer = vm.uiState.value.responses.single()
+
+        vm.reportPerson("donor", ReportReason.ABUSIVE, "  rude  ")
+        advanceUntilIdle()
+        assertEquals(listOf("donor" to ReportReason.ABUSIVE), safety.userReports)
+        assertEquals(DetailEvent.Message(R.string.reported_thanks), events.last())
+
+        vm.blockDonor(offer)
+        advanceUntilIdle()
+        assertEquals("their open offer is declined, so they lose my number", ResponseStatus.DECLINED, offers.decisions.single().third)
+        assertEquals(listOf("r1" to "donor"), worker.offerNotices)
+        assertEquals(listOf("donor"), profiles.profiles.getValue("requester-1").blockedUids)
+        assertEquals(emptyList<String>(), vm.uiState.value.responses.map { it.donorUid })
+        assertEquals(DetailEvent.Message(R.string.blocked_done), events.last())
+    }
+
+    @Test
+    fun `a donor blocks the requester and leaves the request`() = runTest(dispatcher) {
+        val vm = vm()
+        val events = events(vm)
+        advanceUntilIdle()
+        vm.blockRequester()
+        advanceUntilIdle()
+        assertEquals(listOf("requester-1"), profiles.profiles.getValue("donor").blockedUids)
+        assertEquals(listOf(DetailEvent.Message(R.string.blocked_done), DetailEvent.Left), events.takeLast(2))
+    }
+
+    @Test
     fun `offers from people I blocked stay hidden`() = runTest(dispatcher) {
         val pest = TestData.profile(uid = "pest").copy(fullName = "Pest Person")
         profiles.profiles["pest"] = pest

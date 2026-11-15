@@ -192,7 +192,12 @@ class FakeSafetyRepository : SafetyRepository {
         return AppResult.Success(Unit)
     }
 
-    override suspend fun reportUser(targetUid: String, reporterUid: String, reason: ReportReason, note: String?) = AppResult.Success(Unit)
+    val userReports = mutableListOf<Pair<String, ReportReason>>()
+
+    override suspend fun reportUser(targetUid: String, reporterUid: String, reason: ReportReason, note: String?): AppResult<Unit> {
+        userReports += targetUid to reason
+        return AppResult.Success(Unit)
+    }
 
     val asks = mutableListOf<Pair<String, String>>()
     var askResult: AppResult<Unit> = AppResult.Success(Unit)

@@ -11,6 +11,7 @@ import io.github.liquidlyf.core.data.donor.DonorRepository
 import io.github.liquidlyf.core.data.donor.DonorSearch
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.GeoRepository
+import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.safety.SafetyRepository
 import io.github.liquidlyf.core.data.session.SessionManager
@@ -19,6 +20,7 @@ import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.DonorCard
+import io.github.liquidlyf.core.model.ReportReason
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
@@ -90,6 +92,7 @@ class FindDonorsViewModel @Inject constructor(
     private val donors: DonorRepository,
     private val requests: RequestRepository,
     private val safety: SafetyRepository,
+    private val profiles: ProfileRepository,
     private val worker: WorkerClient,
     private val flags: FeatureFlags,
     private val geoRepository: GeoRepository,
@@ -269,6 +272,32 @@ class FindDonorsViewModel @Inject constructor(
     }
 
     fun isAsked(request: BloodRequest, donor: DonorCard): Boolean = key(request, donor) in state.value.asked
+
+    /** 7.1: report the person on the open sheet. */
+    fun reportDonor(reason: ReportReason, note: String?) {
+        val donor = state.value.ask?.donor ?: return
+        val me = state.value.me ?: return
+        viewModelScope.launch {
+            val result = safety.reportUser(donor.uid, me.uid, reason, note?.trim()?.ifEmpty { null })
+            events.send(FindDonorsEvent.Message(if (result is AppResult.Failure) result.error.messageRes else R.string.reported_thanks))
+        }
+    }
+
+    /** 7.2: block the person on the open sheet; they leave the results at once. */
+    fun blockDonor() {
+        val donor = state.value.ask?.donor ?: return
+        val me = state.value.me ?: return
+        viewModelScope.launch {
+            when (val result = profiles.block(me, donor.uid)) {
+                is AppResult.Success -> {
+                    session.refresh()
+                    state.update { s -> s.copy(ask = null, results = s.results?.filter { it.uid != donor.uid }) }
+                    events.send(FindDonorsEvent.Message(R.string.blocked_done))
+                }
+                is AppResult.Failure -> events.send(FindDonorsEvent.Message(result.error.messageRes))
+            }
+        }
+    }
 
     private fun key(request: BloodRequest, donor: DonorCard) = "${request.id}:${donor.uid}"
 

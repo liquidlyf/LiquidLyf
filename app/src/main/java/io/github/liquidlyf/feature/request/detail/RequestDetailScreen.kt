@@ -36,6 +36,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -91,6 +92,7 @@ import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.request.create.PlannedAtPicker
 import io.github.liquidlyf.feature.request.create.PostNotice
+import io.github.liquidlyf.feature.safety.ReportDialog
 import kotlinx.coroutines.launch
 import java.time.Instant
 
@@ -164,6 +166,11 @@ private fun RequestDetailScreen(
                                         leadingIcon = { Icon(painterResource(LLIcons.Flag), contentDescription = null) },
                                         onClick = { menuOpen = false; dialog = DetailDialog.REPORT },
                                     )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.action_block_person)) },
+                                        leadingIcon = { Icon(painterResource(LLIcons.Block), contentDescription = null) },
+                                        onClick = { menuOpen = false; dialog = DetailDialog.BLOCK_REQUESTER },
+                                    )
                                 }
                             }
                         }
@@ -205,6 +212,8 @@ private fun RequestDetailScreen(
                             onConfirm = vm::confirm,
                             onDecline = { r -> dialog = DetailDialog.DECLINE; dialogDonorUid = r.donorUid },
                             onDonated = { r -> dialog = DetailDialog.DONATED; dialogDonorUid = r.donorUid },
+                            onReportPerson = { r -> dialog = DetailDialog.REPORT_PERSON; dialogDonorUid = r.donorUid },
+                            onBlockPerson = { r -> dialog = DetailDialog.BLOCK_DONOR; dialogDonorUid = r.donorUid },
                             onClose = { dialog = DetailDialog.CLOSE },
                         )
                     }
@@ -224,7 +233,20 @@ private fun RequestDetailScreen(
             ConfirmDialog(R.string.detail_donated_title, R.string.detail_donated_body, R.string.detail_mark_donated, onDismiss = { dialog = null }) { vm.markDonated(r) }
         }
         DetailDialog.CLOSE -> CloseDialog(onDismiss = { dialog = null }, onClose = { status, reason -> dialog = null; vm.close(status, reason) })
-        DetailDialog.REPORT -> ReportDialog(onDismiss = { dialog = null }, onReport = { reason, note -> dialog = null; vm.report(reason, note) })
+        DetailDialog.REPORT -> ReportDialog(R.string.detail_report_title, onDismiss = { dialog = null }, onReport = { reason, note -> dialog = null; vm.report(reason, note) })
+        DetailDialog.BLOCK_REQUESTER -> ConfirmDialog(R.string.block_title, R.string.block_body, R.string.action_block, onDismiss = { dialog = null }) {
+            vm.blockRequester()
+        }
+        DetailDialog.REPORT_PERSON -> dialogDonorUid?.let { uid ->
+            ReportDialog(R.string.report_person_title, onDismiss = { dialog = null }, onReport = { reason, note -> dialog = null; vm.reportPerson(uid, reason, note) })
+        }
+        DetailDialog.BLOCK_DONOR -> dialogResponse?.let { r ->
+            // An open offer is declined too, so they no longer see my number.
+            val open = r.status == ResponseStatus.OFFERED || r.status == ResponseStatus.CONFIRMED
+            ConfirmDialog(R.string.block_title, if (open) R.string.block_body_offer else R.string.block_body, R.string.action_block, onDismiss = { dialog = null }) {
+                vm.blockDonor(r)
+            }
+        }
         DetailDialog.EDIT -> request?.let { r ->
             EditDialog(r, onDismiss = { dialog = null }, onSave = { notes, units, neededBy -> dialog = null; vm.edit(notes, units, neededBy) })
         }
@@ -232,7 +254,7 @@ private fun RequestDetailScreen(
     }
 }
 
-private enum class DetailDialog { WITHDRAW, DECLINE, DONATED, CLOSE, REPORT, EDIT }
+private enum class DetailDialog { WITHDRAW, DECLINE, DONATED, CLOSE, REPORT, EDIT, BLOCK_REQUESTER, REPORT_PERSON, BLOCK_DONOR }
 
 // ---- Header and details ----
 
@@ -445,6 +467,8 @@ private fun RequesterSection(
     onConfirm: (DonorResponse) -> Unit,
     onDecline: (DonorResponse) -> Unit,
     onDonated: (DonorResponse) -> Unit,
+    onReportPerson: (DonorResponse) -> Unit,
+    onBlockPerson: (DonorResponse) -> Unit,
     onClose: () -> Unit,
 ) {
     val r = state.request ?: return
@@ -463,7 +487,7 @@ private fun RequesterSection(
     }
     state.responses.forEachIndexed { i, response ->
         if (i > 0) HorizontalDivider()
-        ResponderRow(response, enabled = !state.working, onCall, onConfirm, onDecline, onDonated)
+        ResponderRow(response, enabled = !state.working, onCall, onConfirm, onDecline, onDonated, onReportPerson, onBlockPerson)
     }
     if (r.status == RequestStatus.OPEN) {
         OutlinedButton(onClick = onClose, enabled = !state.working, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
@@ -480,8 +504,11 @@ private fun ResponderRow(
     onConfirm: (DonorResponse) -> Unit,
     onDecline: (DonorResponse) -> Unit,
     onDonated: (DonorResponse) -> Unit,
+    onReportPerson: (DonorResponse) -> Unit,
+    onBlockPerson: (DonorResponse) -> Unit,
 ) {
     val next = StatusTransitions.requesterNext(response.status)
+    var menuOpen by remember { mutableStateOf(false) }
     Column(Modifier.padding(vertical = Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             BloodGroupBadge(response.donorBloodGroup, size = 40.dp)
@@ -490,6 +517,24 @@ private fun ResponderRow(
                 response.message?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             }
             StatusPill(response.status)
+            // 7.1/7.2: report or block this person.
+            Box {
+                IconButton(onClick = { menuOpen = true }, enabled = enabled) {
+                    Icon(painterResource(LLIcons.MoreVert), contentDescription = stringResource(R.string.detail_more_about, response.donorDisplayName))
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_report_person)) },
+                        leadingIcon = { Icon(painterResource(LLIcons.Flag), contentDescription = null) },
+                        onClick = { menuOpen = false; onReportPerson(response) },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_block_person)) },
+                        leadingIcon = { Icon(painterResource(LLIcons.Block), contentDescription = null) },
+                        onClick = { menuOpen = false; onBlockPerson(response) },
+                    )
+                }
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             response.donorPhone?.takeIf { response.status != ResponseStatus.WITHDRAWN }?.let { phone ->
@@ -546,32 +591,6 @@ private fun CloseDialog(onDismiss: () -> Unit, onClose: (RequestStatus, String?)
     )
 }
 
-@Composable
-private fun ReportDialog(onDismiss: () -> Unit, onReport: (ReportReason, String?) -> Unit) {
-    var choice by rememberSaveable { mutableStateOf<ReportReason?>(null) }
-    var note by rememberSaveable { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.detail_report_title)) },
-        text = {
-            Column(Modifier.selectableGroup().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
-                ReportReason.entries.forEach { reason ->
-                    RadioRow(stringResource(reason.labelRes), choice == reason) { choice = reason }
-                }
-                LLTextField(
-                    value = note,
-                    onValueChange = { note = it.take(Validators.REPORT_NOTE_MAX) },
-                    label = stringResource(R.string.detail_report_note),
-                    singleLine = false,
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { choice?.let { onReport(it, note) } }, enabled = choice != null) { Text(stringResource(R.string.detail_report)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
-    )
-}
 
 @Composable
 private fun EditDialog(r: BloodRequest, onDismiss: () -> Unit, onSave: (String?, Int?, Instant?) -> Unit) {

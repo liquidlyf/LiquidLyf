@@ -19,6 +19,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
@@ -69,6 +70,7 @@ import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.DonorCard
+import io.github.liquidlyf.feature.safety.ReportDialog
 import kotlinx.coroutines.launch
 import java.time.Duration
 import java.time.Instant
@@ -100,6 +102,8 @@ fun FindDonorsRoute(onCreateRequest: () -> Unit, viewModel: FindDonorsViewModel 
             onCreateRequest = onCreateRequest,
         ),
     )
+    var reporting by rememberSaveable { mutableStateOf(false) }
+    var blocking by rememberSaveable { mutableStateOf(false) }
     state.ask?.let { sheet ->
         AskToDonateSheet(
             sheet = sheet,
@@ -108,8 +112,25 @@ fun FindDonorsRoute(onCreateRequest: () -> Unit, viewModel: FindDonorsViewModel 
             onSelect = viewModel::selectRequest,
             onAsk = viewModel::ask,
             onCreateRequest = { viewModel.closeAsk(); onCreateRequest() },
+            onReport = { reporting = true },
+            onBlock = { blocking = true },
             onDismiss = viewModel::closeAsk,
         )
+        if (reporting) {
+            ReportDialog(R.string.report_person_title, onDismiss = { reporting = false }, onReport = { reason, note ->
+                reporting = false
+                viewModel.reportDonor(reason, note)
+            })
+        }
+        if (blocking) {
+            AlertDialog(
+                onDismissRequest = { blocking = false },
+                title = { Text(stringResource(R.string.block_title)) },
+                text = { Text(stringResource(R.string.block_body)) },
+                confirmButton = { TextButton(onClick = { blocking = false; viewModel.blockDonor() }) { Text(stringResource(R.string.action_block)) } },
+                dismissButton = { TextButton(onClick = { blocking = false }) { Text(stringResource(R.string.action_cancel)) } },
+            )
+        }
     }
 }
 
@@ -318,6 +339,8 @@ private fun AskToDonateSheet(
     onSelect: (String) -> Unit,
     onAsk: () -> Unit,
     onCreateRequest: () -> Unit,
+    onReport: () -> Unit,
+    onBlock: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val donor = sheet.donor
@@ -368,6 +391,11 @@ private fun AskToDonateSheet(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+            }
+            // 7.1/7.2: report or block this person.
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                TextButton(onClick = onReport, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) { Text(stringResource(R.string.action_report_person)) }
+                TextButton(onClick = onBlock, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) { Text(stringResource(R.string.action_block_person)) }
             }
         }
     }

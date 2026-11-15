@@ -117,6 +117,9 @@ class RequestDetailViewModel @Inject constructor(
     private val noticeArg: String? = savedState.get<String>("notice")
     private val me: UserProfile? get() = (session.state.value as? SessionState.Ready)?.profile
 
+    /** People blocked on this screen, hidden before the session's profile catches up. */
+    private val blockedHere = mutableSetOf<String>()
+
     private val state = MutableStateFlow(
         RequestDetailUiState(notice = noticeArg?.let { n -> PostNotice.entries.firstOrNull { it.name == n } }),
     )
@@ -190,7 +193,7 @@ class RequestDetailViewModel @Inject constructor(
         listeningToResponses = true
         viewModelScope.launch {
             offers.responders(requestId, myUid).endOnListenError("responders").collect { list ->
-                val blocked = me?.blockedUids.orEmpty().toSet() // 7.2: offers from people I blocked stay hidden
+                val blocked = me?.blockedUids.orEmpty().toSet() + blockedHere // 7.2: offers from people I blocked stay hidden
                 val shown = list.filter { it.donorUid !in blocked }
                 state.update { it.copy(responses = shown.sortedWith(compareBy({ order(it.status) }, { it.createdAt }))) }
             }
@@ -246,8 +249,47 @@ class RequestDetailViewModel @Inject constructor(
         }
     }
 
-    fun report(reason: ReportReason, note: String?) = act(R.string.detail_reported) { r, p ->
+    fun report(reason: ReportReason, note: String?) = act(R.string.reported_thanks) { r, p ->
         safety.reportRequest(r, p.uid, reason, note?.trim()?.ifEmpty { null })
+    }
+
+    /** 7.1: a donor on my request (from their row). A user report is the report doc alone. */
+    fun reportPerson(uid: String, reason: ReportReason, note: String?) = act(R.string.reported_thanks) { _, p ->
+        safety.reportUser(uid, p.uid, reason, note?.trim()?.ifEmpty { null })
+    }
+
+    /** 7.2, donor side: block this request's requester, then leave (their requests are hidden now). */
+    fun blockRequester() {
+        val r = state.value.request ?: return
+        val p = me ?: return
+        viewModelScope.launch {
+            when (val result = profiles.block(p, r.requesterUid)) {
+                is AppResult.Success -> {
+                    session.refresh()
+                    events.send(DetailEvent.Message(R.string.blocked_done))
+                    events.send(DetailEvent.Left)
+                }
+                is AppResult.Failure -> events.send(DetailEvent.Message(result.error.messageRes))
+            }
+        }
+    }
+
+    /**
+     * 7.2, requester side: block a donor on my request. An open offer is declined first (session
+     * B's 9924077), so they lose my number; the decline is announced like any other.
+     */
+    fun blockDonor(response: DonorResponse) = act(R.string.blocked_done) { r, p ->
+        // Hidden from now on, whatever order the decline's listener update and the session refresh come in.
+        blockedHere += response.donorUid
+        if (response.status == ResponseStatus.OFFERED || response.status == ResponseStatus.CONFIRMED) {
+            val declined = offers.decide(r, response, ResponseStatus.DECLINED)
+            if (declined is AppResult.Failure) return@act declined
+            viewModelScope.launch { worker.notifyOffer(r.id, response.donorUid) }
+        }
+        profiles.block(p, response.donorUid).also { result ->
+            if (result is AppResult.Success) session.refresh()
+            state.update { s -> s.copy(responses = s.responses.filter { it.donorUid !in blockedHere }) }
+        }
     }
 
     // ---- Requester actions ----

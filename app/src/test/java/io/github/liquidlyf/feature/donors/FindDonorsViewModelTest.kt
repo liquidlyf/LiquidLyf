@@ -57,7 +57,9 @@ class FindDonorsViewModelTest {
     }
     private val jashore = Area("BD40", "BD4041", "BD40410023")
 
-    private fun vm() = FindDonorsViewModel(session, donors, requests, safety, worker, flags, geoRepo, EligibilityCalculator(), Clock { TestData.NOW })
+    private val profiles = io.github.liquidlyf.testing.FakeProfileRepository().apply { profiles["me"] = me }
+
+    private fun vm() = FindDonorsViewModel(session, donors, requests, safety, profiles, worker, flags, geoRepo, EligibilityCalculator(), Clock { TestData.NOW })
 
     private fun TestScope.events(vm: FindDonorsViewModel): List<FindDonorsEvent> =
         mutableListOf<FindDonorsEvent>().also { list -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { list += it } } }
@@ -142,6 +144,31 @@ class FindDonorsViewModelTest {
         assertEquals(25, vm.uiState.value.results?.size)
         assertTrue(vm.uiState.value.endReached)
         assertEquals(25L, vm.uiState.value.total)
+    }
+
+    @Test
+    fun `a donor can be reported or blocked from their sheet, and a blocked one leaves the results`() = runTest(dispatcher) {
+        val vm = vm()
+        val events = events(vm)
+        advanceUntilIdle()
+        vm.toggleGroup(BloodGroup.B_POS)
+        vm.search()
+        advanceUntilIdle()
+        assertEquals(listOf("d1"), vm.uiState.value.results?.map { it.uid })
+
+        vm.openAsk(TestData.donor("d1"))
+        advanceUntilIdle()
+        vm.reportDonor(io.github.liquidlyf.core.model.ReportReason.SPAM, null)
+        advanceUntilIdle()
+        assertEquals(listOf("d1" to io.github.liquidlyf.core.model.ReportReason.SPAM), safety.userReports)
+        assertEquals(FindDonorsEvent.Message(R.string.reported_thanks), events.last())
+
+        vm.blockDonor()
+        advanceUntilIdle()
+        assertEquals(listOf("troll", "d1"), profiles.profiles.getValue("me").blockedUids)
+        assertEquals(emptyList<String>(), vm.uiState.value.results?.map { it.uid })
+        assertNull(vm.uiState.value.ask)
+        assertEquals(FindDonorsEvent.Message(R.string.blocked_done), events.last())
     }
 
     @Test

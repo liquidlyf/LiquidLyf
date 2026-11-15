@@ -36,5 +36,6 @@
     <string name="action_block">Block</string>
     <string name="blocked_done">Blocked.</string>
     <string name="report_person_title">Report this person</string>
+    <string name="detail_more_about">More about %1$s</string>
     <string name="reported_thanks">Thanks. Our team reviews every report. A request that 3 people report is hidden until it\'s checked.</string>
 </resources>
