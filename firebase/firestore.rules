@@ -608,7 +608,10 @@ service cloud.firestore {
           && str(o.donorDisplayName, 2, 40) && bdPhone(o.donorPhone) && optStr(o, 'message', 300)
           && o.createdAt == request.time && o.updatedAt == request.time
           && offerGroupOk(rq, o)
-          && offerCounted(rid, rq);
+          && offerCounted(rid, rq)
+          // Phase 7.2: someone the requester blocked can't offer (an offer would show them the
+          // private contact and notify the requester).
+          && !(me() in listOrEmpty(get(userPath(rq.requesterUid)).data, 'blockedUids'));
     }
     function offerGroupOk(rq, o) {
       // get(..., null): a donor without a known group is refused cleanly, not by an error.
@@ -661,8 +664,11 @@ service cloud.firestore {
 
       // requesterUid is denormalized here, so the requester path needs no billed get().
       match /private/contact {
+        // A donor only while their offer is active or donated: declined and withdrawn donors
+        // lose access (so declining a blocked person's old offer also cuts them off).
         allow read: if signedIn() && (resource.data.requesterUid == me()
-                     || exists(responsePath(rid, me()))
+                     || (exists(responsePath(rid, me()))
+                         && get(responsePath(rid, me())).data.status in ['OFFERED','CONFIRMED','DONATED'])
                      || isAdmin());
         allow create, update: if signedIn() && validContact(rid, data());
         // resource == null: re-deleting an already deleted contact is a harmless no-op, so a

@@ -44,6 +44,13 @@ describe('offers (doc 07 test 5)', () => {
     await assertFails(offer(as('alice'), 'alice', 'r1', 'alice', users.alice));
   });
 
+  test('someone the requester blocked cannot offer (phase-07 7.2); others still can', async () => {
+    await seed(async (db) => updateDoc(doc(db, 'users/alice'), { blockedUids: ['bob'] }));
+    await assertFails(offer(as('bob'), 'bob', 'r1', 'alice', users.bob));
+    await seed(async (db) => updateDoc(doc(db, 'users/alice'), { blockedUids: ['zed'] }));
+    await assertSucceeds(offer(as('bob'), 'bob', 'r1', 'alice', users.bob));
+  });
+
   test('a donor whose blood group is not in acceptedGroups cannot offer', async () => {
     await assertFails(offer(as('dave'), 'dave', 'r1', 'alice', users.dave));
   });

@@ -85,6 +85,8 @@ General:
    - `requests/{rid}/responses/{myUid}` with `status OFFERED`;
    - on the request: `responders.{myUid} = {name, group, status: 'OFFERED'}` (copied from the response), `responseCount +1`, `lastResponderUid: myUid`;
    - optionally the inbox item `users/{requester}/notifications/NEW_OFFER_{rid}_{myUid}`.
+
+   Refused if the requester has blocked me (`blockedUids`, phase-07 7.2). The offer is also what lets a donor read `private/contact`, and only while it's `OFFERED`, `CONFIRMED` or `DONATED`: a declined or withdrawn donor loses access.
 10. **Withdraw (donor):** response `→ WITHDRAWN` + `responders.{myUid}.status = 'WITHDRAWN'` + `lastResponderUid: myUid`.
 11. **Confirm / decline / mark donated (requester):**
     - response `status` (OFFERED → CONFIRMED|DECLINED, CONFIRMED → DONATED|DECLINED);

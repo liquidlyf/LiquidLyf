@@ -428,6 +428,14 @@ describe('private/contact (doc 07 tests 1 and 6)', () => {
     await assertSucceeds(getDoc(doc(as('bob'), 'requests/r1/private/contact')));
   });
 
+  test('only while the offer is active or donated: declined or withdrawn donors lose the contact', async () => {
+    for (const [status, ok] of [['CONFIRMED', true], ['DONATED', true], ['DECLINED', false], ['WITHDRAWN', false]]) {
+      await seedResponse('r1', 'bob', 'alice', users.bob, status);
+      const read = getDoc(doc(as('bob'), 'requests/r1/private/contact'));
+      await (ok ? assertSucceeds(read) : assertFails(read));
+    }
+  });
+
   test('only the requester can write the contact, with a valid BD phone', async () => {
     await assertFails(setDoc(doc(as('eve'), 'requests/r1/private/contact'), contactDoc('eve')));
     await assertFails(setDoc(doc(as('alice'), 'requests/r1/private/contact'), contactDoc('alice', { contactPhone: '12345' })));
