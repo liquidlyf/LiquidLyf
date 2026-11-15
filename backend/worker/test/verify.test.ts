@@ -37,6 +37,21 @@ describe("Firebase ID token", () => {
     await expect(verifyIdToken(await idToken("alice", {}, keys.rogue.privateKey), PROJECT)).rejects.toThrow("bad signature");
   });
 
+  test("only the keys that tokens name are imported, once each", async () => {
+    await fakeGoogle(); // lists 2 ID-token keys and 5 App Check keys, like Google
+    const importKey = vi.spyOn(crypto.subtle, "importKey");
+    const jwkImports = () => importKey.mock.calls.filter((c) => c[0] === "jwk").length;
+    await verifyIdToken(await idToken("alice"), PROJECT);
+    await verifyIdToken(await idToken("bob"), PROJECT);
+    await verifyAppCheck(await appCheckToken(), PROJECT_NUMBER, [APP_ID]);
+    await verifyAppCheck(await appCheckToken(), PROJECT_NUMBER, [APP_ID]);
+    expect(jwkImports()).toBe(2);
+    // Another listed kid (e.g. after Google rotates): imported when first named, no refetch.
+    await expect(verifyIdToken(await idToken("carol", {}, keys.spare.privateKey, "id-0"), PROJECT)).resolves.toMatchObject({ uid: "carol" });
+    expect(jwkImports()).toBe(3);
+    importKey.mockRestore();
+  });
+
   test("an unknown kid is rejected", async () => {
     await fakeGoogle();
     await expect(verifyIdToken(await idToken("alice", {}, keys.id.privateKey, "nope"), PROJECT)).rejects.toThrow("unknown kid");

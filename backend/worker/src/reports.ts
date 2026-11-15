@@ -43,7 +43,7 @@ export async function alertNewReports(env: Env, now = new Date()): Promise<Repor
     return log({ new: 0, sent: false, started: true });
   }
 
-  const token = await getAccessToken(env);
+  const token = await getAccessToken(env, "cron");
   const n = await new Firestore(env, token).count(newReportsQuery(after, now), REPORT_COUNT_UPTO);
   if (n === 0) return log({ new: 0, sent: false });
 

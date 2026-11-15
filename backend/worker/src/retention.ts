@@ -21,7 +21,7 @@ interface Cursor { t: string; name: string }
 export interface RetentionResult { requests: number; responses: number; inbox: number; reports: number; adminLog: number }
 
 export async function retention(env: Env, now = new Date()): Promise<RetentionResult> {
-  const token = await getAccessToken(env);
+  const token = await getAccessToken(env, "cron");
   const fs = new Firestore(env, token);
   const out: RetentionResult = { requests: 0, responses: 0, inbox: 0, reports: 0, adminLog: 0 };
   await purgeClosedRequests(env, fs, now, out);

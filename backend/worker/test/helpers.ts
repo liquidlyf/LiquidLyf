@@ -18,6 +18,7 @@ export const keys = {
   appCheck: await genKey(), // "Firebase App Check" signing key
   sa: await genKey(),       // the service account's key
   rogue: await genKey(),    // an attacker's key
+  spare: await genKey(),    // the other published keys (Google lists 2 ID-token keys, 5 App Check keys)
 };
 
 export async function jwk(pair: CryptoKeyPair, kid: string) {
@@ -115,8 +116,8 @@ export async function fakeGoogle(opts: GoogleOpts = {}): Promise<Calls> {
   const calls: Calls = { token: 0, idJwks: 0, appCheckJwks: 0, reads: [], writes: [], fcm: [], other: [], queries: [], batches: [], counts: [] };
   const commitErrors = [...(opts.commitErrors ?? [])];
   const batchCodes = [...(opts.batchCodes ?? [])];
-  const idKeys = { keys: [await jwk(keys.id, "id-1")] };
-  const acKeys = { keys: [await jwk(keys.appCheck, "ac-1")] };
+  const idKeys = { keys: [await jwk(keys.spare, "id-0"), await jwk(keys.id, "id-1")] };
+  const acKeys = { keys: [...await Promise.all(["ac-0", "ac-2", "ac-3", "ac-4"].map((k) => jwk(keys.spare, k))), await jwk(keys.appCheck, "ac-1")] };
   const fcmStatus = [...(opts.fcmStatus ?? [])];
   const base = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/`;
 

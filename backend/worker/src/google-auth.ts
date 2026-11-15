@@ -1,5 +1,5 @@
 // Mint a Google OAuth2 access token from the service-account key with WebCrypto.
-// One token covers Firestore and FCM. Cached in memory and in KV (~55 min).
+// One token covers Firestore and FCM. Cached in memory and in KV; the crons renew it early.
 import { emulatorMode, type Env } from "./env";
 import { JWT_GRANT, jwtClaims, TOKEN_URL } from "./oauth";
 
@@ -48,14 +48,23 @@ export function resetAuthCacheForTests() {
   cachedToken = undefined;
 }
 
-export async function getAccessToken(env: Env): Promise<string> {
+/**
+ * Seconds a cached token must still be valid to be used. The crons (every 5 min) renew it
+ * 15 min early, so an app's call almost never has to mint one: minting (import the key,
+ * sign the JWT) costs a few ms of CPU, and the Free plan allows 10 ms a call. A call
+ * finishes well within the 2 min it keeps; if the crons stop, calls still renew it then.
+ */
+export const MIN_VALID_SEC = { request: 120, cron: 900 } as const;
+
+export async function getAccessToken(env: Env, caller: keyof typeof MIN_VALID_SEC = "request"): Promise<string> {
   if (emulatorMode(env)) return "owner"; // the emulator's admin token: bypasses rules
   const now = Math.floor(Date.now() / 1000);
-  if (cachedToken && cachedToken.exp - 300 > now) return cachedToken.value;
+  const minValid = MIN_VALID_SEC[caller];
+  if (cachedToken && cachedToken.exp - minValid > now) return cachedToken.value;
 
-  // Second-level cache in KV (free: 1,000 writes/day; this writes ~24/day).
+  // Second-level cache in KV (free: 1,000 writes/day; this writes ~32/day).
   const kv = await env.CACHE.get(KV_KEY, "json") as { value: string; exp: number } | null;
-  if (kv && kv.exp - 300 > now) return (cachedToken = kv).value;
+  if (kv && kv.exp - minValid > now) return (cachedToken = kv).value;
 
   if (!env.GCP_SA_JSON) throw new Error("GCP_SA_JSON secret is not set");
   const sa = JSON.parse(env.GCP_SA_JSON) as ServiceAccount;

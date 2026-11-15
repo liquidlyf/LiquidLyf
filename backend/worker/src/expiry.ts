@@ -12,7 +12,7 @@ const UID = /^[A-Za-z0-9_-]{1,128}$/;
 export interface ExpiryResult { due: number; expired: number; lost: number; withoutStats: number }
 
 export async function expireOverdue(env: Env, now = new Date()): Promise<ExpiryResult> {
-  const token = await getAccessToken(env);
+  const token = await getAccessToken(env, "cron");
   const fs = new Firestore(env, token);
   const docs = await fs.runQuery({
     collection: "requests",

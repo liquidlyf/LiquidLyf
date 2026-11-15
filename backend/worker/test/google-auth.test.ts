@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { getAccessToken, resetAuthCacheForTests } from "../src/google-auth";
+import { getAccessToken, MIN_VALID_SEC, resetAuthCacheForTests } from "../src/google-auth";
 import { fakeGoogle, makeEnv, resetCaches } from "./helpers";
 
 beforeEach(resetCaches);
@@ -26,6 +26,31 @@ describe("service-account OAuth token", () => {
     const env = await makeEnv();
     await getAccessToken(env);
     resetAuthCacheForTests(); // simulate a fresh isolate
+    expect(await getAccessToken(env)).toBe("ya29.test-1");
+    expect(calls.token).toBe(1);
+  });
+
+  test("an app's call uses a token with a few minutes left; a cron renews it 15 min early", async () => {
+    const calls = await fakeGoogle();
+    const env = await makeEnv();
+    const kvToken = (secondsLeft: number) => env.CACHE.put("gcp_token",
+      JSON.stringify({ value: "ya29.from-kv", exp: Math.floor(Date.now() / 1000) + secondsLeft }));
+    await kvToken(600); // 10 min left
+    expect(await getAccessToken(env)).toBe("ya29.from-kv");
+    expect(calls.token).toBe(0);
+    resetAuthCacheForTests();
+    expect(await getAccessToken(env, "cron")).toBe("ya29.test-1");
+    expect(calls.token).toBe(1);
+    // The renewed token went to KV, so a new isolate's app call gets it without minting.
+    resetAuthCacheForTests();
+    expect(await getAccessToken(env)).toBe("ya29.test-1");
+    expect(calls.token).toBe(1);
+  });
+
+  test("an app's call still mints when the token is about to expire (crons not running)", async () => {
+    const calls = await fakeGoogle();
+    const env = await makeEnv();
+    await env.CACHE.put("gcp_token", JSON.stringify({ value: "ya29.old", exp: Math.floor(Date.now() / 1000) + MIN_VALID_SEC.request - 10 }));
     expect(await getAccessToken(env)).toBe("ya29.test-1");
     expect(calls.token).toBe(1);
   });

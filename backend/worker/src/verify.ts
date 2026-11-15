@@ -5,7 +5,8 @@ export const APP_CHECK_JWKS = "https://firebaseappcheck.googleapis.com/v1/jwks";
 const LEEWAY = 60; // seconds of clock skew
 
 type Jwk = JsonWebKey & { kid: string };
-const jwksCache = new Map<string, { keys: Map<string, CryptoKey>; exp: number; fetchedAt: number }>();
+/** Per JWKS URL: the published keys, and the ones already imported (only kids a token named). */
+const jwksCache = new Map<string, { jwks: Map<string, Jwk>; keys: Map<string, CryptoKey>; exp: number; fetchedAt: number }>();
 
 export function resetJwksCacheForTests() {
   jwksCache.clear();
@@ -16,20 +17,23 @@ async function getKey(url: string, kid: string): Promise<CryptoKey | undefined> 
   let entry = jwksCache.get(url);
   // Refetch when expired, or for an unknown kid (key rotation) at most once a minute,
   // so junk tokens with random kids can't make us fetch the JWKS on every request.
-  if (!entry || entry.exp < now || (!entry.keys.has(kid) && now - entry.fetchedAt > 60)) {
+  if (!entry || entry.exp < now || (!entry.jwks.has(kid) && now - entry.fetchedAt > 60)) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`JWKS ${res.status}`);
     const maxAge = Number(/max-age=(\d+)/.exec(res.headers.get("cache-control") ?? "")?.[1] ?? 3600);
     const { keys } = await res.json() as { keys: Jwk[] };
-    const map = new Map<string, CryptoKey>();
-    for (const jwk of keys) {
-      map.set(jwk.kid, await crypto.subtle.importKey(
-        "jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]));
-    }
-    entry = { keys: map, exp: now + maxAge, fetchedAt: now };
+    entry = { jwks: new Map(keys.map((k) => [k.kid, k])), keys: new Map(), exp: now + maxAge, fetchedAt: now };
     jwksCache.set(url, entry);
   }
-  return entry.keys.get(kid);
+  // Import only the key this token names: App Check publishes 5 RSA-3072 keys, and importing
+  // all of them in a new isolate was a large part of a cold call's CPU (Free plan: 10 ms).
+  let key = entry.keys.get(kid);
+  const jwk = entry.jwks.get(kid);
+  if (!key && jwk) {
+    key = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+    entry.keys.set(kid, key);
+  }
+  return key;
 }
 
 function b64urlDecode(s: string): Uint8Array {

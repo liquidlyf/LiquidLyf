@@ -12,7 +12,7 @@ export {
 } from "./escalation";
 
 export async function sweep(env: Env, now = new Date()): Promise<SweepResult> {
-  const token = await getAccessToken(env);
+  const token = await getAccessToken(env, "cron");
   const fs = new Firestore(env, token);
   const perform = (s: Step): Promise<unknown> => {
     switch (s.op) {
