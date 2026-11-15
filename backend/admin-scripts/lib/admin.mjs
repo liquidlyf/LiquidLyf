@@ -23,8 +23,10 @@ export class UsageError extends Error {}
 /**
  * Parses `--name value` and `--flag` options. Anything not in `values` or `flags` is an error,
  * so a typo such as `--aply` can't silently turn a real run into a dry run or the other way.
+ * `user: false` is for scripts that act on no single account (no --uid/--email);
+ * `readOnly: true` for scripts that never write (no --apply).
  */
-export function parseArgs(argv, { values = [], flags = [] } = {}) {
+export function parseArgs(argv, { values = [], flags = [], user = true, readOnly = false } = {}) {
   const known = new Set([...values, ...flags, "uid", "email", "key", "emulator", "apply"]);
   const takesValue = new Set([...values, "uid", "email", "key"]);
   const out = {};
@@ -43,6 +45,11 @@ export function parseArgs(argv, { values = [], flags = [] } = {}) {
   }
   if (out.emulator && out.key) throw new UsageError("pass --emulator or --key, not both");
   if (!out.emulator && !out.key) throw new UsageError("pass --emulator (local emulators) or --key <file> (production)");
+  if (readOnly && out.apply) throw new UsageError("this script only reads: there is nothing to --apply");
+  if (!user) {
+    if (out.uid || out.email) throw new UsageError("this script takes no --uid or --email");
+    return out;
+  }
   if (!!out.uid === !!out.email) throw new UsageError("pass exactly one of --uid or --email");
   if (out.uid && !ID.test(out.uid)) throw new UsageError("--uid doesn't look like a uid");
   if (out.email && !EMAIL.test(out.email)) throw new UsageError("--email doesn't look like an email address");
@@ -50,7 +57,7 @@ export function parseArgs(argv, { values = [], flags = [] } = {}) {
 }
 
 /** Connects to the emulators or to the key's project. Prints which one, never the key. */
-export function connect(args) {
+export function connect(args, { readOnly = false } = {}) {
   let app, project;
   if (args.emulator) {
     process.env.FIRESTORE_EMULATOR_HOST ??= "127.0.0.1:8085";
@@ -68,7 +75,8 @@ export function connect(args) {
     app = initializeApp({ credential: cert(key), projectId: project });
     console.log(`Project: ${project} (PRODUCTION), as ${key.client_email}`);
   }
-  console.log(args.apply ? "Mode: APPLY (changes will be written)" : "Mode: dry run (nothing is changed; add --apply to do it)");
+  console.log(readOnly ? "Mode: read-only (this script never changes anything)"
+    : args.apply ? "Mode: APPLY (changes will be written)" : "Mode: dry run (nothing is changed; add --apply to do it)");
   return { app, project, auth: getAuth(app), db: getFirestore(app), apply: args.apply === true, emulator: !!args.emulator };
 }
 

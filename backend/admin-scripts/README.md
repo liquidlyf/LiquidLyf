@@ -8,9 +8,10 @@ Small Node scripts a maintainer runs on their own PC (phase-07 7.4). They use th
 | `setCoordinator.mjs` | The `coordinator` claim (club coordinator, v1.1), or `--remove` |
 | `revokeAndBan.mjs` | Suspends an account: the `banned` claim + signs it out everywhere. `--unban` removes the claim |
 | `deleteUserData.mjs` | Deletes an account for a deletion request sent by email or the website (write contract 16 in `firebase/README.md`) |
+| `listAdmins.mjs` | Lists every account with a claim (moderators, coordinators, banned). Read-only. Shows uids, not emails, unless you add `--emails` |
 
 **The Admin SDK bypasses the security rules.** So every script:
-- is a **dry run unless you add `--apply`**: it shows what it would change, and changes nothing;
+- is a **dry run unless you add `--apply`**: it shows what it would change, and changes nothing (`listAdmins.mjs` only reads, so it has no `--apply`);
 - needs `--emulator` (the local emulators, no key) or `--key <file>` (production);
 - refuses a key file inside the repo, and never prints the key;
 - refuses unknown options, so a typo like `--aply` can't change what it does.
@@ -33,20 +34,36 @@ node setAdmin.mjs --emulator --email donor@example.test --apply
 ```
 
 ## Production: the key
-The scripts sign in with the key of the service account **`liquidlyf-admin`**, with only two roles: **Firebase Authentication Admin** and **Cloud Datastore User**. Create it only when you first need a script on production. Keep the key file **outside the repo** (for example in Downloads), never paste it anywhere, and delete it after use (you can make a new key each time). Then:
+The scripts sign in with the key of the service account **`liquidlyf-admin`**, with only two roles: **Firebase Authentication Admin** and **Cloud Datastore User**. Make a new key each time you need a script on production, and delete it afterwards:
+
+1. console.cloud.google.com → project `liquidlyf-app` → IAM & Admin → Service accounts. The first time only: **Create service account** `liquidlyf-admin` with the two roles above.
+2. Open `liquidlyf-admin` → Keys → Add key → Create new key → JSON. It downloads as **`liquidlyf-app-<key id>.json`** (for example `liquidlyf-app-1a2b3c4d5e6f.json`). Leave it **outside the repo** (Downloads is fine), and never paste it anywhere.
+3. Run the script (below).
+4. When you're done, delete **both**: the key file in Downloads **and** the key under `liquidlyf-admin` → Keys (trash icon). Deleting only the file leaves the key valid. Keep the service account itself for next time.
 
 ```powershell
-node revokeAndBan.mjs --key "$HOME\Downloads\liquidlyf-admin-xxxx.json" --email someone@gmail.com          # dry run
-node revokeAndBan.mjs --key "$HOME\Downloads\liquidlyf-admin-xxxx.json" --email someone@gmail.com --apply
+node revokeAndBan.mjs --key "$HOME\Downloads\liquidlyf-app-<key id>.json" --email someone@gmail.com          # dry run
+node revokeAndBan.mjs --key "$HOME\Downloads\liquidlyf-app-<key id>.json" --email someone@gmail.com --apply
 ```
 
-The first line printed says which project it is connected to. Check it says `liquidlyf-app (PRODUCTION)` before you add `--apply`.
+The first line printed says which project it is connected to, and as which account. Check it says `liquidlyf-app (PRODUCTION), as liquidlyf-admin@…` before you add `--apply`.
 
 ## How to handle each case
 
 **Make someone a moderator:**
-1. `setAdmin.mjs --email <their email> --apply`.
-2. They sign out and in again. Settings then shows "Moderation", and their phone gets new-report alerts.
+1. They need a LiquidLyf account first: signed in to the app at least once, with Google or a verified email. (For an account whose email isn't verified, the script warns you: the rules still refuse most of its writes.)
+2. Dry run: `setAdmin.mjs --key <key file> --email <their email>`. Check the project line, the account (`User:`), and `Claims after:` with `"admin":true`.
+3. The same command with `--apply`.
+4. They sign out and in again. Settings then shows "Moderation", and their phone gets new-report alerts.
+
+**Remove a moderator:**
+1. Dry run: `setAdmin.mjs --key <key file> --email <their email> --remove`, then the same with `--apply`. Their other claims stay.
+2. It takes effect when their app refreshes its sign-in token, **within 1 hour**. Until then, the token their app already has still works, so they can still use Moderation. Nothing ends it sooner: Firestore accepts a token until it expires. Every action they take meanwhile is in the admin log.
+3. If the account itself may be compromised, also disable it in the Firebase console → Authentication → the user → Disable account. Then it can't sign in or get a new token at all; the current token still runs out within the hour. Enable it again later if they should keep a normal account.
+
+**See who is a moderator:**
+- All of them: `listAdmins.mjs --key <key file>` prints each account with a claim (`admin`, `coordinator`, `banned`) by uid. Add `--emails` to see their email addresses too; leave it off when you share the output.
+- One account: a dry run of `setAdmin.mjs` shows its `Claims now:` line and changes nothing.
 
 **Suspend someone** (scams, harassment):
 1. `revokeAndBan.mjs --email <email> --apply`. Within an hour, the app must sign in again, and from then on the rules refuse their posts and offers. They can still read, and they can still delete their account.
@@ -66,4 +83,4 @@ What happens to the data:
 - **Not reachable from here:** inbox items they sent to other people (`fromUid`, no text). They're deleted after 60 days by the clean-up.
 
 ## Tests
-`npm test` runs every script against the emulators (phase-07 7.9): the dry runs, `--apply`, a second run of a deletion, and the safety checks. The emulators need Java 21; on this PC, point `JAVA_HOME` at Android Studio's `jbr` and put its `bin` first on `PATH`.
+`npm test` runs every script against the emulators (phase-07 7.9): the dry runs, `--apply`, a second run of a deletion, the read-only list, and the safety checks. The emulators need Java 21; on this PC, point `JAVA_HOME` at Android Studio's `jbr` and put its `bin` first on `PATH`.

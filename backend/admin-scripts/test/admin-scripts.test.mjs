@@ -82,6 +82,36 @@ describe("setAdmin / setCoordinator", () => {
   });
 });
 
+describe("listAdmins", () => {
+  test("lists accounts with a claim, emails only with --emails, and is read-only", async () => {
+    const admin = await newUser("lst", { admin: true });
+    const plain = await newUser("pln");
+
+    const r = await script("listAdmins.mjs", ["--emulator"]);
+    assert.equal(r.code, 0, r.out);
+    assert.match(r.out, /Mode: read-only/);
+    assert.match(r.out, new RegExp(`${admin.uid}  claims: \\{"admin":true\\}  sign-in: password`));
+    assert.doesNotMatch(r.out, new RegExp(plain.uid));
+    assert.doesNotMatch(r.out, /@example\.test/);
+    assert.match(r.out, /accounts have a claim: \d+ admin/);
+
+    const withEmails = await script("listAdmins.mjs", ["--emulator", "--emails"]);
+    assert.equal(withEmails.code, 0, withEmails.out);
+    assert.match(withEmails.out, new RegExp(`${admin.uid} <${admin.email}>`));
+
+    for (const [args, msg] of [
+      [["--emulator", "--apply"], /nothing to --apply/],
+      [["--emulator", "--uid", admin.uid], /takes no --uid or --email/],
+      [["--emulator", "--email", admin.email], /takes no --uid or --email/],
+    ]) {
+      const bad = await script("listAdmins.mjs", args);
+      assert.equal(bad.code, 2, `${args.join(" ")}: ${bad.out}`);
+      assert.match(bad.out, msg);
+    }
+    assert.deepEqual(await claimsOf(admin.uid), { admin: true });
+  });
+});
+
 describe("revokeAndBan", () => {
   test("bans and signs out with --apply only; --unban removes the claim", async () => {
     const u = await newUser("ban", { admin: false });
