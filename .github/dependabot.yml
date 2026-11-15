@@ -38,11 +38,13 @@ updates:
           - io.mockk*
           - app.cash.turbine*
 
-  # Dev-only tooling for the rules tests and the Worker (nothing here ships in the app).
+  # Dev-only tooling for the rules tests, the Worker and the maintainer's admin scripts
+  # (nothing here ships in the app).
   - package-ecosystem: npm
     directories:
       - /firebase
       - /backend/worker
+      - /backend/admin-scripts
     schedule:
       interval: weekly
       day: monday

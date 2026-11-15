@@ -1,5 +1,5 @@
 # Lint, unit tests and builds for every pull request and push: the Android app,
-# the Firestore rules (on the emulator) and the Cloudflare Worker.
+# the Firestore rules and the admin scripts (on the emulators) and the Cloudflare Worker.
 # Fork-PR safe: `pull_request` only (never pull_request_target), read-only token, no secrets.
 # Actions are pinned to full commit SHAs; Dependabot keeps them current.
 # No path filters on purpose: a required check skipped by `paths:` would block PRs forever.
@@ -90,6 +90,7 @@ jobs:
           cache-dependency-path: |
             firebase/package-lock.json
             backend/worker/package-lock.json
+            backend/admin-scripts/package-lock.json
 
       - run: npm ci
 
@@ -102,6 +103,13 @@ jobs:
         run: |
           npm ci
           npm run test:e2e
+
+      # Same: the emulators come from firebase/, the tests from backend/admin-scripts/.
+      - name: Admin scripts tests (Admin SDK on the Auth/Firestore emulators, no account)
+        working-directory: backend/admin-scripts
+        run: |
+          npm ci
+          npm test
 
   # Cloudflare Worker unit tests (mocked Google endpoints). Nothing is deployed.
   worker:
