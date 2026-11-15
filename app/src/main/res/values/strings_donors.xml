@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 6: Find donors (6.1) and Ask to donate (6.2). -->
+<resources>
+    <!-- Saver mode (Remote Config donor_search_enabled = false) -->
+    <string name="donors_paused_title">Find donors is paused</string>
+    <string name="donors_paused_body">To stay within the free plan, searching for donors is paused for now. Post a request instead: we alert matching donors near you.</string>
+
+    <!-- Filters -->
+    <string name="donors_filter_groups">Blood group needed</string>
+    <string name="donors_filter_eligible">Eligible now only</string>
+    <string name="donors_filter_eligible_summary">Hide donors who are still in their rest period</string>
+    <string name="donors_any_upazila">Whole district</string>
+    <string name="donors_pick_group">Pick at least one blood group.</string>
+    <string name="action_search">Search</string>
+    <string name="action_change_filters">Change filters</string>
+    <string name="donors_summary_eligible">eligible now</string>
+
+    <!-- Results -->
+    <plurals name="donors_count">
+        <item quantity="one">%1$d donor matches</item>
+        <item quantity="other">%1$d donors match</item>
+    </plurals>
+    <string name="donors_eligible_now">Eligible now</string>
+    <plurals name="donors_eligible_in">
+        <item quantity="one">Eligible in %1$d day</item>
+        <item quantity="other">Eligible in %1$d days</item>
+    </plurals>
+    <plurals name="donors_donations">
+        <item quantity="one">%1$d donation</item>
+        <item quantity="other">%1$d donations</item>
+    </plurals>
+    <string name="donors_active_week">Active this week</string>
+    <string name="donors_empty_title">No donors found</string>
+    <string name="donors_empty_body">Post a request: we\'ll alert donors as they become available.</string>
+    <string name="action_show_more">Show more</string>
+
+    <!-- Ask to donate -->
+    <string name="donors_ask_title">Ask %1$s to donate</string>
+    <string name="donors_ask_body">They get a notification and can offer through your request. No phone number is shared now: they see yours only if they offer.</string>
+    <string name="donors_ask_pick">For which request?</string>
+    <string name="donors_ask_no_requests">You have no open request. Post one first, then you can ask donors directly.</string>
+    <string name="donors_ask_none_compatible">None of your open requests can take %1$s blood.</string>
+    <string name="action_ask_to_donate">Ask to donate</string>
+    <string name="action_asking">Asking…</string>
+    <string name="donors_asked_label">Asked</string>
+    <string name="donors_asked">Asked. %1$s will get a notification.</string>
+    <string name="donors_ask_already">You\'ve already asked this donor for this request.</string>
+    <string name="donors_ask_request_full">This request has had its 10 asks.</string>
+    <string name="donors_ask_no_alert">Your ask is in their notifications, but the alert couldn\'t be sent.</string>
+</resources>

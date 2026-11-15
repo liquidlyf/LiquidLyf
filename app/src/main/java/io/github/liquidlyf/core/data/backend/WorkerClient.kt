@@ -32,6 +32,12 @@ interface WorkerClient {
 
     /** The requester, after fulfilling or cancelling: tells donors still OFFERED or CONFIRMED. */
     suspend fun notifyResponders(requestId: String): AppResult<Unit>
+
+    /**
+     * Phase 6.2: pushes ASKED_TO_DONATE to the donor. Call right after the ask batch: the Worker
+     * accepts an ask up to 10 minutes old. [AppError.DailyAskLimit] past 30 asks a day.
+     */
+    suspend fun notifyAsk(requestId: String, donorUid: String): AppResult<Unit>
 }
 
 data class Dispatch(
@@ -73,6 +79,9 @@ class HttpWorkerClient @Inject constructor(
     override suspend fun notifyResponders(requestId: String): AppResult<Unit> =
         call("v1/requests/$requestId/notify-responders") { }
 
+    override suspend fun notifyAsk(requestId: String, donorUid: String): AppResult<Unit> =
+        call("v1/requests/$requestId/asks/$donorUid/notify") { }
+
     /** One POST with the retry table of backend/worker/README.md; [ok] reads a 202 body. */
     private suspend fun <T> call(path: String, ok: (Reply) -> T): AppResult<T> {
         val base = endpoint.baseUrl()?.trimEnd('/')
@@ -103,6 +112,7 @@ class HttpWorkerClient @Inject constructor(
                 else -> {
                     // The daily alert cap, not the per-minute limit: a retry gets the same answer.
                     if (code == 429 && reply!!.isDailyCap()) return AppResult.Failure(AppError.DailyAlertLimit)
+                    if (code == 429 && reply!!.isDailyAskCap()) return AppResult.Failure(AppError.DailyAskLimit)
                     val retryable = code == null || code == 429 || code >= 500
                     if (!retryable || retries >= MAX_RETRIES) {
                         return AppResult.Failure(if (code == 429) AppError.RateLimited else AppError.Network)
@@ -122,6 +132,9 @@ class HttpWorkerClient @Inject constructor(
 
         fun isDailyCap(): Boolean =
             runCatching { JSON.decodeFromString<ErrorJson>(body).dailyCap }.getOrDefault(false)
+
+        fun isDailyAskCap(): Boolean =
+            runCatching { JSON.decodeFromString<ErrorJson>(body).dailyAskCap }.getOrDefault(false)
     }
 
     private suspend fun post(url: String, forceRefresh: Boolean): Reply? {
@@ -142,7 +155,7 @@ class HttpWorkerClient @Inject constructor(
     private class DispatchJson(val accepted: Boolean = false, val tier: Int? = null, val alreadyDispatched: Boolean = false)
 
     @Serializable
-    private class ErrorJson(val error: String? = null, val dailyCap: Boolean = false)
+    private class ErrorJson(val error: String? = null, val dailyCap: Boolean = false, val dailyAskCap: Boolean = false)
 
     companion object {
         /** "Retry with backoff, up to 3 times; the sweep covers the rest." */

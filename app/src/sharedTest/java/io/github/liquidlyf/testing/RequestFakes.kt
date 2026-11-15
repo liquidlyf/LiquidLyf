@@ -194,7 +194,13 @@ class FakeSafetyRepository : SafetyRepository {
 
     override suspend fun reportUser(targetUid: String, reporterUid: String, reason: ReportReason, note: String?) = AppResult.Success(Unit)
 
-    override suspend fun askToDonate(request: BloodRequest, donor: DonorCard) = AppResult.Success(Unit)
+    val asks = mutableListOf<Pair<String, String>>()
+    var askResult: AppResult<Unit> = AppResult.Success(Unit)
+
+    override suspend fun askToDonate(request: BloodRequest, donor: DonorCard): AppResult<Unit> {
+        if (askResult is AppResult.Success) asks += request.id to donor.uid
+        return askResult
+    }
 }
 
 /** Records every Worker call; [dispatchResult] is what dispatch answers. */
@@ -217,6 +223,14 @@ class FakeWorkerClient : WorkerClient {
     override suspend fun notifyResponders(requestId: String): AppResult<Unit> {
         responderNotices += requestId
         return AppResult.Success(Unit)
+    }
+
+    val askNotices = mutableListOf<Pair<String, String>>()
+    var askResult: AppResult<Unit> = AppResult.Success(Unit)
+
+    override suspend fun notifyAsk(requestId: String, donorUid: String): AppResult<Unit> {
+        askNotices += requestId to donorUid
+        return askResult
     }
 }
 

@@ -25,6 +25,8 @@ enum class AppError(@param:StringRes val messageRes: Int) {
      * the request is posted and stays in the feed, but nobody was alerted. Not worth a retry.
      */
     DailyAlertLimit(R.string.error_daily_alert_limit),
+    /** Phase 6.2: 30 asks to donate per person in any 24 h (contract 14). The ask is saved, not pushed. */
+    DailyAskLimit(R.string.error_daily_ask_limit),
     Unknown(R.string.error_unknown),
 
     // Sign-in and account errors (Firebase Auth error codes, mapped in ErrorMapper).

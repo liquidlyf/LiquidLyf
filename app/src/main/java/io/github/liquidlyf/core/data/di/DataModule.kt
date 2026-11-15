@@ -5,6 +5,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.liquidlyf.core.data.donor.DonorRepository
+import io.github.liquidlyf.core.data.donor.FirestoreDonorRepository
 import io.github.liquidlyf.core.data.inbox.FirestoreInboxRepository
 import io.github.liquidlyf.core.data.inbox.InboxRepository
 import io.github.liquidlyf.core.data.profile.FirestoreProfileRepository
@@ -35,6 +37,8 @@ abstract class DataModule {
     @Binds abstract fun inbox(impl: FirestoreInboxRepository): InboxRepository
 
     @Binds abstract fun safety(impl: FirestoreSafetyRepository): SafetyRepository
+
+    @Binds abstract fun donors(impl: FirestoreDonorRepository): DonorRepository
 
     companion object {
         @Provides

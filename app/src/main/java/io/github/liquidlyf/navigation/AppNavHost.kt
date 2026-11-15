@@ -61,6 +61,7 @@ import io.github.liquidlyf.feature.auth.ForgotPasswordRoute
 import io.github.liquidlyf.feature.auth.SignInRoute
 import io.github.liquidlyf.feature.auth.SignUpRoute
 import io.github.liquidlyf.feature.auth.VerifyEmailRoute
+import io.github.liquidlyf.feature.donors.FindDonorsRoute
 import io.github.liquidlyf.feature.gallery.ComponentGalleryScreen
 import io.github.liquidlyf.feature.home.HomeRoute
 import io.github.liquidlyf.feature.notifications.InboxRoute
@@ -297,7 +298,7 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
         }
         navigation<DonorsGraph>(startDestination = Donors) {
             composable<Donors> {
-                PlaceholderScreen(title = stringResource(R.string.nav_donors), phase = 6)
+                FindDonorsRoute(onCreateRequest = dropUnlessResumed { navController.navigate(CreateRequest) { launchSingleTop = true } })
             }
         }
         navigation<ProfileGraph>(startDestination = Profile) {

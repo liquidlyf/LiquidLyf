@@ -237,6 +237,47 @@ class AccessibilityLabelsTest {
     }
 
     @Test
+    fun findDonorsFilters() {
+        val me = TestData.profile()
+        val filters = io.github.liquidlyf.feature.donors.DonorFilters(
+            groups = setOf(io.github.liquidlyf.core.model.BloodGroup.B_POS), division = me.area.division, district = me.area.district,
+        )
+        show {
+            io.github.liquidlyf.feature.donors.FindDonorsScreen(
+                io.github.liquidlyf.feature.donors.FindDonorsUiState(
+                    enabled = true, filters = filters, geo = geo, me = me,
+                ),
+                io.github.liquidlyf.feature.donors.FindDonorsActions(),
+                now = TestData.NOW,
+            )
+        }
+        assertControlsAreLabelledAndBigEnough("Find donors, filters")
+    }
+
+    @Test
+    fun findDonorsResults() {
+        val me = TestData.profile()
+        val card = { uid: String, verified: Boolean -> io.github.liquidlyf.core.model.DonorCard(
+            uid, "Donor $uid", io.github.liquidlyf.core.model.BloodGroup.B_POS, TestData.DHAKA_SOUTH, available = true,
+            eligibleFrom = java.time.Instant.EPOCH, donationCount = 3, verifiedDonations = 1, phoneVerified = verified, lastActiveAt = TestData.NOW,
+        ) }
+        val filters = io.github.liquidlyf.feature.donors.DonorFilters(
+            groups = setOf(io.github.liquidlyf.core.model.BloodGroup.B_POS), division = me.area.division, district = me.area.district,
+        )
+        show {
+            io.github.liquidlyf.feature.donors.FindDonorsScreen(
+                io.github.liquidlyf.feature.donors.FindDonorsUiState(
+                    enabled = true, filters = filters, applied = filters, results = listOf(card("a", true), card("b", false)),
+                    total = 2, geo = geo, me = me,
+                ),
+                io.github.liquidlyf.feature.donors.FindDonorsActions(),
+                now = TestData.NOW,
+            )
+        }
+        assertControlsAreLabelledAndBigEnough("Find donors, results")
+    }
+
+    @Test
     fun profileWithHistoryAndBadges() {
         val me = TestData.profile().copy(phoneVerified = true, lastDonationAt = TestData.NOW.minus(java.time.Duration.ofDays(30)), donationCount = 2)
         val eligibility = EligibilityCalculator().evaluate(me.birthYear, me.weightOk, me.gender, me.lastDonationAt, TestData.NOW)

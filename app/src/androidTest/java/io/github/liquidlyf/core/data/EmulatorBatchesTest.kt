@@ -79,6 +79,7 @@ class EmulatorBatchesTest {
     @Inject lateinit var offers: OfferRepository
     @Inject lateinit var inbox: InboxRepository
     @Inject lateinit var safety: SafetyRepository
+    @Inject lateinit var donors: io.github.liquidlyf.core.data.donor.DonorRepository
 
     private val dhakaSouth = Area("BD30", "BD3026", "BD30262000")
 
@@ -277,6 +278,44 @@ class EmulatorBatchesTest {
     }
 
     // ---- helpers ----
+
+    // ---- Find donors and ask to donate (6.1, 6.2; contract 14) ----
+
+    @Test
+    fun findAListedDonorAndAskThemOnce() = runBlocking {
+        val donorEmail = newVerifiedUser("find-d")
+        val donorUid = auth.uid!!
+        profiles.create(donorUid, donorEmail, profileDraft(BloodGroup.B_POS, listed = true)).ok()
+        assertFalse("a donor card never holds a phone number", db.donorRef(donorUid).get(Source.SERVER).await().data!!.containsKey("phone"))
+
+        val requesterEmail = newVerifiedUser("find-r")
+        val requesterUid = auth.uid!!
+        profiles.create(requesterUid, requesterEmail, profileDraft(BloodGroup.A_POS, listed = false)).ok()
+        val requester = profiles.profile(requesterUid, refresh = true).ok()!!
+        val rid = requests.create(requester, requestDraft(units = 1)).ok()
+
+        // Earlier runs leave many cards in this district: page until the new donor shows up.
+        val search = io.github.liquidlyf.core.data.donor.DonorSearch(setOf(BloodGroup.B_POS), dhakaSouth.district, null, eligibleNowOnly = true)
+        val now = Instant.now()
+        var after: io.github.liquidlyf.core.model.DonorCard? = null
+        var found: io.github.liquidlyf.core.model.DonorCard? = null
+        repeat(50) {
+            if (found != null) return@repeat
+            val page = donors.search(search, now, after).ok()
+            found = page.firstOrNull { it.uid == donorUid }
+            after = page.lastOrNull() ?: return@repeat
+        }
+        val card = found ?: throw AssertionError("the listed B+ donor wasn't in the search")
+        assertTrue(donors.count(search, now).ok() >= 1)
+        assertTrue(donors.search(search.copy(upazila = dhakaSouth.upazila), now).ok().isNotEmpty())
+
+        val request = serverRequest(rid)
+        safety.askToDonate(request, card).ok()
+        assertEquals(1, serverRequest(rid).askCount)
+        assertEquals(donorUid, db.requestRef(rid).get(Source.SERVER).await().getString(RequestDoc.LAST_ASKED_UID))
+        // The ask's id is fixed per donor and request: asking again is refused.
+        assertEquals(AppResult.Failure(io.github.liquidlyf.core.util.AppError.PermissionDenied), safety.askToDonate(serverRequest(rid), card))
+    }
 
     private fun <T> AppResult<T>.ok(): T = when (this) {
         is AppResult.Success -> data

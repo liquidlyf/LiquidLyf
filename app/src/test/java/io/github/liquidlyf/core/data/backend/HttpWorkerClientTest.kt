@@ -143,6 +143,21 @@ class HttpWorkerClientTest {
     }
 
     @Test
+    fun `an ask to donate hits its own path, and the daily ask cap is never retried`() = runTest {
+        reply(202, """{"accepted":true,"type":"ASKED_TO_DONATE"}""")
+        assertEquals(AppResult.Success(Unit), client.notifyAsk("req1", "donor1"))
+        assertEquals("/v1/requests/req1/asks/donor1/notify", server.takeRequest().url.encodedPath)
+
+        reply(429, """{"error":"daily ask limit reached","dailyAskCap":true}""")
+        assertEquals(AppResult.Failure(AppError.DailyAskLimit), client.notifyAsk("req1", "donor1"))
+        assertEquals(2, server.requestCount)
+        assertEquals(emptyList<Int>(), waits)
+
+        reply(409, """{"error":"no such ask"}""")
+        assertEquals(AppResult.Failure(AppError.InvalidInput), client.notifyAsk("req1", "donor1"))
+    }
+
+    @Test
     fun `no Worker configured yet is a quiet failure, with no call`() = runTest {
         val unconfigured = HttpWorkerClient(OkHttpClient(), { null }, tokens)
         assertEquals(AppResult.Failure(AppError.Unknown), unconfigured.dispatch("req1"))
