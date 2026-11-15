@@ -109,8 +109,11 @@ fun ProfileRoute(onEditProfile: () -> Unit, onOpenSettings: () -> Unit, viewMode
             onDismissRequest = viewModel::cancelEligibilityQuestion,
             title = { Text(stringResource(R.string.add_donation_update_title)) },
             text = {
-                val from = viewModel.eligibleAfter(draft)?.let { dateText(it) }.orEmpty()
-                Text(stringResource(R.string.add_donation_update_body, from))
+                val after = viewModel.eligibleAfter(draft)
+                val from = after?.let { dateText(it) }.orEmpty()
+                // An old donation's rest period may be over already: then nothing pauses.
+                val past = after != null && !after.isAfter(Instant.now())
+                Text(stringResource(if (past) R.string.add_donation_update_body_past else R.string.add_donation_update_body, from))
             },
             confirmButton = { TextButton(onClick = { viewModel.answerEligibility(update = true) }) { Text(stringResource(R.string.add_donation_update_yes)) } },
             dismissButton = { TextButton(onClick = { viewModel.answerEligibility(update = false) }) { Text(stringResource(R.string.add_donation_update_no)) } },

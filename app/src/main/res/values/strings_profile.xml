@@ -64,6 +64,7 @@
     <string name="add_donation_added">Donation added.</string>
     <string name="add_donation_update_title">Update your eligibility?</string>
     <string name="add_donation_update_body">This is your latest donation. You could then donate again from %1$s, and request alerts pause until then.</string>
+    <string name="add_donation_update_body_past">This is your latest donation. Its rest period ended on %1$s, so you can still donate now.</string>
     <string name="add_donation_update_yes">Update</string>
     <string name="add_donation_update_no">Keep as is</string>
 
