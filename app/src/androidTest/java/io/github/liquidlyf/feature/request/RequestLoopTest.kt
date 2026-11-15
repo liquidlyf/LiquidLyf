@@ -156,7 +156,11 @@ class RequestLoopTest {
         waitUntil("A sees B's offer") { requesterView.uiState.value.responses.size == 1 }
         assertEquals("+8801712345678", requesterView.uiState.value.responses.single().donorPhone)
         onMain { requesterView.confirm(requesterView.uiState.value.responses.single()) }
-        waitUntil("confirmed") { requesterView.uiState.value.responses.single().status == ResponseStatus.CONFIRMED }
+        // Also wait for the write itself: the listener shows CONFIRMED before the server has it, and
+        // the screen ignores a second action while one is still running (a busy emulator lost it here).
+        waitUntil("confirmed") {
+            requesterView.uiState.value.responses.single().status == ResponseStatus.CONFIRMED && !requesterView.uiState.value.working
+        }
         onMain { requesterView.markDonated(requesterView.uiState.value.responses.single()) }
         waitUntil("fulfilled") { requesterView.uiState.value.request?.status == RequestStatus.FULFILLED }
         closeAll()
