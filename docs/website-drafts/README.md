@@ -62,7 +62,7 @@ from other sites.
    table from the Worker's clean-up job. **If a pull request adds or changes stored data, update the
    privacy policy too.** The app opens these pages from `core/util/Links.kt` (`/privacy`, `/terms`,
    `/download` and the `/bn/…` versions).
-2. **Resolve each `CHECK` note** (HTML comments; `build_site.py` lists them): backups, App Check
+2. **Resolve each `CHECK` note** (HTML comments; `build_site.py` lists them): App Check
    enforced (Phase 9), the PDPA 2026 rights and authority, the Terms' governing law, and, for the
    download page, the AppVerifier steps and the Obtainium link.
 3. **Legal review (C7):** Terms sections 9 (liability) and 11 (law), and the privacy policy's

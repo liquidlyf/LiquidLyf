@@ -135,12 +135,14 @@ We use a few services to run LiquidLyf. They process data for us and only on our
 | Provider | What it does for LiquidLyf | Where |
 |---|---|---|
 | Google Firebase: Authentication, Cloud Firestore, Cloud Messaging, Crashlytics, Remote Config, App Check | Sign-in, the database, notifications, crash reports, app settings, abuse protection | The database is in Mumbai, India. Sign-in, notifications and crash reports may be processed in other countries, including the United States |
-| Cloudflare Workers | Sends the request alerts to donors. When your app asks it to, it receives your user ID, the request ID, the donor's user ID for a notification about an offer or an ask, and, like any web server, your IP address. It stores none of them. To stop abuse, Cloudflare counts each user's calls for 60 seconds, then forgets them. Its technical logs contain no names, phone numbers or user IDs | Cloudflare's worldwide network |
+| Cloudflare Workers | Sends the request alerts to donors. When your app asks it to, it receives your user ID, the request ID, the donor's user ID for a notification about an offer or an ask, and, like any web server, your IP address. It stores none of them. A maintainer fixing a problem can watch the calls live, with the IP address and its approximate location; that live view isn't saved. To stop abuse, Cloudflare counts each user's calls for 60 seconds, then forgets them. Its technical logs contain no names, phone numbers or user IDs | Cloudflare's worldwide network |
 | GitHub | Hosts the app download, this website and the source code. It sees your IP address when you visit | United States and worldwide |
 
 <!-- Confirmed 13 Nov 2026: the production Firestore database is in asia-south1 (Mumbai).
-     Confirmed with session B, 13 Nov 2026 (Worker code at 2616359): KV holds only the Worker's own
-     Google access token (expires within 1 h); rate limiting is a 60-second per-uid counter in
+     Confirmed with session B, 13 Nov 2026 (Worker code at 2616359), re-checked 15 Nov 2026: KV holds the
+     Worker's own Google access token (expires within 1 h) and two job cursors (timestamps, and the path
+     of the last cleaned request), no personal data; a live `wrangler tail` shows callers' IP and
+     approximate location only while a maintainer watches, and isn't saved; rate limiting is a 60-second per-uid counter in
      Cloudflare's Rate Limiting binding (or in memory), never written to storage; the Worker's log lines
      have no uid, names, phone numbers or tokens; automatic invocation logs are off. Re-check whenever
      the Worker changes. Cloudflare's log retention isn't stated on purpose: check its docs before
@@ -169,8 +171,14 @@ serious harm.
 | In-app notifications | 60 days |
 | Reports and moderators' action log | 1 year, to prevent repeat abuse |
 | Crash reports | 90 days |
+| Earlier versions of changed or deleted data | Up to 1 hour, readable only by the project's administrators. We keep no backups |
 
-<!-- CHECK: whether any backups exist. The free Spark plan has no scheduled Firestore backups.
+<!-- Backups, confirmed with session B on 15 Nov 2026 from the production admin API: none. Point-in-time
+     recovery is off, there are no backup schedules or backups, and no export has ever run (exports and
+     backups need billing, which Spark doesn't have). Firestore keeps earlier versions of changed or
+     deleted documents for 1 hour (versionRetentionPeriod), readable only by project admins with a
+     read-at-time query. The admin scripts write no files; the Apps Script backup and the Worker's KV
+     hold no personal data. Re-check if billing, exports or backups are ever turned on.
      B6 answered 13 Nov 2026 (a): after 90 days closed requests keep short names, blood group, area,
      date and outcome; contact details, donor phones, messages, notes and the closing reason are deleted.
      Confirmed with session B, 15 Nov 2026: the Worker's clean-up job (backend/worker/src/retention.ts)
