@@ -40,6 +40,9 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     // Eagerly: the start destination must survive the activity going to the background.
+    /** A20: "Signing out…" over the whole app while sign-out runs. */
+    val signingOut: StateFlow<Boolean> = sessionManager.signingOut
+
     val uiState: StateFlow<MainUiState> = combine(settingsRepository.settings, sessionManager.state, ::Pair)
         .scan<_, MainUiState>(MainUiState.Loading) { previous, (settings, session) ->
             when (previous) {

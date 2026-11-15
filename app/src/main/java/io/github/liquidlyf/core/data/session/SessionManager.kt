@@ -19,6 +19,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.mapLatest
@@ -59,6 +62,9 @@ sealed interface SessionState {
 interface SessionManager {
     val state: StateFlow<SessionState>
 
+    /** True while [signOut] runs: the app shows "Signing out…" and takes no taps (A20). */
+    val signingOut: StateFlow<Boolean>
+
     /** Reads the user and profile again: after "I've verified", profile setup or an edit. */
     fun refresh()
 
@@ -78,6 +84,8 @@ class AppSessionManager @Inject constructor(
     @param:ApplicationScope private val scope: CoroutineScope,
 ) : SessionManager {
     private val refreshes = MutableStateFlow(0)
+    private val signingOutState = MutableStateFlow(false)
+    override val signingOut: StateFlow<Boolean> = signingOutState.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override val state: StateFlow<SessionState> = combine(auth.authState, auth.claims, refreshes) { user, claims, _ -> user to claims }
@@ -118,12 +126,20 @@ class AppSessionManager @Inject constructor(
     }
 
     override suspend fun signOut() {
-        push.sync(null)
-        // Also done here, before the sign-out itself, so nothing is left behind if the app stops
-        // right after it. The watcher in init still covers sign-outs that don't come through
-        // here (account deleted elsewhere, session revoked).
-        forgetThisPerson()
-        auth.signOut()
+        signingOutState.value = true
+        try {
+            // A20: at most ~2 s for the topics; FCM finishes any it hasn't confirmed in the background.
+            push.dropAll(SIGN_OUT_TOPICS_WAIT_MS)
+            // Also done here, before the sign-out itself, so nothing is left behind if the app stops
+            // right after it. The watcher in init still covers sign-outs that don't come through
+            // here (account deleted elsewhere, session revoked).
+            forgetThisPerson()
+            auth.signOut()
+            // Keep "Signing out…" up until the sign-in screen takes over.
+            withTimeoutOrNull(SIGN_OUT_TOPICS_WAIT_MS) { state.first { it == SessionState.SignedOut } }
+        } finally {
+            signingOutState.value = false
+        }
     }
 
     private suspend fun forgetThisPerson() {
@@ -145,3 +161,6 @@ class AppSessionManager @Inject constructor(
         }
     }
 }
+
+/** A20: how long sign-out waits for FCM to confirm the topic unsubscribes. */
+internal const val SIGN_OUT_TOPICS_WAIT_MS = 2_000L

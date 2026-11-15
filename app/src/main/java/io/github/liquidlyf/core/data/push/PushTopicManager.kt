@@ -7,6 +7,11 @@ import io.github.liquidlyf.core.firebase.appResultOf
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -66,6 +71,29 @@ class PushTopicManager @Inject constructor(
     fun nextChangeAt(profile: UserProfile?): Instant? {
         if (profile == null || !profile.showInDonorSearch || !profile.available) return null
         return eligibility.eligibleFrom(profile.lastDonationAt, profile.gender).takeIf { it.isAfter(clock.now()) }
+    }
+
+    /**
+     * Sign-out (A20): asks FCM to drop every topic at once and waits at most [maxWaitMs], so a
+     * slow network doesn't keep the person waiting. FCM keeps the unsubscribes it hasn't
+     * confirmed in its own saved queue and finishes them in the background, before any later
+     * subscribe. A call that fails outright stays in the store, so the next sync retries it.
+     * True when every topic was confirmed in time.
+     */
+    suspend fun dropAll(maxWaitMs: Long): Boolean = coroutineScope {
+        val topics = store.get().toList()
+        // UNDISPATCHED: each FCM call is made right here, before anything can be cancelled.
+        val calls = topics.map { topic -> async(start = CoroutineStart.UNDISPATCHED) { runCatching { messaging.unsubscribe(topic) } } }
+        val results = withTimeoutOrNull(maxWaitMs) { calls.awaitAll() }
+        if (results == null) {
+            calls.forEach { it.cancel() }
+            store.set(emptySet())
+            false
+        } else {
+            val failed = topics.filterIndexed { i, _ -> results[i].isFailure }.toSet()
+            store.set(failed)
+            failed.isEmpty()
+        }
     }
 
     /**

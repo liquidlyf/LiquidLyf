@@ -1,12 +1,12 @@
 package io.github.liquidlyf.core.data.push
 
-import io.github.liquidlyf.core.data.ProcessDataStores
 import android.content.Context
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.google.android.gms.tasks.Task
 import com.google.firebase.Firebase
 import com.google.firebase.messaging.messaging
 import dagger.Binds
@@ -16,7 +16,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.liquidlyf.BuildConfig
-import kotlinx.coroutines.CancellationException
+import io.github.liquidlyf.core.data.ProcessDataStores
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -26,27 +26,28 @@ private const val TAG = "PushTopics"
 
 /** Real FCM topic calls (dev and prod). */
 class FcmTopicMessaging @Inject constructor() : TopicMessaging {
-    override suspend fun subscribe(topic: String) =
-        logged("subscribed to", topic) { Firebase.messaging.subscribeToTopic(topic).await() }
+    override suspend fun subscribe(topic: String) {
+        Firebase.messaging.subscribeToTopic(topic).logged("subscribed to", topic).await()
+    }
 
-    override suspend fun unsubscribe(topic: String) =
-        logged("unsubscribed from", topic) { Firebase.messaging.unsubscribeFromTopic(topic).await() }
+    override suspend fun unsubscribe(topic: String) {
+        Firebase.messaging.unsubscribeFromTopic(topic).logged("unsubscribed from", topic).await()
+    }
 
     /**
-     * One line per topic call, so a phone check can see that alerts are set up. Topic names hold
-     * the uid, area and blood group: the published app logs only the kind (`up_…`), local test
-     * builds the whole name.
+     * One line per topic call when FCM confirms it, even if the app stopped waiting (sign-out
+     * waits at most ~2 s), so a phone check can see that alerts are set up or gone. Topic names
+     * hold the uid, area and blood group: the published app logs only the kind (`up_…`), local
+     * test builds the whole name.
      */
-    private suspend fun logged(done: String, topic: String, call: suspend () -> Unit) {
+    private fun Task<Void>.logged(done: String, topic: String): Task<Void> {
         val shown = if (BuildConfig.LOCAL_BUILD) topic else topic.substringBefore('_') + "_…"
-        try {
-            call()
-            Log.i(TAG, "$done $shown")
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.w(TAG, "not $done $shown: ${e.javaClass.simpleName}")
-            throw e
+        return addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Log.i(TAG, "$done $shown")
+            } else {
+                Log.w(TAG, "not $done $shown: ${task.exception?.javaClass?.simpleName}")
+            }
         }
     }
 }

@@ -15,6 +15,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.SystemBarScrims
 import io.github.liquidlyf.core.designsystem.isDark
+import io.github.liquidlyf.feature.session.SigningOutDialog
 import io.github.liquidlyf.navigation.AppNavHost
 
 /**
@@ -57,6 +58,8 @@ class MainActivity : AppCompatActivity() {
                     onRetrySession = viewModel::retrySession,
                     onSignOut = viewModel::signOut,
                 )
+                val signingOut by viewModel.signingOut.collectAsStateWithLifecycle()
+                if (signingOut) SigningOutDialog()
             }
         }
     }

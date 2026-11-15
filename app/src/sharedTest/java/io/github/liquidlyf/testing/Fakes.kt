@@ -55,6 +55,7 @@ class FakeSettingsRepository(initial: UserSettings? = null) : SettingsRepository
 
 class FakeSessionManager(initial: SessionState = SessionState.SignedOut) : SessionManager {
     override val state = MutableStateFlow(initial)
+    override val signingOut = MutableStateFlow(false)
     var refreshes = 0
     var signOuts = 0
 

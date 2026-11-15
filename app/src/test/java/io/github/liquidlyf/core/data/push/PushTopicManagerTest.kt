@@ -13,6 +13,7 @@ import io.github.liquidlyf.testing.FakeAlertPrefsStore
 import java.io.IOException
 import java.time.Duration
 import java.time.Instant
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -28,6 +29,10 @@ class PushTopicManagerTest {
         val calls = mutableListOf<String>()
         var failOn: String? = null
 
+        /** A slow network: this topic's call never comes back. */
+        var hangOn: String? = null
+        val issued = mutableListOf<String>()
+
         override suspend fun subscribe(topic: String) {
             if (topic == failOn) throw IOException("offline")
             calls += "+$topic"
@@ -35,6 +40,8 @@ class PushTopicManagerTest {
         }
 
         override suspend fun unsubscribe(topic: String) {
+            issued += topic
+            if (topic == hangOn) awaitCancellation()
             if (topic == failOn) throw IOException("offline")
             calls += "-$topic"
             subscribed -= topic
@@ -105,6 +112,37 @@ class PushTopicManagerTest {
         manager.sync(donor)
         assertTrue("admins" !in fcm.subscribed)
         // Signed out: nothing at all.
+        manager.sync(null)
+        assertEquals(emptySet<String>(), fcm.subscribed)
+    }
+
+    @Test
+    fun `sign-out drops every topic at once`() = runTest {
+        manager.sync(donor)
+        assertTrue(manager.dropAll(maxWaitMs = 2_000))
+        assertEquals(emptySet<String>(), fcm.subscribed)
+        assertEquals(emptySet<String>(), store.topics)
+    }
+
+    @Test
+    fun `on a slow network sign-out waits at most the cap, with every unsubscribe already asked for (A20)`() = runTest {
+        manager.sync(donor)
+        fcm.hangOn = "di_BD3026_B_POS"
+        val start = testScheduler.currentTime
+        assertEquals(false, manager.dropAll(maxWaitMs = 2_000))
+        assertEquals(2_000L, testScheduler.currentTime - start)
+        // All four were asked for (FCM keeps the slow one queued); the app forgets them all.
+        assertEquals((setOf("usr_u1") + areaTopics), fcm.issued.toSet())
+        assertEquals(emptySet<String>(), store.topics)
+    }
+
+    @Test
+    fun `a topic whose unsubscribe fails outright is kept, so the next sync retries it`() = runTest {
+        manager.sync(donor)
+        fcm.failOn = "usr_u1"
+        assertEquals(false, manager.dropAll(maxWaitMs = 2_000))
+        assertEquals(setOf("usr_u1"), store.topics)
+        fcm.failOn = null
         manager.sync(null)
         assertEquals(emptySet<String>(), fcm.subscribed)
     }

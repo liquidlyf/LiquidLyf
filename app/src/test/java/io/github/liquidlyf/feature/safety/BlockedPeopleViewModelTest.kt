@@ -32,6 +32,7 @@ class BlockedPeopleViewModelTest {
     /** Like the real session: refresh() reads the profile again after a write. */
     private val session = object : SessionManager {
         override val state = MutableStateFlow<SessionState>(SessionState.Ready(TestData.user(uid = "me"), me))
+        override val signingOut = MutableStateFlow(false)
         override fun refresh() {
             state.value = SessionState.Ready(TestData.user(uid = "me"), profiles.profiles.getValue("me"))
         }

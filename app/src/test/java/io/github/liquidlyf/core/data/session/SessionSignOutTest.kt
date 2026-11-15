@@ -16,6 +16,7 @@ import io.github.liquidlyf.testing.TestData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -71,10 +72,14 @@ class SessionSignOutTest {
         assertTrue(session.state.value.toString(), session.state.value is SessionState.Ready)
         assertEquals(4, subscribed.size)
 
+        val signingOutSeen = mutableListOf<Boolean>()
+        backgroundScope.launch { session.signingOut.collect { signingOutSeen += it } }
+        runCurrent()
         session.signOut()
         runCurrent() // the session runs in backgroundScope, which advanceUntilIdle() leaves alone
 
         assertEquals(SessionState.SignedOut, session.state.value)
+        assertEquals("A20: 'Signing out…' shows while it runs, then goes", listOf(false, true, false), signingOutSeen)
         assertEquals(emptySet<String>(), subscribed)
         assertEquals(listOf("unsubscribe dv", "unsubscribe di", "unsubscribe up", "unsubscribe usr", "notifications").sorted(), steps.map { it.first }.distinct().sorted())
         // Each step ran while still signed in (the first clear-up, from signOut() itself).
