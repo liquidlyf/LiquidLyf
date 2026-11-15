@@ -64,3 +64,8 @@ fun localDateText(date: java.time.LocalDate): String {
     val format = DateFormat.getDateInstance(DateFormat.MEDIUM, locale).apply { timeZone = android.icu.util.TimeZone.GMT_ZONE }
     return format.format(Date.from(date.atStartOfDay(java.time.ZoneOffset.UTC).toInstant()))
 }
+
+/** A count in the app's language: "৩" in Bangla, "3" in English (8.4: no ASCII digits in Bangla). */
+@Composable
+fun numberText(value: Int): String =
+    android.icu.text.NumberFormat.getIntegerInstance(LocalConfiguration.current.locales[0]).format(value.toLong())

@@ -66,6 +66,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.numberText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
 import io.github.liquidlyf.core.designsystem.components.ChoiceRow
 import io.github.liquidlyf.core.designsystem.components.EmptyState
@@ -297,7 +298,7 @@ private fun UnitsStepper(units: Int, onChange: (Int) -> Unit) {
             Icon(painterResource(LLIcons.Remove), contentDescription = stringResource(R.string.create_units_less))
         }
         Text(
-            units.toString(),
+            numberText(units),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.clearAndSetSemantics { contentDescription = description },
         )

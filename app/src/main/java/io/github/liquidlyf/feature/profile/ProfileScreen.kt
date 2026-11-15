@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.numberText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.EligibilityRing
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
@@ -288,7 +289,7 @@ private fun ImpactCard(state: ProfileUiState) {
 private fun Stat(value: Int, @StringRes label: Int, modifier: Modifier = Modifier) {
     val text = stringResource(label)
     Column(modifier.semantics(mergeDescendants = true) {}, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value.toString(), style = MaterialTheme.typography.headlineSmall)
+        Text(numberText(value), style = MaterialTheme.typography.headlineSmall)
         Text(text, style = MaterialTheme.typography.bodySmall)
     }
 }

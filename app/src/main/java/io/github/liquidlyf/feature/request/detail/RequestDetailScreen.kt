@@ -60,6 +60,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.numberText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.IconLine
@@ -615,7 +616,7 @@ private fun EditDialog(r: BloodRequest, onDismiss: () -> Unit, onSave: (String?,
                     IconButton(onClick = { units-- }, enabled = units > minUnits) {
                         Icon(painterResource(LLIcons.Remove), contentDescription = stringResource(R.string.create_units_less))
                     }
-                    Text(units.toString(), style = MaterialTheme.typography.titleMedium)
+                    Text(numberText(units), style = MaterialTheme.typography.titleMedium)
                     IconButton(onClick = { units++ }, enabled = units < Validators.UNITS_MAX) {
                         Icon(painterResource(LLIcons.Add), contentDescription = stringResource(R.string.create_units_more))
                     }
