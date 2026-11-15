@@ -115,7 +115,7 @@ We use your data only for these purposes. Your data is never used for advertisin
 | Donation history | You see all of it. Others see only how many times you donated |
 | Your badges | Only you |
 | A request's blood group, units, hospital, area, urgency and notes | Signed-in users with a verified email |
-| A request's contact name and phone, patient name and ward | The requester, and donors with an active offer for that request. A donor loses access when they withdraw the offer or the requester declines it |
+| A request's contact name and phone, patient name and ward | The requester, and donors whose offer for that request is still active or who donated. A donor loses access when they withdraw the offer or the requester declines it |
 | Reports you send | Only the LiquidLyf moderators. The person you report isn't told who reported them |
 
 <!-- Confirmed with session B, 15 Nov 2026 (d6b9d74): a request shows only how many donors were asked
@@ -192,7 +192,7 @@ serious harm.
   have written it down.
 - **Block someone:** you stop seeing their requests, and they can't ask you to donate or offer on
   your requests. If they had already offered, decline that offer, so they stop seeing your
-  request's contact details.
+  request's contact details. Once their donation is recorded, the offer can't be declined.
 - **Delete your account:** in the app under Settings → Delete account, or without the app at
   [liquidlyf.github.io/delete-account](/delete-account).
 - **Get a copy of your data,** or ask any question about it: email liquidlyf@gmail.com from the email
