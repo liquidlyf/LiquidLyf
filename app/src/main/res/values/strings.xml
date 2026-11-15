@@ -24,7 +24,7 @@
     <string name="title_create_request">Request blood</string>
     <string name="title_notifications">Notifications</string>
     <string name="title_settings">Settings</string>
-    <string name="title_component_gallery">Component gallery</string>
+    <string name="title_component_gallery" translatable="false">Component gallery</string>
 
     <!-- Common actions -->
     <string name="action_back">Back</string>
@@ -37,16 +37,16 @@
     <string name="state_loading">Loading…</string>
 
     <!-- Placeholder screens (Phase 1 only; each phase replaces its screens) -->
-    <string name="placeholder_body">This screen arrives in Phase %1$d.</string>
+    <string name="placeholder_body" translatable="false">This screen arrives in Phase %1$d.</string>
 
     <!-- Settings (the full screen arrives in Phase 8) -->
     <string name="settings_theme">Theme</string>
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="settings_developer">Developer</string>
-    <string name="settings_component_gallery">Component gallery</string>
-    <string name="settings_component_gallery_summary">Every design-system component in both themes. Debug builds only.</string>
+    <string name="settings_developer" translatable="false">Developer</string>
+    <string name="settings_component_gallery" translatable="false">Component gallery</string>
+    <string name="settings_component_gallery_summary" translatable="false">Every design-system component in both themes. Debug builds only.</string>
 
     <!-- Errors (AppError) -->
     <string name="error_network">No internet connection. Check your connection and try again.</string>
@@ -122,16 +122,16 @@
     <string name="channel_general_description">Other messages from LiquidLyf.</string>
 
     <!-- Component gallery samples (debug builds only) -->
-    <string name="gallery_section_buttons">Buttons</string>
-    <string name="gallery_section_fields">Text fields</string>
-    <string name="gallery_section_blood_groups">Blood groups</string>
-    <string name="gallery_section_status">Status and urgency</string>
-    <string name="gallery_section_states">Screen states</string>
-    <string name="gallery_button_posting">Posting…</string>
-    <string name="gallery_field_supporting">We only show your phone to donors you accept.</string>
-    <string name="gallery_field_error">Enter an 11-digit number starting with 01.</string>
-    <string name="gallery_empty_title">No requests near you yet</string>
-    <string name="gallery_empty_body">When someone nearby needs blood, it shows up here.</string>
+    <string name="gallery_section_buttons" translatable="false">Buttons</string>
+    <string name="gallery_section_fields" translatable="false">Text fields</string>
+    <string name="gallery_section_blood_groups" translatable="false">Blood groups</string>
+    <string name="gallery_section_status" translatable="false">Status and urgency</string>
+    <string name="gallery_section_states" translatable="false">Screen states</string>
+    <string name="gallery_button_posting" translatable="false">Posting…</string>
+    <string name="gallery_field_supporting" translatable="false">We only show your phone to donors you accept.</string>
+    <string name="gallery_field_error" translatable="false">Enter an 11-digit number starting with 01.</string>
+    <string name="gallery_empty_title" translatable="false">No requests near you yet</string>
+    <string name="gallery_empty_body" translatable="false">When someone nearby needs blood, it shows up here.</string>
     <string name="state_error_title">Couldn\'t load this</string>
     <!-- Phase 3: onboarding -->
     <string name="onboarding_find_title">Find donors near you</string>
@@ -281,7 +281,7 @@
     <string name="confirm_blood_group_body">This changes which requests you see and who can ask you to donate. Make sure it matches a test result.</string>
     <string name="action_change">Change</string>
     <string name="delete_account_body">This permanently deletes your profile, your donor card, your donation history and your messages. Your requests and offers stay for the people involved, but show \"Deleted user\" and no phone number. You can\'t undo this.</string>
-    <string name="delete_account_word">DELETE</string>
+    <string name="delete_account_word" translatable="false">DELETE</string>
     <string name="delete_account_type">Type %1$s to confirm</string>
     <string name="error_confirm_word">Type %1$s exactly.</string>
     <string name="delete_account_password_hint">Enter your password to confirm it\'s you.</string>

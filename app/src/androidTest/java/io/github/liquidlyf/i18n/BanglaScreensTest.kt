@@ -119,4 +119,59 @@ class BanglaScreensTest {
         assertShows(R.string.suspended_title)
         save("set1-suspended")
     }
+
+    // ---- set 2: signing in, the account, profile setup ----
+
+    @Test
+    fun set2SignInAndSignUp() {
+        val step = androidx.compose.runtime.mutableIntStateOf(0)
+        show {
+            when (step.intValue) {
+                0 -> io.github.liquidlyf.feature.auth.SignInScreen(io.github.liquidlyf.feature.auth.SignInUiState(), {}, {}, {}, {}, {}, onContinueWithGoogle = {})
+                1 -> io.github.liquidlyf.feature.auth.SignUpScreen(io.github.liquidlyf.feature.auth.SignUpUiState(), {}, {}, {}, {}, {}, {})
+                else -> io.github.liquidlyf.feature.auth.VerifyEmailScreen(io.github.liquidlyf.feature.auth.VerifyEmailUiState(email = "rahim@example.test", resendIn = 0), {}, {}, {})
+            }
+        }
+        assertShows(R.string.action_forgot_password)
+        save("set2-sign-in")
+        compose.runOnUiThread { step.intValue = 1 }
+        assertShows(R.string.sign_up_have_account)
+        save("set2-sign-up")
+        compose.runOnUiThread { step.intValue = 2 }
+        assertShows(R.string.action_i_have_verified)
+        save("set2-verify-email")
+    }
+
+    @Test
+    fun set2EveryProfileSetupStep() {
+        val geo = target.assets.open("bd-geo.json").bufferedReader().use { io.github.liquidlyf.core.data.geo.BdGeoParser.parse(it.readText()) }
+        val draft = io.github.liquidlyf.feature.profilesetup.SetupDraft(uid = "u1", division = "BD30", district = "BD3026", upazila = "BD30262000", bloodGroup = "B_POS")
+        val step = androidx.compose.runtime.mutableIntStateOf(0)
+        show {
+            val state = io.github.liquidlyf.feature.profilesetup.ProfileSetupUiState(draft = draft.copy(step = step.intValue), geo = geo, loaded = true, needsTerms = true)
+            io.github.liquidlyf.feature.profilesetup.ProfileSetupScreen(state, io.github.liquidlyf.core.model.AppLocale.BN, {}, {}, {}, {}, {})
+        }
+        val titles = listOf(R.string.setup_blood_title, R.string.setup_about_title, R.string.setup_location_title, R.string.setup_contact_title)
+        titles.forEachIndexed { s, title ->
+            compose.runOnUiThread { step.intValue = s }
+            compose.waitForIdle()
+            assertShows(title)
+            save("set2-setup-${s + 1}")
+        }
+    }
+
+    @Test
+    fun set2Settings() {
+        show {
+            io.github.liquidlyf.feature.settings.SettingsContent(
+                uiState = io.github.liquidlyf.feature.settings.SettingsUiState(
+                    hasPassword = true, listed = true, available = true, bloodGroup = io.github.liquidlyf.core.model.BloodGroup.B_POS,
+                ),
+                onBack = {}, onThemeModeChange = {}, onOpenComponentGallery = {}, onEditProfile = {}, onChangePassword = {},
+                onDeleteAccount = {}, onSignOut = {}, showDeveloperOptions = false,
+            )
+        }
+        assertShows(R.string.settings_list_me)
+        save("set2-settings")
+    }
 }
