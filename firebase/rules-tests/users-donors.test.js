@@ -154,6 +154,54 @@ describe('users: protected fields (doc 07 test 3)', () => {
   });
 });
 
+describe('users: private lists and timestamps (doc 07 §9.1)', () => {
+  const ids = (n, p) => Array.from({ length: n }, (_, i) => `${p}${i}`);
+
+  test('the owner hides requests, blocks people, marks the inbox seen and records the last post', async () => {
+    await assertSucceeds(updateProfile(as('alice'), 'alice', {
+      hiddenRequestIds: ['req1', 'req2'], blockedUids: ['mallory'], inboxSeenAt: serverTimestamp(), lastRequestAt: ts(-DAY),
+    }));
+    // A listed donor too: none of these fields is on the public card, so no card update is needed.
+    await assertSucceeds(updateProfile(as('bob'), 'bob', { blockedUids: ['mallory'], inboxSeenAt: serverTimestamp() }));
+  });
+
+  test('each list holds at most 200 entries', async () => {
+    await assertSucceeds(updateProfile(as('alice'), 'alice', { hiddenRequestIds: ids(200, 'r'), blockedUids: ids(200, 'u') }));
+    await assertFails(updateProfile(as('alice'), 'alice', { hiddenRequestIds: ids(201, 'r') }));
+    await assertFails(updateProfile(as('alice'), 'alice', { blockedUids: ids(201, 'u') }));
+    await assertFails(profileSetup(as('zed'), 'zed', newUserDoc('zed', { blockedUids: ids(201, 'u') })));
+  });
+
+  test('lists must be lists and the times must be timestamps', async () => {
+    await assertFails(updateProfile(as('alice'), 'alice', { blockedUids: 'mallory' }));
+    await assertFails(updateProfile(as('alice'), 'alice', { hiddenRequestIds: { req1: true } }));
+    await assertFails(updateProfile(as('alice'), 'alice', { inboxSeenAt: '2026-11-17' }));
+    await assertFails(updateProfile(as('alice'), 'alice', { lastRequestAt: 1763337600000 }));
+  });
+
+  test('nobody else can change my lists', async () => {
+    await assertFails(updateDoc(doc(as('mallory'), 'users/alice'), { blockedUids: [], updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as('bob'), 'users/alice'), { hiddenRequestIds: [], updatedAt: serverTimestamp() }));
+  });
+});
+
+describe('users: language and terms (phase-08)', () => {
+  test('the language switches between English and Bangla only', async () => {
+    await assertSucceeds(updateProfile(as('alice'), 'alice', { locale: 'bn' }));
+    await assertSucceeds(updateProfile(as('alice'), 'alice', { locale: 'en' }));
+    await assertFails(updateProfile(as('alice'), 'alice', { locale: 'fr' }));
+    await assertFails(updateProfile(as('alice'), 'alice', { locale: 'BN' }));
+  });
+
+  test('accepting new terms records the version and the time', async () => {
+    await assertSucceeds(updateProfile(as('alice'), 'alice', { termsVersion: '2027-01', termsAcceptedAt: serverTimestamp() }));
+    await assertFails(updateProfile(as('alice'), 'alice', { termsVersion: '' }));
+    await assertFails(updateProfile(as('alice'), 'alice', { termsVersion: 'x'.repeat(21) }));
+    await assertFails(updateProfile(as('alice'), 'alice', { termsAcceptedAt: 'today' }));
+    await assertFails(updateProfile(as('alice'), 'alice', { termsVersion: deleteField() }));
+  });
+});
+
 describe('donors: owner-written mirror (Spark test 1)', () => {
   test('signed-in verified users can read donor cards; unverified cannot', async () => {
     await assertSucceeds(getDoc(doc(as('eve'), 'donors/bob')));
