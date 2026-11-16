@@ -9,67 +9,67 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="bn">
     <!-- Onboarding (8.3: the last page is the short medical disclaimer) -->
     <string name="onboarding_find_title">কাছের রক্তদাতা খুঁজুন</string>
-    <string name="onboarding_find_body">অনুরোধ পোস্ট করুন। কাছাকাছি যাঁদের রক্তের গ্রুপ মেলে, তাঁরা অ্যালার্ট পাবেন।</string>
+    <string name="onboarding_find_body">অনুরোধ পোস্ট করুন। কাছাকাছি যে রক্তদাতাদের রক্তের গ্রুপ মেলে, তাঁরা অ্যালার্ট পাবেন।</string>
     <string name="onboarding_alert_title">আপনার গ্রুপের রক্ত দরকার হলে অ্যালার্ট পান</string>
     <string name="onboarding_alert_body">রক্তদাতা হিসেবে তালিকায় নাম দিন। কাছাকাছি কারও আপনার গ্রুপের রক্ত দরকার হলে আপনি জানতে পারবেন।</string>
     <string name="onboarding_money_title">রক্তের জন্য কখনো টাকা দেবেন না, নেবেনও না</string>
     <string name="onboarding_money_body">রক্তদান বিনামূল্যে। কেউ টাকা চাইলে অনুরোধটি রিপোর্ট করুন।</string>
     <string name="onboarding_medical_title">LiquidLyf কোনো চিকিৎসা সেবা নয়</string>
-    <string name="onboarding_medical_body">এটি স্বেচ্ছায় রক্তদাতা খুঁজে পেতে সাহায্য করে। এটি রক্ত পরীক্ষা বা সরবরাহ করে না, রক্তদাতার স্বাস্থ্যও যাচাই করে না। শুধু লাইসেন্সপ্রাপ্ত হাসপাতাল বা ব্লাড ব্যাংকে রক্ত দিন, আর চিকিৎসার পরামর্শের জন্য ডাক্তারের কাছে যান। জরুরি অবস্থায় ৯৯৯-এ কল করুন।</string>
+    <string name="onboarding_medical_body">এটি আপনাকে স্বেচ্ছাসেবী রক্তদাতা খুঁজে পেতে সাহায্য করে। এটি রক্ত পরীক্ষা বা সরবরাহ করে না, রক্তদাতাদের স্বাস্থ্যও যাচাই করে না। শুধু লাইসেন্সপ্রাপ্ত হাসপাতাল বা ব্লাড ব্যাংকে রক্ত দিন, আর চিকিৎসার বিষয়ে ডাক্তারের পরামর্শ নিন। জরুরি অবস্থায় ৯৯৯-এ কল করুন।</string>
     <string name="action_i_understand">বুঝেছি</string>
-    <string name="onboarding_page">পৃষ্ঠা %1$d / %2$d</string>
+    <string name="onboarding_page">পৃষ্ঠা %1$d, মোট %2$d</string>
     <string name="action_next">পরবর্তী</string>
     <string name="action_skip">এড়িয়ে যান</string>
 
     <!-- The full medical disclaimer (About) -->
     <string name="title_medical_disclaimer">চিকিৎসা-সংক্রান্ত সতর্কতা</string>
-    <string name="medical_disclaimer_full">LiquidLyf একটি কমিউনিটি টুল, যা মানুষকে স্বেচ্ছায় রক্তদাতা খুঁজে পেতে সাহায্য করে। এটি কোনো চিকিৎসা যন্ত্র নয়, এবং কোনো রোগ নির্ণয়, চিকিৎসা, নিরাময় বা প্রতিরোধ করে না।\n\nLiquidLyf রক্ত সংগ্রহ, পরীক্ষা, সংরক্ষণ বা সরবরাহ করে না, এবং রক্তদাতার স্বাস্থ্য বা পরিচয় যাচাই করে না। রক্ত দিতে হবে শুধু লাইসেন্সপ্রাপ্ত হাসপাতাল বা রক্ত পরিসঞ্চালন কেন্দ্রে, যেখানে তা পরীক্ষা করা হবে।\n\nচিকিৎসার পরামর্শের জন্য সবসময় ডাক্তার বা যোগ্য স্বাস্থ্যকর্মীর সঙ্গে কথা বলুন। রক্তের জন্য কখনো টাকা দেবেন না, নেবেনও না। জরুরি অবস্থায় ৯৯৯-এ কল করুন।</string>
+    <string name="medical_disclaimer_full">LiquidLyf একটি কমিউনিটি অ্যাপ, যা মানুষকে স্বেচ্ছাসেবী রক্তদাতা খুঁজে পেতে সাহায্য করে। এটি কোনো চিকিৎসা যন্ত্র নয়, এবং কোনো রোগ নির্ণয়, চিকিৎসা, নিরাময় বা প্রতিরোধ করে না।\n\nLiquidLyf রক্ত সংগ্রহ, পরীক্ষা, সংরক্ষণ বা সরবরাহ করে না, এবং রক্তদাতাদের স্বাস্থ্য বা পরিচয় যাচাই করে না। রক্ত দিতে হবে শুধু লাইসেন্সপ্রাপ্ত হাসপাতাল বা ব্লাড ব্যাংকে, যেখানে রক্ত পরীক্ষা করে নেওয়া হবে।\n\nচিকিৎসার বিষয়ে পরামর্শের জন্য সবসময় ডাক্তার বা অন্য কোনো যোগ্য স্বাস্থ্যকর্মীর সঙ্গে কথা বলুন। রক্তের জন্য কখনো টাকা দেবেন না, নেবেনও না। জরুরি অবস্থায় ৯৯৯-এ কল করুন।</string>
 
     <!-- How matching works -->
     <string name="title_how_matching_works">কীভাবে রক্তদাতা মেলানো হয়</string>
     <string name="settings_how_matching_summary">কারা অ্যালার্ট পান, আর আপনার নম্বর কখন শেয়ার হয়</string>
-    <string name="matching_intro">কেউ রক্তের অনুরোধ পোস্ট করলে LiquidLyf কাছাকাছি উপযুক্ত রক্তদাতাদের অ্যালার্ট পাঠায়, সবচেয়ে কাছের জন থেকে শুরু করে। দরকারের বেশি কাউকে অ্যালার্ট পাঠানো হয় না।</string>
+    <string name="matching_intro">কেউ রক্তের অনুরোধ পোস্ট করলে LiquidLyf কাছাকাছি উপযুক্ত রক্তদাতাদের অ্যালার্ট পাঠায়, যাঁরা সবচেয়ে কাছে তাঁদের আগে। কাউকেই দরকারের বেশি অ্যালার্ট পাঠানো হয় না।</string>
     <string name="matching_who_title">কারা অ্যালার্ট পান</string>
     <string name="matching_who_body">যে রক্তদাতারা তালিকায় আছেন, রক্ত দিতে প্রস্তুত এবং এখন রক্ত দিতে পারেন: বয়স ১৮ থেকে ৬০ বছর, শেষ রক্তদানের পর অন্তত ৪ মাস পেরিয়েছে, আর রোগী তাঁদের গ্রুপের রক্ত নিতে পারেন।</string>
     <string name="matching_nearest_title">সবচেয়ে কাছের জন আগে</string>
-    <string name="matching_nearest_body">অ্যালার্ট শুরু হয় হাসপাতালের উপজেলা থেকে। যথেষ্ট রক্তদাতা সাড়া না দিলে ধাপে ধাপে আরও ছড়ায়: কাছাকাছি অন্য উপযুক্ত গ্রুপ (অনুরোধকারী রাজি থাকলে), তারপর পুরো জেলা, তারপর পাশের জেলাগুলো। নেগেটিভ গ্রুপের অনুরোধ শুরু হয় জেলা থেকে, তারপর পুরো বিভাগে। প্রস্তাবে দরকারি ব্যাগ পূরণ হলে পরের ধাপ অপেক্ষা করে।</string>
+    <string name="matching_nearest_body">অ্যালার্ট শুরু হয় হাসপাতালের উপজেলা থেকে। যথেষ্ট রক্তদাতা সাড়া না দিলে অ্যালার্ট ধাপে ধাপে আরও ছড়ায়: কাছাকাছি অন্য উপযুক্ত গ্রুপের রক্তদাতারা (যিনি অনুরোধ করেছেন তিনি অন্য গ্রুপ নিতে রাজি থাকলে), তারপর পুরো জেলা, তারপর পাশের জেলাগুলো। নেগেটিভ গ্রুপের অনুরোধে অ্যালার্ট শুরু হয় জেলা থেকে, তারপর পুরো বিভাগে যায়। যত ব্যাগ দরকার তত জন সাড়া দিলে পরের ধাপ আপাতত থেমে থাকে।</string>
     <string name="matching_limits_title">দরকারের বেশি নয়</string>
     <string name="matching_limits_body">একই অনুরোধের জন্য আপনি সর্বোচ্চ দুটি অ্যালার্ট পাবেন: পোস্ট হলে, আর তখনো দরকার থাকলে আরেকবার। প্রত্যেকে দিনে অল্প কয়েকটি অনুরোধের জন্যই অ্যালার্ট পাঠাতে পারেন।</string>
     <string name="matching_find_title">রক্তদাতা খুঁজুন</string>
-    <string name="matching_find_body">অনুরোধকারী রক্তের গ্রুপ ও এলাকা দিয়ে তালিকার রক্তদাতাদের খুঁজে কাউকে রক্ত দিতে অনুরোধ করতে পারেন। প্রত্যেকে দিনে সীমিত সংখ্যক রক্তদাতাকে অনুরোধ করতে পারেন।</string>
+    <string name="matching_find_body">যিনি অনুরোধ করেছেন, তিনি রক্তের গ্রুপ ও এলাকা দিয়ে তালিকায় থাকা রক্তদাতাদের খুঁজতেও পারেন, আর কাউকে রক্ত দিতে অনুরোধ করতে পারেন। প্রত্যেকে দিনে শুধু সীমিত সংখ্যক রক্তদাতাকে অনুরোধ করতে পারেন।</string>
     <string name="matching_contact_title">আপনার ফোন নম্বর</string>
-    <string name="matching_contact_body">আপনার ফোন নম্বর কখনো তালিকায় দেখানো হয় না। কারও অনুরোধে রক্ত দেওয়ার প্রস্তাব দিলে তবেই নম্বরটি সেই অনুরোধকারীর সঙ্গে শেয়ার হয়। অনুরোধের যোগাযোগের তথ্যও শুধু প্রস্তাব দেওয়া রক্তদাতারা দেখেন; প্রস্তাব ফিরিয়ে নিলে বা প্রত্যাখ্যাত হলে তা আবার লুকিয়ে যায়।</string>
-    <string name="matching_pause_title">যেকোনো সময় বিরতি নিন</string>
-    <string name="matching_pause_body">অ্যালার্ট বন্ধ রাখতে \"রক্ত দিতে প্রস্তুত\" বন্ধ করুন, অথবা সেটিংস → গোপনীয়তা থেকে তালিকা থেকে নাম সরান। রক্ত দেওয়ার পর, আবার দিতে পারার আগ পর্যন্ত অ্যালার্ট নিজে থেকেই বন্ধ থাকে।</string>
+    <string name="matching_contact_body">আপনার ফোন নম্বর কখনো তালিকায় দেখানো হয় না। কারও অনুরোধে আপনি রক্ত দিতে সাড়া দিলে তবেই নম্বরটি তাঁর সঙ্গে শেয়ার হয়। কোনো অনুরোধের যোগাযোগের তথ্য শুধু সেই রক্তদাতারাই দেখতে পান, যাঁরা সাড়া দিয়েছেন; সাড়াটি ফিরিয়ে নেওয়া বা নাকচ করা হলে তথ্য আবার লুকিয়ে যায়।</string>
+    <string name="matching_pause_title">যেকোনো সময় অ্যালার্ট বন্ধ রাখুন</string>
+    <string name="matching_pause_body">অ্যালার্ট সাময়িকভাবে থামাতে \"রক্ত দিতে প্রস্তুত\" অফ করুন, অথবা সেটিংস → গোপনীয়তা থেকে তালিকায় আপনার নাম দেখানো বন্ধ করুন। রক্ত দেওয়ার পর, আবার রক্ত দেওয়ার সময় না হওয়া পর্যন্ত অ্যালার্ট নিজে থেকেই বন্ধ থাকে।</string>
 
     <!-- Request form and offer sheet (8.3) -->
-    <string name="create_money_warning">রক্ত কখনো কেনাবেচা করা যায় না। টাকার কথা আছে এমন অনুরোধ আমাদের টিম যাচাই করে।</string>
+    <string name="create_money_warning">রক্ত কখনো কেনাবেচা করা যাবে না। যে অনুরোধে টাকার কথা থাকে, আমাদের টিম তা যাচাই করে।</string>
     <string name="create_disclaimer">রক্ত দিতে হবে শুধু লাইসেন্সপ্রাপ্ত হাসপাতাল বা ব্লাড ব্যাংকে। রক্তের জন্য কখনো টাকা দেবেন না।</string>
     <string name="create_genuine">আমি নিশ্চিত করছি, এই অনুরোধ সত্যিকারের, এবং কোনো টাকা চাওয়া বা দেওয়া হবে না।</string>
     <string name="create_error_genuine">অনুরোধটি যে সত্যিকারের, তা নিশ্চিত করুন।</string>
     <string name="detail_safety">রক্তের জন্য কখনো টাকা দেবেন না, নেবেনও না। যে অনুরোধে টাকা চাওয়া হয়, তা রিপোর্ট করুন।</string>
-    <string name="detail_check_title">প্রস্তাব দেওয়ার আগে</string>
-    <string name="detail_check_well">আজ আপনি সুস্থ বোধ করছেন।</string>
-    <string name="detail_check_interval">আপনার শেষ রক্তদান অন্তত ৪ মাস আগে হয়েছে।</string>
+    <string name="detail_check_title">সাড়া দেওয়ার আগে</string>
+    <string name="detail_check_well">আজ আপনার শরীর ভালো আছে।</string>
+    <string name="detail_check_interval">শেষবার পূর্ণ রক্ত (হোল ব্লাড) দেওয়ার পর অন্তত ৪ মাস পার হয়েছে।</string>
     <string name="detail_check_weight">আপনার ওজন অন্তত ৪৫ কেজি।</string>
-    <string name="detail_check_illness">গত এক সপ্তাহে জ্বর, সংক্রমণ বা নতুন কোনো ওষুধ নেই।</string>
-    <string name="detail_check_meal">রক্ত দেওয়ার আগে আপনি খেতে ও পান করতে পারবেন।</string>
-    <string name="detail_check_guidance">এটি শুধু নির্দেশনা। রক্ত দেওয়ার আগে ব্লাড ব্যাংক আপনাকে পরীক্ষা করবে।</string>
+    <string name="detail_check_illness">গত এক সপ্তাহে জ্বর বা ইনফেকশন হয়নি, নতুন কোনো ওষুধও শুরু করেননি।</string>
+    <string name="detail_check_meal">রক্ত দেওয়ার আগে খাওয়াদাওয়া ও পানি পান করে নিতে পারবেন।</string>
+    <string name="detail_check_guidance">এগুলো শুধু নির্দেশনা। রক্ত দেওয়ার আগে ব্লাড ব্যাংক আপনাকে পরীক্ষা করে দেখবে।</string>
     <string name="detail_offer_message">অনুরোধকারীকে বার্তা (ঐচ্ছিক)</string>
-    <string name="detail_offer_disclaimer">শুধু লাইসেন্সপ্রাপ্ত হাসপাতাল বা ব্লাড ব্যাংকে রক্ত দিন। আপনি যেকোনো সময় না বলতে পারেন। অসুস্থ বোধ করলে রক্ত দেবেন না।</string>
-    <string name="detail_offer_consent">আপনার নাম, রক্তের গ্রুপ ও মোবাইল নম্বর অনুরোধকারীর সঙ্গে শেয়ার করা হবে।</string>
-    <string name="detail_offer_confirm">নম্বর শেয়ার করে প্রস্তাব দিন</string>
-    <string name="detail_offer_sent">প্রস্তাব পাঠানো হয়েছে। অনুরোধকারী এখন আপনাকে কল করতে পারবেন।</string>
+    <string name="detail_offer_disclaimer">শুধু লাইসেন্সপ্রাপ্ত হাসপাতাল বা ব্লাড ব্যাংকে রক্ত দিন। যেকোনো সময় আপনি না বলতে পারেন। শরীর খারাপ লাগলে রক্ত দেবেন না।</string>
+    <string name="detail_offer_consent">আপনার নাম, রক্তের গ্রুপ ও মোবাইল নম্বর যিনি অনুরোধ করেছেন তাঁর সঙ্গে শেয়ার করা হবে।</string>
+    <string name="detail_offer_confirm">নম্বর শেয়ার করে সাড়া দিন</string>
+    <string name="detail_offer_sent">আপনার সাড়া জানানো হয়েছে। যিনি অনুরোধ করেছেন, তিনি এখন আপনাকে কল করতে পারবেন।</string>
 
     <!-- Report and block (Phase 7) -->
     <string name="action_cancel">বাতিল</string>
-    <string name="detail_report">রিপোর্ট</string>
+    <string name="detail_report">রিপোর্ট করুন</string>
     <string name="detail_report_title">এই অনুরোধ রিপোর্ট করুন</string>
     <string name="detail_report_note">সমস্যা কী? (ঐচ্ছিক)</string>
     <string name="report_person_title">এই ব্যক্তিকে রিপোর্ট করুন</string>
     <string name="report_reason_fake">এটি ভুয়া</string>
     <string name="report_reason_money">এতে টাকা চাওয়া হচ্ছে</string>
-    <string name="report_reason_abusive">এটি অপমানজনক</string>
+    <string name="report_reason_abusive">এতে গালিগালাজ বা খারাপ ব্যবহার আছে</string>
     <string name="report_reason_spam">এটি স্প্যাম</string>
     <string name="report_reason_wrong_info">তথ্য ভুল</string>
     <string name="report_reason_other">অন্য কিছু</string>
@@ -77,30 +77,30 @@
     <string name="action_report_person">এই ব্যক্তিকে রিপোর্ট করুন</string>
     <string name="action_block_person">এই ব্যক্তিকে ব্লক করুন</string>
     <string name="block_title">এই ব্যক্তিকে ব্লক করবেন?</string>
-    <string name="block_body">আপনি তাঁর অনুরোধ, প্রস্তাব বা অনুরোধ-বার্তা দেখবেন না, আর তিনি আপনার অনুরোধে প্রস্তাব দিতে বা আপনাকে রক্ত দিতে অনুরোধ করতে পারবেন না। তাঁকে জানানো হয় না। সেটিংস থেকে আনব্লক করতে পারবেন।</string>
-    <string name="block_body_offer">এই অনুরোধে তাঁর প্রস্তাবও প্রত্যাখ্যাত হবে, ফলে তিনি আর আপনার নম্বর দেখবেন না। আপনি তাঁর অনুরোধ, প্রস্তাব বা অনুরোধ-বার্তা দেখবেন না, আর তাঁকে জানানো হয় না। সেটিংস থেকে আনব্লক করতে পারবেন।</string>
+    <string name="block_body">তাঁর পোস্ট করা অনুরোধ, তাঁর সাড়া বা আপনাকে পাঠানো অনুরোধ, কোনোটাই আপনি দেখবেন না। তিনিও আপনার অনুরোধে সাড়া দিতে বা আপনাকে রক্ত দিতে অনুরোধ করতে পারবেন না। তাঁকে এ বিষয়ে জানানো হয় না। সেটিংস থেকে তাঁকে আনব্লক করতে পারবেন।</string>
+    <string name="block_body_offer">এই অনুরোধে তাঁর সাড়াটিও নাকচ হয়ে যাবে, ফলে তিনি আর আপনার নম্বর দেখতে পাবেন না। তাঁর পোস্ট করা অনুরোধ, তাঁর সাড়া বা আপনাকে পাঠানো অনুরোধ, কোনোটাই আপনি দেখবেন না, আর তাঁকে এ বিষয়ে জানানো হয় না। সেটিংস থেকে তাঁকে আনব্লক করতে পারবেন।</string>
     <string name="action_block">ব্লক করুন</string>
     <string name="blocked_done">ব্লক করা হয়েছে।</string>
     <string name="title_blocked_people">ব্লক করা ব্যক্তিরা</string>
-    <string name="settings_blocked_summary">যাঁদের অনুরোধ, প্রস্তাব ও অনুরোধ-বার্তা আপনি দেখেন না</string>
+    <string name="settings_blocked_summary">যাঁদের পোস্ট করা অনুরোধ, সাড়া ও আপনাকে পাঠানো অনুরোধ আপনি দেখেন না</string>
     <string name="blocked_empty_title">আপনি কাউকে ব্লক করেননি</string>
-    <string name="blocked_empty_body">কাউকে ব্লক করতে তাঁর অনুরোধ, প্রস্তাব বা রক্তদাতা কার্ড থেকে ব্লক করুন। এখানে আনব্লক করতে পারবেন।</string>
-    <string name="blocked_someone">আপনার ব্লক করা কেউ</string>
-    <string name="action_unblock">আনব্লক</string>
+    <string name="blocked_empty_body">কাউকে ব্লক করতে চাইলে তাঁর অনুরোধ, সাড়া বা রক্তদাতা কার্ড থেকে করুন। এখান থেকে তাঁকে আনব্লক করতে পারবেন।</string>
+    <string name="blocked_someone">আপনার ব্লক করা একজন</string>
+    <string name="action_unblock">আনব্লক করুন</string>
     <string name="blocked_unblocked">আনব্লক করা হয়েছে।</string>
 
     <!-- Money warning before posting (7.8) and the caution on a flagged request -->
     <string name="money_warning_title">আপনার নোটে টাকার কথা আছে</string>
-    <string name="money_warning_body">রক্ত কখনো কেনাবেচা করা যায় না। যে অনুরোধে টাকার কথা থাকে (বিকাশ, নগদ, টাকা, পেমেন্ট…), সেটি আমাদের টিমের যাচাইয়ের জন্য চিহ্নিত হয়, আর রক্তদাতারা তাতে একটি সতর্কবার্তা দেখেন। নোটটি বদলান, অথবা যেমন আছে তেমনই পোস্ট করুন।</string>
+    <string name="money_warning_body">রক্ত কখনো কেনাবেচা করা যাবে না। যে অনুরোধে টাকার কথা থাকে (বিকাশ, নগদ, টাকা, পেমেন্ট…), সেটি আমাদের টিমের যাচাইয়ের জন্য চিহ্নিত হয়, আর রক্তদাতারা তাতে একটি সতর্কবার্তা দেখেন। নোটটি বদলান, অথবা যেমন আছে তেমনই পোস্ট করুন।</string>
     <string name="action_change_note">নোট বদলান</string>
     <string name="action_post_anyway">তবুও পোস্ট করুন</string>
-    <string name="detail_flagged_caution">এই অনুরোধে টাকার কথা আছে। রক্তের জন্য কখনো টাকা দেবেন না, নেবেনও না। কেউ চাইলে অনুরোধটি রিপোর্ট করুন।</string>
+    <string name="detail_flagged_caution">এই অনুরোধে টাকার কথা আছে। রক্তের জন্য কখনো টাকা দেবেন না, নেবেনও না। কেউ টাকা চাইলে অনুরোধটি রিপোর্ট করুন।</string>
 
     <!-- Safety tips (7.6) -->
     <string name="title_safety_tips">নিরাপত্তা পরামর্শ</string>
     <string name="action_safety_tips">নিরাপত্তা পরামর্শ</string>
     <string name="settings_safety_tips_summary">কীভাবে নিরাপদে রক্ত দেবেন ও পাবেন</string>
-    <string name="safety_intro">রক্ত দেওয়া ও পাওয়া নিরাপদ হওয়া উচিত। কয়েকটি সহজ নিয়ম মানলেই তা নিশ্চিত হয়।</string>
+    <string name="safety_intro">রক্ত দেওয়া ও রক্ত খোঁজা নিরাপদ হওয়া উচিত। কয়েকটি সহজ নিয়ম মেনে চললেই তা নিরাপদ থাকে।</string>
     <string name="safety_tip_money_title">কখনো টাকা দেবেন না, নেবেনও না</string>
     <string name="safety_tip_money_body">রক্তদান বিনামূল্যে। কেউ টাকা চাইলে বা দিতে চাইলে তিনি নিয়ম ভাঙছেন: তাঁকে রিপোর্ট করুন।</string>
     <string name="safety_tip_place_title">হাসপাতালে দেখা করুন</string>
@@ -108,16 +108,16 @@
     <string name="safety_tip_company_title">কাউকে সঙ্গে নিন</string>
     <string name="safety_tip_company_body">সম্ভব হলে বন্ধু বা পরিবারের কাউকে সঙ্গে নিয়ে যান, আর কাউকে জানিয়ে যান আপনি কোথায় যাচ্ছেন।</string>
     <string name="safety_tip_screening_title">হাসপাতাল আপনাকে পরীক্ষা করে</string>
-    <string name="safety_tip_screening_body">ব্লাড ব্যাংক প্রত্যেক রক্তদাতা ও প্রতিটি ব্যাগ রক্ত পরীক্ষা করে। তাদের পরামর্শ মানুন, এমনকি তাতে আজ রক্ত দিতে না পারলেও।</string>
-    <string name="safety_tip_report_title">কিছু ভুল দেখলে রিপোর্ট করুন</string>
-    <string name="safety_tip_report_body">ভুয়া অনুরোধ, টাকা চাওয়া, গালিগালাজ বা স্প্যাম: অনুরোধে বা ব্যক্তির ওপর \"রিপোর্ট\" ব্যবহার করুন। চাইলে তাঁকে ব্লকও করতে পারেন।</string>
+    <string name="safety_tip_screening_body">ব্লাড ব্যাংক প্রত্যেক রক্তদাতা ও প্রতিটি ব্যাগ রক্ত পরীক্ষা করে। তাঁরা যদি বলেন আজ রক্ত দিতে পারবেন না, তবুও তাঁদের পরামর্শ মেনে চলুন।</string>
+    <string name="safety_tip_report_title">কোনো সমস্যা দেখলে রিপোর্ট করুন</string>
+    <string name="safety_tip_report_body">ভুয়া অনুরোধ, টাকা চাওয়া, গালিগালাজ বা খারাপ ব্যবহার, কিংবা স্প্যাম দেখলে সেই অনুরোধ বা ব্যক্তিকে রিপোর্ট করুন। চাইলে তাঁকে ব্লকও করতে পারেন।</string>
     <string name="safety_tip_emergency_title">জরুরি অবস্থায় ৯৯৯-এ কল করুন</string>
     <string name="safety_tip_emergency_body">৯৯৯ বাংলাদেশের বিনামূল্যের জাতীয় জরুরি সেবা নম্বর: পুলিশ, ফায়ার সার্ভিস ও অ্যাম্বুলেন্স।</string>
     <string name="action_call_999">৯৯৯-এ কল করুন</string>
 
     <!-- Suspended account (Phase 7) -->
     <string name="suspended_title">আপনার অ্যাকাউন্ট স্থগিত করা হয়েছে</string>
-    <string name="suspended_body">রিপোর্টের পর LiquidLyf-এর টিম এই অ্যাকাউন্টটি স্থগিত করেছে। স্থগিত থাকা অবস্থায় আপনি অনুরোধ পোস্ট, প্রস্তাব বা রক্ত দিতে অনুরোধ করতে পারবেন না। এটি ভুল মনে হলে %1$s ঠিকানায় লিখুন।</string>
+    <string name="suspended_body">রিপোর্ট পাওয়ার পর LiquidLyf-এর টিম এই অ্যাকাউন্টটি স্থগিত করেছে। স্থগিত থাকা অবস্থায় আপনি অনুরোধ পোস্ট করতে, কারও অনুরোধে সাড়া দিতে বা কাউকে রক্ত দিতে অনুরোধ করতে পারবেন না। এটি ভুল মনে হলে %1$s ঠিকানায় লিখুন।</string>
     <string name="action_write_to_us">আমাদের লিখুন</string>
     <string name="suspended_mail_subject">আমার LiquidLyf অ্যাকাউন্ট স্থগিত করা হয়েছে</string>
 </resources>

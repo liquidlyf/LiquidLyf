@@ -11,7 +11,7 @@
     <string name="title_sign_up">অ্যাকাউন্ট খুলুন</string>
     <string name="title_verify_email">আপনার ইমেইল যাচাই করুন</string>
     <string name="title_forgot_password">পাসওয়ার্ড রিসেট করুন</string>
-    <string name="title_phone_verify">আপনার ফোন যাচাই করুন</string>
+    <string name="title_phone_verify">আপনার ফোন নম্বর যাচাই করুন</string>
     <string name="title_profile_setup">প্রোফাইল তৈরি করুন</string>
     <string name="action_open_notifications">নোটিফিকেশন খুলুন</string>
     <string name="action_open_settings">সেটিংস খুলুন</string>
@@ -19,8 +19,8 @@
     <string name="action_hide_password">পাসওয়ার্ড লুকান</string>
     <string name="state_error_title">লোড করা যায়নি</string>
     <string name="action_ok">ঠিক আছে</string>
-    <string name="action_save">সংরক্ষণ করুন</string>
-    <string name="action_saving">সংরক্ষণ হচ্ছে…</string>
+    <string name="action_save">সেভ করুন</string>
+    <string name="action_saving">সেভ হচ্ছে…</string>
     <string name="action_continue">চালিয়ে যান</string>
     <string name="action_finish">শেষ করুন</string>
     <string name="action_change">বদলান</string>
@@ -29,27 +29,27 @@
     <string name="answer_no">না</string>
 
     <!-- Errors -->
-    <string name="error_network">ইন্টারনেট সংযোগ নেই। সংযোগ দেখে আবার চেষ্টা করুন।</string>
+    <string name="error_network">ইন্টারনেট সংযোগ নেই। সংযোগ ঠিক আছে কি না দেখে আবার চেষ্টা করুন।</string>
     <string name="error_permission_denied">এটি করার অনুমতি আপনার নেই।</string>
     <string name="error_not_found">এটি পাওয়া যায়নি। হয়তো সরিয়ে ফেলা হয়েছে।</string>
     <string name="error_invalid_input">কিছু তথ্য সঠিক নয়। চিহ্নিত ঘরগুলো দেখুন।</string>
-    <string name="error_rate_limited">অনেকবার চেষ্টা হয়েছে। একটু অপেক্ষা করে আবার চেষ্টা করুন।</string>
-    <string name="error_daily_ask_limit">আজকের ৩০টি অনুরোধের সীমা পূর্ণ হয়েছে। এই রক্তদাতা নোটিফিকেশনে আপনার অনুরোধ দেখবেন, কিন্তু অ্যালার্ট পাবেন না।</string>
-    <string name="error_daily_alert_limit">আজ অ্যালার্টসহ অনুরোধ পাঠানোর সীমা পূর্ণ হয়েছে। আপনার অনুরোধ পোস্ট হয়েছে, কিন্তু রক্তদাতাদের জানানো হয়নি।</string>
-    <string name="error_unknown">কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।</string>
+    <string name="error_rate_limited">খুব বেশিবার চেষ্টা করা হয়েছে। একটু অপেক্ষা করে আবার চেষ্টা করুন।</string>
+    <string name="error_daily_ask_limit">আপনার আজকের ৩০টি সরাসরি অনুরোধের সীমা পূর্ণ হয়ে গেছে। এই রক্তদাতা তাঁর নোটিফিকেশনে আপনার অনুরোধটি দেখবেন, কিন্তু অ্যালার্ট পাবেন না।</string>
+    <string name="error_daily_alert_limit">অ্যালার্টসহ অনুরোধ পোস্ট করার আজকের সীমা পূর্ণ হয়ে গেছে। আপনার অনুরোধ পোস্ট হয়েছে, কিন্তু রক্তদাতাদের জানানো হয়নি।</string>
+    <string name="error_unknown">কোনো একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।</string>
     <string name="error_invalid_credentials">ইমেইল বা পাসওয়ার্ড ভুল।</string>
-    <string name="error_email_in_use">এই ইমেইলে আগেই একটি অ্যাকাউন্ট আছে। সাইন ইন করুন।</string>
+    <string name="error_email_in_use">এই ইমেইল দিয়ে আগে থেকেই একটি অ্যাকাউন্ট আছে। নতুন অ্যাকাউন্ট না খুলে সাইন ইন করুন।</string>
     <string name="error_weak_password">আরও শক্ত পাসওয়ার্ড দিন: অন্তত ৮ অক্ষর।</string>
     <string name="error_invalid_email">সঠিক ইমেইল ঠিকানা দিন।</string>
-    <string name="error_account_disabled">এই অ্যাকাউন্টটি স্থগিত। এটি ভুল মনে হলে liquidlyf@gmail.com ঠিকানায় ইমেইল করুন।</string>
+    <string name="error_account_disabled">এই অ্যাকাউন্টটি স্থগিত করা হয়েছে। ভুল করে হয়েছে মনে হলে liquidlyf@gmail.com ঠিকানায় ইমেইল করুন।</string>
     <string name="error_recent_login_required">আপনার নিরাপত্তার জন্য এটি করার আগে আবার সাইন ইন করুন।</string>
     <string name="intent_no_dialer">কল করার মতো কোনো ফোন অ্যাপ পাওয়া যায়নি।</string>
     <string name="intent_no_maps">কোনো ম্যাপ অ্যাপ বা ব্রাউজার পাওয়া যায়নি।</string>
     <string name="intent_no_browser">এই লিংক খোলার মতো কোনো ব্রাউজার পাওয়া যায়নি।</string>
     <string name="intent_no_email_app">কোনো ইমেইল অ্যাপ পাওয়া যায়নি।</string>
     <string name="intent_no_share_target">শেয়ার করার মতো কোনো অ্যাপ পাওয়া যায়নি।</string>
-    <string name="intent_no_settings">ফোনের সেটিংস খোলা যায়নি। সেটিংস → অ্যাপস → LiquidLyf → নোটিফিকেশন খুলুন।</string>
-    <string name="intent_share_chooser_title">শেয়ার করুন</string>
+    <string name="intent_no_settings">ফোনের সেটিংস খোলা যায়নি। এভাবে খুলুন: সেটিংস → অ্যাপস → LiquidLyf → নোটিফিকেশন।</string>
+    <string name="intent_share_chooser_title">কোন অ্যাপে শেয়ার করবেন?</string>
 
     <!-- Sign in, sign up, verify, reset -->
     <string name="label_full_name">পুরো নাম</string>
@@ -61,14 +61,14 @@
     <string name="action_create_account">অ্যাকাউন্ট খুলুন</string>
     <string name="action_creating_account">অ্যাকাউন্ট খোলা হচ্ছে…</string>
     <string name="sign_in_no_account">LiquidLyf-এ নতুন?</string>
-    <string name="sign_up_have_account">আগেই অ্যাকাউন্ট আছে?</string>
+    <string name="sign_up_have_account">আগে থেকেই অ্যাকাউন্ট আছে?</string>
     <string name="error_email_required">আপনার ইমেইল দিন।</string>
     <string name="error_password_required">আপনার পাসওয়ার্ড দিন।</string>
     <string name="error_name_invalid">আপনার নাম দিন (২ থেকে ৬০ অক্ষর)।</string>
     <string name="error_password_short">অন্তত ৮ অক্ষর দিন।</string>
     <string name="password_hint">অন্তত ৮ অক্ষর। লম্বা পাসওয়ার্ড বেশি নিরাপদ।</string>
     <string name="sign_up_consent">আমার বয়স ১৮ বা তার বেশি, এবং আমি শর্তাবলি ও গোপনীয়তা নীতিতে সম্মত</string>
-    <string name="error_consent_required">নিশ্চিত করুন যে আপনার বয়স ১৮ বা তার বেশি এবং আপনি শর্তাবলিতে সম্মত।</string>
+    <string name="error_consent_required">আপনার বয়স ১৮ বা তার বেশি এবং আপনি শর্তাবলিতে সম্মত, তা নিশ্চিত করুন।</string>
     <string name="action_read_terms">শর্তাবলি পড়ুন</string>
     <string name="action_read_privacy">গোপনীয়তা নীতি পড়ুন</string>
     <string name="verify_email_body">আমরা %1$s ঠিকানায় একটি লিংক পাঠিয়েছি। লিংকটি খুলুন, তারপর ফিরে এসে \"যাচাই করেছি\" চাপুন।</string>
@@ -76,22 +76,22 @@
     <string name="action_resend_email">আবার ইমেইল পাঠান</string>
     <string name="action_resend_in">%1$d সেকেন্ড পর আবার পাঠান</string>
     <string name="action_i_have_verified">যাচাই করেছি</string>
-    <string name="action_checking">দেখা হচ্ছে…</string>
+    <string name="action_checking">যাচাই করা হচ্ছে…</string>
     <string name="verify_email_not_yet">এখনো যাচাই হয়নি। আগে ইমেইলের লিংকটি খুলুন, তারপর আবার চেষ্টা করুন। ইমেইল খুঁজে পাচ্ছেন না? স্প্যাম ও প্রোমোশনস ফোল্ডার দেখুন।</string>
     <string name="verify_email_resend_hint">২ মিনিটের মধ্যে পাননি? \"আবার ইমেইল পাঠান\" চাপুন।</string>
     <string name="email_spam_hint">খুঁজে পাচ্ছেন না? স্প্যাম ও প্রোমোশনস ফোল্ডার দেখুন।</string>
     <string name="email_sender">ইমেইলটি আসবে %1$s থেকে।</string>
     <string name="verify_email_sent">ইমেইল পাঠানো হয়েছে। ইনবক্স ও স্প্যাম ফোল্ডার দেখুন।</string>
     <string name="action_use_different_email">অন্য ইমেইল ব্যবহার করুন</string>
-    <string name="forgot_password_body">আপনার অ্যাকাউন্টের ইমেইল দিন, আমরা পাসওয়ার্ড রিসেটের লিংক পাঠাব।</string>
+    <string name="forgot_password_body">আপনার অ্যাকাউন্টের ইমেইল দিন, আমরা পাসওয়ার্ড রিসেট করার একটি লিংক পাঠাব।</string>
     <string name="action_send_link">লিংক পাঠান</string>
     <string name="action_sending">পাঠানো হচ্ছে…</string>
     <string name="forgot_password_sent_title">আপনার ইমেইল দেখুন</string>
-    <string name="forgot_password_sent_body">%1$s ঠিকানায় কোনো অ্যাকাউন্ট থাকলে রিসেট লিংক পাঠানো হয়েছে।</string>
+    <string name="forgot_password_sent_body">%1$s দিয়ে কোনো অ্যাকাউন্ট খোলা থাকলে, শিগগিরই সেই ঠিকানায় রিসেট লিংক পৌঁছে যাবে।</string>
     <string name="action_back_to_sign_in">সাইন ইনে ফিরে যান</string>
     <string name="action_continue_with_google">Google দিয়ে চালিয়ে যান</string>
     <string name="auth_or">অথবা</string>
-    <string name="error_google_no_account">এই ফোনে কোনো Google অ্যাকাউন্ট নেই। সেটিংস থেকে একটি যোগ করুন, অথবা ইমেইল ব্যবহার করুন।</string>
+    <string name="error_google_no_account">এই ফোনে কোনো Google অ্যাকাউন্ট নেই। ফোনের সেটিংস থেকে একটি যোগ করুন, অথবা ইমেইল ব্যবহার করুন।</string>
     <string name="error_google_failed">Google দিয়ে সাইন ইন করা যায়নি। আবার চেষ্টা করুন, অথবা ইমেইল ব্যবহার করুন।</string>
     <string name="session_problem_title">আপনার প্রোফাইল লোড করা যায়নি</string>
     <string name="action_sign_out">সাইন আউট</string>
@@ -99,18 +99,18 @@
 
     <!-- Notification permission -->
     <string name="notifications_rationale_title">কাছাকাছি কারও আপনার গ্রুপের রক্ত দরকার হলে অ্যালার্ট পান</string>
-    <string name="notifications_rationale_body">শুধু কাছাকাছি কোনো অনুরোধ আপনার রক্তের গ্রুপের সঙ্গে মিললেই LiquidLyf আপনাকে অ্যালার্ট পাঠায়। সেটিংস থেকে যেকোনো সময় অ্যালার্ট বন্ধ করতে পারবেন।</string>
+    <string name="notifications_rationale_body">LiquidLyf আপনাকে অ্যালার্ট পাঠায় শুধু তখনই, যখন আপনার কাছাকাছি কোনো অনুরোধ আপনার রক্তের গ্রুপের সঙ্গে মেলে। সেটিংস থেকে যেকোনো সময় অ্যালার্ট বন্ধ করতে পারবেন।</string>
     <string name="action_allow_alerts">অ্যালার্ট চালু করুন</string>
 
     <!-- Profile setup -->
     <string name="setup_step">ধাপ %1$d / %2$d</string>
     <string name="setup_blood_title">আপনার রক্তের গ্রুপ কী?</string>
     <string name="setup_blood_unknown">আমি আমার রক্তের গ্রুপ জানি না</string>
-    <string name="setup_blood_unknown_body">যেকোনো হাসপাতাল বা ডায়াগনস্টিক সেন্টারে সাধারণত অল্প খরচে পরীক্ষা করানো যায়, আর রক্ত দিলে ব্লাড ব্যাংক বিনামূল্যে পরীক্ষা করে। এখন এটি বাদ দিতে পারেন: তবুও রক্তের অনুরোধ করতে পারবেন, আর পরে প্রোফাইলে গ্রুপ যোগ করে রক্তদাতা হতে পারবেন।</string>
-    <string name="setup_blood_skip">এখন বাদ দিন</string>
+    <string name="setup_blood_unknown_body">যেকোনো হাসপাতাল বা ডায়াগনস্টিক সেন্টারে রক্তের গ্রুপ পরীক্ষা করানো যায়, সাধারণত অল্প খরচে। আর রক্ত দিলে ব্লাড ব্যাংক বিনামূল্যে গ্রুপ পরীক্ষা করে দেয়। আপাতত এটি বাদ দিতে পারেন: তবুও রক্তের অনুরোধ করতে পারবেন, আর পরে প্রোফাইলে গ্রুপ যোগ করে রক্তদাতা হতে পারবেন।</string>
+    <string name="setup_blood_skip">আপাতত বাদ দিন</string>
     <string name="setup_no_group_listing">প্রোফাইলে রক্তের গ্রুপ যোগ করলেই আপনি রক্তদাতা হতে পারবেন।</string>
     <string name="reminder_add_blood_group_title">রক্তদাতা হতে আপনার রক্তের গ্রুপ যোগ করুন</string>
-    <string name="reminder_add_blood_group_body">রক্তের গ্রুপ জানলে এখানে যোগ করুন। তখন কাছাকাছি যাঁদের দরকার, তাঁরা আপনাকে খুঁজে রক্ত দিতে অনুরোধ করতে পারবেন।</string>
+    <string name="reminder_add_blood_group_body">আপনার রক্তের গ্রুপ জানলে এখানে যোগ করুন। তখন কাছাকাছি যাঁদের এই গ্রুপের রক্ত দরকার, তাঁরা আপনাকে খুঁজে পেতে ও রক্ত দিতে অনুরোধ করতে পারবেন।</string>
     <string name="action_add_blood_group">রক্তের গ্রুপ যোগ করুন</string>
     <string name="action_how_to_find_out">কীভাবে জানবেন</string>
     <string name="error_blood_group_required">আপনার রক্তের গ্রুপ বেছে নিন।</string>
@@ -120,29 +120,29 @@
     <string name="gender_female">নারী</string>
     <string name="gender_other">অন্যান্য</string>
     <string name="label_birth_year">জন্মসাল</string>
-    <string name="error_birth_year">আপনার বয়স ১৮ বা তার বেশি হতে হবে। যে সালে জন্মেছেন তা লিখুন, যেমন ১৯৯৫।</string>
+    <string name="error_birth_year">আপনার বয়স ১৮ বা তার বেশি হতে হবে। আপনার জন্মসাল লিখুন, যেমন ১৯৯৫।</string>
     <string name="setup_weight_question">আপনার ওজন কি অন্তত ৪৫ কেজি?</string>
     <string name="error_answer_required">একটি উত্তর বেছে নিন।</string>
     <string name="setup_location_title">আপনি কোথায় থাকেন?</string>
-    <string name="setup_location_body">এলাকা দেখে অ্যালার্ট মেলানো হয়। আপনি সাধারণত যেখানে থাকেন সেটি বেছে নিন।</string>
+    <string name="setup_location_body">এলাকা মিলিয়ে অ্যালার্ট পাঠানো হয়। আপনি সাধারণত যেখানে থাকেন, সেই এলাকা বেছে নিন।</string>
     <string name="label_division">বিভাগ</string>
     <string name="label_district">জেলা</string>
     <string name="label_upazila">উপজেলা বা সিটি কর্পোরেশন</string>
     <string name="error_location_required">আপনার বিভাগ, জেলা ও উপজেলা বেছে নিন।</string>
     <string name="setup_contact_title">ফোন ও রক্তদান</string>
     <string name="label_phone">মোবাইল নম্বর</string>
-    <string name="phone_hint">রক্ত দেওয়ার প্রস্তাব দিলে তবেই শুধু অনুরোধকারীর সঙ্গে শেয়ার হয়।</string>
-    <string name="error_phone_invalid">বাংলাদেশি মোবাইল নম্বর দিন, যেমন ০১৭১২৩৪৫৬৭৮।</string>
+    <string name="phone_hint">আপনি কোনো অনুরোধে সাড়া দিলে, শুধু যিনি সেই অনুরোধ করেছেন তিনিই আপনার নম্বর পাবেন।</string>
+    <string name="error_phone_invalid">বাংলাদেশি মোবাইল নম্বর দিন, যেমন ০১XXXXXXXXX।</string>
     <string name="setup_last_donation">শেষ কবে রক্ত দিয়েছেন?</string>
     <string name="last_donation_never">কখনো না</string>
     <string name="last_donation_pick">তারিখ বেছে নিন</string>
     <string name="last_donation_on">%1$s তারিখে</string>
     <string name="error_last_donation_required">\"কখনো না\" বেছে নিন, অথবা তারিখ দিন।</string>
-    <string name="setup_consent_question">রক্তদাতা হিসেবে আমার নাম তালিকায় রাখুন, যাতে কাছাকাছি যাঁদের %1$s রক্ত দরকার তাঁরা আমাকে খুঁজে অ্যালার্ট পাঠাতে পারেন</string>
-    <string name="consent_yes">হ্যাঁ, তালিকায় রাখুন</string>
+    <string name="setup_consent_question">রক্তদাতা হিসেবে তালিকায় আমার নাম দিন, যাতে কাছাকাছি যাঁদের %1$s রক্ত দরকার, তাঁরা আমাকে খুঁজে পান এবং অ্যালার্ট পাঠাতে পারেন</string>
+    <string name="consent_yes">হ্যাঁ, তালিকায় নাম দিন</string>
     <string name="consent_not_now">এখন না</string>
-    <string name="setup_consent_info">আপনার ফোন নম্বর কখনো তালিকায় দেখানো হয় না। রক্ত দেওয়ার প্রস্তাব দিলে তবেই অনুরোধকারীর সঙ্গে শেয়ার হয়।</string>
-    <string name="error_consent_choice">একটি বেছে নিন: তালিকায় রাখুন, অথবা এখন না।</string>
+    <string name="setup_consent_info">আপনার ফোন নম্বর কখনো তালিকায় দেখানো হয় না। আপনি কোনো অনুরোধে সাড়া দিলে শুধু তখনই নম্বরটি যিনি সেই অনুরোধ করেছেন তাঁর সঙ্গে শেয়ার হয়।</string>
+    <string name="error_consent_choice">একটি বেছে নিন: তালিকায় নাম দেবেন, নাকি এখন না।</string>
     <string name="setup_available">এখনই রক্ত দিতে প্রস্তুত</string>
 
     <!-- Settings: language, privacy, account -->
@@ -151,29 +151,29 @@
     <string name="settings_privacy">গোপনীয়তা</string>
     <string name="settings_safety">নিরাপত্তা</string>
     <string name="settings_account">অ্যাকাউন্ট</string>
-    <string name="settings_list_me">রক্তদাতা হিসেবে আমার নাম তালিকায় রাখুন</string>
-    <string name="settings_list_me_summary">কাছাকাছি যাঁদের আপনার গ্রুপের রক্ত দরকার, তাঁরা \"রক্তদাতা খুঁজুন\"-এ আপনাকে দেখতে ও অ্যালার্ট পাঠাতে পারবেন। আপনার ফোন নম্বর কখনো তালিকায় দেখানো হয় না।</string>
-    <string name="settings_list_me_needs_group">আগে \"প্রোফাইল সম্পাদনা\"-য় আপনার রক্তের গ্রুপ যোগ করুন।</string>
+    <string name="settings_list_me">রক্তদাতা হিসেবে তালিকায় নাম দিন</string>
+    <string name="settings_list_me_summary">কাছাকাছি যাঁদের আপনার গ্রুপের রক্ত দরকার, তাঁরা \"রক্তদাতা খুঁজুন\"-এ আপনাকে খুঁজে পেতে ও অ্যালার্ট পাঠাতে পারবেন। আপনার ফোন নম্বর কখনো তালিকায় দেখানো হয় না।</string>
+    <string name="settings_list_me_needs_group">আগে \"প্রোফাইল এডিট করুন\" থেকে আপনার রক্তের গ্রুপ যোগ করুন।</string>
     <string name="list_me_title">রক্তদাতা হিসেবে তালিকায় নাম দেবেন?</string>
 
     <!-- Edit profile, passwords, email -->
-    <string name="title_edit_profile">প্রোফাইল সম্পাদনা</string>
-    <string name="profile_saved">প্রোফাইল সংরক্ষণ হয়েছে।</string>
+    <string name="title_edit_profile">প্রোফাইল এডিট করুন</string>
+    <string name="profile_saved">প্রোফাইল সেভ হয়েছে।</string>
     <string name="confirm_blood_group_title">রক্তের গ্রুপ বদলাবেন?</string>
-    <string name="confirm_blood_group_body">এতে আপনি কোন অনুরোধ দেখবেন এবং কে আপনাকে রক্ত দিতে অনুরোধ করতে পারবেন, তা বদলে যাবে। নিশ্চিত হন যে এটি পরীক্ষার ফলের সঙ্গে মেলে।</string>
+    <string name="confirm_blood_group_body">এতে আপনি কোন অনুরোধ দেখবেন এবং কে আপনাকে রক্ত দিতে অনুরোধ করতে পারবেন, তা বদলে যাবে। রক্তের গ্রুপ পরীক্ষার ফলের সঙ্গে এটি মেলে কি না, নিশ্চিত হয়ে নিন।</string>
     <string name="title_change_password">পাসওয়ার্ড বদলান</string>
     <string name="label_current_password">বর্তমান পাসওয়ার্ড</string>
     <string name="label_new_password">নতুন পাসওয়ার্ড</string>
     <string name="password_changed">পাসওয়ার্ড বদলানো হয়েছে।</string>
     <string name="title_add_password">পাসওয়ার্ড যোগ করুন</string>
     <string name="settings_add_password_summary">ইমেইল ও পাসওয়ার্ড দিয়েও সাইন ইন করুন</string>
-    <string name="add_password_body">%1$s ও একটি পাসওয়ার্ড দিয়েও সাইন ইন করতে পাসওয়ার্ড যোগ করুন, যেমন এমন ফোনে যেখানে আপনার Google অ্যাকাউন্ট নেই। আগে Google নিশ্চিত হয়ে নেবে যে এটা আপনি।</string>
+    <string name="add_password_body">একটি পাসওয়ার্ড যোগ করলে %1$s ও সেই পাসওয়ার্ড দিয়েও সাইন ইন করতে পারবেন, যেমন যে ফোনে আপনার Google অ্যাকাউন্ট নেই সেখানে। প্রথমে Google আপনাকে নিশ্চিত করতে বলবে যে এটা আপনিই।</string>
     <string name="label_confirm_password">পাসওয়ার্ডটি আবার লিখুন</string>
     <string name="error_passwords_differ">দুটি পাসওয়ার্ড মেলেনি।</string>
     <string name="action_add_password">Google দিয়ে নিশ্চিত করে যোগ করুন</string>
     <string name="add_password_done">পাসওয়ার্ড যোগ হয়েছে। এখন Google দিয়ে, অথবা %1$s ও এই পাসওয়ার্ড দিয়ে সাইন ইন করতে পারবেন।</string>
     <string name="add_password_wrong_account">এটি অন্য একটি Google অ্যাকাউন্ট। যেটি দিয়ে সাইন ইন করেছেন সেটি বেছে নিন।</string>
-    <string name="add_password_no_google">এই বিল্ডে Google সাইন-ইন নেই।</string>
+    <string name="add_password_no_google">অ্যাপের এই ভার্সনে Google দিয়ে সাইন ইন করা যায় না।</string>
     <string name="label_email_readonly">ইমেইল: %1$s</string>
     <string name="action_change_email">ইমেইল বদলান</string>
     <string name="label_new_email">নতুন ইমেইল</string>
@@ -181,16 +181,16 @@
 
     <!-- Delete account -->
     <string name="title_delete_account">আপনার অ্যাকাউন্ট মুছে ফেলুন</string>
-    <string name="delete_account_body">এতে আপনার প্রোফাইল, রক্তদাতা কার্ড, রক্তদানের ইতিহাস ও বার্তা স্থায়ীভাবে মুছে যাবে। আপনার অনুরোধ ও প্রস্তাব সংশ্লিষ্টদের জন্য থেকে যাবে, তবে সেখানে \"মুছে ফেলা ব্যবহারকারী\" দেখাবে এবং কোনো ফোন নম্বর থাকবে না। এটি আর ফেরানো যাবে না।</string>
+    <string name="delete_account_body">এতে আপনার প্রোফাইল, রক্তদাতা কার্ড, রক্তদানের ইতিহাস ও বার্তা স্থায়ীভাবে মুছে যাবে। আপনার অনুরোধ ও সাড়াগুলো যাঁদের সঙ্গে জড়িত, তাঁদের জন্য থেকে যাবে, তবে সেখানে \"মুছে ফেলা ব্যবহারকারী\" দেখাবে, কোনো ফোন নম্বর দেখাবে না। এটি আর ফেরানো যাবে না।</string>
     <string name="delete_account_type">নিশ্চিত করতে %1$s বা মুছুন লিখুন</string>
     <string name="error_confirm_word">হুবহু %1$s বা মুছুন লিখুন।</string>
-    <string name="delete_account_password_hint">এটা যে আপনি, নিশ্চিত করতে পাসওয়ার্ড দিন।</string>
+    <string name="delete_account_password_hint">আপনিই যে এটা করছেন, তা নিশ্চিত করতে পাসওয়ার্ড দিন।</string>
     <string name="action_delete_account">আমার অ্যাকাউন্ট মুছে ফেলুন</string>
     <string name="deleting_title">আপনার অ্যাকাউন্ট মুছে ফেলা হচ্ছে…</string>
-    <string name="deleting_body">অ্যাপটি খোলা রাখুন। বন্ধ হয়ে গেলে পরের বার LiquidLyf খুললে মুছে ফেলার কাজ আবার চলবে।</string>
-    <string name="deleting_step_offers">আপনার প্রস্তাবগুলো প্রত্যাহার করা হচ্ছে</string>
+    <string name="deleting_body">অ্যাপটি খোলা রাখুন। বন্ধ হয়ে গেলে, পরের বার LiquidLyf খুললে মুছে ফেলার বাকি কাজ চলতে থাকবে।</string>
+    <string name="deleting_step_offers">আপনার সাড়াগুলো ফিরিয়ে নেওয়া হচ্ছে</string>
     <string name="deleting_step_requests">আপনার অনুরোধ থেকে আপনার নাম সরানো হচ্ছে</string>
-    <string name="deleting_step_offers_named">আপনার প্রস্তাব থেকে নাম ও ফোন নম্বর সরানো হচ্ছে</string>
+    <string name="deleting_step_offers_named">আপনার সাড়াগুলো থেকে নাম ও ফোন নম্বর সরানো হচ্ছে</string>
     <string name="deleting_step_private">যোগাযোগের তথ্য ও বার্তা মুছে ফেলা হচ্ছে</string>
     <string name="deleting_step_profile">আপনার প্রোফাইল মুছে ফেলা হচ্ছে</string>
     <string name="deleting_sign_in_again">আপনার নিরাপত্তার জন্য, অ্যাকাউন্ট মুছে ফেলা শেষ করতে পাসওয়ার্ড দিন।</string>

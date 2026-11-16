@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -77,6 +78,8 @@ class LanguageChoiceTest {
     @Test
     fun onboardingInBanglaMarksBanglaAndOffersEnglish() {
         show("bn") { OnboardingScreen(onFinished = {}, onLanguageChange = { chosen += it }) }
+        // What TalkBack reads for the page, with Bangla digits.
+        compose.onNodeWithContentDescription("পৃষ্ঠা ১, মোট ৪").assertExists()
         compose.onNodeWithText("বাংলা").assertIsSelected()
         compose.onNodeWithText("English").performClick()
         assertEquals(listOf(AppLanguage.ENGLISH), chosen)

@@ -15,21 +15,21 @@
     <string name="title_settings">সেটিংস</string>
     <string name="title_notifications">নোটিফিকেশন</string>
     <string name="title_create_request">রক্তের অনুরোধ</string>
-    <string name="action_back">পিছনে</string>
+    <string name="action_back">ফিরে যান</string>
     <string name="action_retry">আবার চেষ্টা করুন</string>
     <string name="action_request_blood">রক্তের অনুরোধ করুন</string>
     <string name="state_loading">লোড হচ্ছে…</string>
 
     <!-- Settings -->
     <string name="settings_theme">থিম</string>
-    <string name="theme_system">সিস্টেম</string>
+    <string name="theme_system">ফোনের থিম</string>
     <string name="theme_light">লাইট</string>
     <string name="theme_dark">ডার্ক</string>
 
     <!-- Urgency -->
     <string name="urgency_critical">অতি জরুরি</string>
     <string name="urgency_urgent">জরুরি</string>
-    <string name="urgency_planned">পরিকল্পিত</string>
+    <string name="urgency_planned">নির্দিষ্ট দিনে</string>
 
     <!-- Blood groups, spoken form for TalkBack -->
     <string name="blood_group_a_pos_spoken">এ পজিটিভ</string>

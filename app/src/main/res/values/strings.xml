@@ -236,7 +236,7 @@
     <string name="setup_contact_title">Phone and donating</string>
     <string name="label_phone">Mobile number</string>
     <string name="phone_hint">Shared only with a requester when you offer to donate.</string>
-    <string name="error_phone_invalid">Enter a Bangladeshi mobile number, for example 01712345678.</string>
+    <string name="error_phone_invalid">Enter a Bangladeshi mobile number, for example 01XXXXXXXXX.</string>
     <string name="setup_last_donation">When did you last donate blood?</string>
     <string name="last_donation_never">Never</string>
     <string name="last_donation_pick">Pick a date</string>
