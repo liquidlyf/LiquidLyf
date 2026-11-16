@@ -17,7 +17,11 @@ Until v1.0 is released, `/download` is a short "coming soon" page
 ([site/prerelease/](site/prerelease/)), and the home page says "Coming soon" instead of showing the
 download button. The request share page (`/r/`, v1.1) comes later.
 
-**Bangla:** the pages were translated from the English ones and need a native review (C8). Until then,
+**Bangla:** reviewed by the maintainer (C8, 16 Nov 2026), after a meaning check against the English:
+checkers translated each Bangla line back into English without seeing the English, and the lines that
+didn't match were fixed. `bn_reviewed` is now `true`, so the notice below is off. Give every new or
+changed Bangla line the same check. The v1.0 download page (`bn/download.md`) wasn't part of C8: review
+it before `--released`. Before the review,
 the site shows a notice on every Bangla page that the English version applies if the two differ. After
 the review, set `bn_reviewed: true` in [site/_config.yml](site/_config.yml).
 
@@ -56,7 +60,7 @@ Switches in [`site/_config.yml`](site/_config.yml):
 |---|---|---|
 | `released` (set by `--released`) | "Coming soon", and the short /download page | The download button and the full install guide |
 | `facebook` | The home page offers release alerts on GitHub (Watch → Custom → Releases) | "Follow us on Facebook" and a Facebook link in the footer. Turn it on only after P confirms the page's auto-reply |
-| `bn_reviewed` | A notice on every Bangla page that the English applies | No notice (after C8) |
+| `bn_reviewed` | A notice on every Bangla page that the English applies | No notice (**on** since C8, 16 Nov 2026) |
 
 After the release (`--released`), a phone screenshot replaces the logo on the home page: its front
 matter has `screenshot: /assets/screens/home-en.png` (and `-bn` for Bangla), with the image in
@@ -92,7 +96,8 @@ home-screen icon. Run it after the logo or the tagline changes (it needs Chrome 
 3. **Legal review (C7):** Terms sections 9 (liability) and 11 (law), and the privacy policy's
    publisher, rights and data-transfer sections, by someone with legal training. Bangladesh's Personal
    Data Protection Act, 2026 applies.
-4. **Native Bangla review (C8)** of all five Bangla pages, including medical and safety wording.
+4. **Native Bangla review (C8):** done for the five pages on 16 Nov 2026. The v1.0 download page still needs
+   it, and so does any Bangla line added or changed later.
 5. **v1.1 features** (Telegram phone verification, approximate location) are in a hidden comment in the
    English privacy policy. Add them, in both languages, only when they ship.
 6. **Google's rules for these pages:** each must load over HTTPS without a login, must not be a PDF, and

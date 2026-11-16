@@ -4,10 +4,10 @@ lang: bn
 permalink: /bn/privacy
 description: LiquidLyf কোন তথ্য নেয়, কে কী দেখতে পায়, কত দিন রাখা হয়, আর কীভাবে মুছে ফেলবেন।
 alternate: /privacy
-status: draft, needs native review, needs legal review
+status: draft, Bangla reviewed (C8), needs legal review
 ---
 
-<!-- Needs native review (C8). Rewritten 15 Nov 2026 in everyday Bangla ("web a", C13 = a), with the same
+<!-- Reviewed by the maintainer (C8, 16 Nov 2026), after a meaning check against the English (blind back-translations). Rewritten 15 Nov 2026 in everyday Bangla ("web a", C13 = a), with the same
      facts, sections and table rows as en/privacy.md; keep them in step. The English version applies
      until this one is reviewed. Words: "পোস্ট" for a blood request (the app says "রক্তের অনুরোধ"),
      "রাজি হওয়া" or "সাড়া দেওয়া" for offering (the app's noun is "সাড়া", never "প্রস্তাব"), "যিনি পোস্ট

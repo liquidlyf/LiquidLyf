@@ -7,7 +7,8 @@ alternate: /download
 status: draft, needs native review
 ---
 
-<!-- Needs native review (C8). Translated from the English draft (`en/download.md`). A native Bangla
+<!-- NOT part of the C8 review (16 Nov 2026): this v1.0 page needs the same meaning check and the
+    maintainer's review before the build runs with --released. Translated from the English draft (`en/download.md`). A native Bangla
     speaker must check the wording. The Android button names below must match what a phone set to
     Bangla really shows: check them on a real phone and take the screenshots in Bangla. "ভার্সন", not
     "সংস্করণ", as in the maintainer's final app Bangla (16 Nov 2026). -->

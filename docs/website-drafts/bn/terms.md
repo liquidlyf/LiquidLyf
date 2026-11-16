@@ -4,10 +4,10 @@ lang: bn
 permalink: /bn/terms
 description: LiquidLyf ব্যবহারের নিয়ম, রক্ত কেন কখনো বিক্রির জিনিস নয়, কীভাবে রিপোর্ট করবেন, আর কেউ নিয়ম ভাঙলে কী হয়।
 alternate: /terms
-status: draft, needs native review, needs legal review
+status: draft, Bangla reviewed (C8), needs legal review
 ---
 
-<!-- Needs native review (C8). Rewritten 15 Nov 2026 in everyday Bangla ("web a", C13 = a), with the same
+<!-- Reviewed by the maintainer (C8, 16 Nov 2026), after a meaning check against the English (blind back-translations). Rewritten 15 Nov 2026 in everyday Bangla ("web a", C13 = a), with the same
      facts and sections as en/terms.md; keep them in step. A lawyer must review sections ৯ and ১১ in
      both languages (C7). The English version applies until this one is reviewed. Words as in
      bn/privacy.md: "পোস্ট" (the app's "রক্তের অনুরোধ"), "রাজি হওয়া" and the app's "সাড়া" (never

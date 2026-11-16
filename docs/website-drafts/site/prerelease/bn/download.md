@@ -7,7 +7,7 @@ alternate: /download
 ---
 
 <!-- Shown until v1.0 is released (build_site.py without --released). Everyday Bangla, same facts as
-     site/prerelease/en/download.md; needs native review (C8). -->
+     site/prerelease/en/download.md; reviewed by the maintainer (C8, 16 Nov 2026). -->
 
 # LiquidLyf ডাউনলোড
 

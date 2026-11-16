@@ -4,10 +4,10 @@ lang: bn
 permalink: /bn/delete-account
 description: অ্যাপ থেকে বা ইমেইল করে কীভাবে আপনার LiquidLyf অ্যাকাউন্ট আর তার তথ্য মুছবেন, আর কী কী থেকে যায়।
 alternate: /delete-account
-status: draft, needs native review
+status: draft, Bangla reviewed (C8)
 ---
 
-<!-- Needs native review (C8). Rewritten 15 Nov 2026 in everyday Bangla ("web a", C13 = a), with the same
+<!-- Reviewed by the maintainer (C8, 16 Nov 2026), after a meaning check against the English (blind back-translations). Rewritten 15 Nov 2026 in everyday Bangla ("web a", C13 = a), with the same
      facts and steps as en/delete-account.md; keep them in step. The steps use the app's labels from
      values-bn: সেটিংস → আপনার অ্যাকাউন্ট মুছে ফেলুন, "আমার অ্যাকাউন্ট মুছে ফেলুন", "আপনার অ্যাকাউন্ট
      মুছে ফেলা হচ্ছে…", the words DELETE or মুছুন. The app stores the name "Deleted user" in English
