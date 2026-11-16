@@ -86,7 +86,7 @@ explains the parts and the rules every pull request follows.
 | `app/` | The Android app |
 | `firebase/` | Firestore security rules, rules tests and sample data for the emulators |
 | `backend/` | The Cloudflare Worker, its Google Apps Script backup, the maintainers' admin scripts, and data shared with the app |
-| `docs/` | [How the app is built](docs/architecture.md) and [decision records](docs/adr/) |
+| `docs/` | [How the app is built](docs/architecture.md), [decision records](docs/adr/), and the maintainers' [release and operations checklists](docs/ops/) |
 | `branding/` | The logo (not open-licensed; see [TRADEMARKS.md](TRADEMARKS.md)) |
 
 ## Community
