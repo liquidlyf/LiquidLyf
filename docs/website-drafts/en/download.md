@@ -51,8 +51,9 @@ takes about 2 minutes.
 
    [SCREENSHOT 2]
 
-   On Android 7, turn on **Unknown sources** instead. On some phones (for example realme, Xiaomi or
-   Samsung) the switch is under Settings → Apps → Special app access → Install unknown apps.
+   On Android 7, turn on **Unknown sources** instead. On some phones with Android 8 or newer (for
+   example realme, Xiaomi or Samsung) the switch is under Settings → Apps → Special app access →
+   Install unknown apps.
 
 4. **Install.** Tap **Install**.
 

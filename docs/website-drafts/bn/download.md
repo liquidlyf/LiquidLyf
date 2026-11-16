@@ -4,13 +4,13 @@ lang: bn
 permalink: /bn/download
 description: রক্তদাতা খোঁজার ফ্রি অ্যাপ LiquidLyf ডাউনলোড করুন, আর ধাপে ধাপে আপনার অ্যান্ড্রয়েড ফোনে ইনস্টল করুন।
 alternate: /download
-status: draft, needs the meaning check and the maintainer's review
+status: draft, meaning-checked, waits for the maintainer's review (C19)
 ---
 
 <!-- DRAFT for Phase 10.3, published only with build_site.py --released. Rewritten 17 Nov 2026 from the
      English draft (`en/download.md`) in the C13 style (everyday Bangla, as on the five reviewed pages).
-     NOT part of the C8 review: it needs the same meaning check and the maintainer's review before
-     --released. App labels come from `values-bn/` ("Google দিয়ে চালিয়ে যান"). The phone's own buttons
+     Not part of C8: its own meaning check (17 Nov 2026, blind back-translations, 9 lines made clearer)
+     is done, and the maintainer's review (C19) comes before --released. App labels come from `values-bn/` ("Google দিয়ে চালিয়ে যান"). The phone's own buttons
      (browser, Android, Play Protect) are shown in Bangla with the English in brackets, because many
      phones in Bangladesh are set to English: check both on a real phone (one set to Bangla, one to
      English) and take the screenshots in Bangla. Screenshots are on hold until the UI/UX review's fixes
@@ -26,8 +26,8 @@ status: draft, needs the meaning check and the maintainer's review
 
 [QR CODE]
 
-**যা লাগবে:** **অ্যান্ড্রয়েড ৭.০ বা তার পরের ভার্সনের** একটা ফোন, যাতে **Google Play services** আছে।
-সাইন ইন আর নোটিফিকেশনের জন্য এটা লাগে। যেসব ফোনে Google Play services নেই, যেমন নতুন Huawei ফোন,
+**যা লাগবে:** **অ্যান্ড্রয়েড ৭.০ বা তার পরের ভার্সনের** একটা ফোন, যেটাতে **Google Play services** আছে।
+সাইন ইন আর নোটিফিকেশনের জন্য Google Play services লাগে। যেসব ফোনে Google Play services নেই, যেমন নতুন Huawei ফোন,
 সেগুলোতে LiquidLyf চলবে না।
 
 ## কীভাবে ইনস্টল করবেন
@@ -38,36 +38,37 @@ LiquidLyf Play Store থেকে নয়, আমাদের ওয়েব�
 <!-- CHECK each step on a real phone before publishing, as in the English page, with the phone set to
      Bangla and to English: the Bangla button names below are guesses until then. -->
 
-1. **ডাউনলোড করুন।** ওপরের ডাউনলোড বাটন চাপুন। ব্রাউজার যদি সাবধান করে যে এই ধরনের ফাইল ফোনের ক্ষতি
-   করতে পারে, তাহলে **"তবুও ডাউনলোড করুন"** (<span lang="en">Download anyway</span>) চাপুন।
+1. **ডাউনলোড করুন।** ওপরের ডাউনলোড বাটন চাপুন। ব্রাউজার যদি সাবধান করে যে এই ধরনের ফাইল আপনার ফোনের
+   ক্ষতি করতে পারে, তাহলে **"তবুও ডাউনলোড করুন"** (<span lang="en">Download anyway</span>) চাপুন।
 
    [SCREENSHOT 1]
 
 2. **ফাইলটা খুলুন।** ডাউনলোডের নোটিফিকেশনে চাপুন, অথবা **Files** বা **Downloads** অ্যাপ খুলে
    `LiquidLyf.apk` চাপুন।
 
-3. **ইনস্টলের অনুমতি দিন।** প্রথমবার অ্যান্ড্রয়েড জানাবে, আপনার ব্রাউজার দিয়ে অ্যাপ ইনস্টল করার অনুমতি
-   নেই। **"সেটিংস"** (<span lang="en">Settings</span>) চাপুন, **"এই উৎস থেকে অনুমতি দিন"**
-   (<span lang="en">Allow from this source</span>) চালু করুন, তারপর ফিরে আসুন।
+3. **ইনস্টলের অনুমতি দিন।** প্রথমবার অ্যান্ড্রয়েড জানাবে, আপনার ব্রাউজারকে অ্যাপ ইনস্টল করার অনুমতি
+   দেওয়া নেই। **"সেটিংস"** (<span lang="en">Settings</span>) চাপুন, **"এই উৎস থেকে অনুমতি দিন"**
+   (<span lang="en">Allow from this source</span>) চালু করুন, তারপর আগের স্ক্রিনে ফিরে যান।
 
    [SCREENSHOT 2]
 
-   অ্যান্ড্রয়েড ৭-এ এর বদলে **"অজানা উৎস"** (<span lang="en">Unknown sources</span>) চালু করুন। কিছু
-   ফোনে (যেমন realme, Xiaomi বা Samsung) সুইচটা থাকে সেটিংস → অ্যাপ → বিশেষ অ্যাপ অ্যাক্সেস → অজানা অ্যাপ
-   ইনস্টল করুন-এ।
+   ফোনে অ্যান্ড্রয়েড ৭ থাকলে এর বদলে **"অজানা উৎস"** (<span lang="en">Unknown sources</span>) চালু
+   করুন। অ্যান্ড্রয়েড ৮ বা তার পরের ভার্সনের কিছু ফোনে (যেমন realme, Xiaomi বা Samsung) সুইচটা পাবেন
+   এখানে: সেটিংস → অ্যাপ → বিশেষ অ্যাপ অ্যাক্সেস → "অজানা অ্যাপ ইনস্টল করুন"
+   (<span lang="en">Settings → Apps → Special app access → Install unknown apps</span>)।
 
 4. **ইনস্টল করুন।** **"ইনস্টল করুন"** (<span lang="en">Install</span>) চাপুন।
 
 5. **Play Protect সাবধান করলে** **"আরও বিস্তারিত"** (<span lang="en">More details</span>) চাপুন, তারপর
-   **"তবুও ইনস্টল করুন"** (<span lang="en">Install anyway</span>)।
+   **"তবুও ইনস্টল করুন"** (<span lang="en">Install anyway</span>) চাপুন।
 
    [SCREENSHOT 3]
 
    অ্যাপটা Play Store থেকে আসেনি বলেই এই সতর্কবার্তা দেখায়। LiquidLyf ওপেন সোর্স: এর কোড যে কেউ দেখে
    নিতে পারেন।
 
-6. **LiquidLyf খুলুন,** ভাষা বেছে নিন, তারপর **"Google দিয়ে চালিয়ে যান"** চাপুন, অথবা আপনার ইমেইল
-   দিয়ে সাইন ইন করুন।
+6. **LiquidLyf খুলুন,** ভাষা বেছে নিন, তারপর **"Google দিয়ে চালিয়ে যান"**
+   (<span lang="en">Continue with Google</span>) চাপুন, অথবা আপনার ইমেইল দিয়ে সাইন ইন করুন।
 
 ## এটা কি আসল LiquidLyf?
 
@@ -98,10 +99,11 @@ io.github.liquidlyf
 
 ## আপডেট
 
-- নতুন ভার্সন এলে অ্যাপের হোম স্ক্রিনে একটা কার্ড দেখাবে যে আপডেট এসেছে। সেটায় চাপলেই নতুন ভার্সন পাবেন।
+- নতুন ভার্সন বের হলে অ্যাপের হোম স্ক্রিনে আপডেটের একটা কার্ড দেখাবে। কার্ডটায় চাপলেই নতুন ভার্সন
+  ডাউনলোড করতে পারবেন।
 - [Obtainium](https://obtainium.imranr.dev) ব্যবহার করলে সেটাই আপডেট ইনস্টল করে দিতে পারে:
-  [Obtainium-এ LiquidLyf যোগ করুন](obtainium://add/https://github.com/liquidlyf/LiquidLyf)। লিংকে চাপলে
-  Obtainium না খুললে নিজে Obtainium খুলুন, **<span lang="en">Add App</span>** চাপুন,
+  [Obtainium-এ LiquidLyf যোগ করুন](obtainium://add/https://github.com/liquidlyf/LiquidLyf)। এই লিংকে চাপার
+  পরও যদি Obtainium না খোলে, তাহলে নিজে Obtainium খুলুন, **<span lang="en">Add App</span>** চাপুন,
   `https://github.com/liquidlyf/LiquidLyf` পেস্ট করুন, তারপর **<span lang="en">Add</span>** চাপুন।
 
 প্রতিটা আপডেট পুরোনো ভার্সনের ওপরেই ইনস্টল হয়। আপনার অ্যাকাউন্ট আর সেটিংস যেমন ছিল তেমনই থাকে।
@@ -110,7 +112,7 @@ io.github.liquidlyf
      Bangla label from values-bn/. Obtainium's labels stay in English: check on a phone whether Obtainium
      shows them in Bangla too. -->
 
-## জরুরি কথা
+## গুরুত্বপূর্ণ কথা
 
 - **রক্তের জন্য কখনো টাকা দেবেন না।** LiquidLyf ফ্রি, রক্তদানও ফ্রি। কেউ টাকা চাইলে দেবেন না, অ্যাপে
   রিপোর্ট করুন।
