@@ -24,7 +24,9 @@ phone. It stops if any other [PLACEHOLDER] is left, and it lists the CHECK notes
 sources.
 
 It also writes sitemap.xml (each page with its other-language version) and robots.txt, and puts a
-hash of site.css into _config.yml (css_version), so a browser never keeps an old stylesheet.
+hash of site.css into _config.yml (css_version), so a browser never keeps an old stylesheet, and
+copies site/workflows/yearly-rebuild.yml to .github/workflows/: a 1 January rebuild, so the footer's
+copyright year (the year of the build) moves on even if nothing else was published.
 
 It never deletes anything in the output folder. Files there that this build didn't write are listed
 at the end, to remove by hand if they're stale.
@@ -239,6 +241,9 @@ def main() -> None:
                                       f"Sitemap: {site_url}/sitemap.xml\n")
     for rel in ("_layouts/default.html", "404.md", "README.md"):
         write(pathlib.Path(rel), (HERE / "site" / rel).read_text(encoding="utf-8"))
+    # The 1 January rebuild that moves the footer's copyright year (C15).
+    write(pathlib.Path(".github/workflows/yearly-rebuild.yml"),
+          (HERE / "site" / "workflows" / "yearly-rebuild.yml").read_text(encoding="utf-8"))
     # Everything in site/assets: the stylesheet, the icons, the share images and the PNG icons.
     assets = HERE / "site" / "assets"
     for f in sorted(assets.rglob("*")):

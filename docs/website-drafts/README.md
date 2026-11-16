@@ -125,6 +125,12 @@ only; the build removes them.
   so add `include: [".well-known"]` to `site/_config.yml`. Don't add a `.nojekyll` file, because that
   stops the Markdown pages from being built.
 - Bangla lists show Bangla digits (১, ২, ৩) through the stylesheet: `:where(html[lang="bn"]) ol { list-style-type: bengali; }`.
+- **The footer's copyright year** is the year of the build (`site.time | date: "%Y"`, Bangla digits on
+  the Bangla pages), so every publish updates it. The website repo also rebuilds every 1 January
+  ([site/workflows/yearly-rebuild.yml](site/workflows/yearly-rebuild.yml), copied to
+  `.github/workflows/`). GitHub switches scheduled workflows off after 60 days without activity:
+  in January, check the footer, and if needed use Actions → "Yearly rebuild" → Enable workflow,
+  then Run workflow (the website repo's README says the same).
 - **Each page has a `description:`** in its front matter: the text that search results and share
   cards show. Keep it one sentence, true to the page.
 - **Tables:** write normal Markdown (GFM) tables. `build_site.py` turns them into HTML tables; one with
