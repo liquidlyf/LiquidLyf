@@ -81,9 +81,9 @@ home-screen icon. Run it after the logo or the tagline changes (it needs Chrome 
 | `[PUBLISHER]`, `[COUNTRY OR POSTAL ADDRESS]` | "the LiquidLyf maintainers", Bangladesh (C11, 15 Nov 2026), until the lawyer (C7) says more is needed. No personal name or address on a public page. The privacy policy must name whoever is responsible for the data |
 | `[EFFECTIVE DATE]` | By `build_site.py --date`, on the day the page goes live or changes |
 | `[CONTENTS]` | By `build_site.py`: the list of the page's numbered sections, with anchors `#s1`, `#s2`… |
-| `[SHA-256 FINGERPRINT]` | After the release signing key exists (Phase 10.1) |
-| `[QR CODE]` | An image of the download link (Phase 10.3) |
-| `[SCREENSHOT 1–3]` | Install steps on a real phone with fake data, one set in English, one in Bangla (Phase 10.3) |
+| `[SHA-256 FINGERPRINT]` | After the release signing key exists (Phase 10.1): the key's SHA-256 as `apksigner verify --print-certs` shows it, written the way AppVerifier writes it (32 pairs of capital letters and digits, with colons), on the line under the app ID |
+| `[QR CODE]` | A QR code image for posters (Phase 10.3) |
+| `[SCREENSHOT 1–3]` | Install steps on a real phone with fake data, one set in English, one in Bangla (Phase 10.3). **On hold** (the maintainer, 17 Nov 2026) until the UI/UX review's fixes are in the app, like every app screenshot |
 
 ## Before publishing
 
@@ -94,7 +94,8 @@ home-screen icon. Run it after the logo or the tagline changes (it needs Chrome 
    `/download` and the `/bn/…` versions).
 2. **Resolve each `CHECK` note** (HTML comments; `build_site.py` lists them): App Check
    enforced (Phase 9), the PDPA 2026 rights and authority, the Terms' governing law, and, for the
-   download page, the AppVerifier steps and the Obtainium link.
+   download page, each install step on a real phone (in English and Bangla), AppVerifier and Obtainium
+   on a phone, and the app's update card label (Phase 9.4).
 3. **Legal review (C7):** Terms sections 9 (liability) and 11 (law), and the privacy policy's
    publisher, rights and data-transfer sections, by someone with legal training. Bangladesh's Personal
    Data Protection Act, 2026 applies.

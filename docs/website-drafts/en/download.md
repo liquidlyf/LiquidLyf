@@ -7,8 +7,13 @@ alternate: /bn/download
 status: draft
 ---
 
-<!-- DRAFT for Phase 10.3. Needs: [SHA-256 FINGERPRINT] from Phase 10.1, the QR code image,
-     and screenshots of each install step (fake data, a phone in English and one in Bangla). -->
+<!-- DRAFT for Phase 10.3, published only with build_site.py --released. Text and structure checked
+     17 Nov 2026 against the plan's 10.3 table and the website's format rules. Still needs:
+     [SHA-256 FINGERPRINT] (Phase 10.1), the [QR CODE] image, and [SCREENSHOT 1–3]. The screenshots are
+     ON HOLD (the maintainer, 17 Nov 2026) until the UI/UX review's fixes are in the app: take them then,
+     from the release build, with fake data, one set in English and one in Bangla. The links in the page
+     footer (Privacy, Terms, Delete your account, GitHub, email) and its emergency line come from the
+     layout, so this page doesn't repeat them. -->
 
 # Download LiquidLyf
 
@@ -16,74 +21,102 @@ Free. No ads. Find blood donors near you, and get alerted when someone nearby ne
 
 <div class="cta"><a class="btn" href="https://github.com/liquidlyf/LiquidLyf/releases/latest/download/LiquidLyf.apk"><span class="ic ic-download" aria-hidden="true"></span>Download LiquidLyf (APK)</a></div>
 
-This link always gives the newest version. [All versions and release notes](https://github.com/liquidlyf/LiquidLyf/releases)
+This link always gives you the newest version. [All versions and release notes](https://github.com/liquidlyf/LiquidLyf/releases)
 
-[QR CODE: the same download link, for posters]
+[QR CODE]
 
 **You need:** an Android phone with **Android 7.0 or newer** and **Google Play services**, which
-sign-in and notifications need. Phones without Google Play services, such as newer Huawei phones, are not
+sign-in and notifications need. Phones without Google Play services, such as newer Huawei phones, aren't
 supported.
 
 ## How to install
 
-LiquidLyf is downloaded from our website, not from the Play Store, so Android asks a few extra
-questions. It takes about 2 minutes.
+LiquidLyf comes from our website, not from the Play Store, so Android asks a few extra questions. It
+takes about 2 minutes.
 
-1. **Download.** Tap the download button above. If your browser warns that "this type of file can
-   harm your device", tap **Download anyway**.
+<!-- CHECK each step and its button names on a real phone before publishing (the realme on Android 11,
+     and a newer phone), in English and in Bangla. Browsers and Play Protect change their wording often:
+     write what the phones show. Phase 10 acceptance: from this page to signed in within 3 minutes. -->
+
+1. **Download.** Tap the download button above. If your browser warns that this type of file can
+   harm your device, tap **Download anyway**.
+
    [SCREENSHOT 1]
+
 2. **Open the file.** Tap the download notification, or open your **Files** or **Downloads** app and
    tap `LiquidLyf.apk`.
+
 3. **Allow installing.** The first time, Android says your browser isn't allowed to install apps. Tap
    **Settings**, turn on **Allow from this source**, then go back.
+
    [SCREENSHOT 2]
-   *On some phones (for example realme, Xiaomi or Samsung) the switch is under Settings → Apps →
-   Special app access → Install unknown apps.*
+
+   On Android 7, turn on **Unknown sources** instead. On some phones (for example realme, Xiaomi or
+   Samsung) the switch is under Settings → Apps → Special app access → Install unknown apps.
+
 4. **Install.** Tap **Install**.
+
 5. **If Play Protect shows a warning,** tap **More details → Install anyway**.
+
    [SCREENSHOT 3]
+
    This warning appears because the app isn't from the Play Store. LiquidLyf is open source: anyone
    can read its code.
-6. **Open LiquidLyf** and sign in with Google or your email address.
 
-<!-- CHECK each step and its wording on a real phone before publishing (Android 11 realme, and a newer
-     phone). Phase 10 acceptance: from this page to signed in within 3 minutes. -->
+6. **Open LiquidLyf,** choose your language, and sign in with **Continue with Google** or with your
+   email address.
 
 ## Is this the real LiquidLyf?
 
 Only download LiquidLyf from this page or from
-[our GitHub releases](https://github.com/liquidlyf/LiquidLyf/releases). Any other copy may be fake and
-could steal your data or ask you for money.
+[our GitHub releases](https://github.com/liquidlyf/LiquidLyf/releases). A copy from anywhere else may be
+fake, and could steal your data or ask you for money.
 
-Every real copy is signed with the same key. Its fingerprint is:
+Every real copy is signed with the same key. The first line below is the app's ID, the second the
+fingerprint of that key:
 
 ```
-App ID:  io.github.liquidlyf
-SHA-256: [SHA-256 FINGERPRINT]
+io.github.liquidlyf
+[SHA-256 FINGERPRINT]
 ```
 
-To check it, install [AppVerifier](https://github.com/soupslurpr/AppVerifier), copy the two lines above,
-and open AppVerifier. It compares them with the LiquidLyf installed on your phone and tells you if they
-match.
+To check the LiquidLyf on your phone:
 
-<!-- CHECK AppVerifier's current steps (it reads the copied text from the clipboard or a share). -->
+1. Install [AppVerifier](https://github.com/soupslurpr/AppVerifier), a free, open-source app.
+2. Select the two lines above, tap **Share**, and choose **AppVerifier**.
+3. AppVerifier compares them with the LiquidLyf on your phone and tells you whether they match.
+
+If they don't match, uninstall that copy, download LiquidLyf again from this page, and tell us at
+**[liquidlyf@gmail.com](mailto:liquidlyf@gmail.com)**.
+
+<!-- CHECK AppVerifier on a real phone once the release key exists: that sharing the two lines from a
+     browser opens its result (its README: "share the received verification info to AppVerifier"),
+     and that the fingerprint's format matches its own (32 pairs of capital letters and digits, with
+     colons). -->
+
+For developers: each release also has `SHA256SUMS.txt` and a build attestation
+(`gh attestation verify LiquidLyf.apk --repo liquidlyf/LiquidLyf`).
 
 ## Updates
 
-- The app tells you when a new version is out. Tap the message, and it opens this page.
-- Or get updates automatically with [Obtainium](https://obtainium.imranr.dev):
-  [Add LiquidLyf to Obtainium](obtainium://add/https://github.com/liquidlyf/LiquidLyf).
-  <!-- CHECK the Obtainium deep-link format, and add a plain-text fallback URL for browsers that block it. -->
+- When a new version is out, the app shows an **Update available** card on its home screen. Tap it to
+  get the new version.
+- If you use [Obtainium](https://obtainium.imranr.dev), it can install updates for you:
+  [add LiquidLyf to Obtainium](obtainium://add/https://github.com/liquidlyf/LiquidLyf). If the link
+  doesn't open Obtainium, open it yourself, tap **Add App**, paste
+  `https://github.com/liquidlyf/LiquidLyf` and tap **Add**.
 
-Updates install over the old version. You keep your account and settings.
+Each update installs over the old version. You keep your account and settings.
+
+<!-- CHECK after Phase 9: the update card's exact label in the app (Phase 9.4, A), that the first release
+     has SHA256SUMS.txt and the attestation (Phase 9.2), and Obtainium's link and button names on a phone
+     (its wiki, 17 Nov 2026: "obtainium://add/<url>" opens Add App with the URL filled in). -->
 
 ## Important
 
 - **Never pay for blood.** LiquidLyf is free, and so is donating. If anyone asks you for money, don't
   pay, and report them in the app.
 - **Not an emergency service.** If someone needs blood urgently, contact the hospital or a licensed
-  blood bank now, or call 999.
+  blood bank now, or call [999](tel:999).
 
-[Privacy Policy](/privacy) · [Terms and Community Guidelines](/terms) ·
-[Delete your account](/delete-account) · [Source code](https://github.com/liquidlyf/LiquidLyf) ·
-Contact: liquidlyf@gmail.com
+Questions about installing? Email **[liquidlyf@gmail.com](mailto:liquidlyf@gmail.com)**.
