@@ -3,10 +3,13 @@ package io.github.liquidlyf.feature.request.list
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -70,18 +74,23 @@ internal fun RequestsScreen(
     Scaffold(topBar = { LLTopBar(title = stringResource(R.string.nav_requests)) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
             OfflineBanner(online)
+            // A long label wraps to a second line instead of losing words (in one line, the Bangla
+            // "আমার অনুরোধ" showed only "আমার"). All three tabs take the tallest one's height, so the
+            // outline stays one pill.
             SingleChoiceSegmentedButtonRow(
                 Modifier
                     .widthIn(max = 640.dp)
                     .fillMaxWidth()
-                    .padding(horizontal = screenGutter(), vertical = Spacing.xs),
+                    .padding(horizontal = screenGutter(), vertical = Spacing.xs)
+                    .height(IntrinsicSize.Min),
             ) {
                 RequestsTab.entries.forEachIndexed { i, tab ->
                     SegmentedButton(
                         selected = state.tab == tab,
                         onClick = { onSelectTab(tab) },
                         shape = SegmentedButtonDefaults.itemShape(i, RequestsTab.entries.size),
-                        label = { Text(stringResource(tab.labelRes), maxLines = 1) },
+                        modifier = Modifier.fillMaxHeight(),
+                        label = { Text(stringResource(tab.labelRes), textAlign = TextAlign.Center) },
                     )
                 }
             }

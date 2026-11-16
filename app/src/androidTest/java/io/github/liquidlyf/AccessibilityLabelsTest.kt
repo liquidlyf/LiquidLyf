@@ -6,9 +6,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -18,6 +20,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -174,6 +178,25 @@ class AccessibilityLabelsTest {
                 problems += "smaller than 48 dp (${width.toInt()}x${height.toInt()} px): \"$label\""
             }
         }
+        // 8.5: no words silently cut off. A text too long for its space must wrap, scroll or end in
+        // "…" (a one-line tab once showed only "আমার" of the Bangla "আমার অনুরোধ"). Cut means lines
+        // dropped by maxLines, or a line whose letters are wider than the text's box. (Compose's own
+        // overflow flags compare the box with the width the text was laid out at, so they also flag
+        // texts that fit.)
+        compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
+            .fetchSemanticsNodes().forEach { node ->
+                val layouts = mutableListOf<TextLayoutResult>()
+                node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+                for (layout in layouts) {
+                    if (layout.layoutInput.overflow != TextOverflow.Clip) continue
+                    val widest = (0 until layout.lineCount).maxOfOrNull { layout.getLineRight(it) - layout.getLineLeft(it) } ?: 0f
+                    if (layout.multiParagraph.didExceedMaxLines || widest > layout.size.width + 1f) {
+                        val dropped = if (layout.multiParagraph.didExceedMaxLines) ", lines dropped" else ""
+                        problems += "text cut off (box ${layout.size.width} px, widest line ${widest.toInt()} px$dropped): " +
+                            "\"${layout.layoutInput.text}\""
+                    }
+                }
+            }
         saveScreenshot(screen)
         assertTrue("$screen:\n" + problems.joinToString("\n"), problems.isEmpty())
     }
