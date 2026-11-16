@@ -1,10 +1,16 @@
 package io.github.liquidlyf
 
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.util.Log
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
@@ -26,6 +32,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckPreset
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityCheckResult.AccessibilityCheckResultType
+import com.google.android.apps.common.testing.accessibility.framework.AccessibilityHierarchyCheckResult
+import com.google.android.apps.common.testing.accessibility.framework.Parameters
+import com.google.android.apps.common.testing.accessibility.framework.uielement.AccessibilityHierarchyAndroid
+import com.google.android.apps.common.testing.accessibility.framework.uielement.ViewHierarchyElement
+import com.google.android.apps.common.testing.accessibility.framework.utils.contrast.BitmapImage
 import com.mikepenz.aboutlibraries.util.withJson
 import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
@@ -85,6 +98,7 @@ import io.github.liquidlyf.testing.FakeSessionManager
 import io.github.liquidlyf.testing.FakeWorkerClient
 import io.github.liquidlyf.testing.TestData
 import io.github.liquidlyf.testing.request
+import java.util.Locale
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -188,6 +202,7 @@ class AccessibilityLabelsTest {
                 val layouts = mutableListOf<TextLayoutResult>()
                 node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
                 for (layout in layouts) {
+                    brokenWords(layout).forEach { problems += "word broken across lines: \"$it\" in \"${layout.layoutInput.text}\"" }
                     if (layout.layoutInput.overflow != TextOverflow.Clip) continue
                     val widest = (0 until layout.lineCount).maxOfOrNull { layout.getLineRight(it) - layout.getLineLeft(it) } ?: 0f
                     if (layout.multiParagraph.didExceedMaxLines || widest > layout.size.width + 1f) {
@@ -197,8 +212,77 @@ class AccessibilityLabelsTest {
                     }
                 }
             }
+        // 8.5: the Accessibility Scanner's own checks (labels, touch targets, contrast, duplicate
+        // descriptions, clickable bounds…), on every window of the app.
+        scannerResults(screen).filter { it.type == AccessibilityCheckResultType.ERROR }.forEach { problems += "ATF: ${it.describe()}" }
         saveScreenshot(screen)
         assertTrue("$screen:\n" + problems.joinToString("\n"), problems.isEmpty())
+    }
+
+    /**
+     * The Accessibility Scanner's checks (the Accessibility Test Framework, latest preset), run the
+     * way the Scanner runs them: on what an accessibility service sees of this app's windows (a
+     * sheet or a menu is a window of its own), with a screenshot for the contrast checks. Warnings
+     * go to the log under "LiquidLyfA11y"; errors fail the screen.
+     */
+    private fun scannerResults(screen: String): List<AccessibilityHierarchyCheckResult> {
+        compose.waitForIdle()
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        automation.serviceInfo = automation.serviceInfo.apply { flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS }
+        runCatching { automation.waitForIdle(300, 3_000) } // a spinner never idles; the screen is drawn anyway
+        val windows = automation.windows.filter { it.root?.packageName == target.packageName }
+        assertTrue("no window of ${target.packageName} found for the Scanner's checks", windows.isNotEmpty())
+        val hierarchy = AccessibilityHierarchyAndroid.newBuilder(windows, target).build()
+        val parameters = Parameters().apply { automation.takeScreenshot()?.let { putScreenCapture(BitmapImage(it)) } }
+        val results = AccessibilityCheckPreset.getAccessibilityHierarchyChecksForPreset(AccessibilityCheckPreset.LATEST)
+            .flatMap { it.runCheckOnHierarchy(hierarchy, null, parameters) }
+        results.filter { it.type == AccessibilityCheckResultType.WARNING }.forEach { Log.w("LiquidLyfA11y", "$screen: ${it.describe()}") }
+        return results
+    }
+
+    private fun AccessibilityHierarchyCheckResult.describe(): String {
+        // Explicit types: ATF's own nullness annotations aren't on the test classpath.
+        val e: ViewHierarchyElement? = getElement()
+        val what = listOfNotNull(e?.getText()?.toString(), e?.getContentDescription()?.toString()).joinToString(" / ")
+        val bounds: Any? = e?.getBoundsInScreen() // where on the screen, when the item has no text
+        val check: Class<*>? = getSourceCheckClass()
+        return "${check?.simpleName}: ${getMessage(Locale.ENGLISH)} [$what] at $bounds"
+    }
+
+    /**
+     * Short words a line break cut in two ("Offer/ed", "কাছাকা/ছি"): their box is too narrow. A word
+     * longer than [LONG_WORD] (a web address on a narrow phone) may have to break.
+     */
+    private fun brokenWords(layout: TextLayoutResult): List<String> {
+        val text = layout.layoutInput.text.text
+        fun Char.inWord() = isLetterOrDigit() || Character.getType(this).toByte() in WORD_MARKS
+        return (0 until layout.lineCount - 1).mapNotNull { line ->
+            val end = layout.getLineEnd(line)
+            if (end !in 1 until text.length || !text[end - 1].inWord() || !text[end].inWord()) return@mapNotNull null
+            var start = end - 1
+            while (start > 0 && text[start - 1].inWord()) start--
+            var stop = end
+            while (stop < text.length && text[stop].inWord()) stop++
+            text.substring(start, stop).takeIf { it.length <= LONG_WORD }
+        }
+    }
+
+    private companion object {
+        const val LONG_WORD = 14
+
+        /** Bangla vowel signs, the hasanta and the nukta are marks, not letters; ZWJ/ZWNJ join letters. */
+        val WORD_MARKS = setOf(Character.NON_SPACING_MARK, Character.COMBINING_SPACING_MARK, Character.FORMAT)
+    }
+
+    /** Proof that the Accessibility Test Framework really runs here: it must reject this button. */
+    @Test
+    fun theFrameworkChecksRunAndCatchATinyUnlabelledButton() {
+        show { Box(Modifier.size(20.dp).clickable {}) }
+        val results = scannerResults("self-test")
+        assertTrue(
+            "ATF passed a 20 dp button without a label: ${results.map { it.describe() }}",
+            results.any { it.type == AccessibilityCheckResultType.ERROR },
+        )
     }
 
     @Test

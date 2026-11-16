@@ -43,6 +43,8 @@ androidxTestRunner = "1.7.0"
 junit = "4.13.2"
 mockk = "1.14.12"
 turbine = "1.2.1"
+# The version the test build already resolves; the Scanner-check test names its ImmutableSet.
+guava = "33.6.0-android"
 
 [libraries]
 # Compose (versions come from the BOM)
@@ -51,6 +53,9 @@ androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+# 8.5: the Accessibility Test Framework checks (the Accessibility Scanner's engine) for Compose tests.
+androidx-compose-ui-test-junit4-accessibility = { group = "androidx.compose.ui", name = "ui-test-junit4-accessibility" }
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
