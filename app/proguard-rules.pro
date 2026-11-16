@@ -1,21 +1,15 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# LiquidLyf's own R8 rules for release builds (on top of proguard-android-optimize.txt and the
+# rules every library ships in its AAR).
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Crashlytics: keep file names and line numbers, so crash reports point at real lines (the
+# uploaded mapping file turns the shortened class and method names back). Firebase's own advice.
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# No rules needed for:
+# - Firestore documents: core/firebase/dto/ maps every field by hand with key constants, with no
+#   reflection, so R8 may rename the model classes. If a screen ever uses the snapshots<T>()
+#   helpers in FirestoreExt.kt (Firestore's class mapper, toObject), keep that class and its
+#   no-argument constructor here.
+# - kotlinx.serialization (navigation routes, saved drafts, the Worker's JSON, bd-geo.json): the
+#   library ships its R8 rules.
