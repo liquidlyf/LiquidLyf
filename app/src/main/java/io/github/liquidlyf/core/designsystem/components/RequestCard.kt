@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
@@ -96,7 +95,10 @@ fun unitsText(units: Int, component: String): String = pluralStringResource(R.pl
 fun neededByText(neededBy: Instant, now: Instant): String =
     stringResource(R.string.request_needed_by, relativeTimeText(neededBy, now))
 
-/** A small icon and one line of text. */
+/**
+ * A small icon and its text. The text wraps as far as it needs: with 200% text even an area like
+ * "Dhaka South City Corporation, Dhaka" takes three lines, and the offer sheet's safety line more.
+ */
 @Composable
 fun IconLine(@DrawableRes icon: Int, text: String, modifier: Modifier = Modifier) {
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
@@ -106,6 +108,6 @@ fun IconLine(@DrawableRes icon: Int, text: String, modifier: Modifier = Modifier
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(16.dp),
         )
-        Text(text, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(text, style = MaterialTheme.typography.bodyMedium)
     }
 }

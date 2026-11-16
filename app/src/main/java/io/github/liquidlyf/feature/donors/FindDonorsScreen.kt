@@ -61,6 +61,7 @@ import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.SheetDragHandle
 import io.github.liquidlyf.core.designsystem.components.StatusPill
 import io.github.liquidlyf.core.designsystem.components.bloodGroupsPerRow
 import io.github.liquidlyf.core.designsystem.currentAppLocale
@@ -72,9 +73,9 @@ import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.DonorCard
 import io.github.liquidlyf.feature.safety.ReportDialog
-import kotlinx.coroutines.launch
 import java.time.Duration
 import java.time.Instant
+import kotlinx.coroutines.launch
 
 @Composable
 fun FindDonorsRoute(onCreateRequest: () -> Unit, viewModel: FindDonorsViewModel = hiltViewModel()) {
@@ -345,7 +346,7 @@ private fun AskToDonateSheet(
     onDismiss: () -> Unit,
 ) {
     val donor = sheet.donor
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), dragHandle = { SheetDragHandle() }) {
         Column(
             Modifier.verticalScroll(rememberScrollState()).padding(horizontal = Spacing.md).padding(bottom = Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.sm),

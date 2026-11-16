@@ -3,7 +3,6 @@ package io.github.liquidlyf.feature.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -13,9 +12,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +37,7 @@ import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.SectionHeader
+import io.github.liquidlyf.core.designsystem.components.SegmentedChoices
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.feature.about.versionLabel
 import kotlinx.coroutines.launch
@@ -251,25 +248,9 @@ internal fun SettingsContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> Choices(options: List<T>, selected: T, onSelect: (T) -> Unit, label: @Composable (T) -> String) {
-    val gutter = screenGutter()
-    SingleChoiceSegmentedButtonRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = gutter, vertical = Spacing.xs),
-    ) {
-        options.forEachIndexed { index, option ->
-            SegmentedButton(
-                selected = selected == option,
-                onClick = { onSelect(option) },
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-            ) {
-                Text(label(option))
-            }
-        }
-    }
+    SegmentedChoices(options, selected, onSelect, Modifier.padding(horizontal = screenGutter(), vertical = Spacing.xs), label)
 }
 
 /** 8.5: the whole row toggles, and TalkBack reads it as one switch. */

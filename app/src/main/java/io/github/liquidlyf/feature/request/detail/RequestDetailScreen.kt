@@ -4,6 +4,7 @@ import android.content.ClipData
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,9 +38,9 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -59,10 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
-import io.github.liquidlyf.core.firebase.dto.RequestDoc
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
-import io.github.liquidlyf.core.designsystem.numberText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.IconLine
@@ -73,19 +72,22 @@ import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.SectionHeader
+import io.github.liquidlyf.core.designsystem.components.SheetDragHandle
 import io.github.liquidlyf.core.designsystem.components.StatusPill
 import io.github.liquidlyf.core.designsystem.components.UrgencyBadge
 import io.github.liquidlyf.core.designsystem.components.neededByText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
 import io.github.liquidlyf.core.designsystem.labelRes
-import io.github.liquidlyf.core.designsystem.rememberNow
+import io.github.liquidlyf.core.designsystem.numberText
 import io.github.liquidlyf.core.designsystem.relativeTimeText
+import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.domain.StatusTransitions
 import io.github.liquidlyf.core.domain.Validators
+import io.github.liquidlyf.core.firebase.dto.RequestDoc
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.DonorResponse
 import io.github.liquidlyf.core.model.ReportReason
@@ -96,8 +98,8 @@ import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.request.create.PlannedAtPicker
 import io.github.liquidlyf.feature.request.create.PostNotice
 import io.github.liquidlyf.feature.safety.ReportDialog
-import kotlinx.coroutines.launch
 import java.time.Instant
+import kotlinx.coroutines.launch
 
 @Composable
 fun RequestDetailRoute(onBack: () -> Unit, onOpenSafetyTips: () -> Unit = {}, viewModel: RequestDetailViewModel = hiltViewModel()) {
@@ -387,7 +389,7 @@ private fun DonorSection(state: RequestDetailUiState, vm: RequestDetailViewModel
     if (checking) {
         var message by rememberSaveable { mutableStateOf("") }
         // Fully open and scrollable, so the offer button is reachable with large text or in landscape.
-        ModalBottomSheet(onDismissRequest = { checking = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+        ModalBottomSheet(onDismissRequest = { checking = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), dragHandle = { SheetDragHandle() }) {
             Column(
                 Modifier
                     .verticalScroll(rememberScrollState())
@@ -448,7 +450,8 @@ private fun ContactCard(c: RequestContact, onCall: (String) -> Unit) {
             Text(c.contactName, style = MaterialTheme.typography.bodyLarge)
             Text(c.contactPhone, style = MaterialTheme.typography.bodyLarge)
             c.patientName?.let { Text(stringResource(R.string.detail_patient, it), style = MaterialTheme.typography.bodyMedium) }
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            // Copy moves under Call when both don't fit (200% text squeezed "কপি করুন" letter by letter).
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 LLPrimaryButton(text = stringResource(R.string.action_call), onClick = { onCall(c.contactPhone) }, icon = LLIcons.Call)
                 OutlinedButton(
                     onClick = {

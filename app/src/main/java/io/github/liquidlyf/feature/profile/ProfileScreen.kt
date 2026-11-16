@@ -267,13 +267,16 @@ private fun VerifiedTag(@StringRes label: Int) {
     StatusPill(stringResource(label), LLIcons.Verified, MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ImpactCard(state: ProfileUiState) {
     val i = state.impact
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Text(stringResource(R.string.profile_impact_title), style = MaterialTheme.typography.titleMedium)
-            Row(Modifier.fillMaxWidth()) {
+            // Three equal columns when they fit; with large text a stat whose label won't fit moves to
+            // the next line instead of breaking the word ("Donat/ions" at 200%).
+            FlowRow(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Spacing.sm), maxItemsInEachRow = 3) {
                 Stat(i.donations, R.string.profile_impact_donations, Modifier.weight(1f))
                 Stat(i.verifiedDonations, R.string.profile_impact_verified, Modifier.weight(1f))
                 Stat(i.requestsHelped, R.string.profile_impact_requests, Modifier.weight(1f))

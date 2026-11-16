@@ -34,10 +34,11 @@ import androidx.compose.ui.res.stringResource
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
-import io.github.liquidlyf.core.designsystem.localDateText
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
+import io.github.liquidlyf.core.designsystem.components.SheetDragHandle
 import io.github.liquidlyf.core.designsystem.labelRes
+import io.github.liquidlyf.core.designsystem.localDateText
 import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.model.BloodComponent
 import java.time.LocalDate
@@ -72,7 +73,7 @@ fun AddDonationSheet(
     }
     val placeTooLong = place.trim().length > Validators.HOSPITAL_NAME_MAX
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), dragHandle = { SheetDragHandle() }) {
         Column(
             Modifier.verticalScroll(rememberScrollState()).padding(horizontal = Spacing.md).padding(bottom = Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),

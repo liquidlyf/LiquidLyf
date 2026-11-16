@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -348,7 +349,8 @@ private fun ContactStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Se
             Text(stringResource(R.string.sign_up_consent), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = Spacing.xs))
         }
         FieldError(SetupField.TERMS in state.errors, stringResource(R.string.error_consent_required))
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        // The second link moves below the first when both don't fit (200% text).
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             TextButton(onClick = { links.openUrl(Links.terms(locale)) }) { Text(stringResource(R.string.action_read_terms)) }
             TextButton(onClick = { links.openUrl(Links.privacy(locale)) }) { Text(stringResource(R.string.action_read_privacy)) }
         }
