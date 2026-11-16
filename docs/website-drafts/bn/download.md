@@ -2,6 +2,7 @@
 title: LiquidLyf ডাউনলোড করুন
 lang: bn
 permalink: /bn/download
+description: ফ্রি রক্তদাতা অ্যাপ LiquidLyf ডাউনলোড করুন, আর ধাপে ধাপে আপনার অ্যান্ড্রয়েড ফোনে ইনস্টল করুন।
 alternate: /download
 status: draft, needs native review
 ---
@@ -16,7 +17,7 @@ status: draft, needs native review
 বিনামূল্যে। কোনো বিজ্ঞাপন নেই। কাছাকাছি রক্তদাতা খুঁজুন, আর কাছের কারো আপনার গ্রুপের রক্ত দরকার হলে
 অ্যালার্ট পান।
 
-**[⬇ LiquidLyf ডাউনলোড করুন (APK)](https://github.com/liquidlyf/LiquidLyf/releases/latest/download/LiquidLyf.apk)**
+<div class="cta"><a class="btn" href="https://github.com/liquidlyf/LiquidLyf/releases/latest/download/LiquidLyf.apk"><span class="ic ic-download" aria-hidden="true"></span>LiquidLyf ডাউনলোড করুন (APK)</a></div>
 
 এই লিংক সবসময় সর্বশেষ ভার্সন দেয়। [সব ভার্সন ও রিলিজ নোট](https://github.com/liquidlyf/LiquidLyf/releases)
 

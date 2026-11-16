@@ -2,6 +2,7 @@
 title: Download LiquidLyf
 lang: en
 permalink: /download
+description: Download LiquidLyf, the free blood-donor app for Android, and install it step by step.
 alternate: /bn/download
 status: draft
 ---
@@ -13,7 +14,7 @@ status: draft
 
 Free. No ads. Find blood donors near you, and get alerted when someone nearby needs your blood group.
 
-**[⬇ Download LiquidLyf (APK)](https://github.com/liquidlyf/LiquidLyf/releases/latest/download/LiquidLyf.apk)**
+<div class="cta"><a class="btn" href="https://github.com/liquidlyf/LiquidLyf/releases/latest/download/LiquidLyf.apk"><span class="ic ic-download" aria-hidden="true"></span>Download LiquidLyf (APK)</a></div>
 
 This link always gives the newest version. [All versions and release notes](https://github.com/liquidlyf/LiquidLyf/releases)
 

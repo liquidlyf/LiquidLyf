@@ -2,6 +2,7 @@
 title: Privacy Policy
 lang: en
 permalink: /privacy
+description: What data LiquidLyf collects, who can see it, how long it is kept, and how to delete it.
 alternate: /bn/privacy
 status: draft, needs legal review
 ---
@@ -19,7 +20,7 @@ people as we can, and explain everything here in plain words.
 
 <div class="glance" markdown="1">
 
-**At a glance**
+## At a glance
 - Your phone number is **never shown publicly**. A requester sees it only if you offer to donate for
   their request, and you see a requester's number only after you offer, while your offer is active.
 - We don't sell your data, we don't show ads, and we don't use advertising or analytics trackers.
@@ -34,20 +35,20 @@ people as we can, and explain everything here in plain words.
 LiquidLyf is an open-source project run by volunteers. The app is published by **[PUBLISHER]**
 ([COUNTRY OR POSTAL ADDRESS]), who are responsible for your data under this policy.
 
-**Privacy contact:** liquidlyf@gmail.com (please write "Privacy" in the subject).
+**Privacy contact:** [liquidlyf@gmail.com](mailto:liquidlyf@gmail.com?subject=Privacy) (please write "Privacy" in the subject).
 
 The app's source code is public at <https://github.com/liquidlyf/LiquidLyf>, so anyone can check what
 it does with your data.
 
 ## 2. What we collect
 
-**When you create an account**
+### When you create an account
 - Your email address, and how you sign in (email and password, Google, or both). If you use Google, Google
   shares your name, email address and profile picture link with us. We don't show the picture.
 - Your password is handled by Google's Firebase Authentication. We never see it.
 - That you are 18 or older and accepted these terms, with the date and the version you accepted.
 
-**Your profile**
+### Your profile
 - Full name, phone number, blood group.
 - Gender and birth year. We use them only to check whether you can donate and to count your rest
   period after a donation. They are never shown to other users.
@@ -57,7 +58,7 @@ it does with your data.
 - Whether you chose to be listed as a donor, and when you chose it.
 - Your app language.
 
-**When you use the app**
+### When you use the app
 - **Blood requests you post:** the patient's blood group, the blood component and number of units,
   the hospital and its area, how urgent it is, when the blood is needed, an optional condition (such as
   "surgery" or "dengue") and notes. The **contact person's name and phone number**, and optionally the
@@ -73,7 +74,7 @@ it does with your data.
   donor you asked to donate (only you can see it).
 - **When you last used the app,** updated at most once every 3 days.
 
-**From your phone**
+### From your phone
 - **Push notifications:** your phone subscribes to notification "topics" named after your area and
   blood group (for example, "Savar, B+"), through Google's Firebase Cloud Messaging. We don't
   store a device token. You can stop alerts at any time (section 7).
@@ -211,7 +212,7 @@ serious harm.
   be declined.
 - **Delete your account:** in the app under Settings → Delete your account, or without the app at
   [liquidlyf.github.io/delete-account](/delete-account).
-- **Get a copy of your data,** or ask any question about it: email liquidlyf@gmail.com from the email
+- **Get a copy of your data,** or ask any question about it: email [liquidlyf@gmail.com](mailto:liquidlyf@gmail.com?subject=Privacy) from the email
   address of your account. We reply within 30 days.
 
 Bangladesh's Personal Data Protection Act, 2026 gives you rights to access, correct and erase your data,
@@ -253,7 +254,7 @@ asks you to read and accept the new version. Earlier versions stay in the websit
 
 ## 11. Contact
 
-Email **liquidlyf@gmail.com**, with "Privacy" in the subject. We reply within 30 days, usually much sooner.
+Email **[liquidlyf@gmail.com](mailto:liquidlyf@gmail.com?subject=Privacy)**, with "Privacy" in the subject. We reply within 30 days, usually much sooner.
 
 **LiquidLyf is not an emergency service.** If someone needs blood urgently, contact the hospital or a
 licensed blood bank now, or call 999.

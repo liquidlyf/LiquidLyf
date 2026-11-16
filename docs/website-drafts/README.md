@@ -33,8 +33,10 @@ the review, set `bn_reviewed: true` in [site/_config.yml](site/_config.yml).
 
    `--date` is the effective date shown on the Privacy Policy and the Terms. Add `--released` once
    v1.0 is on GitHub Releases. The script removes every HTML comment (the notes below never reach the
-   site), stops if a `[PLACEHOLDER]` has no value, and lists the `CHECK` notes still open. It never
-   deletes files in the website repo; it lists the ones it didn't write.
+   site), stops if a `[PLACEHOLDER]` has no value, and lists the `CHECK` notes still open. It also
+   writes `sitemap.xml` and `robots.txt`, and puts a hash of the stylesheet into `_config.yml`
+   (`css_version`), so a browser never keeps an old `site.css` after a change. It never deletes files
+   in the website repo; it lists the ones it didn't write.
 3. Commit in the website repo (`git commit -s`) and push. GitHub Pages rebuilds the site in a minute or two.
 4. Open each page in a private window, in English and Bangla, on a phone.
 5. If the Terms or the Privacy Policy changed in a way users must accept again, change
@@ -123,3 +125,19 @@ only; the build removes them.
   so add `include: [".well-known"]` to `site/_config.yml`. Don't add a `.nojekyll` file, because that
   stops the Markdown pages from being built.
 - Bangla lists show Bangla digits (১, ২, ৩) through the stylesheet: `:where(html[lang="bn"]) ol { list-style-type: bengali; }`.
+- **Each page has a `description:`** in its front matter: the text that search results and share
+  cards show. Keep it one sentence, true to the page.
+- **Tables:** write normal Markdown (GFM) tables. `build_site.py` turns them into HTML tables; one with
+  3 or more columns becomes one card per row on a phone, each cell labelled with its column's name.
+  Cells may use only `**bold**`, `[links](/url)` and "quotes".
+- **Numbered sections** (`## 1. …`) get an anchor (`#s1`), a line in the contents list and a "Back
+  to contents" link at their end, all from the build. A heading inside a section is `###`, never a
+  bold line, so screen readers can jump to it.
+- **The other language:** an English phrase on a Bangla page that the reader sees or types in English
+  (an email subject, GitHub's menu, `DELETE`) is `<span lang="en">…</span>`, so a screen reader reads
+  it with an English voice. Names (LiquidLyf, GitHub, Android) need nothing. Bangla on an English page
+  gets `lang="bn"`.
+- **Email addresses are links.** Where the page asks for a subject, the link fills it in:
+  `mailto:liquidlyf@gmail.com?subject=Delete%20my%20account`.
+- On the home page, each FAQ question has an id (`#faq-free`, the same in both languages), and lists
+  without bullets have `role="list"` (Safari doesn't announce them as lists otherwise).

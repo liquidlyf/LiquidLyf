@@ -2,6 +2,7 @@
 title: Terms and Community Guidelines
 lang: en
 permalink: /terms
+description: The rules for using LiquidLyf, why blood is never for sale, how to report someone, and what happens when someone breaks the rules.
 alternate: /bn/terms
 status: draft, needs legal review
 ---
@@ -18,7 +19,7 @@ our [Privacy Policy](/privacy). They are written to keep donors, patients and th
 
 <div class="glance" markdown="1">
 
-**At a glance**
+## At a glance
 - LiquidLyf **only connects people**. It isn't a blood bank, a hospital or an emergency service.
 - You must be **18 or older**, and use your real name, number and blood group.
 - **Blood is never for sale.** Never pay or accept money for it, and donate only at a licensed hospital
@@ -159,5 +160,5 @@ asks you to accept the new version. If you don't agree, you can stop using Liqui
 
 ## 13. Contact
 
-Email **liquidlyf@gmail.com**. Write "Report" in the subject for safety issues, and "Appeal" if you
+Email **[liquidlyf@gmail.com](mailto:liquidlyf@gmail.com)**. Write "Report" in the subject for safety issues, and "Appeal" if you
 want a moderation decision reviewed.

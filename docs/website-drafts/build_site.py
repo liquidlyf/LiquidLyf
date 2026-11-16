@@ -17,9 +17,14 @@ Options:
 What it does to each page: removes HTML comments (the CHECK notes and other notes for maintainers,
 which must never reach the public page), removes the draft-only `status:` front-matter line, and
 fills [EFFECTIVE DATE], [PUBLISHER] and [COUNTRY OR POSTAL ADDRESS]. Where a page has [CONTENTS], it
-puts a list of the page's numbered sections ("## 1. …") there, and gives each of them an anchor
-(#s1, #s2…, the same in both languages). It stops if any other [PLACEHOLDER] is left, and it lists
-the CHECK notes still open in the sources.
+puts a list of the page's numbered sections ("## 1. …") there, gives each of them an anchor (#s1,
+#s2…, the same in both languages) and a "Back to contents" link at its end. It writes Markdown tables
+as HTML tables, so that a table with 3 or more columns can become one labelled card per row on a
+phone. It stops if any other [PLACEHOLDER] is left, and it lists the CHECK notes still open in the
+sources.
+
+It also writes sitemap.xml (each page with its other-language version) and robots.txt, and puts a
+hash of site.css into _config.yml (css_version), so a browser never keeps an old stylesheet.
 
 It never deletes anything in the output folder. Files there that this build didn't write are listed
 at the end, to remove by hand if they're stale.
@@ -29,6 +34,7 @@ pages it publishes are CC BY 4.0, and the logo files are covered by TRADEMARKS.m
 """
 import argparse
 import datetime as dt
+import hashlib
 import html
 import pathlib
 import re
@@ -46,6 +52,8 @@ PLACEHOLDER = re.compile(r"\[[A-Z][A-Z0-9]*(?:[ \-–][A-Z0-9]+)*\]")
 BN_DIGITS = str.maketrans("0123456789", "০১২৩৪৫৬৭৮৯")
 ASCII_DIGITS = str.maketrans("০১২৩৪৫৬৭৮৯", "0123456789")
 SECTION = re.compile(r"(?m)^## (([0-9০-৯]+)\. .+?)[ \t]*$")
+TABLE_ROW = re.compile(r"^\|.*\|[ \t]*$")
+TABLE_RULE = re.compile(r"^\|(?:[ \t]*:?-{3,}:?[ \t]*\|)+[ \t]*$")
 BN_MONTHS = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট",
              "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"]
 
@@ -66,21 +74,92 @@ def open_checks(text: str) -> list[str]:
 
 
 def add_contents(text: str, lang: str) -> str:
-    """Replaces [CONTENTS] with a list of the numbered sections, and gives each one an anchor."""
+    """Replaces [CONTENTS] with a list of the numbered sections, gives each one an anchor, and ends
+    each section with a "Back to contents" link."""
     if "[CONTENTS]" not in text:
         return text
     items = []
+    back = "সূচিতে ফিরে যান" if lang == "bn" else "Back to contents"
+    back_link = f'<p class="to-contents"><a href="#contents">{back}</a></p>\n\n'
 
     def heading(m: re.Match) -> str:
         title = html.escape(m.group(1).replace("'", "’"), quote=False)
         anchor = "s" + m.group(2).translate(ASCII_DIGITS)
         items.append((anchor, title))
-        return f'<h2 id="{anchor}">{title}</h2>'
+        return (back_link if len(items) > 1 else "") + f'<h2 id="{anchor}">{title}</h2>'
 
     text = SECTION.sub(heading, text)
+    if items:
+        text = text.rstrip("\n") + "\n\n" + back_link
     label = "এই পাতায় যা আছে" if lang == "bn" else "On this page"
     links = "".join(f'<li><a href="#{a}">{t}</a></li>' for a, t in items)
-    return text.replace("[CONTENTS]", f'<nav class="toc" aria-label="{label}"><h2>{label}</h2><ol>{links}</ol></nav>')
+    return text.replace("[CONTENTS]", f'<nav class="toc" id="contents" aria-label="{label}"><h2>{label}</h2>'
+                                      f'<ol role="list">{links}</ol></nav>')
+
+
+def inline_md(cell: str) -> str:
+    """The Markdown that table cells use, as HTML: "quotes", apostrophes, **bold** and [links](url)."""
+    s = html.escape(cell.strip(), quote=False)
+    s = re.sub(r'"([^"]*)"', r"“\1”", s).replace("'", "’")
+    s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
+    return re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", r'<a href="\2">\1</a>', s)
+
+
+def table_html(head: list[str], rows: list[list[str]]) -> str:
+    """A GFM table as HTML. With 3 or more columns it gets class "stack" (one card per row on a phone),
+    each cell the name of its column (data-label), and ARIA roles, which keep it a table for screen
+    readers when the CSS changes its display."""
+    stack = len(head) >= 3
+    t, rg, tr, th, td = (' role="table"', ' role="rowgroup"', ' role="row"', ' role="columnheader"', ' role="cell"') \
+        if stack else ("", "", "", "", "")
+    labels = [html.escape(re.sub(r"[*_`]", "", h).strip()) for h in head]
+    cols = "".join(f'<th scope="col"{th}>{inline_md(h)}</th>' for h in head)
+    body = "".join(f"<tr{tr}>" + "".join(
+        f'<td{td}' + (f' data-label="{labels[k]}"' if stack else "") + f">{inline_md(c)}</td>"
+        for k, c in enumerate(r)) + "</tr>\n" for r in rows)
+    cls = ' class="stack"' if stack else ""
+    return (f'<div class="table-wrap"><table{cls}{t}>\n<thead{rg}><tr{tr}>{cols}</tr></thead>\n'
+            f"<tbody{rg}>\n{body}</tbody></table></div>")
+
+
+def html_tables(text: str) -> str:
+    """Replaces each GFM pipe table with table_html()."""
+    def cells(line: str) -> list[str]:
+        return [c.strip() for c in line.strip().strip("|").split("|")]
+
+    lines, out, i = text.split("\n"), [], 0
+    while i < len(lines):
+        if TABLE_ROW.match(lines[i]) and i + 1 < len(lines) and TABLE_RULE.match(lines[i + 1]):
+            head, j, rows = cells(lines[i]), i + 2, []
+            while j < len(lines) and TABLE_ROW.match(lines[j]):
+                rows.append(cells(lines[j]))
+                j += 1
+            if any(len(r) != len(head) for r in rows):
+                raise SystemExit(f"a table row has the wrong number of cells: {lines[i]}")
+            out.append(table_html(head, rows))
+            i = j
+        else:
+            out.append(lines[i])
+            i += 1
+    return "\n".join(out)
+
+
+def front(page: str, key: str) -> str:
+    m = re.search(rf"(?m)^{key}:[ \t]*(.+?)[ \t]*$", page.partition("\n---\n")[0])
+    return m.group(1).strip('"') if m else ""
+
+
+def sitemap(site: str, pages: list[tuple[str, str, str]]) -> str:
+    """sitemap.xml: every page, with its English, Bangla and default (English) versions."""
+    rows = []
+    for url, lang, alt in pages:
+        en, bn = (url, alt) if lang == "en" else (alt, url)
+        links = "".join(f'\n    <xhtml:link rel="alternate" hreflang="{h}" href="{site}{u}"/>'
+                        for h, u in (("en", en), ("bn", bn), ("x-default", en)))
+        rows.append(f"  <url>\n    <loc>{site}{url}</loc>{links}\n  </url>")
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
+            + "\n".join(rows) + "\n</urlset>\n")
 
 
 def publish_page(text: str, values: dict[str, str], lang: str = "en") -> str:
@@ -94,6 +173,7 @@ def publish_page(text: str, values: dict[str, str], lang: str = "en") -> str:
         if value:
             text = text.replace(key, value)
     text = add_contents(text, lang)
+    text = html_tables(text)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.lstrip("\n")
 
@@ -124,6 +204,7 @@ def main() -> None:
 
     files: dict[pathlib.Path, str | bytes] = {}
     problems: list[str] = []
+    urls: list[tuple[str, str, str]] = []
 
     def write(rel: pathlib.Path, data: str | bytes) -> None:
         files[rel] = data
@@ -143,10 +224,19 @@ def main() -> None:
         if left:
             problems.append(f"{rel}: {', '.join(left)}")
         write(rel, page)
+        urls.append((front(page, "permalink"), lang, front(page, "alternate")))
 
     config = (HERE / "site" / "_config.yml").read_text(encoding="utf-8")
     config = re.sub(r"(?m)^released: \w+$", f"released: {'true' if a.released else 'false'}", config)
+    css = hashlib.sha256((HERE / "site" / "assets" / "site.css").read_bytes()).hexdigest()[:10]
+    config, n = re.subn(r"(?m)^css_version: \S+$", f"css_version: {css}", config)
+    if n != 1:
+        raise SystemExit("site/_config.yml needs a css_version: line")
     write(pathlib.Path("_config.yml"), config)
+    site_url = re.search(r"(?m)^url: (\S+)$", config).group(1)
+    write(pathlib.Path("sitemap.xml"), sitemap(site_url, urls))
+    write(pathlib.Path("robots.txt"), f"# Every page of this site may be indexed.\nUser-agent: *\nDisallow:\n\n"
+                                      f"Sitemap: {site_url}/sitemap.xml\n")
     for rel in ("_layouts/default.html", "404.md", "README.md"):
         write(pathlib.Path(rel), (HERE / "site" / rel).read_text(encoding="utf-8"))
     # Everything in site/assets: the stylesheet, the icons, the share images and the PNG icons.
