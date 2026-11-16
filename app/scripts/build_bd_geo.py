@@ -6,8 +6,10 @@ Sources (decided by the maintainer, A6 = a, 13 Nov 2026):
     https://data.humdata.org/dataset/cod-ab-bgd  -> download bgd_admin_boundaries.geojson.zip
   * Bangla names: ifahimreza/bangladesh-geojson, src/data/*.json (MIT).
     https://github.com/ifahimreza/bangladesh-geojson
-  * Bangla names that match nothing there: app/scripts/bd_geo_bn_overrides.json, written by us
-    and marked "needs native review" in the output.
+  * Bangla names that match nothing there, or that it misspells: app/scripts/bd_geo_bn_overrides.json,
+    written by us and checked by the maintainer (16 Nov 2026). Codes in its "_needsReview" list are
+    marked bnNeedsReview in the output until a native speaker checks them.
+  * English names the BBS list misspells or has outdated: EN_OVERRIDES below.
 
 Neighbouring districts (tier 4 of the fan-out) are computed from the HDX district polygons: two
 districts are neighbours when their borders share at least two points.
@@ -33,6 +35,13 @@ DISTRICT_ALIASES = {
     "chittagong": "chattogram", "barisal": "barishal", "comilla": "cumilla", "jessore": "jashore",
     "bogra": "bogura", "jhalakathi": "jhalokati", "maulvibazar": "moulvibazar",
     "netrakona": "netrokona", "kishorgonj": "kishoreganj",
+}
+
+# English names that replace the BBS spelling, each checked against the upazila's own portal
+# (16 Nov 2026). The code never changes, so saved profiles and requests just show the new name.
+EN_OVERRIDES = {
+    "BD10790090": "Zianagar",  # BBS "Indurkani" (ইন্দুরকানী), renamed back in 2026: https://zianagar.pirojpur.gov.bd/
+    "BD30930019": "Bhuapur",  # BBS "Bhuanpur", a typo: https://bhuapur.tangail.gov.bd/
 }
 
 
@@ -98,17 +107,23 @@ def main():
     if len(sys.argv) < 3:
         raise SystemExit(__doc__)
     hdx_dir, mit_dir, report = sys.argv[1], sys.argv[2], "--report" in sys.argv
-    overrides = {k: v for k, v in load(OVERRIDES).items() if not k.startswith("_")}
+    overrides_file = load(OVERRIDES)
+    overrides = {k: v for k, v in overrides_file.items() if not k.startswith("_")}
+    needs_review = set(overrides_file.get("_needsReview", []))
+    if needs_review - set(overrides):
+        raise SystemExit(f"_needsReview lists codes without a name: {sorted(needs_review - set(overrides))}")
     bn_div, bn_dis, bn_upa = bangla_index(mit_dir)
     missing, fuzzy, used_overrides = [], [], set()
 
     def area(code, name_en, key, candidates, **extra):
         """An area entry. Bangla: our override, else the MIT name (exact, then close spelling)."""
-        entry = {"code": code, "nameEn": name_en}
+        entry = {"code": code, "nameEn": EN_OVERRIDES.get(code, name_en)}
         match = closest(key, candidates)
         if code in overrides:
             used_overrides.add(code)
-            entry |= {"nameBn": overrides[code], "bnNeedsReview": True}
+            entry["nameBn"] = overrides[code]
+            if code in needs_review:
+                entry["bnNeedsReview"] = True
         elif match is not None:
             if match != key:
                 fuzzy.append((code, name_en, match, candidates[match]))
@@ -135,7 +150,8 @@ def main():
         district_by_code[d["code"]] = d
         match = closest(key, district_bn)
         mit_district_id[d["code"]] = bn_dis[match][0] if match else None
-    for f in sorted(features(hdx_dir, 3), key=lambda f: f["properties"]["adm3_name"]):
+    adm3 = features(hdx_dir, 3)
+    for f in sorted(adm3, key=lambda f: EN_OVERRIDES.get(f["properties"]["adm3_pcode"], f["properties"]["adm3_name"])):
         p = f["properties"]
         is_city = bool(CITY.search(p["adm3_name"]))
         candidates = {} if is_city else bn_upa.get(mit_district_id[p["adm2_pcode"]], {})
@@ -145,14 +161,18 @@ def main():
     unused = set(overrides) - used_overrides
     if unused:
         raise SystemExit(f"overrides for unknown codes: {sorted(unused)}")
+    unknown_en = set(EN_OVERRIDES) - {f["properties"]["adm3_pcode"] for f in adm3}
+    if unknown_en:
+        raise SystemExit(f"EN_OVERRIDES for unknown codes: {sorted(unknown_en)}")
 
     for d in divisions.values():
         d["districts"].sort(key=lambda x: x["nameEn"])
     out = {
         "version": 1,
-        "source": "Bangladesh Bureau of Statistics (BBS), via UN OCHA HDX cod-ab-bgd (2026-01-26), CC BY-IGO",
-        "bnSource": "ifahimreza/bangladesh-geojson (MIT); names with bnNeedsReview are LiquidLyf's own "
-                    "and need a native speaker's review",
+        "source": "Bangladesh Bureau of Statistics (BBS), via UN OCHA HDX cod-ab-bgd (2026-01-26), CC BY-IGO; "
+                  f"{len(EN_OVERRIDES)} English names corrected from the upazilas' own gov.bd portals",
+        "bnSource": "ifahimreza/bangladesh-geojson (MIT), plus LiquidLyf's own names where it has none or "
+                    "misspells one, checked by the maintainer; bnNeedsReview marks any not yet checked",
         "divisions": sorted(divisions.values(), key=lambda x: x["nameEn"]),
     }
     if report:

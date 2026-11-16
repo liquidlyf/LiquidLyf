@@ -76,6 +76,16 @@ class BdGeoTest {
     }
 
     @Test
+    fun `names the maintainer corrected stay corrected (16 Nov 2026)`() {
+        val zianagar = assertNotNullAndGet(geo.area("BD10790090"), "BD10790090") // was Indurkani / ইন্দুরকানী
+        assertEquals("Zianagar", zianagar.name.en)
+        assertEquals("জিয়ানগর", zianagar.name.bn)
+        assertEquals("Bhuapur", geo.area("BD30930019")?.name?.en) // BBS spells it "Bhuanpur"
+        assertEquals("চর রাজিবপুর", geo.area("BD55490008")?.name?.bn)
+        assertFalse(areas.any { it.name.bnNeedsReview })
+    }
+
+    @Test
     fun `names fall back to English when there is no Bangla yet`() {
         assertEquals("Lama", PlaceName("Lama", null).localized(AppLocale.BN))
         assertEquals("Lama", PlaceName("Lama", "লামা").localized(AppLocale.EN))

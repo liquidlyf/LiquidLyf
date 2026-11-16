@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.FileNotFoundException
+import java.text.Normalizer
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -95,12 +96,12 @@ object HospitalSearch {
 
     /** Names starting with the query come before names that only contain it; blank finds nothing. */
     fun search(all: List<Hospital>, district: String, query: String, limit: Int): List<Hospital> {
-        val q = query.trim().lowercase(Locale.ROOT)
+        val q = fold(query.trim())
         if (q.isEmpty()) return emptyList()
         return all.asSequence()
             .filter { it.district == district }
             .mapNotNull { h ->
-                val names = listOfNotNull(h.name.en, h.name.bn).map { it.lowercase(Locale.ROOT) }
+                val names = listOfNotNull(h.name.en, h.name.bn).map(::fold)
                 when {
                     names.any { it.startsWith(q) } -> 0 to h
                     names.any { q in it } -> 1 to h
@@ -112,6 +113,12 @@ object HospitalSearch {
             .map { it.second }
             .toList()
     }
+
+    /**
+     * One form for comparing: ড়, ঢ় and য় come either as one character or as the letter plus a nukta
+     * (keyboards and lists differ), so both sides go to NFC, then lower case.
+     */
+    private fun fold(text: String): String = Normalizer.normalize(text, Normalizer.Form.NFC).lowercase(Locale.ROOT)
 
     fun label(h: Hospital, locale: AppLocale): String = h.name.localized(locale)
 }
