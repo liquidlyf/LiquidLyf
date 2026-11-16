@@ -99,7 +99,7 @@ has to make a new one (3–4 ms). In a local test of the Worker's own code, with
 before the fix); and 8.1 ms when it also had to make a Google token. A warm alert took 0.9 ms. About
 half of a cold call is spent compiling the code on first use.
 
-On Cloudflare, after the deploy: a cold alert, the first call after hours with no traffic, took
+On Cloudflare, after the deploy (measured 2026-11-16): a cold alert, the first call after hours with no traffic, took
 **10 ms** (12 ms before the fix), and a warm one **4 ms**. Other notifications took 2–3 ms and the timed
 jobs 1–3 ms, all without errors. The cold call came from a test script without an App Check token,
 which adds about 1.5 ms in the local test, so a cold alert from the app probably takes about 11–12 ms:
