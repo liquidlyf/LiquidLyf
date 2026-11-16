@@ -1,6 +1,6 @@
 // Expiry: OPEN past expiresAt -> EXPIRED + userStats -1 in one atomic commit.
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { expireOverdue } from "../src/expiry";
+import { EXPIRY_LIMIT, expireOverdue } from "../src/expiry";
 import { FAR_FUTURE } from "../src/fanout";
 import { docName, fakeGoogle, makeEnv, requestRest, resetCaches } from "./helpers";
 
@@ -48,5 +48,45 @@ describe("expiry", () => {
     const calls = await fakeGoogle({ query: () => [overdue("r1", "../evil")] });
     await expireOverdue(await makeEnv(), NOW);
     expect(calls.writes[0]).toHaveLength(1);
+  });
+
+  test("asks only for OPEN requests past expiresAt, oldest first, at most EXPIRY_LIMIT, reading only the owner", async () => {
+    const calls = await fakeGoogle();
+    await expireOverdue(await makeEnv(), NOW);
+    const q = calls.queries[0];
+    expect(q.from).toEqual([{ collectionId: "requests", allDescendants: false }]);
+    // Only OPEN: a hidden (REMOVED) request keeps its slot until an admin acts (firebase/README.md).
+    expect(q.where.compositeFilter.filters).toEqual([
+      { fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "OPEN" } } },
+      { fieldFilter: { field: { fieldPath: "expiresAt" }, op: "LESS_THAN_OR_EQUAL", value: { timestampValue: NOW.toISOString() } } },
+    ]);
+    expect(q.orderBy).toEqual([{ field: { fieldPath: "expiresAt" }, direction: "ASCENDING" }]);
+    expect(q.limit).toBe(EXPIRY_LIMIT);
+    expect(EXPIRY_LIMIT).toBeLessThanOrEqual(40); // one commit each, inside the free plan's 50 subrequests
+    expect(q.select).toEqual({ fields: [{ fieldPath: "requesterUid" }] });
+  });
+
+  test("nothing due: one query, no writes", async () => {
+    const calls = await fakeGoogle();
+    expect(await expireOverdue(await makeEnv(), NOW)).toEqual({ due: 0, expired: 0, lost: 0, withoutStats: 0 });
+    expect(calls.queries).toHaveLength(1);
+    expect(calls.writes).toHaveLength(0);
+  });
+
+  test("several due: each is its own commit, and one the owner closed doesn't stop the others", async () => {
+    const calls = await fakeGoogle({
+      query: () => [overdue("r1", "alice"), overdue("r2", "bob"), overdue("r3", "carol")],
+      commitErrors: [null, PRECONDITION, PRECONDITION, null], // r2 lost both attempts
+    });
+    const out = await expireOverdue(await makeEnv(), NOW);
+    expect(out).toEqual({ due: 3, expired: 2, lost: 1, withoutStats: 0 });
+    expect(calls.writes.map((w) => w[0].update.name)).toEqual(
+      [docName("requests/r1"), docName("requests/r2"), docName("requests/r2"), docName("requests/r3")]);
+    expect(calls.writes[3][1].transform.document).toBe(docName("userStats/carol")); // each owner's own -1
+  });
+
+  test("any other Firestore error fails the run, so the dashboard shows it", async () => {
+    await fakeGoogle({ query: () => [overdue("r1")], commitErrors: [{ status: 500, grpc: "INTERNAL" }] });
+    await expect(expireOverdue(await makeEnv(), NOW)).rejects.toThrow();
   });
 });

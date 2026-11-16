@@ -116,3 +116,74 @@ describe("POST .../notify-responders", () => {
     expect(calls.fcm).toHaveLength(0);
   });
 });
+
+describe("the notify allow-list (phase-09 9.1)", () => {
+  beforeEach(() => resetCaches());
+  afterEach(() => vi.unstubAllGlobals());
+
+  // Every response status x both callers. Only these 4 pushes exist; everything else is 409.
+  test.each([
+    ["OFFERED", "bob", "NEW_OFFER"], ["OFFERED", "alice", null],
+    ["CONFIRMED", "bob", null], ["CONFIRMED", "alice", "OFFER_CONFIRMED"],
+    ["DECLINED", "bob", null], ["DECLINED", "alice", "OFFER_DECLINED"],
+    ["DONATED", "bob", null], ["DONATED", "alice", "DONATION_RECORDED"],
+    ["WITHDRAWN", "bob", null], ["WITHDRAWN", "alice", null],
+    ["SOMETHING_NEW", "bob", null], ["SOMETHING_NEW", "alice", null],
+  ])("a %s response, announced by %s: %s", async (status, caller, type) => {
+    const calls = await fakeGoogle({ docs: { [`requests/${RID}/responses/bob`]: responseRest(status) } });
+    const res = await call(notifyPath, caller);
+    if (type === null) {
+      expect(res.status).toBe(409);
+      expect(calls.fcm).toHaveLength(0);
+    } else {
+      expect(res.status).toBe(202);
+      expect(calls.fcm).toHaveLength(1);
+      expect(calls.fcm[0]).toMatchObject({ condition: `'usr_${caller === "bob" ? "alice" : "bob"}' in topics`, data: { type, requestId: RID } });
+    }
+    expect(calls.writes).toHaveLength(0); // the badge write needs a fast offer and the post time
+  });
+
+  test("the caller must be the response's own donor, not just the uid in the path", async () => {
+    const calls = await fakeGoogle({ docs: { [`requests/${RID}/responses/bob`]: requestRest({ donorUid: "carol", requesterUid: "alice", status: "OFFERED" }) } });
+    expect((await call(notifyPath, "bob")).status).toBe(403);
+    expect(calls.fcm).toHaveLength(0);
+  });
+
+  test("a malformed uid in the stored response is refused (422), not pushed", async () => {
+    const calls = await fakeGoogle({ docs: { [`requests/${RID}/responses/bob`]: requestRest({ donorUid: "bob", requesterUid: "al ice'||'x", status: "OFFERED" }) } });
+    expect((await call(notifyPath, "bob")).status).toBe(422);
+    expect(calls.fcm).toHaveLength(0);
+  });
+
+  test("FCM failing is a 503 so the app retries, on both endpoints", async () => {
+    await fakeGoogle({ docs: { [`requests/${RID}/responses/bob`]: responseRest("CONFIRMED") }, fcmStatus: [503] });
+    expect((await call(notifyPath, "alice")).status).toBe(503);
+    resetCaches();
+    await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest({ status: "CANCELLED", responders: { bob: { status: "OFFERED" } } }) }, fcmStatus: [500] });
+    expect((await call(respondersPath, "alice")).status).toBe(503);
+  });
+
+  test.each([["OPEN"], ["EXPIRED"], ["REMOVED"], ["SOMETHING_NEW"]])(
+    "notify-responders on a %s request: 409, nothing sent", async (status) => {
+      const calls = await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest({ status, responders: { bob: { status: "OFFERED" } } }) } });
+      expect((await call(respondersPath, "alice")).status).toBe(409);
+      expect(calls.fcm).toHaveLength(0);
+    });
+
+  test("nobody still waiting: 202 with 0 recipients and no push", async () => {
+    const calls = await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest({
+      status: "CANCELLED", responders: { dan: { status: "DONATED" }, eve: { status: "WITHDRAWN" }, fay: { status: "DECLINED" } },
+    }) } });
+    const res = await call(respondersPath, "alice");
+    expect(await res.json()).toEqual({ accepted: true, type: "REQUEST_CANCELLED", recipients: 0 });
+    expect(calls.fcm).toHaveLength(0);
+  });
+
+  test("responder keys that aren't valid uids are skipped, never put into a condition", async () => {
+    const calls = await fakeGoogle({ docs: { [`requests/${RID}`]: requestRest({
+      status: "FULFILLED", responders: { "x' in topics || 'y": { status: "OFFERED" }, bob: { status: "OFFERED" } },
+    }) } });
+    expect(await (await call(respondersPath, "alice")).json()).toMatchObject({ recipients: 1 });
+    expect(calls.fcm[0].condition).toBe("'usr_bob' in topics");
+  });
+});

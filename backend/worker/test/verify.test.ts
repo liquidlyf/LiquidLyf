@@ -27,9 +27,31 @@ describe("Firebase ID token", () => {
     ["expired", { exp: Math.floor(Date.now() / 1000) - 3600 }],
     ["issued in the future", { iat: Math.floor(Date.now() / 1000) + 3600 }],
     ["empty uid", { sub: "" }],
+    ["signed in in the future (auth_time)", { auth_time: Math.floor(Date.now() / 1000) + 3600 }],
+    ["a uid over 128 characters", { sub: "u".repeat(129) }],
+    ["a uid that isn't a string", { sub: 42 }],
+    ["no expiry", { exp: undefined }],
   ])("rejected: %s", async (_name, claims) => {
     await fakeGoogle();
     await expect(verifyIdToken(await idToken("alice", claims), PROJECT)).rejects.toThrow();
+  });
+
+  test("within the 60 s clock-skew leeway, a token is still accepted", async () => {
+    await fakeGoogle();
+    const now = Math.floor(Date.now() / 1000);
+    await expect(verifyIdToken(await idToken("alice", { exp: now - 30, iat: now + 30 }), PROJECT)).resolves.toMatchObject({ uid: "alice" });
+  });
+
+  test("a token over 4 KB is refused before any key is fetched", async () => {
+    const calls = await fakeGoogle();
+    await expect(verifyIdToken(await idToken("alice", { pad: "x".repeat(4096) }), PROJECT)).rejects.toThrow("malformed");
+    expect(calls.idJwks).toBe(0);
+  });
+
+  test("an email that isn't verified is reported, so the route can refuse it", async () => {
+    await fakeGoogle();
+    expect((await verifyIdToken(await idToken("alice", { email_verified: false }), PROJECT)).emailVerified).toBe(false);
+    expect((await verifyIdToken(await idToken("alice", { email_verified: "true" }), PROJECT)).emailVerified).toBe(false); // only a real true counts
   });
 
   test("a token signed with another key is rejected", async () => {
@@ -98,6 +120,17 @@ describe("App Check token", () => {
   test("a forged token is rejected", async () => {
     await fakeGoogle();
     await expect(verifyAppCheck(await appCheckToken({}, keys.rogue.privateKey), PROJECT_NUMBER, [APP_ID])).rejects.toThrow();
+  });
+
+  test("the header must say typ JWT, and an ID token is not an App Check token", async () => {
+    await fakeGoogle();
+    const claims = {
+      iss: `https://firebaseappcheck.googleapis.com/${PROJECT_NUMBER}`, aud: [`projects/${PROJECT_NUMBER}`],
+      sub: APP_ID, exp: Math.floor(Date.now() / 1000) + 3000,
+    };
+    const jose = await signJwt(keys.appCheck.privateKey, { alg: "RS256", kid: "ac-1", typ: "JOSE" }, claims);
+    await expect(verifyAppCheck(jose, PROJECT_NUMBER, [APP_ID])).rejects.toThrow("typ");
+    await expect(verifyAppCheck(await idToken("alice"), PROJECT_NUMBER, [APP_ID])).rejects.toThrow("unknown kid");
   });
 });
 
