@@ -69,6 +69,8 @@ class RemindersTest {
 
     @After
     fun tearDown() {
+        // Without the emulators setUp skips before injecting: nothing to clean up then.
+        if (!::reminders.isInitialized) return
         reminders.cancelAll()
         manager.cancelAll()
     }

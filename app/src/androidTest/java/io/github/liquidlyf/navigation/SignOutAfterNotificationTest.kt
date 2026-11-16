@@ -81,6 +81,8 @@ class SignOutAfterNotificationTest {
 
     @After
     fun tearDown() {
+        // Without the emulators setUp skips before injecting: nothing to clean up then.
+        if (!::auth.isInitialized) return
         instrumentation.runOnMainSync { liveMainActivities().forEach(Activity::finish) }
         auth.signOut()
     }
