@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Bangla, review set 1: safety and medical wording (Phase 8.4).
-    NEEDS NATIVE REVIEW: first drafts, not yet checked by a native speaker. When the maintainer
-    has reviewed this set on the phone, change this line to "Reviewed by the maintainer, <date>".
+    Reviewed by the maintainer, 16 Nov 2026.
     Terms used throughout: alert = অ্যালার্ট, unit (of blood) = ব্যাগ, blood centre = ব্লাড ব্যাংক,
-    report = রিপোর্ট, block = ব্লক, offer = প্রস্তাব, requester = অনুরোধকারী. Numbers in Bangla digits.
+    report = রিপোর্ট, block = ব্লক, offer = সাড়া (never প্রস্তাব), requester = অনুরোধকারী. Numbers in Bangla digits.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="bn">
     <!-- Onboarding (8.3: the last page is the short medical disclaimer) -->

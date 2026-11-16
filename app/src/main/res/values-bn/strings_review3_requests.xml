@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Bangla, review set 3: Home, requests (post, detail, offers) and notifications (Phase 8.4).
-    NEEDS NATIVE REVIEW: first drafts, not yet checked by a native speaker. When the maintainer
-    has reviewed this set on the phone, change this line to "Reviewed by the maintainer, <date>".
+    Reviewed by the maintainer, 16 Nov 2026.
     Same terms as sets 1 and 2. Plurals: Bangla uses one form, but Android needs both items.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="bn">

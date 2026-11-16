@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Bangla, review set 2: signing in, the account and profile setup, errors and common buttons (Phase 8.4).
-    NEEDS NATIVE REVIEW: first drafts, not yet checked by a native speaker. When the maintainer
-    has reviewed this set on the phone, change this line to "Reviewed by the maintainer, <date>".
-    Same terms as set 1 (অ্যালার্ট, ব্যাগ, প্রস্তাব, অনুরোধকারী). "Google" and "LiquidLyf" stay in Latin letters.
+    Reviewed by the maintainer, 16 Nov 2026.
+    Same terms as set 1 (অ্যালার্ট, ব্যাগ, সাড়া, অনুরোধকারী). "Google" and "LiquidLyf" stay in Latin letters.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="bn">
     <!-- Titles and common buttons -->

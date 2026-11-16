@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Bangla, review set 4: Profile and badges, Find donors, About and licences, Moderation (Phase 8.4).
-    NEEDS NATIVE REVIEW: first drafts, not yet checked by a native speaker. When the maintainer
-    has reviewed this set on the phone, change this line to "Reviewed by the maintainer, <date>".
+    Reviewed by the maintainer, 16 Nov 2026.
     Licence names, "GNU AGPL", file and script names stay in Latin letters.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="bn">

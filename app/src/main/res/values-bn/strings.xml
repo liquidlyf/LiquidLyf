@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Bangla, the first strings (Phase 1): navigation, theme, urgency, blood groups. Reviewed with set 2.
-    NEEDS NATIVE REVIEW: first drafts, not yet checked by a native speaker. The rest of the app is
-    in strings_review1_safety.xml to strings_review4_profile.xml (Phase 8.4).
+    Reviewed by the maintainer, 16 Nov 2026. The rest of the app is in strings_review1_safety.xml to
+    strings_review4_profile.xml (Phase 8.4).
 -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="bn">
     <!-- Bottom navigation -->
