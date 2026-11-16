@@ -7,7 +7,8 @@ alternate: /bn/delete-account
 status: draft
 ---
 
-<!-- DRAFT. The steps must match the app's Settings → Delete your account screen
+<!-- DRAFT. The steps must match the app's Profile → ⚙ Settings → Delete your account screen (Settings is the
+     gear icon in Profile's top bar, A, 16 Nov 2026)
      (feature/account/AccountScreens.kt and AccountViewModels.kt: the word DELETE or মুছুন, the
      password if the account has one, then the "Deleting your account…" screen). Checked 15 Nov 2026. -->
 
@@ -19,7 +20,7 @@ Uninstalling the app does **not** delete your account. Use one of the two ways b
 
 ## In the app (fastest)
 
-1. Open **LiquidLyf** and go to **Settings → Delete your account**.
+1. Open **LiquidLyf** and go to **Profile → ⚙ Settings → Delete your account**.
 2. Read what will be deleted. Type **DELETE** in the box, and enter your password if your account has
    one.
 3. Tap **Delete my account**.
