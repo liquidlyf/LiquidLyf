@@ -29,6 +29,7 @@ object LLIcons {
     val Visibility = R.drawable.ic_visibility
     val VisibilityOff = R.drawable.ic_visibility_off
     val Palette = R.drawable.ic_palette
+    val Language = R.drawable.ic_language
 
     // States
     val Error = R.drawable.ic_error

@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,10 +36,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.screenGutter
+import io.github.liquidlyf.feature.settings.LanguageSwitch
 import kotlinx.coroutines.launch
 
 private data class OnboardingPage(@DrawableRes val icon: Int, @StringRes val title: Int, @StringRes val body: Int)
@@ -51,9 +55,13 @@ private val pages = listOf(
     OnboardingPage(LLIcons.Hospital, R.string.onboarding_medical_title, R.string.onboarding_medical_body),
 )
 
-/** Three slides, shown once on the first launch (Phase 3.1). Skip or finish both go to sign-in. */
+/**
+ * The slides, shown once on the first launch (Phase 3.1). Skip or finish both go to sign-in.
+ * Every page offers English or বাংলা at the top, so a new user can read them in Bangla.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun OnboardingScreen(onFinished: () -> Unit) {
+fun OnboardingScreen(onFinished: () -> Unit, onLanguageChange: (AppLanguage) -> Unit = {}) {
     val pagerState = rememberPagerState { pages.size }
     val scope = rememberCoroutineScope()
     val last = pagerState.currentPage == pages.lastIndex
@@ -66,7 +74,14 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                 .padding(horizontal = screenGutter(), vertical = Spacing.md),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            // With very large text, Skip wraps under the language switch instead of being cut off.
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                LanguageSwitch(onLanguageChange)
                 if (!last) {
                     TextButton(onClick = { scope.launch { pagerState.animateScrollToPage(pages.lastIndex) } }) {
                         Text(stringResource(R.string.action_skip))

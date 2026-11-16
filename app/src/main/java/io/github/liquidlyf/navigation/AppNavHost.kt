@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -84,6 +85,7 @@ import io.github.liquidlyf.feature.session.NotificationPermissionScreen
 import io.github.liquidlyf.feature.session.SessionProblemScreen
 import io.github.liquidlyf.feature.session.SuspendedScreen
 import io.github.liquidlyf.feature.session.needsNotificationPermission
+import io.github.liquidlyf.feature.settings.LanguageViewModel
 import io.github.liquidlyf.feature.settings.NotificationPrefsRoute
 import io.github.liquidlyf.feature.settings.SettingsScreen
 
@@ -239,11 +241,13 @@ internal fun NavController.navigateToTab(tab: TopLevelDestination) {
 
 private fun NavGraphBuilder.onboarding(navController: NavController, onFinished: () -> Unit) {
     composable<Onboarding> {
+        val language: LanguageViewModel = hiltViewModel()
         OnboardingScreen(
             onFinished = dropUnlessResumed {
                 onFinished()
                 navController.navigate(AuthGraph) { popUpTo<Onboarding> { inclusive = true } }
             },
+            onLanguageChange = language::set,
         )
     }
 }

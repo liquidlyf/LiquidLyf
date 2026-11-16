@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -49,6 +52,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.auth.GoogleSignInResult
 import io.github.liquidlyf.core.data.auth.googleWebClientId
 import io.github.liquidlyf.core.data.auth.requestGoogleIdToken
+import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.EmptyState
@@ -61,6 +65,8 @@ import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.util.Links
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
+import io.github.liquidlyf.feature.settings.LanguageToggle
+import io.github.liquidlyf.feature.settings.LanguageViewModel
 import kotlinx.coroutines.launch
 
 /** Shared frame: top bar, scrolling content that stays above the keyboard, at most 480 dp wide. */
@@ -69,9 +75,10 @@ import kotlinx.coroutines.launch
 internal fun AuthLayout(
     title: String,
     onBack: (() -> Unit)?,
+    actions: @Composable RowScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Scaffold(topBar = { LLTopBar(title = title, onBack = onBack) }) { padding ->
+    Scaffold(topBar = { LLTopBar(title = title, onBack = onBack, actions = actions) }) { padding ->
         Box(
             Modifier
                 .fillMaxSize()
@@ -109,10 +116,18 @@ internal fun FormError(@StringRes error: Int?) {
 // ---- Sign in ----
 
 @Composable
-fun SignInRoute(onCreateAccount: () -> Unit, onForgotPassword: () -> Unit, viewModel: SignInViewModel = hiltViewModel()) {
+fun SignInRoute(
+    onCreateAccount: () -> Unit,
+    onForgotPassword: () -> Unit,
+    viewModel: SignInViewModel = hiltViewModel(),
+    language: LanguageViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val onGoogle = rememberContinueWithGoogle(viewModel::onGoogleStarted, viewModel::onGoogleResult)
-    SignInScreen(state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, onCreateAccount, onForgotPassword, onGoogle)
+    SignInScreen(
+        state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, onCreateAccount, onForgotPassword, onGoogle,
+        onLanguageChange = language::set,
+    )
 }
 
 /**
@@ -154,6 +169,7 @@ internal tailrec fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SignInScreen(
     state: SignInUiState,
@@ -163,8 +179,10 @@ fun SignInScreen(
     onCreateAccount: () -> Unit,
     onForgotPassword: () -> Unit,
     onContinueWithGoogle: (() -> Unit)? = null,
+    onLanguageChange: (AppLanguage) -> Unit = {},
 ) {
-    AuthLayout(title = stringResource(R.string.title_sign_in), onBack = null) {
+    // Before sign-in, Settings → Language can't be reached: the switch is in the top bar.
+    AuthLayout(title = stringResource(R.string.title_sign_in), onBack = null, actions = { LanguageToggle(onLanguageChange) }) {
         if (onContinueWithGoogle != null) GoogleOption(onContinueWithGoogle, enabled = !state.loading)
         LLTextField(
             value = state.email,
@@ -196,7 +214,8 @@ fun SignInScreen(
             loading = state.loading,
             loadingText = stringResource(R.string.action_signing_in),
         )
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // A flow row: with large text the button goes under the question instead of being squeezed.
+        FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.sign_in_no_account), style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = dropUnlessResumed(block = onCreateAccount), enabled = !state.loading) {
                 Text(stringResource(R.string.action_create_account))
@@ -208,7 +227,7 @@ fun SignInScreen(
 // ---- Sign up ----
 
 @Composable
-fun SignUpRoute(onBack: () -> Unit, viewModel: SignUpViewModel = hiltViewModel()) {
+fun SignUpRoute(onBack: () -> Unit, viewModel: SignUpViewModel = hiltViewModel(), language: LanguageViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     SignUpScreen(
         state = state,
@@ -219,9 +238,11 @@ fun SignUpRoute(onBack: () -> Unit, viewModel: SignUpViewModel = hiltViewModel()
         onSignUp = viewModel::signUp,
         onBack = onBack,
         onContinueWithGoogle = rememberContinueWithGoogle(viewModel::onGoogleStarted, viewModel::onGoogleResult),
+        onLanguageChange = language::set,
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SignUpScreen(
     state: SignUpUiState,
@@ -232,10 +253,11 @@ fun SignUpScreen(
     onSignUp: () -> Unit,
     onBack: () -> Unit,
     onContinueWithGoogle: (() -> Unit)? = null,
+    onLanguageChange: (AppLanguage) -> Unit = {},
 ) {
     val links = rememberSafeIntentLauncher()
     val locale = currentAppLocale()
-    AuthLayout(title = stringResource(R.string.title_sign_up), onBack = onBack) {
+    AuthLayout(title = stringResource(R.string.title_sign_up), onBack = onBack, actions = { LanguageToggle(onLanguageChange) }) {
         // P2: a new Google account skips this form and confirms 18+ and the Terms in setup.
         if (onContinueWithGoogle != null) GoogleOption(onContinueWithGoogle, enabled = !state.loading)
         LLTextField(
@@ -277,7 +299,7 @@ fun SignUpScreen(
             Text(stringResource(R.string.sign_up_consent), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = Spacing.xs))
         }
         state.consentError?.let { FormError(it) }
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             TextButton(onClick = { links.openUrl(Links.terms(locale)) }) { Text(stringResource(R.string.action_read_terms)) }
             TextButton(onClick = { links.openUrl(Links.privacy(locale)) }) { Text(stringResource(R.string.action_read_privacy)) }
         }
@@ -288,7 +310,7 @@ fun SignUpScreen(
             loading = state.loading,
             loadingText = stringResource(R.string.action_creating_account),
         )
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.sign_up_have_account), style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = dropUnlessResumed(block = onBack), enabled = !state.loading) {
                 Text(stringResource(R.string.action_sign_in))
