@@ -109,9 +109,15 @@ only; the build removes them.
   line, `</div>`.
 - **Bangla style (C13 = a, 16 Nov 2026):** everyday Bangla, the way people write on Facebook in
   Bangladesh, not English word order; common English words stay (অ্যাপ, ফোন, ডাউনলোড, নোটিফিকেশন).
-  A blood request is a "পোস্ট" and its author "যিনি পোস্ট দিয়েছেন"; offering is "রাজি হওয়া", and the
-  offer itself the app's "প্রস্তাব". **Where a page says what to tap, use the app's exact Bangla label**
-  from `app/src/main/res/values-bn/`, in quotes. If the app's words change after C8, change the pages.
+  A blood request is a "পোস্ট" and its author "যিনি পোস্ট দিয়েছেন"; offering is "রাজি হওয়া" or "সাড়া
+  দেওয়া", and the offer itself the app's "সাড়া". **Where a page says what to tap, use the app's exact
+  Bangla label** from `app/src/main/res/values-bn/`, in quotes. If the app's words change, change the
+  pages.
+- **The app's key words (the maintainer's final app Bangla, 16 Nov 2026):** offer = সাড়া, never
+  প্রস্তাব; Withdraw = "আমার সাড়া ফিরিয়ে নিন"; Decline = "নাকচ করুন" (in a sentence "নাকচ করা"); Report
+  = "রিপোর্ট করুন"; a direct ask = সরাসরি অনুরোধ; rest period = বিরতি; Eligible now = "এখন রক্ত দিতে
+  পারবেন"; Edit = "এডিট করুন"; version = ভার্সন (সংস্করণ only in a legal licence name). Change a word only
+  where the page means the app's thing or quotes its button or tab.
 
 - The v1.1 share page needs `/.well-known/assetlinks.json`. Jekyll skips folders that start with a dot,
   so add `include: [".well-known"]` to `site/_config.yml`. Don't add a `.nojekyll` file, because that

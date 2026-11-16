@@ -8,7 +8,8 @@ status: draft, needs native review
 
 <!-- Needs native review (C8). Translated from the English draft (`en/download.md`). A native Bangla
     speaker must check the wording. The Android button names below must match what a phone set to
-    Bangla really shows: check them on a real phone and take the screenshots in Bangla. -->
+    Bangla really shows: check them on a real phone and take the screenshots in Bangla. "ভার্সন", not
+    "সংস্করণ", as in the maintainer's final app Bangla (16 Nov 2026). -->
 
 # LiquidLyf ডাউনলোড করুন
 
@@ -17,11 +18,11 @@ status: draft, needs native review
 
 **[⬇ LiquidLyf ডাউনলোড করুন (APK)](https://github.com/liquidlyf/LiquidLyf/releases/latest/download/LiquidLyf.apk)**
 
-এই লিংক সবসময় সর্বশেষ সংস্করণ দেয়। [সব সংস্করণ ও রিলিজ নোট](https://github.com/liquidlyf/LiquidLyf/releases)
+এই লিংক সবসময় সর্বশেষ ভার্সন দেয়। [সব ভার্সন ও রিলিজ নোট](https://github.com/liquidlyf/LiquidLyf/releases)
 
 [QR CODE: the same download link, for posters]
 
-**যা লাগবে:** **Android 7.0 বা নতুন** সংস্করণের একটি Android ফোন, যাতে **Google Play services** আছে।
+**যা লাগবে:** **Android 7.0 বা নতুন** ভার্সনের একটি Android ফোন, যাতে **Google Play services** আছে।
 সাইন-ইন ও নোটিফিকেশনের জন্য এটি দরকার। Google Play services ছাড়া ফোন, যেমন নতুন Huawei ফোন, সমর্থিত নয়।
 
 ## কীভাবে ইনস্টল করবেন
@@ -63,11 +64,11 @@ SHA-256: [SHA-256 FINGERPRINT]
 
 ## আপডেট
 
-- নতুন সংস্করণ এলে অ্যাপ নিজেই জানায়। বার্তাটি চাপলে এই পাতা খুলবে।
+- নতুন ভার্সন এলে অ্যাপ নিজেই জানায়। বার্তাটি চাপলে এই পাতা খুলবে।
 - অথবা [Obtainium](https://obtainium.imranr.dev) দিয়ে স্বয়ংক্রিয়ভাবে আপডেট পান:
   [Obtainium-এ LiquidLyf যোগ করুন](obtainium://add/https://github.com/liquidlyf/LiquidLyf)।
 
-আপডেট পুরোনো সংস্করণের ওপরেই ইনস্টল হয়। আপনার অ্যাকাউন্ট ও সেটিংস থেকে যায়।
+আপডেট পুরোনো ভার্সনের ওপরেই ইনস্টল হয়। আপনার অ্যাকাউন্ট ও সেটিংস থেকে যায়।
 
 ## জরুরি কথা
 
