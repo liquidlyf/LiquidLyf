@@ -19,11 +19,13 @@ download button. The request share page (`/r/`, v1.1) comes later.
 
 **Bangla:** reviewed by the maintainer (C8, 16 Nov 2026), after a meaning check against the English:
 checkers translated each Bangla line back into English without seeing the English, and the lines that
-didn't match were fixed. `bn_reviewed` is now `true`, so the notice below is off. Give every new or
-changed Bangla line the same check. The v1.0 download page (`bn/download.md`) wasn't part of C8: review
-it before `--released`. Before the review,
-the site shows a notice on every Bangla page that the English version applies if the two differ. After
-the review, set `bn_reviewed: true` in [site/_config.yml](site/_config.yml).
+didn't match were fixed. Give every new or changed Bangla line the same check. The v1.0 download page
+(`bn/download.md`) wasn't part of C8: review it before `--released`.
+
+**The notice stays (the maintainer, 16 Nov 2026):** every Bangla page still says the English version
+applies if the two differ (`bn_reviewed: false` in [site/_config.yml](site/_config.yml)), with its
+wording unchanged, although the review is done. Which language wins, and whether the Terms should say
+so, is a question for the lawyer (C7). Set `bn_reviewed: true` only when the maintainer decides to.
 
 ## Publishing
 
@@ -60,7 +62,7 @@ Switches in [`site/_config.yml`](site/_config.yml):
 |---|---|---|
 | `released` (set by `--released`) | "Coming soon", and the short /download page | The download button and the full install guide |
 | `facebook` | The home page offers release alerts on GitHub (Watch → Custom → Releases) | "Follow us on Facebook" and a Facebook link in the footer. Turn it on only after P confirms the page's auto-reply |
-| `bn_reviewed` | A notice on every Bangla page that the English applies | No notice (**on** since C8, 16 Nov 2026) |
+| `bn_reviewed` | A notice on every Bangla page that the English applies (kept after C8, the maintainer's choice) | No notice |
 
 After the release (`--released`), a phone screenshot replaces the logo on the home page: its front
 matter has `screenshot: /assets/screens/home-en.png` (and `-bn` for Bangla), with the image in
