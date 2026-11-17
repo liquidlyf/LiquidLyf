@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.aboutlibraries.android)
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 // Blood compatibility and fan-out test vectors, shared with firebase/ and backend/worker/.
@@ -191,6 +192,13 @@ androidComponents {
     }
 }
 
+// The Baseline Profile (A32-5) is made in CI only (baselineprofile/README.md) and committed to
+// src/main/generated/baselineProfiles/, so every variant, prod too, ships it. Never during a build.
+baselineProfile {
+    mergeIntoMain = true
+    automaticGenerationDuringBuild = false
+}
+
 dependencies {
     // Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -215,6 +223,9 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     // Phase 5.4: on-device reminders ("You can donate again", "request ends soon").
     implementation(libs.androidx.work.runtime.ktx)
+    // Hands the Baseline Profile to Android on first launch: without Play, nothing else does.
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(project(":baselineprofile"))
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)

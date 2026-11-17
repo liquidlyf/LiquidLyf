@@ -21,3 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "LiquidLyf"
 include(":app")
+// Makes the Baseline Profile in CI (A32-5); never on a PC. See baselineprofile/README.md.
+include(":baselineprofile")
