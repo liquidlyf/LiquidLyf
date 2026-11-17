@@ -236,4 +236,19 @@
          the UI work; its labels are fixed now because the website's download page quotes them. -->
     <string name="update_available_title" tools:ignore="UnusedResources">Update available</string>
     <string name="update_available_action" tools:ignore="UnusedResources">Get the update</string>
+    <!-- "update a" (17 Nov 2026): the in-app download and install, and the required-update screen. -->
+    <string name="update_available_body" tools:ignore="UnusedResources">LiquidLyf %1$s is ready to install. You keep your account and settings.</string>
+    <string name="update_not_now" tools:ignore="UnusedResources">Not now</string>
+    <string name="update_download_size" tools:ignore="UnusedResources">Download size: about %1$s</string>
+    <string name="update_data_note" tools:ignore="UnusedResources">Use Wi-Fi if you pay for mobile data.</string>
+    <string name="update_downloading" tools:ignore="UnusedResources">Downloading the update… %1$d%%</string>
+    <string name="update_allow_title" tools:ignore="UnusedResources">Allow LiquidLyf to install its update</string>
+    <string name="update_allow_body" tools:ignore="UnusedResources">Android asks this once. On the next screen, turn on the switch for LiquidLyf, then come back here.</string>
+    <string name="update_allow_action" tools:ignore="UnusedResources">Open settings</string>
+    <string name="update_error_wrong_file" tools:ignore="UnusedResources">This download didn\'t match the release, so it was deleted. Try again, or download it in the browser.</string>
+    <string name="update_error_network" tools:ignore="UnusedResources">The download stopped. Check your internet connection and try again.</string>
+    <string name="update_error_install" tools:ignore="UnusedResources">The update wasn\'t installed. You can try again.</string>
+    <string name="update_in_browser" tools:ignore="UnusedResources">Download in the browser instead</string>
+    <string name="update_required_title" tools:ignore="UnusedResources">Please update LiquidLyf</string>
+    <string name="update_required_body" tools:ignore="UnusedResources">This version is too old to use safely. Updating keeps your account and settings.</string>
 </resources>
