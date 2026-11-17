@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -12,13 +13,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -29,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -39,6 +44,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.LARGE_FONT_SCALE
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.feature.settings.LanguageSwitch
@@ -88,45 +94,53 @@ fun OnboardingScreen(onFinished: () -> Unit, onLanguageChange: (AppLanguage) -> 
                     }
                 }
             }
+            val largeText = LocalDensity.current.fontScale >= LARGE_FONT_SCALE
             HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { index ->
                 val page = pages[index]
                 val position = stringResource(R.string.onboarding_page, index + 1, pages.size)
-                Column(
-                    Modifier
-                        .fillMaxSize()
-                        .semantics { contentDescription = position },
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Box(
+                // A11Y-04: each page scrolls, so with large text the medical disclaimer is read to its end
+                // ("…call 999") before "I understand"; centred when it fits.
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    Column(
                         Modifier
-                            .size(112.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center,
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .heightIn(min = maxHeight)
+                            .padding(vertical = Spacing.sm)
+                            .semantics { contentDescription = position },
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Icon(
-                            painterResource(page.icon),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(56.dp),
+                        Box(
+                            Modifier
+                                .size(if (largeText) 64.dp else 112.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painterResource(page.icon),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(if (largeText) 32.dp else 56.dp),
+                            )
+                        }
+                        Spacer(Modifier.size(if (largeText) Spacing.md else Spacing.xl))
+                        Text(
+                            stringResource(page.title),
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.widthIn(max = 480.dp),
                         )
-                    }
-                    Spacer(Modifier.size(Spacing.xl))
-                    Text(
-                        stringResource(page.title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.widthIn(max = 480.dp),
-                    )
-                    Spacer(Modifier.size(Spacing.sm))
-                    Text(
-                        stringResource(page.body),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.widthIn(max = 480.dp),
-                    )
+                        Spacer(Modifier.size(Spacing.sm))
+                        Text(
+                            stringResource(page.body),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.widthIn(max = 480.dp),
+                        )
+                }
                 }
             }
             PageDots(count = pages.size, current = pagerState.currentPage)

@@ -14,7 +14,10 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -22,21 +25,25 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.CapFontScale
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
+import io.github.liquidlyf.core.designsystem.components.LARGE_FONT_SCALE
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
+import io.github.liquidlyf.core.designsystem.components.MAX_LABEL_SCALE
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.RequestCard
-import io.github.liquidlyf.core.designsystem.components.SegmentedChoices
 import io.github.liquidlyf.core.designsystem.components.StatusPill
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.rememberNow
@@ -54,6 +61,34 @@ fun RequestsRoute(
     RequestsScreen(state, online, viewModel::selectTab, viewModel::refresh, viewModel::loadMore, onOpenRequest, onCreateRequest)
 }
 
+/**
+ * Nearby / My requests / My offers as Material tabs (A11Y-02). They share the width when the text
+ * is normal; with large text they scroll sideways, their text grows up to 1.5x, and the last tab
+ * always shows partly, so it's clear there's more (at 200% the old segmented row hid "My offers"
+ * off the screen in Bangla). A long label wraps between words, never inside one.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RequestsTabs(selected: RequestsTab, onSelect: (RequestsTab) -> Unit, modifier: Modifier = Modifier) {
+    val index = RequestsTab.entries.indexOf(selected)
+    val tabs = @Composable {
+        RequestsTab.entries.forEach { tab ->
+            Tab(
+                selected = tab == selected,
+                onClick = { onSelect(tab) },
+                text = { CapFontScale(MAX_LABEL_SCALE) { Text(stringResource(tab.labelRes), textAlign = TextAlign.Center) } },
+            )
+        }
+    }
+    if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) {
+        // No edge padding: the first tab's own padding lines its text up with the cards, and the
+        // last tab starts inside the screen.
+        PrimaryScrollableTabRow(selectedTabIndex = index, modifier = modifier, edgePadding = 0.dp, tabs = tabs)
+    } else {
+        PrimaryTabRow(selectedTabIndex = index, modifier = modifier, tabs = tabs)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun RequestsScreen(
@@ -68,17 +103,7 @@ internal fun RequestsScreen(
     Scaffold(topBar = { LLTopBar(title = stringResource(R.string.nav_requests)) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
             OfflineBanner(online)
-            // A long label wraps to a second line instead of losing words (in one line, the Bangla
-            // "আমার অনুরোধ" showed only "আমার"); with 200% text the tabs scroll sideways.
-            SegmentedChoices(
-                options = RequestsTab.entries,
-                selected = state.tab,
-                onSelect = onSelectTab,
-                modifier = Modifier
-                    .widthIn(max = 640.dp)
-                    .fillMaxWidth()
-                    .padding(horizontal = screenGutter(), vertical = Spacing.xs),
-            ) { stringResource(it.labelRes) }
+            RequestsTabs(state.tab, onSelectTab, Modifier.widthIn(max = 640.dp).fillMaxWidth())
             val list = state.list(state.tab)
             PullToRefreshBox(isRefreshing = list.refreshing, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {

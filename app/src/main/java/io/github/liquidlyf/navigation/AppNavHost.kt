@@ -11,7 +11,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
@@ -22,7 +26,6 @@ import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -54,7 +58,9 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
 import io.github.liquidlyf.core.designsystem.LLIcons
+import io.github.liquidlyf.core.designsystem.components.CapFontScale
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.MAX_LABEL_SCALE
 import io.github.liquidlyf.core.designsystem.windowWidth
 import io.github.liquidlyf.core.firebase.CrashReports
 import io.github.liquidlyf.core.util.AppError
@@ -213,7 +219,7 @@ internal fun AppNavigationBar(currentTab: TopLevelDestination, onSelect: (TopLev
                 selected = selected,
                 onClick = { onSelect(tab) },
                 icon = { Icon(painterResource(if (selected) tab.selectedIcon else tab.icon), contentDescription = null) },
-                label = { Text(stringResource(tab.labelRes)) },
+                label = { TabLabel(stringResource(tab.labelRes)) },
                 // The one place the pink stays (D4 a): secondaryContainer is a neutral grey now.
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
@@ -221,6 +227,25 @@ internal fun AppNavigationBar(currentTab: TopLevelDestination, onSelect: (TopLev
                 ),
             )
         }
+    }
+}
+
+/**
+ * A tab's label on one line, never split mid-word (A11Y-01: at 200% text "Reque / sts" pushed the
+ * icons out of line). Its text grows with the phone's font size up to 1.5x, then shrinks to fit the
+ * tab; the icon says it too, and TalkBack reads the full label.
+ */
+@Composable
+private fun TabLabel(text: String) {
+    CapFontScale(MAX_LABEL_SCALE) {
+        val style = LocalTextStyle.current
+        BasicText(
+            text,
+            style = style.copy(color = LocalContentColor.current),
+            maxLines = 1,
+            softWrap = false,
+            autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp),
+        )
     }
 }
 
@@ -233,7 +258,7 @@ private fun AppNavigationRail(currentTab: TopLevelDestination, onSelect: (TopLev
                 selected = selected,
                 onClick = { onSelect(tab) },
                 icon = { Icon(painterResource(if (selected) tab.selectedIcon else tab.icon), contentDescription = null) },
-                label = { Text(stringResource(tab.labelRes)) },
+                label = { TabLabel(stringResource(tab.labelRes)) },
                 colors = NavigationRailItemDefaults.colors(
                     indicatorColor = MaterialTheme.colorScheme.primaryContainer,
                     selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,

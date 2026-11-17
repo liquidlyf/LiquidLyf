@@ -181,7 +181,7 @@
         <item quantity="one">%d দিন পর আবার রক্ত দিতে পারবেন।</item>
         <item quantity="other">%d দিন পর আবার রক্ত দিতে পারবেন।</item>
     </plurals>
-    <string name="detail_block_weight">রক্তদাতার ওজন অন্তত ৪৫ কেজি হতে হবে।</string>
+    <string name="detail_block_weight">রক্তদাতার ওজন অন্তত ৪৫ কেজি হতে হবে।</string>
     <string name="detail_block_age">রক্তদাতার বয়স ১৮ থেকে ৬০ বছর হতে হবে।</string>
     <string name="detail_contact">যোগাযোগ</string>
     <string name="detail_patient">রোগী: %1$s</string>

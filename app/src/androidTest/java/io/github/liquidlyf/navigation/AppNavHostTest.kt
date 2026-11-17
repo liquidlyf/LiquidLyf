@@ -249,7 +249,7 @@ class AppNavHostTest {
     fun lastTabIsRestoredWhenTheAppOpens() {
         launch(GateZone.MAIN, ready, initialTab = TopLevelDestination.DONORS)
         assertOnScreen(R.string.nav_donors)
-        tab(R.string.nav_donors).assertIsSelected()
+        tab(R.string.nav_donors_tab).assertIsSelected()
 
         pressBack()
         assertOnScreen(R.string.nav_home)

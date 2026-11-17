@@ -50,7 +50,7 @@
     <string name="detail_check_title">সাড়া দেওয়ার আগে</string>
     <string name="detail_check_well">আজ আপনার শরীর ভালো আছে।</string>
     <string name="detail_check_interval">শেষবার পূর্ণ রক্ত (হোল ব্লাড) দেওয়ার পর অন্তত ৪ মাস পার হয়েছে।</string>
-    <string name="detail_check_weight">আপনার ওজন অন্তত ৪৫ কেজি।</string>
+    <string name="detail_check_weight">আপনার ওজন অন্তত ৪৫ কেজি।</string>
     <string name="detail_check_illness">গত এক সপ্তাহে জ্বর বা ইনফেকশন হয়নি, নতুন কোনো ওষুধও শুরু করেননি।</string>
     <string name="detail_check_meal">রক্ত দেওয়ার আগে খাওয়াদাওয়া ও পানি পান করে নিতে পারবেন।</string>
     <string name="detail_check_guidance">এগুলো শুধু নির্দেশনা। রক্ত দেওয়ার আগে ব্লাড ব্যাংক আপনাকে পরীক্ষা করে দেখবে।</string>

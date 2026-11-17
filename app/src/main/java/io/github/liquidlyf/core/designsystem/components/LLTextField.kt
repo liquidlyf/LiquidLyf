@@ -1,6 +1,7 @@
 package io.github.liquidlyf.core.designsystem.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
@@ -31,6 +33,7 @@ import io.github.liquidlyf.core.designsystem.LLIcons
  * [errorText] replaces [supportingText] while set and is read out by TalkBack.
  * [contentType] lets autofill and password managers fill the field (Phase 3).
  * The height grows with the font size; there is no fixed height (v0 clipped at large fonts).
+ * With large text the label sits above the box ([FieldLabelAbove]).
  */
 @Composable
 fun LLTextField(
@@ -50,46 +53,51 @@ fun LLTextField(
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     val helpText = errorText ?: supportingText
+    val labelAbove = isLargeText()
 
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics {
-                if (contentType != null) this.contentType = contentType
-                if (errorText != null) error(errorText)
-            },
-        enabled = enabled,
-        label = { Text(label) },
-        leadingIcon = leadingIcon?.let { icon -> { Icon(painterResource(icon), contentDescription = null) } },
-        trailingIcon = when {
-            isPassword -> {
-                {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            painter = painterResource(if (passwordVisible) LLIcons.VisibilityOff else LLIcons.Visibility),
-                            contentDescription = stringResource(
-                                if (passwordVisible) R.string.action_hide_password else R.string.action_show_password,
-                            ),
-                        )
+    Column(modifier.fillMaxWidth()) {
+        if (labelAbove) FieldLabelAbove(label, isError = errorText != null)
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics {
+                    if (labelAbove) contentDescription = label
+                    if (contentType != null) this.contentType = contentType
+                    if (errorText != null) error(errorText)
+                },
+            enabled = enabled,
+            label = if (labelAbove) null else { { Text(label) } },
+            leadingIcon = leadingIcon?.let { icon -> { Icon(painterResource(icon), contentDescription = null) } },
+            trailingIcon = when {
+                isPassword -> {
+                    {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                painter = painterResource(if (passwordVisible) LLIcons.VisibilityOff else LLIcons.Visibility),
+                                contentDescription = stringResource(
+                                    if (passwordVisible) R.string.action_hide_password else R.string.action_show_password,
+                                ),
+                            )
+                        }
                     }
                 }
-            }
-            errorText != null -> {
-                { Icon(painterResource(LLIcons.Error), contentDescription = null) }
-            }
-            else -> null
-        },
-        supportingText = helpText?.let { text -> { Text(text) } },
-        isError = errorText != null,
-        visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions = if (isPassword) {
-            keyboardOptions.copy(keyboardType = KeyboardType.Password, autoCorrectEnabled = false)
-        } else {
-            keyboardOptions
-        },
-        keyboardActions = keyboardActions,
-        singleLine = singleLine,
-    )
+                errorText != null -> {
+                    { Icon(painterResource(LLIcons.Error), contentDescription = null) }
+                }
+                else -> null
+            },
+            supportingText = helpText?.let { text -> { Text(text) } },
+            isError = errorText != null,
+            visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
+            keyboardOptions = if (isPassword) {
+                keyboardOptions.copy(keyboardType = KeyboardType.Password, autoCorrectEnabled = false)
+            } else {
+                keyboardOptions
+            },
+            keyboardActions = keyboardActions,
+            singleLine = singleLine,
+        )
+    }
 }

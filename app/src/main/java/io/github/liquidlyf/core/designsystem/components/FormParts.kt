@@ -1,8 +1,11 @@
 package io.github.liquidlyf.core.designsystem.components
 
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -21,6 +26,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonColors
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -32,8 +38,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
@@ -55,8 +64,12 @@ fun ChoiceRow(
 /**
  * Segmented buttons that keep every word whole (8.5). Each segment is at least as wide as its
  * longest word, a label wraps only between words, and all segments take the tallest one's height,
- * so the outline stays one pill. When they can't fit side by side (Bangla at 200% text), the row
- * scrolls sideways instead of breaking "কাছাকাছি" in two.
+ * so the outline stays one pill. If they still can't fit side by side, the row scrolls sideways
+ * instead of breaking "কাছাকাছি" in two.
+ *
+ * With large text (Android's 130% and up) the options are a vertical list of radio buttons
+ * instead (A11Y-02): at 200% a sideways row hid options off the edge, even the chosen one
+ * ("✓ ব", "Ot" for Other), with nothing to show it could scroll.
  */
 @Composable
 fun <T> SegmentedChoices(
@@ -66,6 +79,10 @@ fun <T> SegmentedChoices(
     modifier: Modifier = Modifier,
     label: @Composable (T) -> String,
 ) {
+    if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) {
+        RadioChoices(options, selected, onSelect, modifier, label)
+        return
+    }
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val fill = if (constraints.hasBoundedWidth) Modifier.widthIn(min = maxWidth) else Modifier
         SingleChoiceSegmentedButtonRow(
@@ -84,6 +101,32 @@ fun <T> SegmentedChoices(
                     colors = chosenSegmentColors(),
                     modifier = Modifier.fillMaxHeight(),
                 ) { Text(label(option), textAlign = TextAlign.Center) }
+            }
+        }
+    }
+}
+
+/** One option per line, each a whole 48 dp row to tap; TalkBack reads them as one radio group. */
+@Composable
+private fun <T> RadioChoices(
+    options: List<T>,
+    selected: T?,
+    onSelect: (T) -> Unit,
+    modifier: Modifier,
+    label: @Composable (T) -> String,
+) {
+    Column(modifier.fillMaxWidth().selectableGroup()) {
+        options.forEach { option ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = Spacing.minTouchTarget)
+                    .selectable(selected = option == selected, role = Role.RadioButton, onClick = { onSelect(option) }),
+            ) {
+                RadioButton(selected = option == selected, onClick = null)
+                Text(label(option), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -141,27 +184,32 @@ fun DropdownField(
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val selectedLabel = options.firstOrNull { it.first == selected }?.second.orEmpty()
-    ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { if (enabled) expanded = it }, modifier = modifier) {
-        OutlinedTextField(
-            value = selectedLabel,
-            onValueChange = {},
-            readOnly = true,
-            enabled = enabled,
-            label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled),
-        )
-        ExposedDropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }) {
-            options.forEach { (key, text) ->
-                DropdownMenuItem(
-                    text = { Text(text) },
-                    onClick = {
-                        onSelect(key)
-                        expanded = false
-                    },
-                )
+    val labelAbove = isLargeText()
+    Column(modifier) {
+        if (labelAbove) FieldLabelAbove(label)
+        ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { if (enabled) expanded = it }) {
+            OutlinedTextField(
+                value = selectedLabel,
+                onValueChange = {},
+                readOnly = true,
+                enabled = enabled,
+                label = if (labelAbove) null else { { Text(label) } },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled)
+                    .semantics { if (labelAbove) contentDescription = label },
+            )
+            ExposedDropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }) {
+                options.forEach { (key, text) ->
+                    DropdownMenuItem(
+                        text = { Text(text) },
+                        onClick = {
+                            onSelect(key)
+                            expanded = false
+                        },
+                    )
+                }
             }
         }
     }

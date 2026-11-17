@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -24,10 +22,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,12 +46,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.localDateText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
 import io.github.liquidlyf.core.designsystem.components.ChoiceRow
 import io.github.liquidlyf.core.designsystem.components.DropdownField
 import io.github.liquidlyf.core.designsystem.components.FieldError
-import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
@@ -109,29 +105,15 @@ fun ProfileSetupScreen(
             )
         },
         bottomBar = {
-            Surface(tonalElevation = 2.dp) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .imePadding()
-                        .padding(horizontal = screenGutter(), vertical = Spacing.sm),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (state.step > 0) {
-                        OutlinedButton(onClick = onBack, enabled = !state.saving) { Text(stringResource(R.string.action_back)) }
-                    }
-                    LLPrimaryButton(
-                        text = stringResource(if (state.isLastStep) R.string.action_finish else R.string.action_next),
-                        onClick = onNext,
-                        enabled = state.loaded,
-                        loading = state.saving,
-                        loadingText = stringResource(R.string.action_saving),
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
+            LLBottomBar(
+                primaryText = stringResource(if (state.isLastStep) R.string.action_finish else R.string.action_next),
+                onPrimary = onNext,
+                primaryEnabled = state.loaded,
+                loading = state.saving,
+                loadingText = stringResource(R.string.action_saving),
+                secondaryText = if (state.step > 0) stringResource(R.string.action_back) else null,
+                onSecondary = onBack,
+            )
         },
     ) { padding ->
         if (!state.loaded) {

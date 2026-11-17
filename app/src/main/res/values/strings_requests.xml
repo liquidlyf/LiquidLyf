@@ -133,7 +133,7 @@
     <string name="detail_check_title">Before you offer</string>
     <string name="detail_check_well">You feel well today.</string>
     <string name="detail_check_interval">Your last whole-blood donation was at least 4 months ago.</string>
-    <string name="detail_check_weight">You weigh at least 45 kg.</string>
+    <string name="detail_check_weight">You weigh at least 45 kg.</string>
     <string name="detail_check_illness">No fever, infection or new medicine in the last week.</string>
     <string name="detail_check_meal">You can eat and drink before donating.</string>
     <string name="detail_check_guidance">This is guidance only. The blood bank checks you before you donate.</string>
@@ -148,7 +148,7 @@
         <item quantity="one">You can donate again in %d day.</item>
         <item quantity="other">You can donate again in %d days.</item>
     </plurals>
-    <string name="detail_block_weight">Donors must weigh at least 45 kg.</string>
+    <string name="detail_block_weight">Donors must weigh at least 45 kg.</string>
     <string name="detail_block_age">Donors must be 18 to 60 years old.</string>
     <string name="detail_contact">Contact</string>
     <string name="detail_patient">Patient: %1$s</string>

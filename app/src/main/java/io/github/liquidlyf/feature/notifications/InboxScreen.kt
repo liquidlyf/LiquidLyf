@@ -131,7 +131,7 @@ private fun InboxRow(entry: InboxEntry, isNew: Boolean, state: InboxUiState, onC
     ListItem(
         leadingContent = { Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
         headlineContent = {
-            Text(title, fontWeight = if (isNew) FontWeight.SemiBold else null, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(title, fontWeight = if (isNew) FontWeight.SemiBold else null, maxLines = 3, overflow = TextOverflow.Ellipsis)
         },
         supportingContent = {
             Text(listOf(detail, time).filter { it.isNotBlank() }.joinToString(" · "), maxLines = 3, overflow = TextOverflow.Ellipsis)

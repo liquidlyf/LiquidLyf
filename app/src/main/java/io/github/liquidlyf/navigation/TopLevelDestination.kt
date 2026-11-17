@@ -17,7 +17,7 @@ enum class TopLevelDestination(
 ) {
     HOME(R.string.nav_home, LLIcons.Home, LLIcons.HomeFilled, HomeGraph, Home),
     REQUESTS(R.string.nav_requests, LLIcons.Requests, LLIcons.RequestsFilled, RequestsGraph, Requests),
-    DONORS(R.string.nav_donors, LLIcons.Donors, LLIcons.DonorsFilled, DonorsGraph, Donors),
+    DONORS(R.string.nav_donors_tab, LLIcons.Donors, LLIcons.DonorsFilled, DonorsGraph, Donors),
     PROFILE(R.string.nav_profile, LLIcons.Profile, LLIcons.ProfileFilled, ProfileGraph, Profile),
     ;
 

@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
@@ -36,13 +37,24 @@ import io.github.liquidlyf.core.model.Urgency
 fun StatusPill(label: String, @DrawableRes icon: Int, tone: StatusTone, modifier: Modifier = Modifier) {
     val colors = tone.colors()
     Surface(shape = CircleShape, color = colors.container, contentColor = colors.content, modifier = modifier) {
+        PillContent(label, icon, Modifier.padding(horizontal = 10.dp, vertical = Spacing.xxs))
+    }
+}
+
+/**
+ * A pill's icon and one line of text. The text grows with the phone's font size up to 1.5x
+ * (A11Y-03: at 200% Bangla pills wrapped into 2-line blobs).
+ */
+@Composable
+private fun PillContent(label: String, @DrawableRes icon: Int, modifier: Modifier) {
+    CapFontScale(MAX_LABEL_SCALE) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.xxs),
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = Spacing.xxs),
+            modifier = modifier,
         ) {
             Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(16.dp))
-            Text(label, style = MaterialTheme.typography.labelMedium)
+            Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -60,14 +72,7 @@ fun LLTag(label: String, @DrawableRes icon: Int, modifier: Modifier = Modifier) 
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier,
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.xxs),
-            modifier = Modifier.padding(horizontal = Spacing.xs, vertical = Spacing.xxs),
-        ) {
-            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(16.dp))
-            Text(label, style = MaterialTheme.typography.labelMedium)
-        }
+        PillContent(label, icon, Modifier.padding(horizontal = Spacing.xs, vertical = Spacing.xxs))
     }
 }
 

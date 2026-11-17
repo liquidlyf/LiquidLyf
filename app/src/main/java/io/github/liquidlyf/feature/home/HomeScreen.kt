@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -46,6 +47,8 @@ import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.EligibilityRing
 import io.github.liquidlyf.core.designsystem.components.EmptyState
+import io.github.liquidlyf.core.designsystem.components.LARGE_FONT_SCALE
+import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLExtendedFab
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
@@ -103,6 +106,9 @@ internal fun HomeScreen(
     val now by rememberNow()
     val launcher = rememberSafeIntentLauncher()
     val locale = currentAppLocale()
+    // UI-08: with large text "Request blood" is a full-width bar above the navigation instead of
+    // floating, where it covered a request's hospital and area at 200%.
+    val actionAsBar = LocalDensity.current.fontScale >= LARGE_FONT_SCALE
     Scaffold(
         topBar = {
             LLTopBar(
@@ -122,7 +128,10 @@ internal fun HomeScreen(
             )
         },
         floatingActionButton = {
-            LLExtendedFab(text = stringResource(R.string.action_request_blood), icon = LLIcons.Add, onClick = onCreateRequest)
+            if (!actionAsBar) LLExtendedFab(text = stringResource(R.string.action_request_blood), icon = LLIcons.Add, onClick = onCreateRequest)
+        },
+        bottomBar = {
+            if (actionAsBar) LLBottomBar(stringResource(R.string.action_request_blood), onCreateRequest, primaryIcon = LLIcons.Add)
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -168,7 +177,7 @@ internal fun HomeScreen(
                             )
                         }
                     }
-                    item(key = "fab-space") { Spacer(Modifier.height(FAB_CLEARANCE)) }
+                    if (!actionAsBar) item(key = "fab-space") { Spacer(Modifier.height(FAB_CLEARANCE)) }
                 }
             }
         }

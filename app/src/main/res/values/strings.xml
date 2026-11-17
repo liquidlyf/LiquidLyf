@@ -11,6 +11,8 @@
     <string name="nav_home">Home</string>
     <string name="nav_requests">Requests</string>
     <string name="nav_donors">Find donors</string>
+    <!-- A11Y-01: the tab's own short label, so it stays one whole word at 200% text; the screen keeps "Find donors". -->
+    <string name="nav_donors_tab">Donors</string>
     <string name="nav_profile">Profile</string>
 
     <!-- Screen titles -->
@@ -223,7 +225,7 @@
     <string name="gender_other">Other</string>
     <string name="label_birth_year">Year of birth</string>
     <string name="error_birth_year">You must be 18 or older. Enter the year you were born, for example 1995.</string>
-    <string name="setup_weight_question">Do you weigh at least 45 kg?</string>
+    <string name="setup_weight_question">Do you weigh at least 45 kg?</string>
     <string name="answer_yes">Yes</string>
     <string name="answer_no">No</string>
     <string name="error_answer_required">Please choose an answer.</string>

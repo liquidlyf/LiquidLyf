@@ -120,7 +120,7 @@
     <string name="gender_other">অন্যান্য</string>
     <string name="label_birth_year">জন্মসাল</string>
     <string name="error_birth_year">আপনার বয়স ১৮ বা তার বেশি হতে হবে। আপনার জন্মসাল লিখুন, যেমন ১৯৯৫।</string>
-    <string name="setup_weight_question">আপনার ওজন কি অন্তত ৪৫ কেজি?</string>
+    <string name="setup_weight_question">আপনার ওজন কি অন্তত ৪৫ কেজি?</string>
     <string name="error_answer_required">একটি উত্তর বেছে নিন।</string>
     <string name="setup_location_title">আপনি কোথায় থাকেন?</string>
     <string name="setup_location_body">এলাকা মিলিয়ে অ্যালার্ট পাঠানো হয়। আপনি সাধারণত যেখানে থাকেন, সেই এলাকা বেছে নিন।</string>
