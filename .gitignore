@@ -86,3 +86,7 @@ firestore-debug*.log
 database-debug*.log
 ui-debug*.log
 pubsub-debug*.log
+
+# ---------- 7. Python (app/scripts/, docs/website-drafts/build_site.py) ----------
+__pycache__/
+*.pyc
