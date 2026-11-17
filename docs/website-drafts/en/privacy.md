@@ -94,7 +94,10 @@ it does with your data.
      github.com/liquidlyf/LiquidLyf/releases/latest/download/update.json (the published prod app only),
      on the shared OkHttp client, which adds no headers; the sign-in and App Check tokens go only on the
      Worker's own calls (WorkerClient.kt). The staged-rollout number is a random ID that stays on the
-     phone (never backed up or sent). Re-check whenever the daily check changes. -->
+     phone (never backed up or sent). Exact headers (A, 17 Nov 2026): Host, Connection,
+     Accept-Encoding: gzip, User-Agent "okhttp/5.5.1" (the library's version, not LiquidLyf's); the
+     hospital request adds If-None-Match with GitHub Pages' ETag (the same for every phone). No cookies,
+     app version, account or rollout ID. Re-check whenever the daily check changes. -->
 
 <!-- v1.1: add when the features ship.
 - **Phone verification with Telegram:** if you choose to verify your number, Telegram shares your
