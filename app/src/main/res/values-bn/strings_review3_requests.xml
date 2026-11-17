@@ -296,4 +296,7 @@
     <!-- FLOW-08: after "Not for me", on the screen you go back to. -->
     <string name="request_hidden">অনুরোধটি লুকানো হয়েছে। হোমে আর দেখাবে না।</string>
     <string name="action_undo">ফিরিয়ে আনুন</string>
+    <string name="detail_alerting">কাছাকাছি %1$s রক্তদাতাদের অ্যালার্ট পাঠানো হচ্ছে…</string>
+    <string name="detail_alerted_in">এখনো কেউ সাড়া দেননি। %2$s এলাকার %1$s রক্তদাতাদের অ্যালার্ট পাঠানো হয়েছে।</string>
+    <string name="detail_alert_soon">এখনো কেউ সাড়া দেননি। কয়েক মিনিটের মধ্যে কাছাকাছি রক্তদাতাদের অ্যালার্ট পাঠানো হবে।</string>
 </resources>

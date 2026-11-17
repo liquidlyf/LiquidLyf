@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.backend.AlertStatus
+import io.github.liquidlyf.core.data.backend.AlertStatusStore
 import io.github.liquidlyf.core.data.backend.WorkerClient
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.GeoRepository
@@ -77,6 +79,8 @@ data class RequestDetailUiState(
      * the phone, or the listener failed. Not "isn't available", which means it's surely gone.
      */
     val loadError: AppError? = null,
+    /** The first donor alert of a request posted from this phone, while the app runs (PERF-01). */
+    val alertStatus: AlertStatus? = null,
     val geo: BdGeo? = null,
     val role: ViewerRole = ViewerRole.DONOR,
     /** The donor's own offer status, live from the request's responders map. */
@@ -124,6 +128,7 @@ class RequestDetailViewModel @Inject constructor(
     private val reminders: Reminders,
     /** Outlives this screen: "Undo" after "Not for me" runs once it's gone (FLOW-08). */
     @param:ApplicationScope private val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    alertStatuses: AlertStatusStore = AlertStatusStore(),
 ) : ViewModel() {
 
     /** Offline, an action's batch waits in Firestore's queue; the screen says so. */
@@ -158,6 +163,9 @@ class RequestDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val geo = geoRepository.geo()
             state.update { it.copy(geo = geo) }
+        }
+        viewModelScope.launch {
+            alertStatuses.observe(requestId).collect { s -> state.update { it.copy(alertStatus = s) } }
         }
         listen()
     }

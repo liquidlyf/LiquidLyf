@@ -259,4 +259,8 @@
     <!-- FLOW-08: after "Not for me", on the screen you go back to. -->
     <string name="request_hidden">Request hidden. It won\'t show on Home.</string>
     <string name="action_undo">Undo</string>
+    <!-- PERF-01 / STATE-03: the first alert, on the request page (%1$s = blood group, %2$s = upazila or district). -->
+    <string name="detail_alerting">Alerting %1$s donors near you…</string>
+    <string name="detail_alerted_in">No offers yet. We alerted %1$s donors in %2$s.</string>
+    <string name="detail_alert_soon">No offers yet. Donors near you will be alerted within a few minutes.</string>
 </resources>

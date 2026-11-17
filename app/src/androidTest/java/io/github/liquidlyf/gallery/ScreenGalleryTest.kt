@@ -51,6 +51,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.liquidlyf.BuildConfig
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.backend.AlertStatus
+import io.github.liquidlyf.core.data.backend.AlertStatusStore
 import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.hospital.Hospital
@@ -703,6 +705,7 @@ class ScreenGalleryTest {
         offer: ResponseStatus? = null,
         missing: Boolean = false,
         failing: Boolean = false,
+        alert: AlertStatus? = null,
     ): RequestDetailViewModel {
         val requests = FakeRequestRepository(now).apply {
             if (!missing) put(request)
@@ -721,12 +724,20 @@ class ScreenGalleryTest {
         return RequestDetailViewModel(
             SavedStateHandle(mapOf("id" to request.id)), ready(viewer), requests, offers, FakeProfileRepository(now), FakeSafetyRepository(),
             FakeWorkerClient(), geoRepository, EligibilityCalculator(), clock, FakeNetworkMonitor(), FakeReminders(),
+            alertStatuses = AlertStatusStore().apply { if (alert != null) set(request.id, alert) },
         )
     }
 
-    private fun detail(viewer: UserProfile, request: BloodRequest = detailRequest, offer: ResponseStatus? = null, missing: Boolean = false, failing: Boolean = false) =
+    private fun detail(
+        viewer: UserProfile,
+        request: BloodRequest = detailRequest,
+        offer: ResponseStatus? = null,
+        missing: Boolean = false,
+        failing: Boolean = false,
+        alert: AlertStatus? = null,
+    ) =
         @Composable {
-            val vm = remember { detailViewModel(viewer, request, offer, missing, failing) }
+            val vm = remember { detailViewModel(viewer, request, offer, missing, failing, alert) }
             RequestDetailRoute(onBack = {}, viewModel = vm)
         }
 
@@ -752,6 +763,9 @@ class ScreenGalleryTest {
             Shot("details-requester-offer", prepare = { loaded(); waitForText("Nusrat") }, content = detail(requester, offer = ResponseStatus.OFFERED)),
             Shot("details-requester-confirmed", prepare = { loaded(); waitForText("Nusrat") }, content = detail(requester, offer = ResponseStatus.CONFIRMED)),
             Shot("details-requester-no-offers", prepare = loaded, content = detail(requester)),
+            // PERF-01: the page opens right after posting and shows the alert's progress.
+            Shot("details-requester-alerting", prepare = loaded, content = detail(requester, alert = AlertStatus.Sending)),
+            Shot("details-requester-alerted", prepare = loaded, content = detail(requester, alert = AlertStatus.Sent(1))),
             Shot("details-requester-menu", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more) }, content = detail(requester)),
             Shot("details-requester-edit", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more); tap(R.string.detail_edit) }, content = detail(requester)),
             Shot("details-requester-close", overlay = true, prepare = { loaded(); tap(R.string.detail_close_request) }, content = detail(requester)),

@@ -5,6 +5,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.liquidlyf.core.data.backend.AlertStatus
+import io.github.liquidlyf.core.data.backend.AlertStatusStore
 import io.github.liquidlyf.core.data.backend.Dispatch
 import io.github.liquidlyf.core.data.backend.WorkerClient
 import io.github.liquidlyf.core.data.geo.BdGeo
@@ -31,10 +33,10 @@ import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.ApplicationScope
 import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.core.util.NetworkMonitor
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -153,6 +155,8 @@ class CreateRequestViewModel @Inject constructor(
     network: NetworkMonitor,
     private val alerts: AlertStore,
     private val reminders: Reminders,
+    /** The request page reads the alert's progress here (PERF-01). */
+    private val alertStatuses: AlertStatusStore = AlertStatusStore(),
 ) : ViewModel() {
 
     val online: StateFlow<Boolean> = network.isOnline.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
@@ -250,24 +254,27 @@ class CreateRequestViewModel @Inject constructor(
         val draft = toDraft(state.value.form) ?: return
         state.update { it.copy(posting = true, formError = null) }
         val requestId = requests.newRequestId()
-        val work = appScope.async {
+        val saved = CompletableDeferred<PostResult>()
+        // PERF-01: the request page opens as soon as the request is saved; the donor alert (up to
+        // 3 tries when the Worker can't be reached, about 7 s) goes on here, in the app's scope,
+        // and the page shows its progress. Leaving the page doesn't stop it.
+        appScope.launch {
             alerts.rememberMyRequest(requestId) // its alert reaches my phone too: don't show it to me
             when (val created = requests.create(requester, draft, requestId)) {
-                is AppResult.Failure -> PostResult.Failed(created.error)
+                is AppResult.Failure -> saved.complete(PostResult.Failed(created.error))
                 is AppResult.Success -> {
                     reminders.scheduleRequestEnding(requestId, draft.neededBy) // "ends in 2 hours"
-                    PostResult.Created(worker.dispatch(requestId))
+                    alertStatuses.set(requestId, AlertStatus.Sending)
+                    saved.complete(PostResult.Saved)
+                    alertStatuses.set(requestId, worker.dispatch(requestId).toAlertStatus())
                 }
             }
         }
         viewModelScope.launch {
-            when (val result = withTimeoutOrNull(POST_WAIT_MS) { work.await() }) {
+            when (val result = withTimeoutOrNull(POST_WAIT_MS) { saved.await() }) {
                 null -> posted(requestId, PostNotice.WAITING_FOR_NETWORK)
                 is PostResult.Failed -> state.update { it.copy(posting = false, formError = result.error.messageRes) }
-                is PostResult.Created -> {
-                    val capped = (result.dispatch as? AppResult.Failure)?.error == AppError.DailyAlertLimit
-                    posted(requestId, if (capped) PostNotice.DAILY_ALERT_LIMIT else null)
-                }
+                PostResult.Saved -> posted(requestId, null)
             }
         }
     }
@@ -278,7 +285,7 @@ class CreateRequestViewModel @Inject constructor(
     }
 
     private sealed interface PostResult {
-        data class Created(val dispatch: AppResult<Dispatch>) : PostResult
+        data object Saved : PostResult
         data class Failed(val error: AppError) : PostResult
     }
 
@@ -391,4 +398,10 @@ class CreateRequestViewModel @Inject constructor(
         private fun RequestForm.withoutHospital(): RequestForm =
             copy(hospitalId = null, hospitalAddress = null, lat = null, lng = null, geohash = null)
     }
+}
+
+/** The dispatch call's answer, as the request page tells it. */
+internal fun AppResult<Dispatch>.toAlertStatus(): AlertStatus = when (this) {
+    is AppResult.Success -> AlertStatus.Sent(data.tier)
+    is AppResult.Failure -> if (error == AppError.DailyAlertLimit) AlertStatus.DailyLimit else AlertStatus.Failed
 }

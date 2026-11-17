@@ -222,9 +222,12 @@ class FakeWorkerClient : WorkerClient {
     val offerNotices = mutableListOf<Pair<String, String>>()
     val responderNotices = mutableListOf<String>()
     var dispatchResult: AppResult<Dispatch> = AppResult.Success(Dispatch(tier = 1, alreadyDispatched = false))
+    /** Set to hold dispatch() until completed, like a slow or retrying Worker call. */
+    var dispatchGate: CompletableDeferred<Unit>? = null
 
     override suspend fun dispatch(requestId: String): AppResult<Dispatch> {
         dispatched += requestId
+        dispatchGate?.await()
         return dispatchResult
     }
 

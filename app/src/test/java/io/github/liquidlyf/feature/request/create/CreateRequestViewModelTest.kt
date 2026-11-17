@@ -2,6 +2,8 @@ package io.github.liquidlyf.feature.request.create
 
 import androidx.lifecycle.SavedStateHandle
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.backend.AlertStatus
+import io.github.liquidlyf.core.data.backend.AlertStatusStore
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
@@ -28,6 +30,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -59,6 +62,7 @@ class CreateRequestViewModelTest {
     private val worker = FakeWorkerClient()
     private val alerts = FakeAlertStore()
     private val reminders = FakeReminders()
+    private val alertStatuses = AlertStatusStore()
     private val dmch = Hospital("h1", PlaceName("Dhaka Medical College Hospital", null), "Bakshibazar", "BD3026", "BD30262000", null)
     private val hospitals = FakeHospitalRepository(listOf(dmch))
     private val geo = BdGeoParser.parse(File("src/main/assets/bd-geo.json").readText())
@@ -74,7 +78,7 @@ class CreateRequestViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun TestScope.vm(appScope: CoroutineScope = backgroundScope) =
-        CreateRequestViewModel(saved, session, profiles, requests, hospitals, geoRepo, worker, Clock { TestData.NOW }, appScope, FakeNetworkMonitor(), alerts, reminders)
+        CreateRequestViewModel(saved, session, profiles, requests, hospitals, geoRepo, worker, Clock { TestData.NOW }, appScope, FakeNetworkMonitor(), alerts, reminders, alertStatuses)
 
     private fun TestScope.events(vm: CreateRequestViewModel): List<CreateRequestEvent> =
         mutableListOf<CreateRequestEvent>().also { list -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { list += it } } }
@@ -211,7 +215,7 @@ class CreateRequestViewModelTest {
     }
 
     @Test
-    fun `over the daily alert cap it is posted, with a notice`() = runTest(dispatcher) {
+    fun `over the daily alert cap it is posted, and the request page says so`() = runTest(dispatcher) {
         worker.dispatchResult = AppResult.Failure(AppError.DailyAlertLimit)
         val vm = vm()
         val events = events(vm)
@@ -219,8 +223,31 @@ class CreateRequestViewModelTest {
         vm.fillAll()
         vm.next()
         advanceUntilIdle()
+        runCurrent() // the app-scope (background) work
         val id = requests.created.single().first
-        assertEquals(listOf(CreateRequestEvent.Posted(id, PostNotice.DAILY_ALERT_LIMIT)), events)
+        assertEquals(listOf(CreateRequestEvent.Posted(id, null)), events)
+        assertEquals(AlertStatus.DailyLimit, alertStatuses.observe(id).first())
+    }
+
+    @Test
+    fun `the request opens as soon as it is saved, while donors are still being alerted`() = runTest(dispatcher) {
+        // PERF-01: "Posting…" waited for the alert call too (about 9 s when the Worker was unreachable).
+        val gate = CompletableDeferred<Unit>()
+        worker.dispatchGate = gate
+        val vm = vm()
+        val events = events(vm)
+        advanceUntilIdle()
+        vm.fillAll()
+        vm.next()
+        advanceUntilIdle()
+        runCurrent()
+        val id = requests.created.single().first
+        assertEquals(listOf(CreateRequestEvent.Posted(id, null)), events)
+        assertEquals(AlertStatus.Sending, alertStatuses.observe(id).first())
+
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(AlertStatus.Sent(1), alertStatuses.observe(id).first())
     }
 
     @Test

@@ -18,6 +18,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,14 +51,17 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.backend.AlertStatus
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
@@ -275,7 +279,7 @@ private fun Banners(state: RequestDetailUiState) {
     if (state.waitingForNetwork) {
         LLNoticeCard(stringResource(R.string.detail_waiting_network), LLIcons.WifiOff)
     }
-    if (state.notice == PostNotice.DAILY_ALERT_LIMIT) {
+    if (state.notice == PostNotice.DAILY_ALERT_LIMIT || state.alertStatus == AlertStatus.DailyLimit) {
         LLNoticeCard(stringResource(R.string.error_daily_alert_limit), LLIcons.Warning, tone = NoticeTone.Warning)
     }
     // 7.8: the notes mention money (the request is flagged for review).
@@ -482,16 +486,34 @@ private fun RequesterSection(
     val r = state.request ?: return
     SectionHeader(pluralStringResource(R.plurals.detail_offers_title, state.responses.size, state.responses.size))
     if (state.responses.isEmpty()) {
+        val group = stringResource(r.bloodGroup.labelRes)
+        val locale = currentAppLocale()
+        val alert = state.alertStatus
+        // PERF-01 / STATE-03: the alert's progress, once the page opened right after posting.
         val text = when {
-            r.status != RequestStatus.OPEN -> R.string.detail_no_offers
-            state.waitingForNetwork -> R.string.detail_no_offers_unsent
-            else -> R.string.detail_no_offers_open
+            r.status != RequestStatus.OPEN -> stringResource(R.string.detail_no_offers)
+            state.waitingForNetwork -> stringResource(R.string.detail_no_offers_unsent)
+            alert == AlertStatus.Sending -> stringResource(R.string.detail_alerting, group)
+            alert is AlertStatus.Sent -> {
+                // Tier 1 is the request's upazila, tier 3 its district (B, 17 Nov 2026).
+                val upazila = r.upazila.takeIf { alert.tier == 1 }
+                val place = state.geo?.placeLabel(r.district, upazila, locale)
+                if (place != null) stringResource(R.string.detail_alerted_in, group, place) else stringResource(R.string.detail_no_offers_open)
+            }
+            alert == AlertStatus.Failed -> stringResource(R.string.detail_alert_soon)
+            else -> stringResource(R.string.detail_no_offers_open)
         }
-        Text(
-            stringResource(text),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalAlignment = Alignment.CenterVertically) {
+            if (alert == AlertStatus.Sending && r.status == RequestStatus.OPEN) {
+                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+            }
+            Text(
+                text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        }
     }
     state.responses.forEachIndexed { i, response ->
         if (i > 0) HorizontalDivider()
