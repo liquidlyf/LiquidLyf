@@ -129,6 +129,23 @@ class ProfileViewModel @Inject constructor(
 
     fun cancelEligibilityQuestion() = state.update { it.copy(pendingDonation = null) }
 
+    /** N1: the Donor card's switches, as in Settings. On: after the consent dialog. */
+    fun setListed(listed: Boolean) = saveProfile { p -> profiles.setListed(p, listed) }
+
+    fun setAvailable(available: Boolean) = saveProfile { p -> profiles.setAvailable(p, available) }
+
+    private fun saveProfile(write: suspend (UserProfile) -> AppResult<Unit>) {
+        val p = state.value.profile ?: return
+        if (state.value.saving) return
+        state.update { it.copy(saving = true) }
+        viewModelScope.launch {
+            val result = write(p)
+            // The session re-reads the profile; the alert topics follow it (PushTopicManager).
+            if (result is AppResult.Success) session.refresh() else events.send(ProfileEvent.Message((result as AppResult.Failure).error.messageRes))
+            state.update { it.copy(saving = false) }
+        }
+    }
+
     fun removeDonation(donation: Donation) {
         val p = state.value.profile ?: return
         if (state.value.saving) return

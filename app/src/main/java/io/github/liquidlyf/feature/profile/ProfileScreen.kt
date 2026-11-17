@@ -6,15 +6,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -50,6 +55,7 @@ import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.StatusTone
 import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LLCard
+import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTag
 import io.github.liquidlyf.core.designsystem.numberText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
@@ -70,6 +76,9 @@ import io.github.liquidlyf.core.model.Donation
 import io.github.liquidlyf.core.model.DonationSource
 import io.github.liquidlyf.core.util.Links
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
+import io.github.liquidlyf.feature.home.readyText
+import io.github.liquidlyf.feature.settings.ListMeDialog
+import io.github.liquidlyf.feature.settings.rememberNotificationsEnabled
 import kotlinx.coroutines.launch
 import java.time.Instant
 
@@ -97,6 +106,8 @@ fun ProfileRoute(onEditProfile: () -> Unit, onOpenSettings: () -> Unit, viewMode
         onRemoveDonation = viewModel::removeDonation,
         onShare = { launcher.shareText(resources.getString(R.string.share_app_text, Links.download(locale))) },
         onRetry = viewModel::retry,
+        onListedChange = viewModel::setListed,
+        onAvailableChange = viewModel::setAvailable,
     )
     if (showAddSheet) {
         AddDonationSheet(
@@ -136,8 +147,14 @@ internal fun ProfileScreen(
     onShare: () -> Unit,
     onRetry: () -> Unit,
     now: Instant = Instant.now(),
+    onListedChange: (Boolean) -> Unit = {},
+    onAvailableChange: (Boolean) -> Unit = {},
+    notificationsOn: Boolean = rememberNotificationsEnabled(),
 ) {
     var toRemove by remember { mutableStateOf<Donation?>(null) }
+    var askListing by remember { mutableStateOf(false) }
+    // N1: the last 3 donations first; "Load more" shows the older ones.
+    var showAllDonations by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         topBar = {
             LLTopBar(
@@ -161,39 +178,31 @@ internal fun ProfileScreen(
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = screenGutter(), vertical = Spacing.md),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
+                // N1: you, your donor status, your donations, your impact, your badges: what you
+                // change comes before what you only look at.
                 if (p.bloodGroup == null) item { BloodGroupReminder(onAdd = onEditProfile) }
-                item { HeaderCard(state) }
-                state.eligibility?.let { e ->
-                    if (p.bloodGroup != null) {
-                        item {
-                            LLCard(Modifier.fillMaxWidth()) {
-                                Row(Modifier.padding(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
-                                    EligibilityRing(e, p.gender, now, size = 64.dp)
-                                    Column(Modifier.padding(start = Spacing.md).weight(1f)) {
-                                        Text(stringResource(R.string.profile_eligibility_title), style = MaterialTheme.typography.labelLarge)
-                                        Text(eligibilityText(e, now), style = MaterialTheme.typography.titleMedium)
-                                        if (IneligibleReason.REST_PERIOD in e.reasons) {
-                                            Text(stringResource(R.string.profile_next_eligible, dateText(e.eligibleFrom)), style = MaterialTheme.typography.bodyMedium)
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                item { HeaderCard(state, onEditProfile) }
+                if (p.bloodGroup != null) {
+                    item {
+                        DonorCard(
+                            state, notificationsOn, now,
+                            onListedChange = { on -> if (on) askListing = true else onListedChange(false) },
+                            onAvailableChange = onAvailableChange,
+                        )
                     }
                 }
-                item { ImpactCard(state) }
-                item { SectionHeader(stringResource(R.string.profile_badges_title)) }
-                item { BadgesRow(state.badges) }
+                item { SectionHeader(stringResource(R.string.profile_history_title)) }
+                // Adding a past donation sets the next date, so it comes first (N1).
                 item {
-                    SectionHeader(
-                        stringResource(R.string.profile_history_title),
-                        action = {
-                            TextButton(onClick = onAddDonation, enabled = !state.saving) {
-                                Icon(painterResource(LLIcons.Add), contentDescription = null)
-                                Text(stringResource(R.string.action_add_past_donation), Modifier.padding(start = Spacing.xs))
-                            }
-                        },
-                    )
+                    FilledTonalButton(
+                        onClick = onAddDonation,
+                        enabled = !state.saving,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
+                    ) {
+                        Icon(painterResource(LLIcons.Add), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text(stringResource(R.string.action_add_past_donation))
+                    }
                 }
                 val donations = state.donations
                 when {
@@ -205,24 +214,43 @@ internal fun ProfileScreen(
                     donations.isEmpty() -> item {
                         Text(stringResource(R.string.profile_history_empty), style = MaterialTheme.typography.bodyMedium)
                     }
-                    else -> items(donations, key = { it.id }) { d ->
-                        DonationRow(d, canRemove = !state.saving, onRemove = { toRemove = d })
+                    else -> {
+                        val shown = if (showAllDonations) donations else donations.take(RECENT_DONATIONS)
+                        items(shown, key = { it.id }) { d ->
+                            DonationRow(d, canRemove = !state.saving, onRemove = { toRemove = d })
+                        }
+                        if (!showAllDonations && donations.size > RECENT_DONATIONS) {
+                            item(key = "load-more") {
+                                TextButton(onClick = { showAllDonations = true }, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
+                                    Text(stringResource(R.string.action_load_more))
+                                }
+                            }
+                        }
                     }
                 }
+                item { ImpactCard(state) }
+                item { SectionHeader(stringResource(R.string.profile_badges_title)) }
+                item { BadgesRow(state.badges) }
+                // Moves to Settings → About with design N5; until then it stays here (P, 18 Nov 00:24).
                 item {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                        OutlinedButton(onClick = onEditProfile, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
-                            Icon(painterResource(LLIcons.Edit), contentDescription = null)
-                            Text(stringResource(R.string.title_edit_profile), Modifier.padding(start = Spacing.xs))
-                        }
-                        OutlinedButton(onClick = onShare, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
-                            Icon(painterResource(LLIcons.Share), contentDescription = null)
-                            Text(stringResource(R.string.action_share_app), Modifier.padding(start = Spacing.xs))
-                        }
+                    OutlinedButton(onClick = onShare, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                        Icon(painterResource(LLIcons.Share), contentDescription = null)
+                        Text(stringResource(R.string.action_share_app), Modifier.padding(start = Spacing.xs))
                     }
                 }
             }
         }
+    }
+    val group = state.profile?.bloodGroup
+    if (askListing && group != null) {
+        ListMeDialog(
+            bloodGroup = group,
+            onConfirm = {
+                askListing = false
+                onListedChange(true)
+            },
+            onDismiss = { askListing = false },
+        )
     }
     toRemove?.let { d ->
         AlertDialog(
@@ -239,11 +267,11 @@ internal fun ProfileScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HeaderCard(state: ProfileUiState) {
+private fun HeaderCard(state: ProfileUiState, onEditProfile: () -> Unit) {
     val p = state.profile ?: return
     val locale = currentAppLocale()
     LLCard(Modifier.fillMaxWidth()) {
-        Row(Modifier.padding(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(start = Spacing.md, top = Spacing.md, bottom = Spacing.md, end = Spacing.xs), verticalAlignment = Alignment.Top) {
             p.bloodGroup?.let { BloodGroupBadge(it, size = 64.dp, hero = true) }
             Column(Modifier.padding(start = if (p.bloodGroup != null) Spacing.md else 0.dp).weight(1f)) {
                 Text(p.fullName, style = MaterialTheme.typography.titleLarge)
@@ -256,6 +284,62 @@ private fun HeaderCard(state: ProfileUiState) {
                     }
                 }
             }
+            // UI-07: a pencil on your profile opens Edit profile (48 dp; TalkBack: "Edit profile").
+            IconButton(onClick = onEditProfile) {
+                Icon(painterResource(LLIcons.Edit), contentDescription = stringResource(R.string.title_edit_profile))
+            }
+        }
+    }
+}
+
+/**
+ * N1 / NAV-01: your donor status in one card: the ring (full = you can donate now; not full = the
+ * days left), and both donor switches, each line true for the state it's in (COPY-04). Settings
+ * keeps the switches too.
+ */
+@Composable
+private fun DonorCard(
+    state: ProfileUiState,
+    notificationsOn: Boolean,
+    now: Instant,
+    onListedChange: (Boolean) -> Unit,
+    onAvailableChange: (Boolean) -> Unit,
+) {
+    val p = state.profile ?: return
+    val e = state.eligibility ?: return
+    val resting = IneligibleReason.REST_PERIOD in e.reasons
+    LLCard(Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
+            EligibilityRing(e, p.gender, now, size = 72.dp, showDays = true)
+            Column(Modifier.padding(start = Spacing.md).weight(1f)) {
+                Text(stringResource(R.string.profile_eligibility_title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(eligibilityText(e, now), style = MaterialTheme.typography.titleMedium)
+                if (resting) {
+                    Text(stringResource(R.string.profile_next_eligible, dateText(e.eligibleFrom)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        LLSwitchRow(
+            title = stringResource(R.string.settings_list_me),
+            checked = p.showInDonorSearch,
+            onCheckedChange = onListedChange,
+            summary = stringResource(if (p.showInDonorSearch) R.string.profile_listed_on else R.string.profile_listed_off),
+            enabled = !state.saving,
+            horizontalPadding = Spacing.md,
+        )
+        if (p.showInDonorSearch) {
+            LLSwitchRow(
+                title = stringResource(R.string.home_ready_to_donate),
+                checked = p.available,
+                onCheckedChange = onAvailableChange,
+                summary = when {
+                    p.available && notificationsOn && resting -> stringResource(R.string.profile_alerts_again_on, dateText(e.eligibleFrom))
+                    else -> stringResource(readyText(p.available, notificationsOn))
+                },
+                enabled = !state.saving,
+                horizontalPadding = Spacing.md,
+            )
         }
     }
 }
@@ -329,7 +413,7 @@ private fun DonationRow(d: Donation, canRemove: Boolean, onRemove: () -> Unit) {
         trailingContent = if (d.source == DonationSource.SELF) {
             {
                 IconButton(onClick = onRemove, enabled = canRemove) {
-                    Icon(painterResource(LLIcons.Remove), contentDescription = stringResource(R.string.action_remove_donation))
+                    Icon(painterResource(LLIcons.Delete), contentDescription = stringResource(R.string.action_remove_donation))
                 }
             }
         } else {
@@ -369,3 +453,6 @@ private val Badge.icon: Int
         Badge.RAPID_RESPONDER -> LLIcons.Bolt
         Badge.REGULAR -> LLIcons.EventRepeat
     }
+
+/** N1: the donation history shows this many before "Load more". */
+private const val RECENT_DONATIONS = 3

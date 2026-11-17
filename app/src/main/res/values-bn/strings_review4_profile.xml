@@ -11,6 +11,14 @@
     <string name="profile_not_listed">\"রক্তদাতা খুঁজুন\" তালিকায় নেই</string>
     <string name="profile_eligibility_title">আপনার পরের রক্তদান</string>
     <string name="profile_next_eligible">%1$s থেকে</string>
+    <string name="profile_listed_on">"রক্তদাতা খুঁজুন"-এ আপনাকে দেখা যায়। আপনার নম্বর কখনো দেখানো হয় না।</string>
+    <string name="profile_listed_off">চালু করলে "রক্তদাতা খুঁজুন"-এ আপনাকে দেখা যাবে, আর অনুরোধের অ্যালার্ট পাবেন।</string>
+    <string name="profile_alerts_again_on">%1$s থেকে আবার অ্যালার্ট পাবেন।</string>
+    <plurals name="ring_days">
+        <item quantity="one">দিন</item>
+        <item quantity="other">দিন</item>
+    </plurals>
+    <string name="action_load_more">আরও দেখুন</string>
     <string name="profile_impact_title">আপনার অবদান</string>
     <string name="profile_impact_donations">রক্তদান</string>
     <string name="profile_impact_verified">যাচাই করা</string>

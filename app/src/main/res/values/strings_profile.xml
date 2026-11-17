@@ -9,6 +9,16 @@
     <!-- Eligibility -->
     <string name="profile_eligibility_title">Your next donation</string>
     <string name="profile_next_eligible">From %1$s</string>
+    <!-- N1 (NAV-01, COPY-04): the Donor card on Profile; each switch line says what is true now. -->
+    <string name="profile_listed_on">You appear in Find donors. Your number is never listed.</string>
+    <string name="profile_listed_off">Turn on to appear in Find donors and get request alerts.</string>
+    <string name="profile_alerts_again_on">Alerts start again on %1$s.</string>
+    <plurals name="ring_days">
+        <item quantity="one">day</item>
+        <item quantity="other">days</item>
+    </plurals>
+    <!-- N1: the donation history shows the last 3 first. -->
+    <string name="action_load_more">Load more</string>
 
     <!-- Impact -->
     <string name="profile_impact_title">Your impact</string>
@@ -45,7 +55,7 @@
     <string name="profile_history_verified">Verified</string>
     <string name="profile_history_self">Self-reported</string>
     <string name="profile_history_error">Couldn\'t load your donations.</string>
-    <string name="action_add_past_donation">Add past donation</string>
+    <string name="action_add_past_donation">Add a past donation</string>
     <string name="action_remove_donation">Remove this donation</string>
     <string name="profile_remove_title">Remove this donation?</string>
     <string name="profile_remove_body">It leaves your history and your count. Your next eligible date stays as it is; you can change it in Edit profile.</string>
