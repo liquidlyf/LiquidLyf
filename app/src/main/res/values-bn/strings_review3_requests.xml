@@ -81,7 +81,7 @@
     <string name="request_needed_by">%1$s দরকার</string>
     <string name="request_needed_on">দরকার %1$s</string>
     <string name="offline_banner">আপনি অফলাইনে আছেন। সেভ করা তথ্য দেখানো হচ্ছে।</string>
-    <string name="offline_banner_form">আপনি অফলাইনে আছেন। আবার অনলাইনে এলে আপনার অনুরোধ পোস্ট হবে।</string>
+    <string name="offline_banner_form">ইন্টারনেট সংযোগ নেই। সংযোগ ফিরলে আপনার অনুরোধ পোস্ট হবে।</string>
     <string name="home_urgent_near_you">যেসব অনুরোধে আপনি সাহায্য করতে পারেন</string>
     <string name="home_no_group_title">আপনার রক্তের গ্রুপ যোগ করুন</string>
     <string name="home_no_group_body">তাহলে কাছের যেসব অনুরোধে সাড়া দিতে পারবেন, সেগুলো দেখবেন।</string>
