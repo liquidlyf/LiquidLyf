@@ -28,18 +28,26 @@ hash of site.css into _config.yml (css_version), so a browser never keeps an old
 copies site/workflows/yearly-rebuild.yml to .github/workflows/: a 1 January rebuild, so the footer's
 copyright year (the year of the build) moves on even if nothing else was published.
 
+It publishes the hospital list (plan D14) as data/hospitals.json for the app's daily refresh: the
+committed app/src/main/assets/hospitals.json, read from git so the bytes are the committed ones even
+where Git checks files out with CRLF. It stops if that list isn't valid, or if it would replace the
+website's list with one the phones ignore or refuse: a changed list whose version didn't go up, fewer
+than 80% as many hospitals, or over 2 MiB. Until the list is committed, it says so and skips it.
+
 It never deletes anything in the output folder. Files there that this build didn't write are listed
 at the end, to remove by hand if they're stale.
 
-Needs only the Python standard library. This script is code under the project's AGPL licence; the
+Needs only the Python standard library, and git. This script is code under the project's AGPL licence; the
 pages it publishes are CC BY 4.0, and the logo files are covered by TRADEMARKS.md.
 """
 import argparse
 import datetime as dt
 import hashlib
 import html
+import json
 import pathlib
 import re
+import subprocess
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -48,6 +56,12 @@ REPO = HERE.parent.parent
 PAGES = ["index.html", "privacy.md", "terms.md", "delete-account.md"]
 LOGOS = ["logo-full.svg", "logo-full-dark.svg", "logo-mark.svg", "logo-horizontal.svg",
          "logo-horizontal-dark.svg"]
+# The hospital list the app bundles (A copies it from B's firebase/seed/hospitals.json), and where the
+# website serves it. The phones' own rules are in the app's HospitalRepository.kt (HospitalListRules)
+# and HospitalLists.kt (MAX_BYTES).
+HOSPITALS = "app/src/main/assets/hospitals.json"
+HOSPITALS_URL_PATH = pathlib.Path("data/hospitals.json")
+HOSPITALS_MAX_BYTES = 2 * 1024 * 1024
 
 COMMENT = re.compile(r"<!--.*?-->\n?", re.S)
 PLACEHOLDER = re.compile(r"\[[A-Z][A-Z0-9]*(?:[ \-–][A-Z0-9]+)*\]")
@@ -180,6 +194,50 @@ def publish_page(text: str, values: dict[str, str], lang: str = "en") -> str:
     return text.lstrip("\n")
 
 
+def parse_hospitals(data: bytes, name: str) -> dict:
+    """The hospital list in `data`, or stop if it isn't one."""
+    try:
+        d = json.loads(data.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        raise SystemExit(f"{name} isn't valid UTF-8 JSON: {e}")
+    version = d.get("version") if isinstance(d, dict) else None
+    if not (type(version) is int and version >= 1 and d.get("licence") == "ODbL-1.0"
+            and isinstance(d.get("hospitals"), list) and d["hospitals"]):
+        raise SystemExit(f'{name} isn\'t a hospital list: it needs "version" (1 or more), '
+                         f'"licence": "ODbL-1.0" and a non-empty "hospitals" list')
+    return d
+
+
+def hospital_list(out: pathlib.Path) -> bytes | None:
+    """The committed hospital list, checked against the website's current one; None if not committed yet."""
+    try:
+        got = subprocess.run(["git", "-C", str(REPO), "cat-file", "blob", f"HEAD:{HOSPITALS}"],
+                             capture_output=True)
+    except FileNotFoundError:
+        raise SystemExit("git isn't on PATH: it's needed to read the committed hospital list")
+    if got.returncode != 0:
+        print(f"\nThe hospital list isn't committed yet ({HOSPITALS}): {HOSPITALS_URL_PATH.as_posix()} not written.")
+        return None
+    data = got.stdout
+    if len(data) > HOSPITALS_MAX_BYTES:
+        raise SystemExit(f"{HOSPITALS} is {len(data)} bytes: phones refuse a list over {HOSPITALS_MAX_BYTES}")
+    new = parse_hospitals(data, HOSPITALS)
+    local = REPO / HOSPITALS
+    if local.exists() and local.read_bytes().replace(b"\r\n", b"\n") != data:
+        print(f"\nNote: {HOSPITALS} has uncommitted changes. The committed version is published.")
+    current = out / HOSPITALS_URL_PATH
+    if current.exists() and current.read_bytes().replace(b"\r\n", b"\n") != data:
+        old = parse_hospitals(current.read_bytes(), f"the website's {HOSPITALS_URL_PATH.as_posix()}")
+        if new["version"] <= old["version"]:
+            raise SystemExit(f"the hospital list changed but its version didn't go up ({old['version']} → "
+                             f"{new['version']}): phones would keep their copy. Raise the version in the CSV (B)")
+        if len(new["hospitals"]) * 5 < len(old["hospitals"]) * 4:
+            raise SystemExit(f"the new hospital list has {len(new['hospitals'])} hospitals, under 80% of the "
+                             f"website's {len(old['hospitals'])}: phones would refuse it")
+    print(f"\nHospital list: version {new['version']}, {len(new['hospitals'])} hospitals.")
+    return data
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("out", type=pathlib.Path, help="the website repo's folder")
@@ -253,6 +311,10 @@ def main() -> None:
             write(pathlib.Path("assets") / rel, f.read_bytes())
     for logo in LOGOS:
         write(pathlib.Path("assets") / logo, (REPO / "branding" / logo).read_bytes())
+    # The hospital list for the app's daily refresh (D14), unchanged. No page links to it.
+    hospitals = hospital_list(out)
+    if hospitals is not None:
+        write(HOSPITALS_URL_PATH, hospitals)
 
     if problems:
         print("\nPlaceholders without a value:")

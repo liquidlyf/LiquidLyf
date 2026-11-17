@@ -89,6 +89,19 @@ Libraries and data from other projects keep their own licences. The app lists th
     (MIT). Names marked `bnNeedsReview` are LiquidLyf's own.
 
   The file is built by [`app/scripts/build_bd_geo.py`](app/scripts/build_bd_geo.py).
+- The hospital list: [`firebase/seed/hospitals.csv`](firebase/seed/hospitals.csv), its only source,
+  and the `hospitals.json` made from it, which the app bundles (`app/src/main/assets/`) and the
+  website serves (`liquidlyf.github.io/data/hospitals.json`):
+  - map points from [OpenStreetMap](https://www.openstreetmap.org/copyright),
+    © OpenStreetMap contributors;
+  - names and addresses are LiquidLyf's own, checked against the hospitals' own websites and official
+    gov.bd pages.
+
+  The whole list is offered under the
+  [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/), with the credit
+  "Hospital locations © OpenStreetMap contributors". If you publish a changed version of the list,
+  offer it under the ODbL too. The app's code stays under the AGPL. The JSON is made by
+  [`firebase/seed/hospitals.mjs`](firebase/seed/hospitals.mjs).
 
 ## Contributions
 

@@ -44,6 +44,14 @@ so, is a question for the lawyer (C7). Set `bn_reviewed: true` only when the mai
    writes `sitemap.xml` and `robots.txt`, and puts a hash of the stylesheet into `_config.yml`
    (`css_version`), so a browser never keeps an old `site.css` after a change. It never deletes files
    in the website repo; it lists the ones it didn't write.
+
+   **The hospital list** (plan D14): the script also publishes the committed
+   `app/src/main/assets/hospitals.json` unchanged as `data/hospitals.json`. No page links to it; the
+   app downloads it once a day. It stops before replacing the website's list with one the phones
+   would ignore or refuse: a changed list with the same version, fewer than 80% as many hospitals, or
+   over 2 MiB. A change to the list is: B edits `firebase/seed/hospitals.csv` (version + 1) and makes
+   the JSON, A commits it into the app, then this build and a push. Its licence (ODbL 1.0) is in
+   [LICENSING.md](../../LICENSING.md).
 3. Commit in the website repo (`git commit -s`) and push. GitHub Pages rebuilds the site in a minute or two.
 4. Open each page in a private window, in English and Bangla, on a phone.
 5. If the Terms or the Privacy Policy changed in a way users must accept again, change
