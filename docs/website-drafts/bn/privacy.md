@@ -96,10 +96,13 @@ LiquidLyf একটা ওপেন সোর্স প্রজেক্ট, �
 - **প্রতিদিনের চেক:** দিনে মোটামুটি একবার অ্যাপ GitHub থেকে দুটো ছোট ফাইল ডাউনলোড করে: হাসপাতালের
   তালিকা, আর অ্যাপের সবচেয়ে নতুন ভার্সনের তথ্য, যাতে আপডেট এলে আপনাকে জানাতে পারে। যেকোনো ডাউনলোডের মতো
   এখানেও GitHub আপনার ফোনের IP ঠিকানা দেখে। এ ছাড়া এই চেকে অ্যাপ আপনার বা আপনার অ্যাকাউন্টের কোনো তথ্য
-  পাঠায় না।
+  পাঠায় না। **"আপডেট নিন"** চাপলে অ্যাপ নতুন ভার্সনটাও GitHub থেকে ডাউনলোড করে, আর এবারও GitHub আপনার
+  ফোনের IP ঠিকানা দেখে।
 
 <!-- The daily checks line (17 Nov 2026): meaning-checked (3 blind rounds) and reviewed by the maintainer
-     (C20, 17 Nov 2026, OK as written). It goes live with the hospital list's website build. -->
+     (C20, 17 Nov 2026, OK as written). Its last sentence, the in-app update download ("update a",
+     17 Nov 2026), is new: meaning check, then the maintainer's review (C22). It goes live with the
+     hospital list's website build. -->
 
 <!-- v1.1: add when the features ship (Telegram phone verification, approximate location). -->
 

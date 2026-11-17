@@ -100,8 +100,12 @@ io.github.liquidlyf
 ## আপডেট
 
 - নতুন ভার্সন বের হলে অ্যাপের হোম স্ক্রিনে **"নতুন আপডেট এসেছে"** (<span lang="en">Update available</span>)
-  কার্ড দেখাবে। **"আপডেট নিন"** (<span lang="en">Get the update</span>) চাপলে ব্রাউজারে GitHub-এ নতুন
-  ভার্সনের পেজ খুলবে। সেখান থেকে **LiquidLyf.apk** ডাউনলোড করে আগের মতোই ইনস্টল করুন।
+  কার্ড দেখাবে। **"আপডেট নিন"** (<span lang="en">Get the update</span>) চাপলে অ্যাপ নিজেই নতুন ভার্সন
+  ডাউনলোড করবে। প্রথমবার অ্যান্ড্রয়েড জানাবে, LiquidLyf-কে অ্যাপ ইনস্টল করার অনুমতি দেওয়া নেই।
+  **"সেটিংস"** (<span lang="en">Settings</span>) চাপুন, **"এই উৎস থেকে অনুমতি দিন"**
+  (<span lang="en">Allow from this source</span>) চালু করুন, তারপর আগের স্ক্রিনে ফিরে যান। এরপর
+  **"ইনস্টল করুন"** (<span lang="en">Install</span>) চাপুন (কিছু ফোনে **"আপডেট করুন"**,
+  <span lang="en">Update</span>)।
 - [Obtainium](https://obtainium.imranr.dev) ব্যবহার করলে সেটাই আপডেট ইনস্টল করে দিতে পারে:
   [Obtainium-এ LiquidLyf যোগ করুন](obtainium://add/https://github.com/liquidlyf/LiquidLyf)। এই লিংকে চাপার
   পরও যদি Obtainium না খোলে, তাহলে নিজে Obtainium খুলুন, **<span lang="en">Add App</span>** চাপুন,
@@ -110,8 +114,9 @@ io.github.liquidlyf
 প্রতিটা আপডেট পুরোনো ভার্সনের ওপরেই ইনস্টল হয়। আপনার অ্যাকাউন্ট আর সেটিংস যেমন ছিল তেমনই থাকে।
 
 <!-- The card's Bangla labels are A's (values-bn/strings_review3_requests.xml, 1abaaad): "নতুন আপডেট
-     এসেছে" / "আপডেট নিন". This line changed after C19 to quote them: meaning check, then the
-     maintainer's review together with A's label pair (C21). If the labels change, change them here too.
+     এসেছে" / "আপডেট নিন" (C21, OK). Changed again for the in-app download ("update a", 17 Nov 2026):
+     meaning check, then the maintainer's review (C22). Android's own Bangla names here are guesses like
+     those in the install steps. If any label changes, change it here too.
      CHECK after Phase 9, as in the English page. Obtainium's labels stay in English: check on a phone whether Obtainium
      shows them in Bangla too. -->
 

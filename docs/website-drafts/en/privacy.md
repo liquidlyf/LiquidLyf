@@ -86,7 +86,8 @@ it does with your data.
 - **Daily checks:** about once a day, the app downloads two small files from GitHub: the hospital
   list, and the details of the newest app version, so it can tell you when an update is available. As
   with any download, GitHub sees your phone's IP address. The app sends nothing else about you or
-  your account with these checks.
+  your account with these checks. When you tap **Get the update**, the app downloads the new version
+  from GitHub too, and GitHub again sees your IP address.
 
 <!-- Daily checks: A32 item 4 = yes and D14 (the maintainer, 17 Nov 2026). Checked in A's code on 17 Nov
      2026, re-checked after A committed it (8907784): one silent daily worker does plain GETs of
@@ -97,7 +98,10 @@ it does with your data.
      phone (never backed up or sent). Exact headers (A, 17 Nov 2026): Host, Connection,
      Accept-Encoding: gzip, User-Agent "okhttp/5.5.1" (the library's version, not LiquidLyf's); the
      hospital request adds If-None-Match with GitHub Pages' ETag (the same for every phone). No cookies,
-     app version, account or rollout ID. Re-check whenever the daily check changes. -->
+     app version, account or rollout ID. Re-check whenever the daily check changes.
+     CHECK (A, when the in-app update download is built; "update a", 17 Nov 2026): what that download
+     sends. On the same OkHttp client, nothing more. Android's DownloadManager would add a User-Agent
+     with the Android version and phone model: then say so here. -->
 
 <!-- v1.1: add when the features ship.
 - **Phone verification with Telegram:** if you choose to verify your number, Telegram shares your
