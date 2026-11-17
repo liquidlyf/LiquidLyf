@@ -249,6 +249,18 @@ class VerifyEmailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * FLOW-09: back from the email app, check by itself. Silent: it moves on if verified and says
+     * nothing otherwise ("I've verified" and Resend stay, if it ever gets stuck).
+     */
+    fun checkQuietly() {
+        if (state.value.checking) return
+        viewModelScope.launch {
+            val result = auth.reloadUser()
+            if (result is AppResult.Success && result.data?.emailVerified == true) session.refresh()
+        }
+    }
+
     fun onMessageShown() = state.update { it.copy(message = null) }
 
     /** Signs out, so the user can sign up again with another address. */

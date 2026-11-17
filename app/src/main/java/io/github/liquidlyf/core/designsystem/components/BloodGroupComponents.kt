@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -58,6 +59,7 @@ fun BloodGroupChip(
     modifier: Modifier = Modifier,
     /** [Role.Checkbox] where several groups can be picked (Find donors). */
     role: Role = Role.RadioButton,
+    isError: Boolean = false,
 ) {
     val spoken = stringResource(group.spokenLabelRes)
     Box(modifier) {
@@ -75,6 +77,11 @@ fun BloodGroupChip(
                 )
             },
             colors = chosenChipColors(),
+            border = if (isError && !selected) {
+                FilterChipDefaults.filterChipBorder(enabled = true, selected = false, borderColor = MaterialTheme.colorScheme.error)
+            } else {
+                FilterChipDefaults.filterChipBorder(enabled = true, selected = selected)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = Spacing.minTouchTarget)
@@ -120,15 +127,14 @@ fun BloodGroupPicker(
                             group = group,
                             selected = group == selected,
                             onClick = { onSelect(group) },
+                            isError = errorText != null,
                             modifier = Modifier.weight(1f),
                         )
                     }
                 }
             }
         }
-        if (errorText != null) {
-            Text(errorText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        }
+        FieldError(errorText != null, errorText.orEmpty())
     }
 }
 

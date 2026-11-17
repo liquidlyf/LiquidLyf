@@ -50,6 +50,8 @@ fun LLTextField(
     contentType: ContentType? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    /** On the text box itself (not its label above it): e.g. an [ErrorAnchors] anchor. */
+    fieldModifier: Modifier = Modifier,
 ) {
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     val helpText = errorText ?: supportingText
@@ -60,7 +62,7 @@ fun LLTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier
+            modifier = fieldModifier
                 .fillMaxWidth()
                 .semantics {
                     if (labelAbove) contentDescription = label

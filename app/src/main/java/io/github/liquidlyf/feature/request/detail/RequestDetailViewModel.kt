@@ -17,6 +17,8 @@ import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.safety.SafetyRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
+import io.github.liquidlyf.core.designsystem.components.AppSnackbar
+import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.domain.StatusTransitions
@@ -31,10 +33,14 @@ import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
+import io.github.liquidlyf.core.util.ApplicationScope
 import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.core.util.NetworkMonitor
 import io.github.liquidlyf.feature.request.create.PostNotice
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -116,6 +122,8 @@ class RequestDetailViewModel @Inject constructor(
     private val clock: Clock,
     network: NetworkMonitor,
     private val reminders: Reminders,
+    /** Outlives this screen: "Undo" after "Not for me" runs once it's gone (FLOW-08). */
+    @param:ApplicationScope private val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) : ViewModel() {
 
     /** Offline, an action's batch waits in Firestore's queue; the screen says so. */
@@ -280,16 +288,30 @@ class RequestDetailViewModel @Inject constructor(
 
     fun withdraw() = act(R.string.detail_withdrawn) { r, p -> offers.withdraw(r, p.uid) }
 
-    /** "Not for me": hidden from Home on every device. */
+    /** "Not for me": hidden from Home on every device, with Undo on the screen it goes back to (FLOW-08). */
     fun hide() {
         val p = me ?: return
         viewModelScope.launch {
             when (val result = profiles.hideRequest(p, requestId)) {
                 is AppResult.Success -> {
                     session.refresh()
+                    AppSnackbars.show(AppSnackbar(R.string.request_hidden, R.string.action_undo, undoHide(requestId)))
                     events.send(DetailEvent.Left)
                 }
                 is AppResult.Failure -> events.send(DetailEvent.Message(result.error.messageRes))
+            }
+        }
+    }
+
+    /** Brings [id] back. Holds only singletons and the app's scope, not this ViewModel (it's gone by then). */
+    private fun undoHide(id: String): () -> Unit {
+        val profiles = profiles
+        val session = session
+        val scope = appScope
+        return {
+            scope.launch {
+                val profile = (session.state.value as? SessionState.Ready)?.profile ?: return@launch
+                if (profiles.unhideRequest(profile, id) is AppResult.Success) session.refresh()
             }
         }
     }

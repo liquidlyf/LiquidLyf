@@ -1,6 +1,7 @@
 package io.github.liquidlyf.feature.request.create
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +19,9 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +61,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.ErrorAnchors
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLFilterChip
@@ -71,6 +75,8 @@ import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
+import io.github.liquidlyf.core.designsystem.components.errorAnchor
+import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
@@ -175,6 +181,11 @@ internal fun CreateRequestScreen(
                 modifier = Modifier.padding(padding),
             )
             else -> Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
+                // FLOW-04: after a failed Next or Post, the first error comes into view.
+                val anchors = rememberErrorAnchors<RequestField>()
+                LaunchedEffect(state.errorAttempt) {
+                    if (state.errorAttempt > 0) anchors.showFirst(state.errors, RequestField.entries)
+                }
                 OfflineBanner(online, text = stringResource(R.string.offline_banner_form))
                 Column(
                     Modifier
@@ -190,9 +201,9 @@ internal fun CreateRequestScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     when (state.step) {
-                        0 -> PatientStep(state, onEdit)
-                        1 -> WhereWhenStep(state, onEdit, onDivision, onDistrict, onHospitalTyped, onHospitalPicked)
-                        else -> ContactStep(state, onEdit)
+                        0 -> PatientStep(state, anchors, onEdit)
+                        1 -> WhereWhenStep(state, anchors, onEdit, onDivision, onDistrict, onHospitalTyped, onHospitalPicked)
+                        else -> ContactStep(state, anchors, onEdit)
                     }
                     state.formError?.let {
                         Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
@@ -211,7 +222,7 @@ private fun StepTitle(text: String) =
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PatientStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> RequestForm) -> Unit) {
+private fun PatientStep(state: CreateRequestUiState, anchors: ErrorAnchors<RequestField>, onEdit: (RequestForm.() -> RequestForm) -> Unit) {
     val f = state.form
     StepTitle(stringResource(R.string.create_patient_title))
     BloodGroupPicker(
@@ -219,6 +230,7 @@ private fun PatientStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> 
         onSelect = { g -> onEdit { copy(bloodGroup = g.code) } },
         label = stringResource(R.string.create_patient_group),
         errorText = if (RequestField.BLOOD_GROUP in state.errors) stringResource(R.string.create_error_group) else null,
+        modifier = Modifier.errorAnchor(anchors, RequestField.BLOOD_GROUP),
     )
 
     Text(stringResource(R.string.create_component), style = MaterialTheme.typography.labelLarge)
@@ -277,6 +289,7 @@ internal fun UnitsStepper(units: Int, onChange: (Int) -> Unit, min: Int = Valida
 @Composable
 private fun WhereWhenStep(
     state: CreateRequestUiState,
+    anchors: ErrorAnchors<RequestField>,
     onEdit: (RequestForm.() -> RequestForm) -> Unit,
     onDivision: (String) -> Unit,
     onDistrict: (String) -> Unit,
@@ -286,19 +299,22 @@ private fun WhereWhenStep(
     val f = state.form
     val locale = currentAppLocale()
     StepTitle(stringResource(R.string.create_where_title))
-    state.geo?.let { geo ->
-        AreaPickers(
-            geo = geo,
-            locale = locale,
-            division = f.division,
-            district = f.district,
-            upazila = f.upazila,
-            onDivision = onDivision,
-            onDistrict = onDistrict,
-            onUpazila = { code -> onEdit { copy(upazila = code) } },
-        )
+    Column(Modifier.errorAnchor(anchors, RequestField.LOCATION), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+        state.geo?.let { geo ->
+            AreaPickers(
+                geo = geo,
+                locale = locale,
+                division = f.division,
+                district = f.district,
+                upazila = f.upazila,
+                onDivision = onDivision,
+                onDistrict = onDistrict,
+                onUpazila = { code -> onEdit { copy(upazila = code) } },
+                isError = RequestField.LOCATION in state.errors,
+            )
+        }
+        FieldError(RequestField.LOCATION in state.errors, stringResource(R.string.error_location_required))
     }
-    FieldError(RequestField.LOCATION in state.errors, stringResource(R.string.error_location_required))
 
     LLTextField(
         value = f.hospitalName,
@@ -307,6 +323,7 @@ private fun WhereWhenStep(
         supportingText = stringResource(R.string.create_hospital_hint),
         errorText = if (RequestField.HOSPITAL in state.errors) stringResource(R.string.create_error_hospital) else null,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+        fieldModifier = Modifier.errorAnchor(anchors, RequestField.HOSPITAL, textField = true),
     )
     if (state.hospitals.isNotEmpty()) {
         LLCard {
@@ -329,39 +346,53 @@ private fun WhereWhenStep(
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
     )
 
-    Text(stringResource(R.string.create_urgency), style = MaterialTheme.typography.labelLarge)
-    ChoiceRow(
-        options = Urgency.entries.map { it.code to stringResource(it.labelRes) },
-        selected = f.urgency,
-        onSelect = { code -> onEdit { copy(urgency = code) } },
-    )
-    val urgencyHelp = when (Urgency.fromCode(f.urgency)) {
-        Urgency.CRITICAL -> R.string.create_urgency_critical_help
-        Urgency.URGENT -> R.string.create_urgency_urgent_help
-        Urgency.PLANNED -> R.string.create_urgency_planned_help
-        null -> null
+    // The anchor covers the label, the row and its error line: bringing a field into view scrolls
+    // only as far as its anchor, so the error must be inside it (FLOW-04).
+    Column(Modifier.errorAnchor(anchors, RequestField.URGENCY), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+        Text(stringResource(R.string.create_urgency), style = MaterialTheme.typography.labelLarge)
+        ChoiceRow(
+            options = Urgency.entries.map { it.code to stringResource(it.labelRes) },
+            selected = f.urgency,
+            onSelect = { code -> onEdit { copy(urgency = code) } },
+            isError = RequestField.URGENCY in state.errors,
+        )
+        val urgencyHelp = when (Urgency.fromCode(f.urgency)) {
+            Urgency.CRITICAL -> R.string.create_urgency_critical_help
+            Urgency.URGENT -> R.string.create_urgency_urgent_help
+            Urgency.PLANNED -> R.string.create_urgency_planned_help
+            null -> null
+        }
+        urgencyHelp?.let { Text(stringResource(it), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        FieldError(RequestField.URGENCY in state.errors, stringResource(R.string.create_error_urgency))
     }
-    urgencyHelp?.let { Text(stringResource(it), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-    FieldError(RequestField.URGENCY in state.errors, stringResource(R.string.create_error_urgency))
-    if (f.urgency == Urgency.PLANNED.code) PlannedAtPicker(f.plannedAtMillis, RequestField.PLANNED_AT in state.errors) { millis ->
-        onEdit { copy(plannedAtMillis = millis) }
+    if (f.urgency == Urgency.PLANNED.code) {
+        PlannedAtPicker(f.plannedAtMillis, RequestField.PLANNED_AT in state.errors, Modifier.errorAnchor(anchors, RequestField.PLANNED_AT)) { millis ->
+            onEdit { copy(plannedAtMillis = millis) }
+        }
     }
 }
 
 /** Date, then time; the rules accept 15 minutes to 30 days ahead. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun PlannedAtPicker(plannedAtMillis: Long?, showError: Boolean, onPicked: (Long) -> Unit) {
+internal fun PlannedAtPicker(plannedAtMillis: Long?, showError: Boolean, modifier: Modifier = Modifier, onPicked: (Long) -> Unit) {
     var pickingDate by rememberSaveable { mutableStateOf(false) }
     var pickedDay by rememberSaveable { mutableStateOf<Long?>(null) }
-    OutlinedButton(onClick = { pickingDate = true }, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
-        Icon(painterResource(LLIcons.Event), contentDescription = null)
-        Text(
-            plannedAtMillis?.let { dateTimeText(Instant.ofEpochMilli(it)) } ?: stringResource(R.string.create_pick_time),
-            modifier = Modifier.padding(start = Spacing.xs),
-        )
+    // [modifier] covers the button and its error line (FLOW-04).
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        OutlinedButton(
+            onClick = { pickingDate = true },
+            modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
+            border = if (showError) BorderStroke(1.dp, MaterialTheme.colorScheme.error) else ButtonDefaults.outlinedButtonBorder(),
+        ) {
+            Icon(painterResource(LLIcons.Event), contentDescription = null)
+            Text(
+                plannedAtMillis?.let { dateTimeText(Instant.ofEpochMilli(it)) } ?: stringResource(R.string.create_pick_time),
+                modifier = Modifier.padding(start = Spacing.xs),
+            )
+        }
+        FieldError(showError, stringResource(R.string.create_error_planned))
     }
-    FieldError(showError, stringResource(R.string.create_error_planned))
 
     val zone = ZoneId.systemDefault()
     val today = LocalDate.now(zone)
@@ -412,7 +443,7 @@ private const val PLANNED_MAX_DAYS = 29L
 // ---- Step 3: contact and review ----
 
 @Composable
-private fun ContactStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> RequestForm) -> Unit) {
+private fun ContactStep(state: CreateRequestUiState, anchors: ErrorAnchors<RequestField>, onEdit: (RequestForm.() -> RequestForm) -> Unit) {
     val f = state.form
     StepTitle(stringResource(R.string.create_contact_title))
     Text(stringResource(R.string.create_contact_info), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -422,6 +453,7 @@ private fun ContactStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> 
         label = stringResource(R.string.create_contact_name),
         errorText = if (RequestField.CONTACT_NAME in state.errors) stringResource(R.string.error_name_invalid) else null,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+        fieldModifier = Modifier.errorAnchor(anchors, RequestField.CONTACT_NAME, textField = true),
     )
     LLTextField(
         value = f.contactPhone,
@@ -431,6 +463,7 @@ private fun ContactStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> 
         supportingText = stringResource(R.string.create_private_hint),
         errorText = if (RequestField.CONTACT_PHONE in state.errors) stringResource(R.string.error_phone_invalid) else null,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+        fieldModifier = Modifier.errorAnchor(anchors, RequestField.CONTACT_PHONE, textField = true),
     )
     LLTextField(
         value = f.patientName,
@@ -460,17 +493,24 @@ private fun ContactStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> 
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = Spacing.minTouchTarget)
-            .toggleable(value = f.genuine, role = Role.Checkbox, onValueChange = { v -> onEdit { copy(genuine = v) } }),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(checked = f.genuine, onCheckedChange = null)
-        Text(stringResource(R.string.create_genuine), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = Spacing.xs))
+    val genuineError = RequestField.GENUINE in state.errors
+    Column(Modifier.errorAnchor(anchors, RequestField.GENUINE)) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = Spacing.minTouchTarget)
+                .toggleable(value = f.genuine, role = Role.Checkbox, onValueChange = { v -> onEdit { copy(genuine = v) } }),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Checkbox(
+                checked = f.genuine,
+                onCheckedChange = null,
+                colors = if (genuineError) CheckboxDefaults.colors(uncheckedColor = MaterialTheme.colorScheme.error) else CheckboxDefaults.colors(),
+            )
+            Text(stringResource(R.string.create_genuine), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = Spacing.xs))
+        }
+        FieldError(RequestField.GENUINE in state.errors, stringResource(R.string.create_error_genuine))
     }
-    FieldError(RequestField.GENUINE in state.errors, stringResource(R.string.create_error_genuine))
 }
 
 /** What will be posted, in one card, so a mistake is caught before donors are alerted. */

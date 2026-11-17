@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonColors
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -42,9 +43,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import io.github.liquidlyf.core.designsystem.LLIcons
@@ -57,8 +60,9 @@ fun ChoiceRow(
     selected: String?,
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
+    isError: Boolean = false,
 ) {
-    SegmentedChoices(options, options.firstOrNull { it.first == selected }, { onSelect(it.first) }, modifier) { it.second }
+    SegmentedChoices(options, options.firstOrNull { it.first == selected }, { onSelect(it.first) }, modifier, isError) { it.second }
 }
 
 /**
@@ -77,10 +81,12 @@ fun <T> SegmentedChoices(
     selected: T?,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
+    /** Nothing picked yet and it's needed (FLOW-04): red outlines, next to the error line below. */
+    isError: Boolean = false,
     label: @Composable (T) -> String,
 ) {
     if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) {
-        RadioChoices(options, selected, onSelect, modifier, label)
+        RadioChoices(options, selected, onSelect, modifier, isError, label)
         return
     }
     BoxWithConstraints(modifier.fillMaxWidth()) {
@@ -98,7 +104,7 @@ fun <T> SegmentedChoices(
                     selected = option == selected,
                     onClick = { onSelect(option) },
                     shape = SegmentedButtonDefaults.itemShape(index, options.size),
-                    colors = chosenSegmentColors(),
+                    colors = chosenSegmentColors(isError),
                     modifier = Modifier.fillMaxHeight(),
                 ) { Text(label(option), textAlign = TextAlign.Center) }
             }
@@ -113,6 +119,7 @@ private fun <T> RadioChoices(
     selected: T?,
     onSelect: (T) -> Unit,
     modifier: Modifier,
+    isError: Boolean,
     label: @Composable (T) -> String,
 ) {
     Column(modifier.fillMaxWidth().selectableGroup()) {
@@ -125,7 +132,11 @@ private fun <T> RadioChoices(
                     .heightIn(min = Spacing.minTouchTarget)
                     .selectable(selected = option == selected, role = Role.RadioButton, onClick = { onSelect(option) }),
             ) {
-                RadioButton(selected = option == selected, onClick = null)
+                RadioButton(
+                    selected = option == selected,
+                    onClick = null,
+                    colors = if (isError) RadioButtonDefaults.colors(unselectedColor = MaterialTheme.colorScheme.error) else RadioButtonDefaults.colors(),
+                )
                 Text(label(option), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
             }
         }
@@ -147,11 +158,12 @@ fun chosenChipColors(): SelectableChipColors = FilterChipDefaults.filterChipColo
     selectedTrailingIconColor = MaterialTheme.colorScheme.onPrimary,
 )
 
-/** Material's SegmentedButton colours for a chosen option (its own check stays). */
+/** Material's SegmentedButton colours for a chosen option (its own check stays); red outlines for an error. */
 @Composable
-fun chosenSegmentColors(): SegmentedButtonColors = SegmentedButtonDefaults.colors(
+fun chosenSegmentColors(isError: Boolean = false): SegmentedButtonColors = SegmentedButtonDefaults.colors(
     activeContainerColor = MaterialTheme.colorScheme.primary,
     activeContentColor = MaterialTheme.colorScheme.onPrimary,
+    inactiveBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
 )
 
 /** A chip to pick (what's needed, the reason, a component): a check when chosen, 48 dp tall. */
@@ -181,18 +193,20 @@ fun DropdownField(
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isError: Boolean = false,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val selectedLabel = options.firstOrNull { it.first == selected }?.second.orEmpty()
     val labelAbove = isLargeText()
     Column(modifier) {
-        if (labelAbove) FieldLabelAbove(label)
+        if (labelAbove) FieldLabelAbove(label, isError)
         ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { if (enabled) expanded = it }) {
             OutlinedTextField(
                 value = selectedLabel,
                 onValueChange = {},
                 readOnly = true,
                 enabled = enabled,
+                isError = isError && enabled,
                 label = if (labelAbove) null else { { Text(label) } },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
@@ -223,7 +237,10 @@ fun FieldError(show: Boolean, text: String, modifier: Modifier = Modifier) {
             text,
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall,
-            modifier = modifier.semantics { error(text) },
+            modifier = modifier.semantics {
+                error(text)
+                liveRegion = LiveRegionMode.Polite // FLOW-04: TalkBack hears it when it appears
+            },
         )
     }
 }

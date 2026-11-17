@@ -77,4 +77,7 @@ object LLIcons {
     val Premium = R.drawable.ic_workspace_premium
     val EventRepeat = R.drawable.ic_event_repeat
     val ActiveDot = R.drawable.ic_active_dot
+
+    /** A list bullet (the same filled dot), where a check would look already ticked (FORM-03). */
+    val Bullet = R.drawable.ic_active_dot
 }

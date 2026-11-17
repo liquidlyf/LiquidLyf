@@ -79,7 +79,7 @@
     <string name="verify_email_not_yet">এখনো যাচাই হয়নি। আগে ইমেইলের লিংকটি খুলুন, তারপর আবার চেষ্টা করুন। ইমেইল খুঁজে পাচ্ছেন না? স্প্যাম ও প্রোমোশনস ফোল্ডার দেখুন।</string>
     <string name="verify_email_resend_hint">২ মিনিটের মধ্যে পাননি? \"আবার ইমেইল পাঠান\" চাপুন।</string>
     <string name="email_spam_hint">খুঁজে পাচ্ছেন না? স্প্যাম ও প্রোমোশনস ফোল্ডার দেখুন।</string>
-    <string name="email_sender">ইমেইলটি আসবে %1$s থেকে।</string>
+    <string name="email_sender">ইমেইলটি আসবে LiquidLyf থেকে (%1$s)।</string>
     <string name="verify_email_sent">ইমেইল পাঠানো হয়েছে। ইনবক্স ও স্প্যাম ফোল্ডার দেখুন।</string>
     <string name="action_use_different_email">অন্য ইমেইল ব্যবহার করুন</string>
     <string name="forgot_password_body">আপনার অ্যাকাউন্টের ইমেইল দিন, আমরা পাসওয়ার্ড রিসেট করার একটি লিংক পাঠাব।</string>

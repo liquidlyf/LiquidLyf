@@ -227,6 +227,24 @@ class AuthViewModelsTest {
     }
 
     @Test
+    fun `coming back from the email app checks by itself, quietly`() = test {
+        // FLOW-09: no "Not verified yet" message on every return, and it moves on once verified.
+        auth.signUpEmail("Rahim", "rahim@example.test", "long-enough")
+        val session = FakeSessionManager(SessionState.Unverified(auth.authState.value!!))
+        val vm = VerifyEmailViewModel(auth, session)
+        vm.checkQuietly()
+        runCurrent()
+        assertEquals(null, vm.uiState.value.message)
+        assertFalse(vm.uiState.value.checking)
+        assertEquals(0, session.refreshes)
+
+        auth.verify("rahim@example.test")
+        vm.checkQuietly()
+        runCurrent()
+        assertEquals(1, session.refreshes)
+    }
+
+    @Test
     fun `use a different email signs out`() = test {
         val session = FakeSessionManager(SessionState.Unverified(TestData.user(verified = false)))
         VerifyEmailViewModel(auth, session).useDifferentEmail()

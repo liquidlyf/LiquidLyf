@@ -244,6 +244,12 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
         AppResult.Success(Unit)
     }
 
+    override suspend fun unhideRequest(profile: UserProfile, requestId: String) = result {
+        val current = profiles[profile.uid] ?: profile
+        profiles[profile.uid] = current.copy(hiddenRequestIds = current.hiddenRequestIds - requestId)
+        AppResult.Success(Unit)
+    }
+
     /** Donations by uid; recordVerifiedDonation adds one with the request id. */
     val donationList = mutableMapOf<String, MutableList<Donation>>()
 

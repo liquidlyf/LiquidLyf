@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -24,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -46,6 +48,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import io.github.liquidlyf.R
@@ -121,8 +124,17 @@ fun SignInRoute(
     onForgotPassword: () -> Unit,
     viewModel: SignInViewModel = hiltViewModel(),
     language: LanguageViewModel = hiltViewModel(),
+    /** An email handed over from Sign up ("already has an account", FORM-04); [onPrefillUsed] clears it. */
+    prefillEmail: String? = null,
+    onPrefillUsed: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(prefillEmail) {
+        if (prefillEmail != null) {
+            viewModel.onEmailChange(prefillEmail)
+            onPrefillUsed()
+        }
+    }
     val onGoogle = rememberContinueWithGoogle(viewModel::onGoogleStarted, viewModel::onGoogleResult)
     SignInScreen(
         state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, onCreateAccount, onForgotPassword, onGoogle,
@@ -227,7 +239,12 @@ fun SignInScreen(
 // ---- Sign up ----
 
 @Composable
-fun SignUpRoute(onBack: () -> Unit, viewModel: SignUpViewModel = hiltViewModel(), language: LanguageViewModel = hiltViewModel()) {
+fun SignUpRoute(
+    onBack: () -> Unit,
+    onSignInWithEmail: (String) -> Unit = { onBack() },
+    viewModel: SignUpViewModel = hiltViewModel(),
+    language: LanguageViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     SignUpScreen(
         state = state,
@@ -239,6 +256,7 @@ fun SignUpRoute(onBack: () -> Unit, viewModel: SignUpViewModel = hiltViewModel()
         onBack = onBack,
         onContinueWithGoogle = rememberContinueWithGoogle(viewModel::onGoogleStarted, viewModel::onGoogleResult),
         onLanguageChange = language::set,
+        onSignInWithEmail = { onSignInWithEmail(state.email.trim()) },
     )
 }
 
@@ -254,6 +272,7 @@ fun SignUpScreen(
     onBack: () -> Unit,
     onContinueWithGoogle: (() -> Unit)? = null,
     onLanguageChange: (AppLanguage) -> Unit = {},
+    onSignInWithEmail: () -> Unit = onBack,
 ) {
     val links = rememberSafeIntentLauncher()
     val locale = currentAppLocale()
@@ -278,6 +297,12 @@ fun SignUpScreen(
             contentType = ContentType.EmailAddress,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
         )
+        // FORM-04: the error says "Sign in instead", so offer it right there, with the email filled in.
+        if (state.emailError == R.string.error_email_in_use) {
+            FilledTonalButton(onClick = dropUnlessResumed(block = onSignInWithEmail), modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                Text(stringResource(R.string.action_sign_in))
+            }
+        }
         LLTextField(
             value = state.password,
             onValueChange = onPasswordChange,
@@ -324,6 +349,11 @@ fun SignUpScreen(
 @Composable
 fun VerifyEmailRoute(viewModel: VerifyEmailViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // FLOW-09: each time the person comes back (from the email app), check by itself.
+    LifecycleResumeEffect(viewModel) {
+        viewModel.checkQuietly()
+        onPauseOrDispose { }
+    }
     val snackbar = LocalSnackbarHostState.current
     val message = state.message?.let { stringResource(it) }
     LaunchedEffect(message) {

@@ -189,7 +189,7 @@
     <string name="verify_email_not_yet">Not verified yet. Open the link in the email first, then try again. Can\'t find the email? Check Spam and Promotions.</string>
     <string name="verify_email_resend_hint">Didn\'t get it within 2 minutes? Tap Resend.</string>
     <string name="email_spam_hint">Can\'t find it? Check Spam and Promotions.</string>
-    <string name="email_sender">It comes from %1$s.</string>
+    <string name="email_sender">It comes from LiquidLyf (%1$s).</string>
     <string name="verify_email_sent">Email sent. Check your inbox and spam folder.</string>
     <string name="action_use_different_email">Use a different email</string>
     <string name="forgot_password_body">Enter your account email, and we\'ll send a link to reset your password.</string>

@@ -24,8 +24,10 @@ import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -36,11 +38,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -58,6 +62,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
 import io.github.liquidlyf.core.designsystem.LLIcons
+import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.designsystem.components.CapFontScale
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.MAX_LABEL_SCALE
@@ -167,6 +172,18 @@ fun AppNavHost(
         }
     }
 
+    // App-wide messages that outlive the screen that sent them (FLOW-08: "Request hidden · Undo").
+    val resources = LocalResources.current
+    LaunchedEffect(snackbarHostState) {
+        AppSnackbars.messages.collect { s ->
+            val result = snackbarHostState.showSnackbar(
+                message = resources.getString(s.message),
+                actionLabel = s.actionLabel?.let(resources::getString),
+                duration = SnackbarDuration.Long,
+            )
+            if (result == SnackbarResult.ActionPerformed) s.onAction?.invoke()
+        }
+    }
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
         Scaffold(
             modifier = modifier,
@@ -296,14 +313,26 @@ private fun NavGraphBuilder.onboarding(navController: NavController, onFinished:
 /** Signed out. Success needs no navigation here: the session changes and the gate moves on. */
 private fun NavGraphBuilder.authGraph(navController: NavController) {
     navigation<AuthGraph>(startDestination = SignIn) {
-        composable<SignIn> {
+        composable<SignIn> { entry ->
+            val prefill by entry.savedStateHandle.getStateFlow<String?>(PREFILL_EMAIL, null).collectAsStateWithLifecycle()
             SignInRoute(
                 onCreateAccount = { navController.navigate(SignUp) { launchSingleTop = true } },
                 onForgotPassword = { navController.navigate(ForgotPassword) { launchSingleTop = true } },
+                prefillEmail = prefill,
+                onPrefillUsed = { entry.savedStateHandle[PREFILL_EMAIL] = null },
             )
         }
         // Back to the existing sign-in screen, never a second copy on top (BUG-031).
-        composable<SignUp> { SignUpRoute(onBack = { navController.popBackStack<SignIn>(inclusive = false) }) }
+        composable<SignUp> {
+            SignUpRoute(
+                onBack = { navController.popBackStack<SignIn>(inclusive = false) },
+                // FORM-04: "already has an account": Sign in, with this email filled in.
+                onSignInWithEmail = { email ->
+                    runCatching { navController.getBackStackEntry<SignIn>().savedStateHandle[PREFILL_EMAIL] = email }
+                    navController.popBackStack<SignIn>(inclusive = false)
+                },
+            )
+        }
         composable<ForgotPassword> { ForgotPasswordRoute(onBack = { navController.popBackStack<SignIn>(inclusive = false) }) }
         // Telegram phone verification arrives in v1.1 (D3); no screen links here yet.
         composable<PhoneVerify> {
@@ -447,3 +476,6 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
         composable<BlockedPeople> { BlockedPeopleRoute(onBack = { navController.popBackStack() }) }
     }
 }
+
+/** Sign up hands an email to Sign in through this saved-state key (FORM-04). */
+private const val PREFILL_EMAIL = "prefillEmail"

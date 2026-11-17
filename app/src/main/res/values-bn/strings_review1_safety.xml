@@ -48,6 +48,7 @@
     <string name="create_error_genuine">অনুরোধটি যে সত্যিকারের, তা নিশ্চিত করুন।</string>
     <string name="detail_safety">রক্তের জন্য কখনো টাকা দেবেন না, নেবেনও না। যে অনুরোধে টাকা চাওয়া হয়, তা রিপোর্ট করুন।</string>
     <string name="detail_check_title">সাড়া দেওয়ার আগে</string>
+    <string name="detail_check_lead">নিচের সব কটি কথা সত্যি হলে তবেই সাড়া দিন:</string>
     <string name="detail_check_well">আজ আপনার শরীর ভালো আছে।</string>
     <string name="detail_check_interval">শেষবার পূর্ণ রক্ত (হোল ব্লাড) দেওয়ার পর অন্তত ৪ মাস পার হয়েছে।</string>
     <string name="detail_check_weight">আপনার ওজন অন্তত ৪৫ কেজি।</string>

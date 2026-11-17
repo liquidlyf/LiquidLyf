@@ -107,6 +107,10 @@ class CreateRequestViewModelTest {
         advanceUntilIdle()
         vm.next()
         assertEquals(setOf(RequestField.BLOOD_GROUP), vm.uiState.value.errors)
+        // FLOW-04: each failed Next is counted, so the screen brings the first error into view again.
+        assertEquals(1, vm.uiState.value.errorAttempt)
+        vm.next()
+        assertEquals(2, vm.uiState.value.errorAttempt)
         vm.edit { copy(bloodGroup = "A_POS") }
         vm.next()
         assertEquals(1, vm.uiState.value.step)

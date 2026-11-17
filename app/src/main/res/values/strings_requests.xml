@@ -131,6 +131,7 @@
     <string name="detail_withdraw_title">Withdraw your offer?</string>
     <string name="detail_withdraw_body">The requester will no longer count on you. You can\'t offer again on this request.</string>
     <string name="detail_check_title">Before you offer</string>
+    <string name="detail_check_lead">Offer only if all of these are true:</string>
     <string name="detail_check_well">You feel well today.</string>
     <string name="detail_check_interval">Your last whole-blood donation was at least 4 months ago.</string>
     <string name="detail_check_weight">You weigh at least 45 kg.</string>
@@ -255,4 +256,7 @@
     <string name="update_in_browser" tools:ignore="UnusedResources">Download in the browser instead</string>
     <string name="update_required_title" tools:ignore="UnusedResources">Please update LiquidLyf</string>
     <string name="update_required_body" tools:ignore="UnusedResources">This version is too old to use safely. Updating keeps your account and settings.</string>
+    <!-- FLOW-08: after "Not for me", on the screen you go back to. -->
+    <string name="request_hidden">Request hidden. It won\'t show on Home.</string>
+    <string name="action_undo">Undo</string>
 </resources>

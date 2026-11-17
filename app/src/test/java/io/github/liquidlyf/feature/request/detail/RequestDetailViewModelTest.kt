@@ -7,6 +7,8 @@ import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.session.SessionState
+import io.github.liquidlyf.core.designsystem.components.AppSnackbar
+import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.model.BloodGroup
@@ -28,6 +30,7 @@ import io.github.liquidlyf.testing.FakeSessionManager
 import io.github.liquidlyf.testing.FakeWorkerClient
 import io.github.liquidlyf.testing.TestData
 import io.github.liquidlyf.testing.request
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -81,6 +84,7 @@ class RequestDetailViewModelTest {
     private fun vm(id: String = "r1", notice: String? = null) = RequestDetailViewModel(
         SavedStateHandle(mapOf("id" to id, "notice" to notice)),
         session, requests, offers, profiles, safety, worker, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, network, reminders,
+        appScope = CoroutineScope(dispatcher),
     )
 
     private fun signInAs(p: UserProfile) {
@@ -307,6 +311,26 @@ class RequestDetailViewModelTest {
         assertEquals(listOf("r1"), profiles.profiles.getValue("donor").hiddenRequestIds)
         assertEquals(1, session.refreshes)
         assertEquals(listOf<DetailEvent>(DetailEvent.Left), events)
+    }
+
+    @Test
+    fun `not for me offers Undo on the screen it goes back to, and Undo brings it back`() = runTest(dispatcher) {
+        // FLOW-08: it used to leave with no message and no undo.
+        val shown = mutableListOf<AppSnackbar>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { AppSnackbars.messages.collect { shown += it } }
+        val vm = vm()
+        advanceUntilIdle()
+        vm.hide()
+        advanceUntilIdle()
+        val snackbar = shown.single()
+        assertEquals(R.string.request_hidden, snackbar.message)
+        assertEquals(R.string.action_undo, snackbar.actionLabel)
+
+        session.state.value = SessionState.Ready(TestData.user(uid = "donor"), profiles.profiles.getValue("donor"))
+        snackbar.onAction!!.invoke()
+        advanceUntilIdle()
+        assertEquals(emptyList<String>(), profiles.profiles.getValue("donor").hiddenRequestIds)
+        assertEquals(2, session.refreshes)
     }
 
     @Test

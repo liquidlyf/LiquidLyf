@@ -293,4 +293,7 @@
     <string name="update_in_browser" tools:ignore="UnusedResources">ব্রাউজারে ডাউনলোড করুন</string>
     <string name="update_required_title" tools:ignore="UnusedResources">LiquidLyf আপডেট করুন</string>
     <string name="update_required_body" tools:ignore="UnusedResources">এই ভার্সনটি নিরাপদে ব্যবহারের জন্য অনেক পুরোনো। আপডেট করলে আপনার অ্যাকাউন্ট আর সেটিংস যেমন আছে তেমনই থাকবে।</string>
+    <!-- FLOW-08: after "Not for me", on the screen you go back to. -->
+    <string name="request_hidden">অনুরোধটি লুকানো হয়েছে। হোমে আর দেখাবে না।</string>
+    <string name="action_undo">ফিরিয়ে আনুন</string>
 </resources>

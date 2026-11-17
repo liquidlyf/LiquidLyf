@@ -107,6 +107,8 @@ data class CreateRequestUiState(
     val geo: BdGeo? = null,
     val limit: OpenRequestLimit? = null,
     val errors: Set<RequestField> = emptySet(),
+    /** Counts failed Next/Post taps: each one brings the first error into view (FLOW-04). */
+    val errorAttempt: Int = 0,
     val hospitals: List<Hospital> = emptyList(),
     val posting: Boolean = false,
     /** 7.8: the notes mention money; waiting for "Post anyway" or "Change note". */
@@ -211,7 +213,7 @@ class CreateRequestViewModel @Inject constructor(
         if (!s.loaded || s.posting) return
         val errors = validate(s.form, s.form.step)
         if (errors.isNotEmpty()) {
-            state.update { it.copy(errors = errors) }
+            state.update { it.copy(errors = errors, errorAttempt = it.errorAttempt + 1) }
             return
         }
         if (!s.isLastStep) {

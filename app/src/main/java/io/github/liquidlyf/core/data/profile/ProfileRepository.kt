@@ -71,6 +71,9 @@ interface ProfileRepository {
      */
     suspend fun hideRequest(profile: UserProfile, requestId: String): AppResult<Unit>
 
+    /** Undo of [hideRequest] (FLOW-08). */
+    suspend fun unhideRequest(profile: UserProfile, requestId: String): AppResult<Unit>
+
     /**
      * 7.2 "Block this person": their requests, offers and asks no longer reach me. The list lives
      * on my user doc (rules: at most 200, and the rules refuse their offers and asks), so the
@@ -178,6 +181,11 @@ class FirestoreProfileRepository @Inject constructor(
         if (requestId in profile.hiddenRequestIds) return AppResult.Success(Unit)
         val ids = (profile.hiddenRequestIds + requestId).takeLast(Validators.MAX_HIDDEN_OR_BLOCKED)
         return writeProfile(profile, profile.copy(hiddenRequestIds = ids))
+    }
+
+    override suspend fun unhideRequest(profile: UserProfile, requestId: String): AppResult<Unit> {
+        if (requestId !in profile.hiddenRequestIds) return AppResult.Success(Unit)
+        return writeProfile(profile, profile.copy(hiddenRequestIds = profile.hiddenRequestIds - requestId))
     }
 
     override suspend fun block(profile: UserProfile, uid: String): AppResult<Unit> {

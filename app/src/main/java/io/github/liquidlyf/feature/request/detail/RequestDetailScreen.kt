@@ -392,10 +392,12 @@ private fun DonorSection(state: RequestDetailUiState, vm: RequestDetailViewModel
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
                 Text(stringResource(R.string.detail_check_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
+                // FORM-03: a lead-in and plain bullets; with ✓ icons the list looked already ticked.
+                Text(stringResource(R.string.detail_check_lead), style = MaterialTheme.typography.bodyMedium)
                 listOf(
                     R.string.detail_check_well, R.string.detail_check_interval, R.string.detail_check_weight,
                     R.string.detail_check_illness, R.string.detail_check_meal,
-                ).forEach { IconLine(LLIcons.Check, stringResource(it)) }
+                ).forEach { IconLine(LLIcons.Bullet, stringResource(it)) }
                 Text(stringResource(R.string.detail_check_guidance), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 LLTextField(
                     value = message,

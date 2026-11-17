@@ -358,11 +358,13 @@ internal fun AreaPickers(
     onDivision: (String) -> Unit,
     onDistrict: (String) -> Unit,
     onUpazila: (String) -> Unit,
+    /** The area is needed and incomplete (FLOW-04): the empty pickers go red. */
+    isError: Boolean = false,
 ) {
     val divisions = geo.divisions.map { it.code to it.name.localized(locale) }.sortedBy { it.second }
-    DropdownField(stringResource(R.string.label_division), divisions, division, onDivision)
+    DropdownField(stringResource(R.string.label_division), divisions, division, onDivision, isError = isError && division == null)
     val districts = division?.let(geo::division)?.districts.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
-    DropdownField(stringResource(R.string.label_district), districts, district, onDistrict, enabled = division != null)
+    DropdownField(stringResource(R.string.label_district), districts, district, onDistrict, enabled = division != null, isError = isError && district == null)
     val areas = district?.let(geo::district)?.areas.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
-    DropdownField(stringResource(R.string.label_upazila), areas, upazila, onUpazila, enabled = district != null)
+    DropdownField(stringResource(R.string.label_upazila), areas, upazila, onUpazila, enabled = district != null, isError = isError && upazila == null)
 }

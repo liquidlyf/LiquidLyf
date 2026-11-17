@@ -250,7 +250,7 @@ internal fun SettingsContent(
 
 @Composable
 private fun <T> Choices(options: List<T>, selected: T, onSelect: (T) -> Unit, label: @Composable (T) -> String) {
-    SegmentedChoices(options, selected, onSelect, Modifier.padding(horizontal = screenGutter(), vertical = Spacing.xs), label)
+    SegmentedChoices(options, selected, onSelect, Modifier.padding(horizontal = screenGutter(), vertical = Spacing.xs), label = label)
 }
 
 /** The shared switch row (DS-01), at the list's gutter like the ListItems around it. */

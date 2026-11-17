@@ -554,7 +554,8 @@ class ScreenGalleryTest {
                 )
             },
             Shot("sign-up-email-in-use") {
-                SignUpScreen(SignUpUiState(name = "Nusrat Jahan", email = "nusrat@example.test", password = "secret12", consent = true, formError = AppError.EmailInUse.messageRes),
+                // As SignUpViewModel shows it: on the email field (FORM-04), with Sign in next to it.
+                SignUpScreen(SignUpUiState(name = "Nusrat Jahan", email = "nusrat@example.test", password = "secret12", consent = true, emailError = AppError.EmailInUse.messageRes),
                     {}, {}, {}, {}, {}, {}, onContinueWithGoogle = {})
             },
             Shot("verify-email-wait") { VerifyEmailScreen(VerifyEmailUiState(email = "nusrat@example.test", sender = SENDER, resendIn = 42), {}, {}, {}) },
