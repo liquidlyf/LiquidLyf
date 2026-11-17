@@ -145,7 +145,7 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = combine(profileFlow, feed, pendingAvailable, geo, ownRequests) { p, f, pending, g, own ->
         HomeUiState(
             profile = p,
-            eligibility = p?.let { eligibility.evaluate(it.birthYear, it.weightOk, it.gender, it.lastDonationAt, clock.now()) },
+            eligibility = p?.let { eligibility.evaluate(it, clock.now()) },
             available = pending ?: p?.available ?: false,
             savingAvailability = pending != null,
             requests = f.list?.let { visible(it, p) },

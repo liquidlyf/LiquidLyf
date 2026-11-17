@@ -84,8 +84,7 @@ class SettingsViewModel @Inject constructor(
                 bloodGroup = profile?.bloodGroup,
                 saving = busy,
                 alertsAgainOn = profile?.let { p ->
-                    val e = eligibility.evaluate(p.birthYear, p.weightOk, p.gender, p.lastDonationAt, clock.now())
-                    e.eligibleFrom.takeIf { IneligibleReason.REST_PERIOD in e.reasons }
+                    eligibility.evaluate(p, clock.now())?.let { e -> e.eligibleFrom.takeIf { IneligibleReason.REST_PERIOD in e.reasons } }
                 },
                 email = user?.email,
             )

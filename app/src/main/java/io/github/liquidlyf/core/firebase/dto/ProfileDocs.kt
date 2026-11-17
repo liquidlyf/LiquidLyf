@@ -48,16 +48,22 @@ object UserDoc {
     /** Written by the Worker only (B's e798bc7); never in [editable], so profile writes leave it alone. */
     const val RAPID_RESPONDER = "rapidResponder"
 
-    fun fromMap(uid: String, m: Map<String, Any?>): UserProfile? = UserProfile(
+    fun fromMap(uid: String, m: Map<String, Any?>): UserProfile? {
+        // D1: the donor details are all three or none (the rules insist); a requester has none.
+        val gender = Gender.fromCode(m.str(GENDER))
+        val birthYear = m.int(BIRTH_YEAR)
+        val weightOk = m.bool(WEIGHT_OK)
+        val donor = gender != null && birthYear != null && weightOk != null
+        return UserProfile(
         uid = uid,
         fullName = m.str(FULL_NAME) ?: return null,
         email = m.str(EMAIL) ?: return null,
         phone = m.str(PHONE) ?: return null,
         phoneVerified = m.bool(PHONE_VERIFIED) ?: false,
         bloodGroup = BloodGroup.fromCode(m.str(BLOOD_GROUP)),
-        gender = Gender.fromCode(m.str(GENDER)) ?: return null,
-        birthYear = m.int(BIRTH_YEAR) ?: return null,
-        weightOk = m.bool(WEIGHT_OK) ?: return null,
+        gender = gender.takeIf { donor },
+        birthYear = birthYear.takeIf { donor },
+        weightOk = weightOk.takeIf { donor },
         area = Area(
             division = m.str(DIVISION) ?: return null,
             district = m.str(DISTRICT) ?: return null,
@@ -82,10 +88,11 @@ object UserDoc {
         verifiedDonations = m.int(VERIFIED_DONATIONS) ?: 0,
         lastDonationId = m.str(LAST_DONATION_ID),
         rapidResponder = m.bool(RAPID_RESPONDER) ?: false,
-    )
+        )
+    }
 
     /**
-     * Profile setup (write contract 1). Counters start at 0, email is the auth email, and there
+     * Profile setup (write contract 1). A requester's short setup (D1) leaves the donor details out. Counters start at 0, email is the auth email, and there
      * is no phoneVerified or role. Being listed records consentAt (PDPA opt-in).
      */
     fun createMap(draft: ProfileDraft, email: String): Map<String, Any?> = fields(
@@ -93,7 +100,7 @@ object UserDoc {
         EMAIL to email,
         PHONE to draft.phone,
         BLOOD_GROUP to draft.bloodGroup?.code,
-        GENDER to draft.gender.code,
+        GENDER to draft.gender?.code,
         BIRTH_YEAR to draft.birthYear,
         WEIGHT_OK to draft.weightOk,
         DIVISION to draft.area.division,
@@ -119,7 +126,7 @@ object UserDoc {
         PHONE to p.phone,
         PHONE_VERIFIED to p.phoneVerified,
         BLOOD_GROUP to p.bloodGroup?.code,
-        GENDER to p.gender.code,
+        GENDER to p.gender?.code,
         BIRTH_YEAR to p.birthYear,
         WEIGHT_OK to p.weightOk,
         DIVISION to p.area.division,

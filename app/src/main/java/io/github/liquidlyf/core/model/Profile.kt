@@ -16,9 +16,14 @@ data class UserProfile(
     val phoneVerified: Boolean,
     /** Null while the user doesn't know it (P1): they can't be listed or offer until they add it. */
     val bloodGroup: BloodGroup?,
-    val gender: Gender,
-    val birthYear: Int,
-    val weightOk: Boolean,
+    /**
+     * The donor details (D1, 17 Nov 2026): all three or none. A requester's short setup gives none;
+     * "Become a donor" adds them. Without them the profile is never listed, available or alerted,
+     * and can't offer (the rules hold it so).
+     */
+    val gender: Gender?,
+    val birthYear: Int?,
+    val weightOk: Boolean?,
     val area: Area,
     val available: Boolean,
     val lastDonationAt: Instant?,
@@ -43,7 +48,10 @@ data class UserProfile(
      * minutes of its request. Read-only for the app (the rules refuse any change), sticky once set.
      */
     val rapidResponder: Boolean = false,
-)
+) {
+    /** Answered the donor questions (D1): may be listed, alerted and offer. */
+    val hasDonorDetails: Boolean get() = gender != null && birthYear != null && weightOk != null
+}
 
 /** Division, district and upazila or city-corporation thana codes from the bundled geo data. */
 data class Area(
@@ -72,9 +80,10 @@ data class ProfileDraft(
     val phone: String,
     /** Null while the user doesn't know it (P1): they can't be listed or offer until they add it. */
     val bloodGroup: BloodGroup?,
-    val gender: Gender,
-    val birthYear: Int,
-    val weightOk: Boolean,
+    /** The donor details: all three or none (D1). None = a requester; then not listed, not available, no last donation. */
+    val gender: Gender?,
+    val birthYear: Int?,
+    val weightOk: Boolean?,
     val area: Area,
     val available: Boolean,
     val lastDonationAt: Instant?,

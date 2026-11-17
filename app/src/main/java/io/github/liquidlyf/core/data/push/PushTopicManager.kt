@@ -128,7 +128,7 @@ class PushTopicManager @Inject constructor(
 
     private fun isMatchable(p: UserProfile): Boolean =
         p.showInDonorSearch && p.available &&
-            eligibility.evaluate(p.birthYear, p.weightOk, p.gender, p.lastDonationAt, clock.now()).eligibleNow
+            eligibility.evaluate(p, clock.now())?.eligibleNow == true
 
     companion object {
         /** The Worker's new-report alert goes here (B's reports cron); only admins subscribe. */

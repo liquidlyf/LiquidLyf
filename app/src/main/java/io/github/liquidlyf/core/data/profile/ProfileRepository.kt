@@ -292,7 +292,12 @@ class FirestoreProfileRepository @Inject constructor(
 
     private fun isValid(d: ProfileDraft): Boolean =
         Validators.isValidName(d.fullName) && Validators.isBdPhone(d.phone) &&
-            Validators.isValidBirthYear(d.birthYear, clock.now()) &&
+            // D1: the donor details all three or none; without them not listed, not available, no last donation.
+            (if (d.gender != null && d.birthYear != null && d.weightOk != null) {
+                Validators.isValidBirthYear(d.birthYear, clock.now())
+            } else {
+                d.gender == null && d.birthYear == null && d.weightOk == null && !d.showInDonorSearch && !d.available && d.lastDonationAt == null
+            }) &&
             Validators.isCode(d.area.division) && Validators.isCode(d.area.district) && Validators.isCode(d.area.upazila) &&
             (d.lastDonationAt == null || !d.lastDonationAt.isAfter(clock.now())) && d.termsVersion.isNotBlank() &&
             // Being listed needs a known blood group (P1; the rules check it too).

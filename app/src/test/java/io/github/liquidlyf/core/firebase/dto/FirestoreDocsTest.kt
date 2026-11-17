@@ -142,6 +142,35 @@ class FirestoreDocsTest {
     }
 
     @Test
+    fun `a requester's short setup leaves the donor details out, and Become a donor adds all three (D1)`() {
+        val requester = profileDraft.copy(
+            bloodGroup = null, gender = null, birthYear = null, weightOk = null,
+            available = false, lastDonationAt = null, showInDonorSearch = false,
+        )
+        val m = UserDoc.createMap(requester, "a@b.test")
+        listOf(UserDoc.GENDER, UserDoc.BIRTH_YEAR, UserDoc.WEIGHT_OK, UserDoc.LAST_DONATION_AT, UserDoc.CONSENT_AT)
+            .forEach { assertFalse(it, it in m) }
+        assertEquals(false, m[UserDoc.AVAILABLE])
+        assertEquals(false, m[UserDoc.SHOW_IN_DONOR_SEARCH])
+        val p = UserDoc.fromMap(uid, resolve(m))!!
+        assertFalse(p.hasDonorDetails)
+
+        // Become a donor: one edit with all three (and the group).
+        val donor = UserDoc.applyDraft(p, profileDraft.copy(showInDonorSearch = false, available = true), serverNow)
+        assertTrue(donor.hasDonorDetails)
+        val update = UserDoc.updateMap(p, donor)
+        assertEquals(profileDraft.gender!!.code, update[UserDoc.GENDER])
+        assertEquals(profileDraft.birthYear, update[UserDoc.BIRTH_YEAR])
+        assertEquals(profileDraft.weightOk, update[UserDoc.WEIGHT_OK])
+
+        // Only some of them (never written by the app, the rules refuse it) reads as none.
+        val partial = resolve(UserDoc.createMap(profileDraft, "a@b.test")) - UserDoc.WEIGHT_OK
+        val read = UserDoc.fromMap(uid, partial)!!
+        assertFalse(read.hasDonorDetails)
+        assertNull(read.gender)
+    }
+
+    @Test
     fun `profile round-trips through Firestore values`() {
         val p = UserDoc.fromMap(uid, resolve(UserDoc.createMap(profileDraft, "rahim@example.test")))!!
         assertEquals(BloodGroup.B_POS, p.bloodGroup)

@@ -153,6 +153,11 @@ class PushTopicManagerTest {
     }
 
     @Test
+    fun `a requester without donor details is never alerted (D1)`() {
+        assertEquals(setOf("usr_u1"), manager.desiredTopics(donor.copy(gender = null, birthYear = null, weightOk = null)))
+    }
+
+    @Test
     fun `sync subscribes what's missing and unsubscribes what's no longer wanted`() = runTest {
         assertEquals(AppResult.Success(Unit), manager.sync(donor))
         assertEquals(setOf("usr_u1") + areaTopics, fcm.subscribed)

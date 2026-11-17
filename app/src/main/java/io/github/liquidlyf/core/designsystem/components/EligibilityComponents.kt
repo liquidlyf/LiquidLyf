@@ -35,7 +35,7 @@ import java.time.Instant
  * [dimmed]: grey, for a donor who switched "Ready to donate" off or isn't listed (N6).
  */
 @Composable
-fun EligibilityRing(eligibility: Eligibility, gender: Gender, now: Instant, size: Dp = 48.dp, showDays: Boolean = false, dimmed: Boolean = false) {
+fun EligibilityRing(eligibility: Eligibility, gender: Gender?, now: Instant, size: Dp = 48.dp, showDays: Boolean = false, dimmed: Boolean = false) {
     val total = Duration.ofDays(EligibilityRules().intervalDays(gender).toLong()).toMillis().toFloat()
     val left = Duration.between(now, eligibility.eligibleFrom).toMillis().coerceAtLeast(0).toFloat()
     val progress = if (IneligibleReason.REST_PERIOD in eligibility.reasons) (1f - left / total).coerceIn(0f, 1f) else 1f

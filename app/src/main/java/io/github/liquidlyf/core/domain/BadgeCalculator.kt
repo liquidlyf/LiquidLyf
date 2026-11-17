@@ -43,7 +43,7 @@ data class Impact(
  */
 class BadgeCalculator(private val rules: EligibilityRules = EligibilityRules()) {
 
-    fun badges(donations: List<Donation>, gender: Gender, rapidResponder: Boolean, now: Instant): List<Badge> {
+    fun badges(donations: List<Donation>, gender: Gender?, rapidResponder: Boolean, now: Instant): List<Badge> {
         val count = donations.size
         return buildList {
             COUNT_BADGES.forEach { (badge, needed) -> if (count >= needed) add(badge) }
@@ -64,7 +64,7 @@ class BadgeCalculator(private val rules: EligibilityRules = EligibilityRules()) 
      * one more rest period. "Regular" = the last 3 donations each fell inside the window opened by
      * the one before (gap < 2 rest periods), and the window opened by the latest isn't over yet.
      */
-    fun isRegular(donations: List<Donation>, gender: Gender, now: Instant): Boolean {
+    fun isRegular(donations: List<Donation>, gender: Gender?, now: Instant): Boolean {
         if (donations.size < REGULAR_DONATIONS) return false
         val window = Duration.ofDays(2L * rules.intervalDays(gender))
         val latest = donations.map { it.donatedAt }.sortedDescending().take(REGULAR_DONATIONS)

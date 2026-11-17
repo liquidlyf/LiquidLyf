@@ -243,19 +243,23 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
             contentType = ContentType.PhoneNumber,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
         )
-        Text(stringResource(R.string.label_gender), style = MaterialTheme.typography.labelLarge)
-        ChoiceRow(
-            options = Gender.entries.map { it.code to stringResource(it.labelRes) },
-            selected = state.gender?.code,
-            onSelect = { code -> viewModel.edit { copy(gender = Gender.fromCode(code)) } },
-        )
-        LLTextField(
-            value = state.birthYear,
-            onValueChange = { v -> viewModel.edit { copy(birthYear = v.filter(Char::isDigit).take(4)) } },
-            label = stringResource(R.string.label_birth_year),
-            errorText = state.birthYearError?.let { stringResource(it) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        )
+        // D1: gender and birth year are donor questions; someone who isn't a donor yet answers
+        // them in "Become a donor", not here.
+        if (state.isDonor) {
+            Text(stringResource(R.string.label_gender), style = MaterialTheme.typography.labelLarge)
+            ChoiceRow(
+                options = Gender.entries.map { it.code to stringResource(it.labelRes) },
+                selected = state.gender?.code,
+                onSelect = { code -> viewModel.edit { copy(gender = Gender.fromCode(code)) } },
+            )
+            LLTextField(
+                value = state.birthYear,
+                onValueChange = { v -> viewModel.edit { copy(birthYear = v.filter(Char::isDigit).take(4)) } },
+                label = stringResource(R.string.label_birth_year),
+                errorText = state.birthYearError?.let { stringResource(it) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            )
+        }
         BloodGroupPicker(selected = state.bloodGroup, onSelect = { g -> viewModel.edit { copy(bloodGroup = g) } })
         state.geo?.let { geo ->
             AreaPickers(

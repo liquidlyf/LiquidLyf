@@ -341,7 +341,7 @@ class AccessibilityLabelsTest {
     @Test
     fun home() {
         val me = TestData.profile()
-        val eligibility = EligibilityCalculator().evaluate(me.birthYear, me.weightOk, me.gender, me.lastDonationAt, TestData.NOW)
+        val eligibility = EligibilityCalculator().evaluate(me, TestData.NOW)!!
         val feed = listOf(TestData.request(id = "r1"), TestData.request(id = "r2").copy(condition = PatientCondition.SURGERY))
         show { HomeScreen(HomeUiState(me, eligibility, available = true, requests = feed, geo = geo), online = false, {}, {}, {}, {}, {}) }
         assertControlsAreLabelledAndBigEnough("Home")
@@ -539,7 +539,7 @@ class AccessibilityLabelsTest {
     @Test
     fun profileWithHistoryAndBadges() {
         val me = TestData.profile().copy(phoneVerified = true, lastDonationAt = TestData.NOW.minus(java.time.Duration.ofDays(30)), donationCount = 2)
-        val eligibility = EligibilityCalculator().evaluate(me.birthYear, me.weightOk, me.gender, me.lastDonationAt, TestData.NOW)
+        val eligibility = EligibilityCalculator().evaluate(me, TestData.NOW)!!
         val history = listOf(
             io.github.liquidlyf.core.model.Donation("r1", TestData.NOW.minus(java.time.Duration.ofDays(30)), io.github.liquidlyf.core.model.BloodComponent.WHOLE_BLOOD,
                 "Dhaka Medical College Hospital", requestId = "r1", verified = true, source = io.github.liquidlyf.core.model.DonationSource.REQUEST, createdAt = TestData.NOW),
@@ -562,7 +562,7 @@ class AccessibilityLabelsTest {
     @Test
     fun homeWithNotificationsOff() {
         val me = TestData.profile()
-        val eligibility = EligibilityCalculator().evaluate(me.birthYear, me.weightOk, me.gender, me.lastDonationAt, TestData.NOW)
+        val eligibility = EligibilityCalculator().evaluate(me, TestData.NOW)!!
         show {
             HomeScreen(HomeUiState(me, eligibility, available = true, requests = emptyList(), geo = geo), online = true, {}, {}, {}, {}, {},
                 unreadInbox = true, notificationsEnabled = false)

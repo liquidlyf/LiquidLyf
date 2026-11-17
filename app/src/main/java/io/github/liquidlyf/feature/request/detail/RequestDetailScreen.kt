@@ -646,6 +646,7 @@ private fun blockText(block: OfferBlock): String = when (block) {
     OfferBlock.Closed -> stringResource(R.string.detail_block_closed)
     OfferBlock.NoBloodGroup -> stringResource(R.string.detail_block_no_group)
     OfferBlock.Incompatible -> stringResource(R.string.detail_block_incompatible)
+    OfferBlock.NotADonor -> stringResource(R.string.home_become_donor_body)
     is OfferBlock.NotEligible -> when {
         IneligibleReason.REST_PERIOD in block.reasons -> {
             val days = EligibilityCalculator.daysUntil(block.eligibleFrom, Instant.now()).toInt().coerceAtLeast(1)

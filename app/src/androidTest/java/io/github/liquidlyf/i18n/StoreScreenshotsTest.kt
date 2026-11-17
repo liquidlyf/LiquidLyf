@@ -153,7 +153,7 @@ class StoreScreenshotsTest {
 
     @Test
     fun home() {
-        val eligibility = EligibilityCalculator().evaluate(me.birthYear, me.weightOk, me.gender, me.lastDonationAt, now)
+        val eligibility = EligibilityCalculator().evaluate(me, now)!!
         both("home", R.string.home_urgent_near_you, tab = TopLevelDestination.HOME) {
             HomeScreen(
                 HomeUiState(me, eligibility, available = true, requests = listOf(request), geo = geo),
@@ -203,7 +203,7 @@ class StoreScreenshotsTest {
     @Test
     fun profile() {
         val donor = me.copy(lastDonationAt = now.minus(Duration.ofDays(40)), donationCount = 3, verifiedDonations = 2)
-        val eligibility = EligibilityCalculator().evaluate(donor.birthYear, donor.weightOk, donor.gender, donor.lastDonationAt, now)
+        val eligibility = EligibilityCalculator().evaluate(donor, now)!!
         val history = listOf(
             Donation("d1", now.minus(Duration.ofDays(40)), BloodComponent.WHOLE_BLOOD, "Dhaka Medical College Hospital", requestId = "r9", verified = true, source = DonationSource.REQUEST, createdAt = now),
             Donation("d2", now.minus(Duration.ofDays(200)), BloodComponent.WHOLE_BLOOD, "Shaheed Suhrawardy Medical College Hospital", requestId = "r8", verified = true, source = DonationSource.REQUEST, createdAt = now),

@@ -123,6 +123,14 @@ class RequestDetailViewModelTest {
     }
 
     @Test
+    fun `a requester without donor details is sent to Become a donor, not refused (D1)`() = runTest(dispatcher) {
+        signInAs(donor.copy(gender = null, birthYear = null, weightOk = null, available = false, showInDonorSearch = false))
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(OfferBlock.NotADonor, vm.uiState.value.offerBlock)
+    }
+
+    @Test
     fun `an alert held back by the daily limit is known from the request itself`() {
         val r = TestData.request(id = "r9").copy(fanoutTier = 0, nextTierAt = TestData.NOW)
         assertFalse(r.alertHeldBack) // new: due now, tier 0

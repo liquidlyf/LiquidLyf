@@ -467,7 +467,7 @@ class ScreenGalleryTest {
     private val requesterProfile = TestData.profile(uid = "requester-1").copy(fullName = "Karim Hossain", email = "karim@example.test")
     private val hospital = "Dhaka Medical College Hospital"
 
-    private fun eligibility(p: UserProfile) = EligibilityCalculator().evaluate(p.birthYear, p.weightOk, p.gender, p.lastDonationAt, now)
+    private fun eligibility(p: UserProfile) = EligibilityCalculator().evaluate(p, now)!!
 
     private val feed: List<BloodRequest> = listOf(
         TestData.request(id = "r1", neededBy = now.plus(Duration.ofHours(5))).copy(

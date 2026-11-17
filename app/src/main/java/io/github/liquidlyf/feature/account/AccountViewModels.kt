@@ -234,6 +234,8 @@ data class EditProfileUiState(
     val saved: Boolean = false,
     @StringRes val message: Int? = null,
     val messageArg: String? = null,
+    /** Answered the donor questions (D1): only then are gender and birth year asked here. */
+    val isDonor: Boolean = true,
 )
 
 @HiltViewModel
@@ -248,7 +250,8 @@ class EditProfileViewModel @Inject constructor(
     private val state = MutableStateFlow(
         profile?.let { p ->
             EditProfileUiState(
-                fullName = p.fullName, gender = p.gender, birthYear = p.birthYear.toString(), bloodGroup = p.bloodGroup,
+                fullName = p.fullName, gender = p.gender, birthYear = p.birthYear?.toString().orEmpty(), bloodGroup = p.bloodGroup,
+                isDonor = p.hasDonorDetails,
                 division = p.area.division, district = p.area.district, upazila = p.area.upazila,
                 phone = "0" + p.phone.removePrefix("+880"), email = p.email,
             )
@@ -280,7 +283,8 @@ class EditProfileViewModel @Inject constructor(
         val area = if (s.division != null && s.district != null && s.upazila != null) Area(s.division, s.district, s.upazila) else null
         val errors = s.copy(
             nameError = if (Validators.isValidName(s.fullName)) null else R.string.error_name_invalid,
-            birthYearError = if (year != null && Validators.isValidBirthYear(year, clock.now())) null else R.string.error_birth_year,
+            // D1: gender and birth year are donor questions; a requester's profile has neither.
+            birthYearError = if (!s.isDonor || (year != null && Validators.isValidBirthYear(year, clock.now()))) null else R.string.error_birth_year,
             phoneError = if (phone != null) null else R.string.error_phone_invalid,
             locationError = area == null || s.geo?.isValid(area) != true,
         )
@@ -295,7 +299,8 @@ class EditProfileViewModel @Inject constructor(
         }
         val draft = ProfileDraft(
             fullName = s.fullName, phone = phone!!, bloodGroup = s.bloodGroup ?: before.bloodGroup,
-            gender = s.gender ?: before.gender, birthYear = year!!, weightOk = before.weightOk, area = area!!,
+            gender = if (s.isDonor) s.gender ?: before.gender else null, birthYear = if (s.isDonor) year else null,
+            weightOk = before.weightOk, area = area!!,
             available = before.available, lastDonationAt = before.lastDonationAt,
             showInDonorSearch = before.showInDonorSearch, locale = before.locale, termsVersion = before.termsVersion,
         )

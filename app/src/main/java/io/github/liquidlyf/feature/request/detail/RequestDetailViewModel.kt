@@ -68,6 +68,8 @@ sealed interface OfferBlock {
     /** P1: no blood group on the profile yet. */
     data object NoBloodGroup : OfferBlock
     data object Incompatible : OfferBlock
+    /** D1: hasn't answered the donor questions yet; "I can donate" opens "Become a donor". */
+    data object NotADonor : OfferBlock
     data class NotEligible(val eligibleFrom: Instant, val reasons: Set<IneligibleReason>) : OfferBlock
 }
 
@@ -246,9 +248,10 @@ class RequestDetailViewModel @Inject constructor(
     private fun offerBlock(r: BloodRequest, p: UserProfile): OfferBlock? {
         val now = clock.now()
         val group = p.bloodGroup
-        val e = eligibility.evaluate(p.birthYear, p.weightOk, p.gender, p.lastDonationAt, now)
+        val e = eligibility.evaluate(p, now)
         return when {
             !r.isActive(now) -> OfferBlock.Closed
+            e == null -> OfferBlock.NotADonor
             group == null -> OfferBlock.NoBloodGroup
             group !in r.acceptedGroups -> OfferBlock.Incompatible
             !e.eligibleNow -> OfferBlock.NotEligible(e.eligibleFrom, e.reasons)

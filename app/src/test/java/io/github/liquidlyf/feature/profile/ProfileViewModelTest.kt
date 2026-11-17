@@ -174,7 +174,7 @@ class ProfileViewModelTest {
     fun `dates from the sheet never land in the future or before the donor turned 18`() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()
-        assertEquals(LocalDate.of(me.birthYear + 18, 1, 1), vm.earliestDonationDate())
+        assertEquals(LocalDate.of(me.birthYear!! + 18, 1, 1), vm.earliestDonationDate())
         // Today: capped a few minutes before now, so the rules never see a future time.
         val today = TestData.NOW.atOffset(ZoneOffset.UTC).toLocalDate()
         assertTrue(vm.donationInstant(today, ZoneOffset.UTC) < TestData.NOW)

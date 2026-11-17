@@ -160,7 +160,7 @@ class ProfileViewModel @Inject constructor(
 
     /** The earliest date a past donation can have: 1 January of the year the donor turned 18. */
     fun earliestDonationDate(): LocalDate? =
-        state.value.profile?.let { LocalDate.of(it.birthYear + MIN_AGE, 1, 1) }
+        state.value.profile?.birthYear?.let { LocalDate.of(it + MIN_AGE, 1, 1) }
 
     /**
      * The sheet's date as an instant: midday local time, but never later than a few minutes ago
@@ -207,7 +207,7 @@ class ProfileViewModel @Inject constructor(
         val now = clock.now()
         val history = s.donations.orEmpty()
         return s.copy(
-            eligibility = eligibility.evaluate(p.birthYear, p.weightOk, p.gender, p.lastDonationAt, now),
+            eligibility = eligibility.evaluate(p, now),
             // Set by the Worker when one of my offers came within 15 minutes of its request.
             badges = badgeCalculator.badges(history, p.gender, p.rapidResponder, now),
             impact = badgeCalculator.impact(history),

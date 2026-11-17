@@ -1,6 +1,7 @@
 package io.github.liquidlyf.core.domain
 
 import io.github.liquidlyf.core.model.Gender
+import io.github.liquidlyf.core.model.UserProfile
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
@@ -21,7 +22,7 @@ data class EligibilityRules(
      * rejects a donor card whose `eligibleFrom` is earlier, so a bad Remote Config value can't
      * break profile saves.
      */
-    fun intervalDays(gender: Gender): Int =
+    fun intervalDays(gender: Gender?): Int =
         (if (gender == Gender.FEMALE) femaleWholeBloodIntervalDays else wholeBloodIntervalDays)
             .coerceAtLeast(MIN_INTERVAL_DAYS)
 
@@ -51,7 +52,7 @@ data class Eligibility(
 class EligibilityCalculator(private val rules: EligibilityRules = EligibilityRules()) {
 
     /** The donor card's `eligibleFrom`. Never null: [ELIGIBLE_NOW] means "no rest period". */
-    fun eligibleFrom(lastDonationAt: Instant?, gender: Gender): Instant =
+    fun eligibleFrom(lastDonationAt: Instant?, gender: Gender?): Instant =
         lastDonationAt?.plus(Duration.ofDays(rules.intervalDays(gender).toLong())) ?: ELIGIBLE_NOW
 
     fun evaluate(
@@ -70,6 +71,12 @@ class EligibilityCalculator(private val rules: EligibilityRules = EligibilityRul
             if (now < from) add(IneligibleReason.REST_PERIOD)
         }
         return Eligibility(from, reasons)
+    }
+
+    /** A donor's eligibility; null for someone who hasn't answered the donor questions (D1). */
+    fun evaluate(p: UserProfile, now: Instant): Eligibility? {
+        if (!p.hasDonorDetails) return null
+        return evaluate(p.birthYear ?: return null, p.weightOk ?: return null, p.gender ?: return null, p.lastDonationAt, now)
     }
 
     companion object {
