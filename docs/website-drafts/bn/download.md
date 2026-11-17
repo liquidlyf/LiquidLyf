@@ -4,7 +4,7 @@ lang: bn
 permalink: /bn/download
 description: রক্তদাতা খোঁজার ফ্রি অ্যাপ LiquidLyf ডাউনলোড করুন, আর ধাপে ধাপে আপনার অ্যান্ড্রয়েড ফোনে ইনস্টল করুন।
 alternate: /download
-status: draft, meaning-checked, reviewed by the maintainer (C19, 17 Nov 2026)
+status: draft, meaning-checked, reviewed by the maintainer (C19, 17 Nov 2026; the update steps C22, 18 Nov 2026)
 ---
 
 <!-- DRAFT for Phase 10.3, published only with build_site.py --released. Rewritten 17 Nov 2026 from the
@@ -120,8 +120,9 @@ io.github.liquidlyf
 
 <!-- The card's Bangla labels are A's (values-bn/strings_review3_requests.xml, 1abaaad): "নতুন আপডেট
      এসেছে" / "আপডেট নিন" (C21, OK). Changed again for the in-app download ("update a", 17 Nov 2026):
-     meaning check, then the maintainer's review (C22). The flow's Bangla texts are A's (e6f8c80, also
-     waiting for the maintainer's check): "LiquidLyf-কে আপডেট ইনস্টল করার অনুমতি দিন", "সেটিংস খুলুন",
+     meaning-checked and reviewed by the maintainer (C22, 18 Nov 2026, all 5 lines OK as written). The
+     flow's Bangla texts are A's (e6f8c80, approved by the maintainer on 17 Nov; 2f50220 changed two
+     texts this page doesn't quote): "LiquidLyf-কে আপডেট ইনস্টল করার অনুমতি দিন", "সেটিংস খুলুন",
      "ব্রাউজারে ডাউনলোড করুন". Android's switch label differs by phone, so the page says "LiquidLyf-এর
      সুইচটা"; "ইনস্টল করুন" / "আপডেট করুন" are Android's and guesses until the phone check. If any label
      changes, change it here too.

@@ -113,8 +113,8 @@ LiquidLyf একটা ওপেন সোর্স প্রজেক্ট, �
 
 <!-- The daily checks line (17 Nov 2026): meaning-checked (3 blind rounds) and reviewed by the maintainer
      (C20, 17 Nov 2026, OK as written). Its last sentence, the in-app update download ("update a",
-     17 Nov 2026), is new: meaning check, then the maintainer's review (C22). It goes live with the
-     hospital list's website build. -->
+     17 Nov 2026), was meaning-checked and reviewed by the maintainer (C22, 18 Nov 2026, OK as
+     written). It goes live with the hospital list's website build. -->
 
 <!-- v1.1: add when the features ship (Telegram phone verification, approximate location). -->
 
