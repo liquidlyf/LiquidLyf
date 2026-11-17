@@ -241,10 +241,10 @@ internal fun HomeScreen(
 private val FAB_CLEARANCE = 88.dp
 
 /**
- * Where "Want to donate too?" goes while the person's own request is open: below it, so an urgent
- * request of their own comes first (D's suggestion, P's pick; the maintainer may still move it).
+ * Where "Want to donate too?" goes while the person's own request is open: above it, in the donor
+ * line's place (the maintainer, 18 Nov 2026, N6). True would move it below.
  */
-private const val BECOME_DONOR_BELOW_OWN_REQUEST = true
+private const val BECOME_DONOR_BELOW_OWN_REQUEST = false
 
 /**
  * Notifications off (STATE-04, N6): a small amber notice with "Turn on" beside it, not a tall card.
