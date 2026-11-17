@@ -553,7 +553,7 @@ class AccessibilityLabelsTest {
                     profile = me, eligibility = eligibility, donations = history, geo = geo,
                     badges = calc.badges(history, me.gender, rapidResponder = true, TestData.NOW), impact = calc.impact(history),
                 ),
-                onEditProfile = {}, onOpenSettings = {}, onAddDonation = {}, onRemoveDonation = {}, onShare = {}, onRetry = {}, now = TestData.NOW,
+                onEditProfile = {}, onOpenSettings = {}, onAddDonation = {}, onRemoveDonation = {}, onRetry = {}, now = TestData.NOW,
             )
         }
         assertControlsAreLabelledAndBigEnough("Profile")

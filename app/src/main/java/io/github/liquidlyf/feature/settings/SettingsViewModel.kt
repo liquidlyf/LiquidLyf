@@ -12,9 +12,12 @@ import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.data.settings.AppLanguageStore
 import io.github.liquidlyf.core.data.settings.SettingsRepository
 import io.github.liquidlyf.core.data.settings.ThemeMode
+import io.github.liquidlyf.core.domain.EligibilityCalculator
+import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppResult
+import io.github.liquidlyf.core.util.Clock
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,6 +26,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Instant
 import javax.inject.Inject
 
 data class SettingsUiState(
@@ -40,6 +44,10 @@ data class SettingsUiState(
     val bloodGroup: BloodGroup? = null,
     /** A privacy switch is being saved. */
     val saving: Boolean = false,
+    /** While resting: when alerts start again, so "Ready to donate" says it (COPY-04). */
+    val alertsAgainOn: Instant? = null,
+    /** The sign-out check names the account (N5). */
+    val email: String? = null,
 )
 
 sealed interface SettingsEvent {
@@ -53,6 +61,8 @@ class SettingsViewModel @Inject constructor(
     private val languages: AppLanguageStore,
     private val session: SessionManager,
     private val profiles: ProfileRepository,
+    private val eligibility: EligibilityCalculator = EligibilityCalculator(),
+    private val clock: Clock = Clock.SYSTEM,
 ) : ViewModel() {
     private val language = MutableStateFlow(languages.current())
     private val saving = MutableStateFlow(false)
@@ -73,6 +83,11 @@ class SettingsViewModel @Inject constructor(
                 available = profile?.available == true,
                 bloodGroup = profile?.bloodGroup,
                 saving = busy,
+                alertsAgainOn = profile?.let { p ->
+                    val e = eligibility.evaluate(p.birthYear, p.weightOk, p.gender, p.lastDonationAt, clock.now())
+                    e.eligibleFrom.takeIf { IneligibleReason.REST_PERIOD in e.reasons }
+                },
+                email = user?.email,
             )
         }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())

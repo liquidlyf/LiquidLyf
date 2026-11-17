@@ -25,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -74,8 +73,6 @@ import io.github.liquidlyf.core.domain.Badge
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.model.Donation
 import io.github.liquidlyf.core.model.DonationSource
-import io.github.liquidlyf.core.util.Links
-import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.home.readyText
 import io.github.liquidlyf.feature.settings.ListMeDialog
 import io.github.liquidlyf.feature.settings.rememberNotificationsEnabled
@@ -87,8 +84,6 @@ fun ProfileRoute(onEditProfile: () -> Unit, onOpenSettings: () -> Unit, viewMode
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbarHostState.current
     val resources = LocalResources.current
-    val launcher = rememberSafeIntentLauncher()
-    val locale = currentAppLocale()
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { e ->
@@ -104,7 +99,6 @@ fun ProfileRoute(onEditProfile: () -> Unit, onOpenSettings: () -> Unit, viewMode
         onOpenSettings = onOpenSettings,
         onAddDonation = { showAddSheet = true },
         onRemoveDonation = viewModel::removeDonation,
-        onShare = { launcher.shareText(resources.getString(R.string.share_app_text, Links.download(locale))) },
         onRetry = viewModel::retry,
         onListedChange = viewModel::setListed,
         onAvailableChange = viewModel::setAvailable,
@@ -144,7 +138,6 @@ internal fun ProfileScreen(
     onOpenSettings: () -> Unit,
     onAddDonation: () -> Unit,
     onRemoveDonation: (Donation) -> Unit,
-    onShare: () -> Unit,
     onRetry: () -> Unit,
     now: Instant = Instant.now(),
     onListedChange: (Boolean) -> Unit = {},
@@ -231,13 +224,7 @@ internal fun ProfileScreen(
                 item { ImpactCard(state) }
                 item { SectionHeader(stringResource(R.string.profile_badges_title)) }
                 item { BadgesRow(state.badges) }
-                // Moves to Settings → About with design N5; until then it stays here (P, 18 Nov 00:24).
-                item {
-                    OutlinedButton(onClick = onShare, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
-                        Icon(painterResource(LLIcons.Share), contentDescription = null)
-                        Text(stringResource(R.string.action_share_app), Modifier.padding(start = Spacing.xs))
-                    }
-                }
+                // "Share LiquidLyf" moved to Settings → About (N5, OK'd 18 Nov 02:11).
             }
         }
     }

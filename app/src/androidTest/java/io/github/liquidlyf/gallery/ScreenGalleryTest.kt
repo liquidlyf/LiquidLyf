@@ -829,7 +829,7 @@ class ScreenGalleryTest {
 
     @Test
     fun profile() {
-        val screen = { state: ProfileUiState -> @Composable { ProfileScreen(state, {}, {}, {}, {}, {}, {}, now = now) } }
+        val screen = { state: ProfileUiState -> @Composable { ProfileScreen(state, {}, {}, {}, {}, {}, now = now) } }
         val newUser = ProfileUiState(profile = me, eligibility = eligibility(me), donations = emptyList(), geo = geo)
         val tab = TopLevelDestination.PROFILE
         gallery(
@@ -872,7 +872,7 @@ class ScreenGalleryTest {
 
     @Test
     fun settings() {
-        val state = SettingsUiState(hasPassword = true, listed = true, available = true, bloodGroup = BloodGroup.B_POS)
+        val state = SettingsUiState(hasPassword = true, listed = true, available = true, bloodGroup = BloodGroup.B_POS, email = "karim@example.com")
         val screen = { s: SettingsUiState ->
             @Composable {
                 val language = if (currentAppLocale() == AppLocale.BN) AppLanguage.BANGLA else AppLanguage.ENGLISH
@@ -891,6 +891,9 @@ class ScreenGalleryTest {
             Shot("settings-admin", content = screen(state.copy(admin = true))),
             Shot("settings-loading", content = screen(state.copy(listed = null))),
             Shot("settings-list-me-dialog", overlay = true, prepare = { tap(R.string.settings_list_me) }, content = screen(state.copy(listed = false, available = false))),
+            // N5: the check after tapping Sign out in the corner, and the resting line under Ready to donate.
+            Shot("settings-sign-out-dialog", overlay = true, prepare = { tap(R.string.action_sign_out) }, content = screen(state)),
+            Shot("settings-resting", content = screen(state.copy(alertsAgainOn = now.plus(Duration.ofDays(80))))),
             Shot("notification-settings") { NotificationPrefsScreen(NotificationPrefsUiState(loaded = true), systemEnabled = true, onChange = {}, onOpenSystemSettings = {}, onBack = {}) },
             Shot("notification-settings-phone-off") {
                 NotificationPrefsScreen(NotificationPrefsUiState(loaded = true), systemEnabled = false, onChange = {}, onOpenSystemSettings = {}, onBack = {})

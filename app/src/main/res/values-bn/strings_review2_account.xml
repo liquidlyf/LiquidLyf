@@ -158,12 +158,18 @@
 
     <!-- Settings: language, privacy, account -->
     <string name="settings_language">ভাষা</string>
-    <string name="language_system">ফোনের ভাষা</string>
-    <string name="settings_privacy">গোপনীয়তা</string>
+    <string name="language_system">ফোনের</string>
+    <string name="settings_language_both">ভাষা · Language</string>
+    <string name="language_same_as_phone">ফোনের মতো</string>
+    <string name="settings_donor_status">রক্তদাতার অবস্থা</string>
+    <string name="settings_about_summary">ভার্সন %1$s · গোপনীয়তা নীতি, শর্তাবলি, লাইসেন্স, যোগাযোগ</string>
+    <string name="settings_share_summary">বন্ধু ও পরিবারকে ডাউনলোডের লিংক পাঠান</string>
+    <string name="sign_out_title">আপনি কি সত্যিই সাইন আউট করতে চান?</string>
+    <string name="sign_out_body">আবার সাইন ইন না করা পর্যন্ত এই ফোনে অ্যালার্ট পাবেন না।</string>
+    <string name="sign_out_account">সাইন ইন করা আছে: %1$s</string>
     <string name="settings_safety">নিরাপত্তা</string>
     <string name="settings_account">অ্যাকাউন্ট</string>
     <string name="settings_list_me">রক্তদাতা হিসেবে তালিকায় নাম দিন</string>
-    <string name="settings_list_me_summary">কাছাকাছি যাঁদের আপনার গ্রুপের রক্ত দরকার, তাঁরা \"রক্তদাতা খুঁজুন\"-এ আপনাকে খুঁজে পেতে ও অ্যালার্ট পাঠাতে পারবেন। আপনার ফোন নম্বর কখনো তালিকায় দেখানো হয় না।</string>
     <string name="settings_list_me_needs_group">আগে \"প্রোফাইল এডিট করুন\" থেকে আপনার রক্তের গ্রুপ যোগ করুন।</string>
     <string name="list_me_title">রক্তদাতা হিসেবে তালিকায় নাম দেবেন?</string>
 

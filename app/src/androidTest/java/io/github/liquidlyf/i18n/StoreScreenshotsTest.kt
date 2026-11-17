@@ -216,7 +216,7 @@ class StoreScreenshotsTest {
                     profile = donor, eligibility = eligibility, donations = history, geo = geo,
                     badges = calc.badges(history, donor.gender, rapidResponder = true, now), impact = calc.impact(history),
                 ),
-                onEditProfile = {}, onOpenSettings = {}, onAddDonation = {}, onRemoveDonation = {}, onShare = {}, onRetry = {}, now = now,
+                onEditProfile = {}, onOpenSettings = {}, onAddDonation = {}, onRemoveDonation = {}, onRetry = {}, now = now,
             )
         }
     }

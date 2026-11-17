@@ -87,10 +87,12 @@ fun <T> SegmentedChoices(
     modifier: Modifier = Modifier,
     /** Nothing picked yet and it's needed (FLOW-04): red outlines, next to the error line below. */
     isError: Boolean = false,
+    /** What TalkBack reads when the short [label] alone isn't clear ("Phone" → "Same as phone", N5). */
+    spokenLabel: @Composable (T) -> String? = { null },
     label: @Composable (T) -> String,
 ) {
     if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) {
-        RadioChoices(options, selected, onSelect, modifier, isError, label)
+        RadioChoices(options, selected, onSelect, modifier, isError, spokenLabel, label)
         return
     }
     BoxWithConstraints(modifier.fillMaxWidth()) {
@@ -110,11 +112,13 @@ fun <T> SegmentedChoices(
                     shape = SegmentedButtonDefaults.itemShape(index, options.size),
                     colors = chosenSegmentColors(isError),
                     modifier = Modifier.fillMaxHeight(),
-                ) { Text(label(option), textAlign = TextAlign.Center) }
+                ) { Text(label(option), textAlign = TextAlign.Center, modifier = Modifier.spoken(spokenLabel(option))) }
             }
         }
     }
 }
+
+private fun Modifier.spoken(text: String?): Modifier = if (text == null) this else semantics { contentDescription = text }
 
 /** One option per line, each a whole 48 dp row to tap; TalkBack reads them as one radio group. */
 @Composable
@@ -124,6 +128,7 @@ private fun <T> RadioChoices(
     onSelect: (T) -> Unit,
     modifier: Modifier,
     isError: Boolean,
+    spokenLabel: @Composable (T) -> String?,
     label: @Composable (T) -> String,
 ) {
     Column(modifier.fillMaxWidth().selectableGroup()) {
@@ -141,7 +146,7 @@ private fun <T> RadioChoices(
                     onClick = null,
                     colors = if (isError) RadioButtonDefaults.colors(unselectedColor = MaterialTheme.colorScheme.error) else RadioButtonDefaults.colors(),
                 )
-                Text(label(option), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                Text(label(option), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f).spoken(spokenLabel(option)))
             }
         }
     }

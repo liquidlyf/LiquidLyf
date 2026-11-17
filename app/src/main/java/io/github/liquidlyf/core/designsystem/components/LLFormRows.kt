@@ -1,5 +1,6 @@
 package io.github.liquidlyf.core.designsystem.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,6 +47,8 @@ fun LLSwitchRow(
     summary: String? = null,
     enabled: Boolean = true,
     horizontalPadding: Dp = 0.dp,
+    /** A leading icon, for lists where every row has one (Settings, N5). */
+    @DrawableRes icon: Int? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -56,6 +59,14 @@ fun LLSwitchRow(
             .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange)
             .padding(horizontal = horizontalPadding, vertical = Spacing.xs),
     ) {
+        icon?.let {
+            Icon(
+                painterResource(it),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.alpha(if (enabled) 1f else DISABLED_ALPHA),
+            )
+        }
         Column(
             Modifier
                 .weight(1f)

@@ -23,7 +23,7 @@
 
     <!-- Settings -->
     <string name="settings_theme">থিম</string>
-    <string name="theme_system">ফোনের থিম</string>
+    <string name="theme_system">ফোনের</string>
     <string name="theme_light">লাইট</string>
     <string name="theme_dark">ডার্ক</string>
 

@@ -71,6 +71,9 @@ object LLIcons {
     val Info = R.drawable.ic_info
     val Shield = R.drawable.ic_shield
     val Delete = R.drawable.ic_delete
+    val Logout = R.drawable.ic_logout
+    val Key = R.drawable.ic_key
+    val Help = R.drawable.ic_help
 
     // Badges and tags: each its own icon (COLOR-01)
     val Bolt = R.drawable.ic_bolt
