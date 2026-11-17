@@ -80,14 +80,14 @@ private fun banglaTime(instant: Instant, locale: java.util.Locale): String {
 
 /**
  * The Bangla word for the part of the day at [hour] (0–23), the way people say the time
- * (the maintainer's pick, 18 Nov 2026): ভোর 4–6, সকাল 6–12, দুপুর 12–16, বিকেল 16–18,
- * সন্ধ্যা 18–20, রাত 20–4.
+ * (the maintainer, 18 Nov 2026, times = b): ভোর 4–6, সকাল 6–12, দুপুর 12–15, বিকেল 15–18,
+ * সন্ধ্যা 18–20, রাত 20–4. So 15:22 is "বিকেল ৩:২২".
  */
 internal fun banglaDayPart(hour: Int): String = when (hour) {
     in 4..5 -> "ভোর"
     in 6..11 -> "সকাল"
-    in 12..15 -> "দুপুর"
-    in 16..17 -> "বিকেল"
+    in 12..14 -> "দুপুর"
+    in 15..17 -> "বিকেল"
     in 18..19 -> "সন্ধ্যা"
     else -> "রাত"
 }
