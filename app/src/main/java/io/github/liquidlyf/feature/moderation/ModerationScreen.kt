@@ -120,7 +120,7 @@ internal fun ModerationScreen(
         when {
             !state.admin -> EmptyState(LLIcons.Shield, stringResource(R.string.title_moderation), stringResource(R.string.moderation_admins_only), Modifier.padding(padding))
             state.error != null && items == null -> ErrorState(state.error, onRetry = onRefresh, modifier = Modifier.padding(padding))
-            items == null -> LoadingState(Modifier.padding(padding))
+            items == null -> LoadingState(Modifier.padding(padding).padding(horizontal = screenGutter(), vertical = Spacing.md))
             items.isEmpty() -> EmptyState(
                 LLIcons.CheckCircle, stringResource(R.string.moderation_empty_title), stringResource(R.string.moderation_empty_body), Modifier.padding(padding),
             )

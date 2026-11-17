@@ -40,6 +40,7 @@ import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.util.AppResult
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -116,7 +117,7 @@ internal fun BlockedPeopleScreen(state: BlockedPeopleUiState, onUnblock: (String
     Scaffold(topBar = { LLTopBar(title = stringResource(R.string.title_blocked_people), onBack = onBack) }) { padding ->
         val people = state.people
         when {
-            people == null -> LoadingState(Modifier.padding(padding))
+            people == null -> LoadingState(Modifier.padding(padding).padding(horizontal = screenGutter(), vertical = Spacing.md))
             people.isEmpty() -> EmptyState(
                 icon = LLIcons.Block,
                 title = stringResource(R.string.blocked_empty_title),

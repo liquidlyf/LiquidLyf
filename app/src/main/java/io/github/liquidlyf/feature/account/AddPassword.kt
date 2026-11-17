@@ -24,7 +24,7 @@ import io.github.liquidlyf.core.data.auth.AuthRepository
 import io.github.liquidlyf.core.data.auth.GoogleSignInResult
 import io.github.liquidlyf.core.data.auth.googleWebClientId
 import io.github.liquidlyf.core.data.auth.requestGoogleIdToken
-import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
+import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.domain.Validators
@@ -153,7 +153,13 @@ internal fun AddPasswordScreen(
     onAdd: () -> Unit,
     onBack: () -> Unit,
 ) {
-    AuthLayout(title = stringResource(R.string.title_add_password), onBack = onBack) {
+    AuthLayout(
+        title = stringResource(R.string.title_add_password),
+        onBack = onBack,
+        bottomBar = {
+            LLBottomBar(stringResource(R.string.action_add_password), onAdd, loading = state.working, loadingText = stringResource(R.string.action_saving))
+        },
+    ) {
         Text(stringResource(R.string.add_password_body, state.email.orEmpty()), style = MaterialTheme.typography.bodyLarge)
         LLTextField(
             value = state.password,
@@ -175,11 +181,5 @@ internal fun AddPasswordScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         )
         FormError(state.formError)
-        LLPrimaryButton(
-            text = stringResource(R.string.action_add_password),
-            onClick = onAdd,
-            loading = state.working,
-            loadingText = stringResource(R.string.action_saving),
-        )
     }
 }

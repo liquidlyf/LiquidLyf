@@ -38,6 +38,7 @@ import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
 import io.github.liquidlyf.core.designsystem.components.ChoiceRow
 import io.github.liquidlyf.core.designsystem.components.FieldError
+import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
@@ -62,7 +63,13 @@ fun ChangePasswordRoute(onDone: () -> Unit, viewModel: ChangePasswordViewModel =
             onDone()
         }
     }
-    AuthLayout(title = stringResource(R.string.title_change_password), onBack = onDone) {
+    AuthLayout(
+        title = stringResource(R.string.title_change_password),
+        onBack = onDone,
+        bottomBar = {
+            LLBottomBar(stringResource(R.string.action_save), viewModel::save, loading = state.saving, loadingText = stringResource(R.string.action_saving))
+        },
+    ) {
         LLTextField(
             value = state.current,
             onValueChange = viewModel::onCurrentChange,
@@ -83,12 +90,6 @@ fun ChangePasswordRoute(onDone: () -> Unit, viewModel: ChangePasswordViewModel =
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         )
         FormError(state.formError)
-        LLPrimaryButton(
-            text = stringResource(R.string.action_save),
-            onClick = viewModel::save,
-            loading = state.saving,
-            loadingText = stringResource(R.string.action_saving),
-        )
     }
 }
 
@@ -212,7 +213,14 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
     var changingEmail by rememberSaveable { mutableStateOf(false) }
     var newEmail by rememberSaveable { mutableStateOf("") }
 
-    AuthLayout(title = stringResource(R.string.title_edit_profile), onBack = onDone) {
+    // UI-05: Save is pinned at the bottom, as on profile setup (it was at the end of a long form).
+    AuthLayout(
+        title = stringResource(R.string.title_edit_profile),
+        onBack = onDone,
+        bottomBar = {
+            LLBottomBar(stringResource(R.string.action_save), viewModel::save, loading = state.saving, loadingText = stringResource(R.string.action_saving))
+        },
+    ) {
         LLTextField(
             value = state.fullName,
             onValueChange = { v -> viewModel.edit { copy(fullName = v) } },
@@ -259,12 +267,6 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
         }
         FieldError(state.locationError, stringResource(R.string.error_location_required))
         FormError(state.formError)
-        LLPrimaryButton(
-            text = stringResource(R.string.action_save),
-            onClick = viewModel::save,
-            loading = state.saving,
-            loadingText = stringResource(R.string.action_saving),
-        )
     }
 
     if (state.confirmBloodGroup && !state.saving) {

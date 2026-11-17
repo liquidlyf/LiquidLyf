@@ -46,6 +46,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.EdgeTextButton
+import io.github.liquidlyf.core.designsystem.components.FormLoadingState
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.localDateText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
@@ -54,7 +56,6 @@ import io.github.liquidlyf.core.designsystem.components.DropdownField
 import io.github.liquidlyf.core.designsystem.components.FieldError
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
-import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.AppLocale
@@ -117,7 +118,7 @@ fun ProfileSetupScreen(
         },
     ) { padding ->
         if (!state.loaded) {
-            LoadingState(Modifier.padding(padding))
+            FormLoadingState(Modifier.padding(padding))
             return@Scaffold
         }
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
@@ -164,7 +165,7 @@ private fun BloodGroupStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() ->
         onSelect = { group -> onEdit { copy(bloodGroup = group.code, bloodGroupUnknown = false) } },
         errorText = if (SetupField.BLOOD_GROUP in state.errors) stringResource(R.string.error_blood_group_required) else null,
     )
-    TextButton(onClick = { showHelp = true }) { Text(stringResource(R.string.setup_blood_unknown)) }
+    EdgeTextButton(stringResource(R.string.setup_blood_unknown), { showHelp = true })
     if (showHelp) {
         AlertDialog(
             onDismissRequest = { showHelp = false },
@@ -333,7 +334,7 @@ private fun ContactStep(state: ProfileSetupUiState, onEdit: (SetupDraft.() -> Se
         FieldError(SetupField.TERMS in state.errors, stringResource(R.string.error_consent_required))
         // The second link moves below the first when both don't fit (200% text).
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            TextButton(onClick = { links.openUrl(Links.terms(locale)) }) { Text(stringResource(R.string.action_read_terms)) }
+            EdgeTextButton(stringResource(R.string.action_read_terms), { links.openUrl(Links.terms(locale)) })
             TextButton(onClick = { links.openUrl(Links.privacy(locale)) }) { Text(stringResource(R.string.action_read_privacy)) }
         }
     }

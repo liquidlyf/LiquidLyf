@@ -2,9 +2,11 @@ package io.github.liquidlyf.core.designsystem.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -21,7 +23,9 @@ import io.github.liquidlyf.core.designsystem.Spacing
 
 /**
  * The main action of a screen. While [loading], it shows a spinner and [loadingText]
- * (e.g. "Posting…") and ignores taps, so the action can't be sent twice.
+ * (e.g. "Posting…") and ignores taps, so the action can't be sent twice. Full width up to 480 dp
+ * (UI-05: one main-button layout; it was sometimes small and left-aligned, narrower than the
+ * secondary button under it).
  */
 @Composable
 fun LLPrimaryButton(
@@ -32,11 +36,14 @@ fun LLPrimaryButton(
     loading: Boolean = false,
     loadingText: String? = null,
     @DrawableRes icon: Int? = null,
+    fullWidth: Boolean = true,
 ) {
     Button(
-        onClick = onClick,
-        enabled = enabled && !loading,
+        // While loading it keeps its colour (UI-07: "Posting…" looked disabled) but ignores taps.
+        onClick = { if (!loading) onClick() },
+        enabled = enabled,
         modifier = modifier
+            .then(if (fullWidth) Modifier.widthIn(max = MAX_ACTION_WIDTH).fillMaxWidth() else Modifier)
             .heightIn(min = Spacing.minTouchTarget)
             .semantics { if (loading && loadingText != null) stateDescription = loadingText },
     ) {

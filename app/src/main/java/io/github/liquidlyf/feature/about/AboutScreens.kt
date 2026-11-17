@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -32,8 +33,13 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
+import com.mikepenz.aboutlibraries.ui.compose.m3.chipColors
+import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
+import com.mikepenz.aboutlibraries.ui.compose.m3.style.m3VariantColors
+import com.mikepenz.aboutlibraries.ui.compose.style.VariantColors
 import io.github.liquidlyf.BuildConfig
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
@@ -212,10 +218,28 @@ private val MATCHING = listOf(
 fun LicencesScreen(onBack: () -> Unit) {
     val libraries by produceLibraries(R.raw.aboutlibraries)
     Scaffold(topBar = { LLTopBar(title = stringResource(R.string.title_licences), onBack = onBack) }) { padding ->
+        // UI-07: the library's chips came in its own purple; ours are the neutral grey.
+        val chips = LibraryDefaults.chipColors(
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer,
+        )
         LibrariesContainer(
             libraries = libraries,
             modifier = Modifier.fillMaxSize(),
             contentPadding = padding,
+            colors = LibraryDefaults.libraryColors(
+                MaterialTheme.colorScheme.background,
+                MaterialTheme.colorScheme.onBackground,
+                chips,
+                chips,
+                chips,
+            ),
+            // Its licence badges take a colour per licence (Apache was purple): ours are the neutral grey.
+            variantColors = NeutralBadges(
+                LibraryDefaults.m3VariantColors(),
+                MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.onSecondaryContainer,
+            ),
             header = {
                 item(key = "area-data") {
                     Column(
@@ -236,4 +260,10 @@ fun LicencesScreen(onBack: () -> Unit) {
             },
         )
     }
+}
+
+/** The library's colours, with every licence badge in our neutral grey (UI-07: its palette made Apache purple). */
+private class NeutralBadges(base: VariantColors, private val container: Color, private val content: Color) : VariantColors by base {
+    override val licenseBadgeContainer: Color get() = container
+    override val licenseBadgeContent: Color get() = content
 }

@@ -62,6 +62,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.ErrorAnchors
+import io.github.liquidlyf.core.designsystem.components.FormLoadingState
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLFilterChip
@@ -167,7 +168,7 @@ internal fun CreateRequestScreen(
         },
     ) { padding ->
         when {
-            !state.loaded -> LoadingState(Modifier.padding(padding))
+            !state.loaded -> FormLoadingState(Modifier.padding(padding))
             limit != null -> EmptyState(
                 icon = LLIcons.HourglassTop,
                 title = stringResource(R.string.create_limit_title),
@@ -522,7 +523,7 @@ private fun ReviewCard(state: CreateRequestUiState) {
     val component = BloodComponent.fromCode(f.component)?.let { stringResource(it.labelRes) }.orEmpty()
     val place = f.district?.let { state.geo?.placeLabel(it, f.upazila, locale) }.orEmpty()
     val urgency = Urgency.fromCode(f.urgency)?.let { stringResource(it.labelRes) }.orEmpty()
-    LLCard {
+    LLCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
             Text(stringResource(R.string.create_review), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             Text("$group · ${unitsText(f.units, component)}")

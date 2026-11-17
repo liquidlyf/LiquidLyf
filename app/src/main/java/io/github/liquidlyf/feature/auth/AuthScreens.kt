@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,17 +13,21 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -40,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.error
@@ -58,7 +64,9 @@ import io.github.liquidlyf.core.data.auth.requestGoogleIdToken
 import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.EdgeTextButton
 import io.github.liquidlyf.core.designsystem.components.EmptyState
+import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
@@ -72,20 +80,26 @@ import io.github.liquidlyf.feature.settings.LanguageToggle
 import io.github.liquidlyf.feature.settings.LanguageViewModel
 import kotlinx.coroutines.launch
 
-/** Shared frame: top bar, scrolling content that stays above the keyboard, at most 480 dp wide. */
+/**
+ * Shared frame: top bar, scrolling content that stays above the keyboard, at most 480 dp wide.
+ * A form puts its main action in [bottomBar] (an [LLBottomBar]), pinned above the keyboard
+ * (UI-05: on Create account the keyboard covered the button).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AuthLayout(
     title: String,
     onBack: (() -> Unit)?,
     actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Scaffold(topBar = { LLTopBar(title = title, onBack = onBack, actions = actions) }) { padding ->
+    Scaffold(topBar = { LLTopBar(title = title, onBack = onBack, actions = actions) }, bottomBar = bottomBar) { padding ->
         Box(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .consumeWindowInsets(padding) // the bar already rides above the keyboard
                 .imePadding(),
             contentAlignment = Alignment.TopCenter,
         ) {
@@ -164,7 +178,10 @@ private fun rememberContinueWithGoogle(
 /** "Continue with Google", then "or" above the email form. */
 @Composable
 private fun ColumnScope.GoogleOption(onClick: () -> Unit, enabled: Boolean) {
-    OutlinedButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
+    OutlinedButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
+        // Google's own colours, untinted (UI-07: the button had no Google mark).
+        Image(painterResource(R.drawable.ic_google_g), contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
         Text(stringResource(R.string.action_continue_with_google))
     }
     Text(
@@ -216,9 +233,7 @@ fun SignInScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onSignIn() }),
         )
-        TextButton(onClick = dropUnlessResumed(block = onForgotPassword), enabled = !state.loading) {
-            Text(stringResource(R.string.action_forgot_password))
-        }
+        EdgeTextButton(stringResource(R.string.action_forgot_password), dropUnlessResumed(block = onForgotPassword), enabled = !state.loading)
         FormError(state.formError)
         LLPrimaryButton(
             text = stringResource(R.string.action_sign_in),
@@ -276,7 +291,19 @@ fun SignUpScreen(
 ) {
     val links = rememberSafeIntentLauncher()
     val locale = currentAppLocale()
-    AuthLayout(title = stringResource(R.string.title_sign_up), onBack = onBack, actions = { LanguageToggle(onLanguageChange) }) {
+    AuthLayout(
+        title = stringResource(R.string.title_sign_up),
+        onBack = onBack,
+        actions = { LanguageToggle(onLanguageChange) },
+        bottomBar = {
+            LLBottomBar(
+                primaryText = stringResource(R.string.action_create_account),
+                onPrimary = onSignUp,
+                loading = state.loading,
+                loadingText = stringResource(R.string.action_creating_account),
+            )
+        },
+    ) {
         // P2: a new Google account skips this form and confirms 18+ and the Terms in setup.
         if (onContinueWithGoogle != null) GoogleOption(onContinueWithGoogle, enabled = !state.loading)
         LLTextField(
@@ -325,16 +352,10 @@ fun SignUpScreen(
         }
         state.consentError?.let { FormError(it) }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            TextButton(onClick = { links.openUrl(Links.terms(locale)) }) { Text(stringResource(R.string.action_read_terms)) }
+            EdgeTextButton(stringResource(R.string.action_read_terms), { links.openUrl(Links.terms(locale)) })
             TextButton(onClick = { links.openUrl(Links.privacy(locale)) }) { Text(stringResource(R.string.action_read_privacy)) }
         }
         FormError(state.formError)
-        LLPrimaryButton(
-            text = stringResource(R.string.action_create_account),
-            onClick = onSignUp,
-            loading = state.loading,
-            loadingText = stringResource(R.string.action_creating_account),
-        )
         FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.sign_up_have_account), style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = dropUnlessResumed(block = onBack), enabled = !state.loading) {
@@ -425,7 +446,27 @@ fun ForgotPasswordScreen(
     onSend: () -> Unit,
     onBack: () -> Unit,
 ) {
-    AuthLayout(title = stringResource(R.string.title_forgot_password), onBack = onBack) {
+    // UI-05 and UI-07: the main action is pinned; "Back to sign in" lives in the same bar before and
+    // after sending (it was a text button on one screen and a tonal button on the next).
+    val back = dropUnlessResumed(block = onBack)
+    AuthLayout(
+        title = stringResource(R.string.title_forgot_password),
+        onBack = onBack,
+        bottomBar = {
+            if (state.sentTo == null) {
+                LLBottomBar(
+                    primaryText = stringResource(R.string.action_send_link),
+                    onPrimary = onSend,
+                    loading = state.loading,
+                    loadingText = stringResource(R.string.action_sending),
+                    secondaryText = stringResource(R.string.action_back_to_sign_in),
+                    onSecondary = back,
+                )
+            } else {
+                LLBottomBar(primaryText = stringResource(R.string.action_back_to_sign_in), onPrimary = back)
+            }
+        },
+    ) {
         val sentTo = state.sentTo
         if (sentTo != null) {
             // Same words whether or not the account exists (no email probing).
@@ -433,8 +474,6 @@ fun ForgotPasswordScreen(
                 icon = LLIcons.CheckCircle,
                 title = stringResource(R.string.forgot_password_sent_title),
                 body = stringResource(R.string.forgot_password_sent_body, sentTo) + " " + emailSpamHint(state.sender),
-                actionLabel = stringResource(R.string.action_back_to_sign_in),
-                onAction = onBack,
             )
             return@AuthLayout
         }
@@ -450,14 +489,5 @@ fun ForgotPasswordScreen(
             keyboardActions = KeyboardActions(onDone = { onSend() }),
         )
         FormError(state.formError)
-        LLPrimaryButton(
-            text = stringResource(R.string.action_send_link),
-            onClick = onSend,
-            loading = state.loading,
-            loadingText = stringResource(R.string.action_sending),
-        )
-        TextButton(onClick = dropUnlessResumed(block = onBack), enabled = !state.loading, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.action_back_to_sign_in))
-        }
     }
 }

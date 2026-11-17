@@ -2,6 +2,7 @@ package io.github.liquidlyf.feature.notifications
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,10 +16,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Badge
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,6 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -42,12 +45,14 @@ import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
+import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.relativeTimeText
 import io.github.liquidlyf.core.designsystem.rememberNow
+import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.InboxType
 import io.github.liquidlyf.core.model.Urgency
@@ -87,7 +92,7 @@ internal fun InboxScreen(
         },
     ) { padding ->
         when {
-            entries == null && state.error == null -> LoadingState(Modifier.padding(padding))
+            entries == null && state.error == null -> LoadingState(Modifier.padding(padding).padding(horizontal = screenGutter(), vertical = Spacing.md))
             // STATE-05: the shared error state (icon, title, message, Retry), not bare red text.
             entries == null -> ErrorState(
                 onRetry = onLoadMore,
@@ -103,11 +108,11 @@ internal fun InboxScreen(
             else -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
                 LazyColumn(
                     modifier = Modifier.widthIn(max = 640.dp).fillMaxWidth(),
-                    contentPadding = PaddingValues(vertical = Spacing.sm),
+                    contentPadding = PaddingValues(horizontal = screenGutter(), vertical = Spacing.sm),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                 ) {
                     items(entries.orEmpty(), key = { it.key }) { entry ->
                         InboxRow(entry, isNew = state.isNew(entry), state = state, onClick = { onOpenRequest(entry.requestId) })
-                        HorizontalDivider()
                     }
                     item(key = "footer") { Footer(state, onLoadMore) }
                 }
@@ -137,8 +142,10 @@ private fun InboxRow(entry: InboxEntry, isNew: Boolean, state: InboxUiState, onC
         }
     }
     val newLabel = stringResource(R.string.inbox_new)
+    // A card like every other list (UI-07); the icon in grey, red is for actions (D4 a).
+    LLCard(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable(onClick = onClick).semantics { if (isNew) stateDescription = newLabel }) {
     ListItem(
-        leadingContent = { Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+        leadingContent = { Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
         headlineContent = {
             Text(title, fontWeight = if (isNew) FontWeight.SemiBold else null, maxLines = 3, overflow = TextOverflow.Ellipsis)
         },
@@ -146,11 +153,10 @@ private fun InboxRow(entry: InboxEntry, isNew: Boolean, state: InboxUiState, onC
             Text(listOf(detail, time).filter { it.isNotBlank() }.joinToString(" · "), maxLines = 3, overflow = TextOverflow.Ellipsis)
         },
         trailingContent = if (isNew) ({ Badge() }) else null,
-        modifier = Modifier
-            .heightIn(min = Spacing.minTouchTarget)
-            .clickable(onClick = onClick)
-            .semantics { if (isNew) stateDescription = newLabel },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
     )
+    }
 }
 
 @Composable

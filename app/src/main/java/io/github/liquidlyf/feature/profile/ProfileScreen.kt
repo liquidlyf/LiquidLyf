@@ -152,7 +152,7 @@ internal fun ProfileScreen(
     ) { padding ->
         val p = state.profile
         if (p == null) {
-            LoadingState(Modifier.padding(padding))
+            LoadingState(Modifier.padding(padding).padding(horizontal = screenGutter(), vertical = Spacing.md))
             return@Scaffold
         }
         Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {

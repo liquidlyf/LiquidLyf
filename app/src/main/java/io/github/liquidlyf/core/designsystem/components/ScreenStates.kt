@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.util.AppError
 
 /*
@@ -68,6 +69,38 @@ fun LoadingState(modifier: Modifier = Modifier, count: Int = 3) {
         repeat(count) {
             // Alpha is read in the draw phase, so the pulse doesn't recompose.
             SkeletonCard(Modifier.graphicsLayer { alpha = pulse })
+        }
+    }
+}
+
+/**
+ * A form's first load: field-shaped placeholders (UI-07: list-row skeletons on a form looked like
+ * a list was coming). TalkBack announces "Loading…".
+ */
+@Composable
+fun FormLoadingState(modifier: Modifier = Modifier, fields: Int = 3) {
+    val description = stringResource(R.string.state_loading)
+    val pulse by rememberInfiniteTransition(label = "formSkeleton").animateFloat(
+        initialValue = 0.45f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(durationMillis = 800), RepeatMode.Reverse),
+        label = "formSkeletonAlpha",
+    )
+    val block = MaterialTheme.colorScheme.surfaceContainerHigh
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Spacing.md),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = screenGutter(), vertical = Spacing.md)
+            .graphicsLayer { alpha = pulse }
+            .clearAndSetSemantics {
+                contentDescription = description
+                liveRegion = LiveRegionMode.Polite
+            },
+    ) {
+        Box(Modifier.fillMaxWidth(0.5f).height(24.dp).clip(MaterialTheme.shapes.extraSmall).background(block))
+        repeat(fields) {
+            Box(Modifier.fillMaxWidth().height(56.dp).clip(MaterialTheme.shapes.extraSmall).background(block))
         }
     }
 }

@@ -187,7 +187,7 @@ private fun RequestDetailScreen(
         },
     ) { padding ->
         when {
-            state.loading -> LoadingState(Modifier.padding(padding))
+            state.loading -> LoadingState(Modifier.padding(padding).padding(horizontal = screenGutter(), vertical = Spacing.md))
             // STATE-05: couldn't load is not "removed": the shared error state with Retry.
             state.loadError != null -> ErrorState(state.loadError, onRetry = vm::retry, modifier = Modifier.padding(padding))
             // STATE-02: surely gone, with a way out.

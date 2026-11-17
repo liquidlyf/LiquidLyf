@@ -19,8 +19,10 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -161,7 +163,7 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
     Scaffold(topBar = { LLTopBar(title = stringResource(R.string.nav_donors)) }) { padding ->
         when (state.enabled) {
             null -> {
-                LoadingState(Modifier.padding(padding))
+                LoadingState(Modifier.padding(padding).padding(horizontal = screenGutter(), vertical = Spacing.md))
                 return@Scaffold
             }
             false -> {
@@ -388,10 +390,18 @@ private fun AskToDonateSheet(
                     )
                 }
             }
-            // 7.1/7.2: report or block this person.
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                TextButton(onClick = onReport, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) { Text(stringResource(R.string.action_report_person)) }
-                TextButton(onClick = onBlock, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) { Text(stringResource(R.string.action_block_person)) }
+            // 7.1/7.2: report or block this person: below a divider, in grey, so they aren't tapped
+            // instead of "Ask to donate" (UI-07); a flow row, so with large text they never break
+            // letter by letter (A11Y-03).
+            HorizontalDivider(Modifier.padding(top = Spacing.sm))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                val quiet = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = onReport, colors = quiet, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                    Text(stringResource(R.string.action_report_person))
+                }
+                TextButton(onClick = onBlock, colors = quiet, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                    Text(stringResource(R.string.action_block_person))
+                }
             }
         }
     }
