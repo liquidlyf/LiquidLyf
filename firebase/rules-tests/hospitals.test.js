@@ -3,7 +3,7 @@
 import { describe, test, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import {
-  CSV_PATH, JSON_PATH, COLUMNS, NAME_MAX, parseCsv, geohash, loadAreas, readList, toJson, versionProblem,
+  CSV_PATH, JSON_PATH, COLUMNS, NAME_MAX, parseCsv, geohash, loadAreas, readList, readCurrent, toJson, versionProblem,
 } from '../seed/hospitals.mjs';
 
 const areas = loadAreas();
@@ -52,7 +52,7 @@ describe('hospitals.json', () => {
       expect(list.published, 'rows are verified but seed/hospitals.json was never written').toEqual([]);
       return;
     }
-    expect(readFileSync(JSON_PATH, 'utf8')).toBe(next);
+    expect(readCurrent()).toBe(next); // line endings aside (Git on Windows may add CRLF)
   });
 
   test('has the shape the app and the website read', () => {

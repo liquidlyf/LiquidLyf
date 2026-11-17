@@ -185,6 +185,11 @@ export function versionProblem(current, next) {
   return null;
 }
 
+/** The committed hospitals.json. Git on Windows (core.autocrlf) may check it out with CRLF; compare as LF. */
+export function readCurrent() {
+  return readFileSync(JSON_PATH, 'utf8').replace(/\r\n/g, '\n');
+}
+
 function main(args) {
   const { version, rows, published, problems } = readList(readFileSync(CSV_PATH, 'utf8'), loadAreas());
   if (problems.length) {
@@ -192,7 +197,7 @@ function main(args) {
     return 1;
   }
   const next = toJson(version, published);
-  const current = existsSync(JSON_PATH) ? readFileSync(JSON_PATH, 'utf8') : null;
+  const current = existsSync(JSON_PATH) ? readCurrent() : null;
   if (args.includes('--check')) {
     if (current === null && published.length === 0) {
       console.log('no hospitals.json yet: no row is verified');
