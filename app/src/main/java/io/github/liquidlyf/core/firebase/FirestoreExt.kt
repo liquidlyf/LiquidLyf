@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Source
 import io.github.liquidlyf.core.util.AppError
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.tasks.await
 
 /*
@@ -32,6 +34,40 @@ fun <T> Flow<T>.endOnListenError(what: String, onError: suspend FlowCollector<T>
         Log.w("LiquidLyfFirestore", "$what listener stopped: $error")
         onError(error)
     }
+
+/**
+ * A document as a screen needs to know it (STATE-05): there, surely gone (the server says so), or
+ * not known yet. Offline, a document that isn't saved on the phone first reads as "doesn't exist"
+ * from the cache; that is [Unknown], not "removed".
+ */
+sealed interface DocState<out T> {
+    data class Found<T>(val value: T) : DocState<T>
+
+    data object Missing : DocState<Nothing>
+
+    data object Unknown : DocState<Nothing>
+}
+
+/** Like [snapshots], but tells a "doesn't exist" from the server apart from one from the cache. */
+fun <T : Any> DocumentReference.docStates(mapper: (DocumentSnapshot) -> T?): Flow<DocState<T>> = callbackFlow {
+    // Metadata changes too: the server's "still doesn't exist" changes nothing but isFromCache.
+    val registration = addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
+        if (error != null) {
+            close(error)
+            return@addSnapshotListener
+        }
+        if (snapshot == null) return@addSnapshotListener
+        val value = if (snapshot.exists()) mapper(snapshot) else null
+        trySend(
+            when {
+                value != null -> DocState.Found(value)
+                !snapshot.exists() && snapshot.metadata.isFromCache -> DocState.Unknown
+                else -> DocState.Missing
+            },
+        )
+    }
+    awaitClose { registration.remove() }
+}.distinctUntilChanged()
 
 /** Emits the mapped document on every change, or null while it doesn't exist. */
 fun <T> DocumentReference.snapshots(mapper: (DocumentSnapshot) -> T?): Flow<T?> = callbackFlow {

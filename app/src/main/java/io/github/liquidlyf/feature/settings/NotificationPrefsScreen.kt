@@ -11,8 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -46,8 +45,10 @@ import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.LLNoticeCard
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
+import io.github.liquidlyf.core.designsystem.components.NoticeTone
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.util.ApplicationScope
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
@@ -118,13 +119,13 @@ internal fun NotificationPrefsScreen(
                 if (!systemEnabled) {
                     NotificationsOffBanner(onTurnOn = onOpenSystemSettings, modifier = Modifier.padding(horizontal = screenGutter()))
                 }
-                PrefSwitch(R.string.notif_prefs_alerts_title, R.string.notif_prefs_alerts_summary, p.requestAlerts, enabled = state.loaded) {
+                PrefSwitch(R.string.notif_prefs_alerts_title, R.string.notif_prefs_alerts_summary, p.requestAlerts, enabled = state.loaded && systemEnabled) {
                     onChange(p.copy(requestAlerts = it))
                 }
-                PrefSwitch(R.string.notif_prefs_updates_title, R.string.notif_prefs_updates_summary, p.updates, enabled = state.loaded) {
+                PrefSwitch(R.string.notif_prefs_updates_title, R.string.notif_prefs_updates_summary, p.updates, enabled = state.loaded && systemEnabled) {
                     onChange(p.copy(updates = it))
                 }
-                PrefSwitch(R.string.notif_prefs_reminders_title, R.string.notif_prefs_reminders_summary, p.reminders, enabled = state.loaded) {
+                PrefSwitch(R.string.notif_prefs_reminders_title, R.string.notif_prefs_reminders_summary, p.reminders, enabled = state.loaded && systemEnabled) {
                     onChange(p.copy(reminders = it))
                 }
                 ListItem(
@@ -159,19 +160,23 @@ fun rememberNotificationsEnabled(): Boolean {
     return enabled
 }
 
-/** Phase 5.10: shown on Home (and here) while notifications are off for the app. */
+/**
+ * Phase 5.10: shown on Home (and here) while notifications are off for the app. A warning with
+ * a bell-off icon and a filled "Turn on" (STATE-04: the old pink card with a small text button was
+ * easy to miss, and without notifications the app silently doesn't work for this person).
+ */
 @Composable
 fun NotificationsOffBanner(onTurnOn: () -> Unit, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-    ) {
-        Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            Text(stringResource(R.string.notif_off_title), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(R.string.notif_off_body), style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onTurnOn, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+    LLNoticeCard(
+        text = stringResource(R.string.notif_off_body),
+        icon = LLIcons.NotificationsOff,
+        tone = NoticeTone.Warning,
+        title = stringResource(R.string.notif_off_title),
+        modifier = modifier,
+        action = {
+            Button(onClick = onTurnOn, modifier = Modifier.padding(top = Spacing.xs).heightIn(min = Spacing.minTouchTarget)) {
                 Text(stringResource(R.string.notif_off_turn_on))
             }
-        }
-    }
+        },
+    )
 }

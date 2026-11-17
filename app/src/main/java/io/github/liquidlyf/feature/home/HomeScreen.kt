@@ -1,5 +1,6 @@
 package io.github.liquidlyf.feature.home
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +48,7 @@ import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.EligibilityRing
 import io.github.liquidlyf.core.designsystem.components.EmptyState
+import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LARGE_FONT_SCALE
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLCard
@@ -86,7 +88,10 @@ fun HomeRoute(
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { e -> if (e is HomeEvent.Message) launch { snackbar.showSnackbar(resources.getString(e.text)) } }
     }
-    HomeScreen(state, online, viewModel::onAvailableToggled, onOpenRequest, onCreateRequest, onOpenNotifications, onEditProfile, unreadInbox, onListMe = viewModel::listMe)
+    HomeScreen(
+        state, online, viewModel::onAvailableToggled, onOpenRequest, onCreateRequest, onOpenNotifications, onEditProfile, unreadInbox,
+        onListMe = viewModel::listMe, onRetryFeed = viewModel::retryFeed,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,6 +107,7 @@ internal fun HomeScreen(
     unreadInbox: Boolean = false,
     notificationsEnabled: Boolean = rememberNotificationsEnabled(),
     onListMe: () -> Unit = {},
+    onRetryFeed: () -> Unit = {},
 ) {
     val now by rememberNow()
     val launcher = rememberSafeIntentLauncher()
@@ -146,11 +152,12 @@ internal fun HomeScreen(
                     if (!notificationsEnabled) {
                         item(key = "notifications-off") { NotificationsOffBanner(onTurnOn = launcher::openNotificationSettings) }
                     }
-                    item(key = "availability") { AvailabilityCard(state, onAvailableToggled, onEditProfile, onListMe) }
+                    item(key = "availability") { AvailabilityCard(state, notificationsEnabled, onAvailableToggled, onEditProfile, onListMe) }
                     item(key = "header") { SectionHeader(stringResource(R.string.home_urgent_near_you)) }
                     val list = state.requests
                     val group = state.profile?.bloodGroup
                     when {
+                        list == null && state.feedError != null -> item(key = "error") { ErrorState(state.feedError, onRetry = onRetryFeed) }
                         list == null -> item(key = "loading") { LoadingState(count = 2) }
                         group == null -> item(key = "no-group") {
                             EmptyState(
@@ -188,7 +195,13 @@ private val FAB_CLEARANCE = 88.dp
 
 /** Availability and eligibility (doc 04 §4): the whole row toggles, for TalkBack too. */
 @Composable
-private fun AvailabilityCard(state: HomeUiState, onAvailableToggled: (Boolean) -> Unit, onEditProfile: () -> Unit, onListMe: () -> Unit) {
+private fun AvailabilityCard(
+    state: HomeUiState,
+    notificationsOn: Boolean,
+    onAvailableToggled: (Boolean) -> Unit,
+    onEditProfile: () -> Unit,
+    onListMe: () -> Unit,
+) {
     val p = state.profile ?: return
     when {
         p.bloodGroup == null -> BloodGroupReminder(onAdd = onEditProfile)
@@ -223,7 +236,7 @@ private fun AvailabilityCard(state: HomeUiState, onAvailableToggled: (Boolean) -
             ListItem(
                 headlineContent = { Text(stringResource(R.string.home_ready_to_donate)) },
                 supportingContent = {
-                    Text(stringResource(if (state.available) R.string.home_ready_on else R.string.home_ready_off))
+                    Text(stringResource(readyText(state.available, notificationsOn)))
                 },
                 trailingContent = { Switch(checked = state.available, onCheckedChange = null) },
                 colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
@@ -236,4 +249,12 @@ private fun AvailabilityCard(state: HomeUiState, onAvailableToggled: (Boolean) -
             )
         }
     }
+}
+
+/** What "Ready to donate" means right now: no promise of alerts while notifications are off (STATE-04). */
+@StringRes
+internal fun readyText(available: Boolean, notificationsOn: Boolean): Int = when {
+    !available -> R.string.home_ready_off
+    notificationsOn -> R.string.home_ready_on
+    else -> R.string.home_ready_on_notifications_off
 }

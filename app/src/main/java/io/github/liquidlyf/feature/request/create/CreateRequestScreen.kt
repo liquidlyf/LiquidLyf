@@ -175,7 +175,7 @@ internal fun CreateRequestScreen(
                 modifier = Modifier.padding(padding),
             )
             else -> Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
-                OfflineBanner(online)
+                OfflineBanner(online, text = stringResource(R.string.offline_banner_form))
                 Column(
                     Modifier
                         .widthIn(max = 560.dp)

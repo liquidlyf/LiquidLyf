@@ -6,7 +6,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import io.github.liquidlyf.core.domain.StatusTransitions
 import io.github.liquidlyf.core.domain.Validators
+import io.github.liquidlyf.core.firebase.DocState
 import io.github.liquidlyf.core.firebase.appResultOf
+import io.github.liquidlyf.core.firebase.docStates
 import io.github.liquidlyf.core.firebase.dto.ContactDoc
 import io.github.liquidlyf.core.firebase.dto.RequestDoc
 import io.github.liquidlyf.core.firebase.dto.UserStatsDoc
@@ -26,6 +28,7 @@ import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -51,6 +54,14 @@ interface RequestRepository {
 
     /** The request being viewed, live. Null if it doesn't exist. */
     fun observe(requestId: String): Flow<BloodRequest?>
+
+    /**
+     * The request being viewed, live, and whether "not there" is sure (the server) or not yet
+     * known (offline, not saved on the phone): Request details shows "isn't available" only when
+     * it's sure (STATE-05).
+     */
+    fun observeState(requestId: String): Flow<DocState<BloodRequest>> =
+        observe(requestId).map { if (it == null) DocState.Missing else DocState.Found(it) }
 
     /** Several requests by id (My offers), in any status; missing ones are left out. */
     suspend fun byIds(ids: List<String>): AppResult<List<BloodRequest>>
@@ -108,6 +119,9 @@ class FirestoreRequestRepository @Inject constructor(
 
     override fun observe(requestId: String): Flow<BloodRequest?> =
         db.requestRef(requestId).snapshots { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
+
+    override fun observeState(requestId: String): Flow<DocState<BloodRequest>> =
+        db.requestRef(requestId).docStates { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
 
     override suspend fun byIds(ids: List<String>): AppResult<List<BloodRequest>> = appResultOf {
         // whereIn takes at most 30 values; a page of offers is 20.

@@ -48,6 +48,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.StatusTone
+import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLTag
 import io.github.liquidlyf.core.designsystem.numberText
@@ -196,11 +197,9 @@ internal fun ProfileScreen(
                 }
                 val donations = state.donations
                 when {
+                    // STATE-05: the shared error state, like every other screen.
                     donations == null && state.donationsFailed -> item {
-                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                            Text(stringResource(R.string.profile_history_error), style = MaterialTheme.typography.bodyMedium)
-                            TextButton(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
-                        }
+                        ErrorState(onRetry = onRetry, title = stringResource(R.string.profile_history_error))
                     }
                     donations == null -> item { LoadingState(count = 2) }
                     donations.isEmpty() -> item {

@@ -62,6 +62,7 @@ import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.EmptyState
+import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.IconLine
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLNoticeCard
@@ -187,10 +188,15 @@ private fun RequestDetailScreen(
     ) { padding ->
         when {
             state.loading -> LoadingState(Modifier.padding(padding))
+            // STATE-05: couldn't load is not "removed": the shared error state with Retry.
+            state.loadError != null -> ErrorState(state.loadError, onRetry = vm::retry, modifier = Modifier.padding(padding))
+            // STATE-02: surely gone, with a way out.
             request == null -> EmptyState(
                 icon = LLIcons.Inbox,
                 title = stringResource(R.string.detail_missing_title),
                 body = stringResource(R.string.detail_missing_body),
+                actionLabel = stringResource(R.string.action_back),
+                onAction = onBack,
                 modifier = Modifier.padding(padding),
             )
             else -> Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {

@@ -20,6 +20,7 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.domain.StatusTransitions
+import io.github.liquidlyf.core.firebase.DocState
 import io.github.liquidlyf.core.firebase.endOnListenError
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.DonorResponse
@@ -28,16 +29,19 @@ import io.github.liquidlyf.core.model.RequestContact
 import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.UserProfile
+import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.core.util.NetworkMonitor
 import io.github.liquidlyf.feature.request.create.PostNotice
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -62,6 +66,11 @@ sealed interface OfferBlock {
 data class RequestDetailUiState(
     val loading: Boolean = true,
     val request: BloodRequest? = null,
+    /**
+     * Couldn't load it, so it's unknown whether the request exists (STATE-05): offline and not on
+     * the phone, or the listener failed. Not "isn't available", which means it's surely gone.
+     */
+    val loadError: AppError? = null,
     val geo: BdGeo? = null,
     val role: ViewerRole = ViewerRole.DONOR,
     /** The donor's own offer status, live from the request's responders map. */
@@ -134,12 +143,47 @@ class RequestDetailViewModel @Inject constructor(
     private var endingReminderFor: Pair<RequestStatus, java.time.Instant>? = null
     private val donations = VerifiedDonationRecorder(profiles, offers, requests, clock)
 
+    private val isOnline: Flow<Boolean> = network.isOnline
+    private var listener: Job? = null
+
     init {
         viewModelScope.launch {
             val geo = geoRepository.geo()
             state.update { it.copy(geo = geo) }
-            // Unreadable from now on (signed out, or hidden by an admin): shown as not available.
-            requests.observe(requestId).endOnListenError("request") { emit(null) }.collect(::onRequest)
+        }
+        listen()
+    }
+
+    /** "Retry" on the error state: listens again. */
+    fun retry() = listen()
+
+    private fun listen() {
+        listener?.cancel()
+        state.update { it.copy(loading = it.request == null, loadError = null) }
+        listener = viewModelScope.launch {
+            requests.observeState(requestId)
+                .endOnListenError("request") { error ->
+                    // Unreadable from now on (signed out, or hidden by an admin): not available.
+                    // Anything else: unknown, so the error state with Retry (STATE-05).
+                    if (error == AppError.PermissionDenied) {
+                        emit(DocState.Missing)
+                    } else {
+                        state.update { it.copy(loading = false, loadError = error) }
+                    }
+                }
+                .collectLatest { doc ->
+                    when (doc) {
+                        is DocState.Found -> onRequest(doc.value)
+                        DocState.Missing -> onRequest(null)
+                        // Not saved on the phone: wait for the server while online; offline, say so.
+                        // The listener answers by itself when the connection comes back.
+                        DocState.Unknown -> isOnline.collect { online ->
+                            state.update {
+                                if (online) it.copy(loading = true, loadError = null) else it.copy(loading = false, loadError = AppError.Network)
+                            }
+                        }
+                    }
+                }
         }
     }
 
@@ -151,6 +195,7 @@ class RequestDetailViewModel @Inject constructor(
         state.update {
             it.copy(
                 loading = false,
+                loadError = null,
                 request = r,
                 role = if (mine) ViewerRole.REQUESTER else ViewerRole.DONOR,
                 myStatus = myStatus,

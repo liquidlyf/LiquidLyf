@@ -10,6 +10,7 @@ import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.safety.SafetyRepository
 import io.github.liquidlyf.core.domain.BloodCompatibility
 import io.github.liquidlyf.core.domain.Validators
+import io.github.liquidlyf.core.firebase.DocState
 import io.github.liquidlyf.core.model.BloodComponent
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.BloodRequest
@@ -74,6 +75,13 @@ class FakeRequestRepository(private val now: Instant = TestData.NOW) : RequestRe
     }
 
     override fun observe(requestId: String): Flow<BloodRequest?> = requests.map { it[requestId] }.failingOnRequest()
+
+    /** Ids that read as "not on the phone yet" (offline, never loaded) while they aren't [put]. */
+    val notOnPhone = MutableStateFlow<Set<String>>(emptySet())
+
+    override fun observeState(requestId: String): Flow<DocState<BloodRequest>> = combine(requests, notOnPhone) { all, unknown ->
+        all[requestId]?.let { DocState.Found(it) } ?: if (requestId in unknown) DocState.Unknown else DocState.Missing
+    }.failingOnRequest()
 
     override suspend fun byIds(ids: List<String>) = result { AppResult.Success(ids.mapNotNull { requests.value[it] }) }
 

@@ -72,6 +72,7 @@
     </plurals>
     <string name="request_needed_by">%1$s দরকার</string>
     <string name="offline_banner">আপনি অফলাইনে আছেন। সেভ করা তথ্য দেখানো হচ্ছে।</string>
+    <string name="offline_banner_form">আপনি অফলাইনে আছেন। আবার অনলাইনে এলে আপনার অনুরোধ পোস্ট হবে।</string>
     <string name="home_urgent_near_you">কাছাকাছি জরুরি অনুরোধ</string>
     <string name="home_no_group_title">আপনার রক্তের গ্রুপ যোগ করুন</string>
     <string name="home_no_group_body">তাহলে কাছের যেসব অনুরোধে সাড়া দিতে পারবেন, সেগুলো দেখবেন।</string>
@@ -83,6 +84,7 @@
     <string name="home_list_me">রক্তদাতা হিসেবে তালিকায় নাম দিন</string>
     <string name="home_ready_to_donate">রক্ত দিতে প্রস্তুত</string>
     <string name="home_ready_on">কাছাকাছি মানুষ আপনাকে খুঁজে অ্যালার্ট পাঠাতে পারবেন।</string>
+    <string name="home_ready_on_notifications_off">কাছাকাছি মানুষ আপনাকে খুঁজে পাবেন, কিন্তু নোটিফিকেশন চালু না করা পর্যন্ত আপনি অ্যালার্ট পাবেন না।</string>
     <string name="home_ready_off">আপনি অ্যালার্ট পাবেন না, আর রক্তদাতা খুঁজলে আপনাকে দেখা যাবে না।</string>
     <string name="home_eligible_now">আপনি এখন রক্ত দিতে পারবেন</string>
     <plurals name="home_eligible_in">
@@ -256,7 +258,6 @@
     <string name="inbox_new">নতুন</string>
     <string name="inbox_just_now">এইমাত্র</string>
     <string name="inbox_load_more">পুরোনোগুলো দেখুন</string>
-    <string name="inbox_load_failed">%1$s আবার চেষ্টা করতে চাপুন।</string>
     <string name="action_open_notifications_unread">নোটিফিকেশন খুলুন, নতুন নোটিফিকেশন এসেছে</string>
     <string name="title_notification_settings">নোটিফিকেশন সেটিংস</string>
     <string name="settings_notifications">নোটিফিকেশন</string>

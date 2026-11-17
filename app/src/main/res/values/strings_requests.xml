@@ -199,6 +199,8 @@
     </plurals>
     <!-- Home -->
     <string name="offline_banner">You\'re offline. Showing saved data.</string>
+    <!-- STATE-06: on the request form, "showing saved data" meant nothing; posting offline does work. -->
+    <string name="offline_banner_form">You\'re offline. Your request will be posted when you\'re back online.</string>
     <string name="home_urgent_near_you">Urgent near you</string>
     <string name="home_no_group_title">Add your blood group</string>
     <string name="home_no_group_body">Then you\'ll see requests near you that you can answer.</string>
@@ -210,6 +212,8 @@
     <string name="home_list_me">List me as a donor</string>
     <string name="home_ready_to_donate">Ready to donate</string>
     <string name="home_ready_on">People nearby can find you and alert you.</string>
+    <!-- STATE-04: "Ready" while the phone blocks LiquidLyf's notifications: the alerts part isn't true. -->
+    <string name="home_ready_on_notifications_off">People nearby can find you, but you won\'t get alerts until notifications are on.</string>
     <string name="home_ready_off">You won\'t get alerts or appear in donor search.</string>
     <string name="home_eligible_now">You can donate now</string>
     <plurals name="home_eligible_in">

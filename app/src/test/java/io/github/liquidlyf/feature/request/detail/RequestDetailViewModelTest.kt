@@ -15,6 +15,7 @@ import io.github.liquidlyf.core.model.RequestContact
 import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.UserProfile
+import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.feature.request.create.PostNotice
 import io.github.liquidlyf.testing.FakeNetworkMonitor
@@ -65,6 +66,7 @@ class RequestDetailViewModelTest {
         override suspend fun geo(): BdGeo = geo
     }
     private val contact = RequestContact("requester-1", "Karim Hossain", "+8801812345678", "Abdul", "Ward 5")
+    private val network = FakeNetworkMonitor()
 
     @Before
     fun setUp() {
@@ -78,7 +80,7 @@ class RequestDetailViewModelTest {
 
     private fun vm(id: String = "r1", notice: String? = null) = RequestDetailViewModel(
         SavedStateHandle(mapOf("id" to id, "notice" to notice)),
-        session, requests, offers, profiles, safety, worker, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, FakeNetworkMonitor(), reminders,
+        session, requests, offers, profiles, safety, worker, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, network, reminders,
     )
 
     private fun signInAs(p: UserProfile) {
@@ -336,5 +338,51 @@ class RequestDetailViewModelTest {
         advanceUntilIdle() // uncaught, this failed the test (and crashed the app)
         assertFalse(vm.uiState.value.loading)
         assertNull(vm.uiState.value.request)
+    }
+
+    @Test
+    fun `a failed load is an error with Retry, not a removed request`() = runTest(dispatcher) {
+        // STATE-05: before, any listener error read "This request isn't available. It may have been removed".
+        requests.listenFailure.value = FirebaseFirestoreException("Unavailable", FirebaseFirestoreException.Code.UNAVAILABLE)
+        val vm = vm()
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loading)
+        assertNull(vm.uiState.value.request)
+        assertEquals(AppError.Network, vm.uiState.value.loadError)
+
+        requests.listenFailure.value = null
+        vm.retry()
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.loadError)
+        assertEquals("r1", vm.uiState.value.request?.id)
+    }
+
+    @Test
+    fun `offline, a request that isn't on the phone says no internet, then shows up when back online`() = runTest(dispatcher) {
+        requests.notOnPhone.value = setOf("r9")
+        network.isOnline.value = false
+        val vm = vm("r9")
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loading)
+        assertEquals(AppError.Network, vm.uiState.value.loadError)
+
+        network.isOnline.value = true
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.loading) // waiting for the server's answer
+        assertNull(vm.uiState.value.loadError)
+
+        requests.put(TestData.request(id = "r9", group = BloodGroup.B_POS))
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loading)
+        assertEquals("r9", vm.uiState.value.request?.id)
+    }
+
+    @Test
+    fun `a request the server doesn't have is not available, with no error`() = runTest(dispatcher) {
+        val vm = vm("gone")
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.loading)
+        assertNull(vm.uiState.value.request)
+        assertNull(vm.uiState.value.loadError)
     }
 }

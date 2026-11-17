@@ -39,6 +39,7 @@ import io.github.liquidlyf.core.designsystem.components.SectionHeader
 import io.github.liquidlyf.core.designsystem.components.SegmentedChoices
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.feature.about.versionLabel
+import io.github.liquidlyf.feature.home.readyText
 import kotlinx.coroutines.launch
 
 /** Phase 8.1: every setting here changes real behaviour and is saved. */
@@ -153,7 +154,7 @@ internal fun SettingsContent(
                 if (uiState.listed) {
                     SwitchRow(
                         title = stringResource(R.string.home_ready_to_donate),
-                        summary = stringResource(if (uiState.available) R.string.home_ready_on else R.string.home_ready_off),
+                        summary = stringResource(readyText(uiState.available, rememberNotificationsEnabled())),
                         checked = uiState.available,
                         enabled = !uiState.saving,
                         onChange = onAvailableChange,

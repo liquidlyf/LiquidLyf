@@ -18,6 +18,7 @@ import io.github.liquidlyf.core.firebase.endOnListenError
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.model.UserProfile
+import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.core.util.NetworkMonitor
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -47,8 +49,10 @@ data class HomeUiState(
     /** What the switch shows: the saved value, or the user's tap until the write finishes. */
     val available: Boolean = false,
     val savingAvailability: Boolean = false,
-    /** Null while the first feed snapshot loads. */
+    /** Null while the first feed snapshot loads, or when it failed ([feedError]). */
     val requests: List<BloodRequest>? = null,
+    /** The feed couldn't load (STATE-01): an error with Retry, never "no one needs blood". */
+    val feedError: AppError? = null,
     val geo: BdGeo? = null,
 )
 
@@ -81,28 +85,43 @@ class HomeViewModel @Inject constructor(
     private val pendingAvailable = MutableStateFlow<Boolean?>(null)
     private val geo = MutableStateFlow<BdGeo?>(null)
 
-    private val feed: Flow<List<BloodRequest>?> = profileFlow
-        .map { p -> p?.let { Triple(it.uid, it.area.district, it.bloodGroup) } }
-        .distinctUntilChanged()
+    /** Bumped by Retry, which starts the feed's listener again. */
+    private val feedAttempt = MutableStateFlow(0)
+
+    private val feed: Flow<FeedState> = combine(
+        profileFlow.map { p -> p?.let { Triple(it.uid, it.area.district, it.bloodGroup) } }.distinctUntilChanged(),
+        feedAttempt,
+    ) { key, _ -> key }
         .flatMapLatest { key ->
             val group = key?.third
             if (key == null || group == null) {
-                flowOf(emptyList())
+                flowOf(FeedState(emptyList()))
             } else {
-                requests.feed(key.second, group).endOnListenError("feed") { emit(emptyList()) }
+                requests.feed(key.second, group)
+                    .map { FeedState(it) }
+                    .onStart { emit(FeedState(null)) }
+                    .endOnListenError("feed") { error ->
+                        // Signed out under the listener: the screen is leaving, so quietly empty.
+                        // Anything else: say it failed (STATE-01: "no requests" was false comfort).
+                        emit(if (error == AppError.PermissionDenied) FeedState(emptyList()) else FeedState(null, error))
+                    }
             }
         }
 
-    val uiState: StateFlow<HomeUiState> = combine(profileFlow, feed, pendingAvailable, geo) { p, list, pending, g ->
+    val uiState: StateFlow<HomeUiState> = combine(profileFlow, feed, pendingAvailable, geo) { p, f, pending, g ->
         HomeUiState(
             profile = p,
             eligibility = p?.let { eligibility.evaluate(it.birthYear, it.weightOk, it.gender, it.lastDonationAt, clock.now()) },
             available = pending ?: p?.available ?: false,
             savingAvailability = pending != null,
-            requests = list?.let { visible(it, p) },
+            requests = f.list?.let { visible(it, p) },
+            feedError = f.error,
             geo = g,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
+
+    /** Retry on the feed's error state. */
+    fun retryFeed() = feedAttempt.update { it + 1 }
 
     /**
      * The bell's badge (phase-05 5.9): anything newer than my last visit to the inbox. One read
@@ -190,3 +209,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 }
+
+/** Home's feed: the list, or null while it loads or when it failed with [error]. */
+private data class FeedState(val list: List<BloodRequest>?, val error: AppError? = null)

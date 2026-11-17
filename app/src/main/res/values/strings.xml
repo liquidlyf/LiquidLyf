@@ -336,7 +336,6 @@
     <string name="inbox_new">New</string>
     <string name="inbox_just_now">Just now</string>
     <string name="inbox_load_more">Show older</string>
-    <string name="inbox_load_failed">%1$s Tap to try again.</string>
     <string name="action_open_notifications_unread">Open notifications, new ones waiting</string>
 
     <!-- Notification settings (Phase 5.10) -->

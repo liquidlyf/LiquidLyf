@@ -114,7 +114,11 @@ internal fun RequestsScreen(
                     ) {
                         when (state.tab) {
                             RequestsTab.NEARBY -> requestItems(state, state.nearby, onOpenRequest) {
-                                EmptyState(LLIcons.Favorite, stringResource(R.string.requests_nearby_empty_title), stringResource(R.string.requests_nearby_empty_body))
+                                // STATE-02: a button too, not only the pull-down gesture.
+                                EmptyState(
+                                    LLIcons.Favorite, stringResource(R.string.requests_nearby_empty_title), stringResource(R.string.requests_nearby_empty_body),
+                                    actionLabel = stringResource(R.string.action_refresh), onAction = onRefresh,
+                                )
                             }
                             RequestsTab.MINE -> requestItems(state, state.mine, onOpenRequest) {
                                 EmptyState(

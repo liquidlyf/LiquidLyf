@@ -19,6 +19,7 @@ object LLIcons {
     val ProfileFilled = R.drawable.ic_person_filled
     val Notifications = R.drawable.ic_notifications
     val NotificationsFilled = R.drawable.ic_notifications_filled
+    val NotificationsOff = R.drawable.ic_notifications_off
 
     // Actions
     val ArrowBack = R.drawable.ic_arrow_back

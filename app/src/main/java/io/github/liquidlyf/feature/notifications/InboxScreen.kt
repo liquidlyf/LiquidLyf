@@ -3,6 +3,7 @@ package io.github.liquidlyf.feature.notifications
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -39,6 +41,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.EmptyState
+import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.currentAppLocale
@@ -85,6 +88,12 @@ internal fun InboxScreen(
     ) { padding ->
         when {
             entries == null && state.error == null -> LoadingState(Modifier.padding(padding))
+            // STATE-05: the shared error state (icon, title, message, Retry), not bare red text.
+            entries == null -> ErrorState(
+                onRetry = onLoadMore,
+                body = stringResource(state.error ?: R.string.error_unknown),
+                modifier = Modifier.padding(padding),
+            )
             entries.isNullOrEmpty() && state.error == null -> EmptyState(
                 icon = LLIcons.Notifications,
                 title = stringResource(R.string.inbox_empty_title),
@@ -149,8 +158,17 @@ private fun Footer(state: InboxUiState, onLoadMore: () -> Unit) {
     Box(Modifier.fillMaxWidth().padding(Spacing.md), contentAlignment = Alignment.Center) {
         when {
             state.loadingMore -> CircularProgressIndicator()
-            state.error != null -> TextButton(onClick = onLoadMore, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
-                Text(stringResource(R.string.inbox_load_failed, stringResource(state.error)))
+            // A later page failed: what went wrong, then Retry (it said "try again" twice).
+            state.error != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    stringResource(state.error),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                TextButton(onClick = onLoadMore, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                    Text(stringResource(R.string.action_retry))
+                }
             }
             !state.endReached -> TextButton(onClick = onLoadMore, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
                 Text(stringResource(R.string.inbox_load_more))

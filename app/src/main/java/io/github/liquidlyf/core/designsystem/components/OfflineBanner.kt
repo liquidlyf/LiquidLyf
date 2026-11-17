@@ -20,18 +20,22 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 
-/** "You're offline. Showing saved data." (doc 04 §6). TalkBack announces it when it appears. */
+/**
+ * "You're offline. Showing saved data." (doc 04 §6), or [text] (a form says what happens to what
+ * the person sends). TalkBack announces it when it appears. A calm grey bar (STATE-06: the old
+ * inverse colours were a glaring light band in dark theme).
+ */
 @Composable
-fun OfflineBanner(online: Boolean, modifier: Modifier = Modifier) {
+fun OfflineBanner(online: Boolean, modifier: Modifier = Modifier, text: String = stringResource(R.string.offline_banner)) {
     if (online) return
-    Surface(color = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface, modifier = modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, contentColor = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier.fillMaxWidth()) {
         Row(
             Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs).semantics { liveRegion = LiveRegionMode.Polite },
             horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(painterResource(LLIcons.WifiOff), contentDescription = null)
-            Text(stringResource(R.string.offline_banner), style = MaterialTheme.typography.bodyMedium)
+            Text(text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
         }
     }
 }

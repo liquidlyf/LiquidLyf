@@ -40,6 +40,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -199,5 +200,22 @@ class HomeViewModelTest {
         requests.listenFailure.value = FirebaseFirestoreException("Missing or insufficient permissions.", FirebaseFirestoreException.Code.PERMISSION_DENIED)
         advanceUntilIdle() // uncaught, this failed the test (and crashed the app in A16)
         assertEquals(emptyList<String>(), vm.uiState.value.requests?.map { it.id })
+    }
+
+    @Test
+    fun `a feed that fails shows an error with Retry, not no requests`() = runTest(dispatcher) {
+        // STATE-01: before, any listener error emptied the list: "No one near you needs B+ right now".
+        requests.put(TestData.request(id = "r1"))
+        requests.listenFailure.value = FirebaseFirestoreException("Unavailable", FirebaseFirestoreException.Code.UNAVAILABLE)
+        val vm = vm()
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.requests)
+        assertEquals(AppError.Network, vm.uiState.value.feedError)
+
+        requests.listenFailure.value = null
+        vm.retryFeed()
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.feedError)
+        assertEquals(listOf("r1"), vm.uiState.value.requests?.map { it.id })
     }
 }
