@@ -26,6 +26,7 @@ All passwords are `password123`, and every email is already verified.
 | `demo-donor-ctg@example.test` | Listed B+ donor, Chattogram. Offered on the B+ request |
 | `demo-new@example.test` | 2-day-old account (limit: 1 open request), with one money-word-flagged request |
 | `demo-admin@example.test` | Has the `admin` custom claim |
+| `demo-requester-only@example.test` | The short setup's profile: name, phone and area (Mirpur) only. No blood group, gender, birth year or weight, so unlisted and unavailable until "Become a donor" (D1) |
 
 ## Notes
 - **The snapshot's requests expire after a few days**, because they carry the date they were generated. With the emulators running, run `npm run seed` in a second terminal for fresh ones.

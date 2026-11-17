@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.geo.BdGeo
@@ -90,6 +91,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun FindDonorsRoute(onCreateRequest: () -> Unit, viewModel: FindDonorsViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // Back after posting or closing a request: "post a request first" follows (FLOW-06).
+    LifecycleResumeEffect(viewModel) {
+        viewModel.onResume()
+        onPauseOrDispose { }
+    }
     val snackbar = LocalSnackbarHostState.current
     val resources = LocalResources.current
     LaunchedEffect(viewModel) {

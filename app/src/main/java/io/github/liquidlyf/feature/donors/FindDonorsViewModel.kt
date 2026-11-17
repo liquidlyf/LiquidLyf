@@ -121,12 +121,7 @@ class FindDonorsViewModel @Inject constructor(
             val geo = geoRepository.geo()
             state.update { it.copy(geo = geo) }
         }
-        viewModelScope.launch {
-            // FLOW-06: one read of my own counters (userStats), like the request form's limit check.
-            val me = session.state.mapNotNull { (it as? SessionState.Ready)?.profile }.first()
-            val stats = (profiles.stats(me.uid, refresh = true) as? AppResult.Success)?.data
-            if (stats != null) state.update { it.copy(hasOpenRequest = stats.openRequests > 0) }
-        }
+        checkOpenRequest()
         viewModelScope.launch {
             session.state.collect { s ->
                 val me = (s as? SessionState.Ready)?.profile ?: return@collect
@@ -306,6 +301,25 @@ class FindDonorsViewModel @Inject constructor(
                 }
                 is AppResult.Failure -> events.send(FindDonorsEvent.Message(result.error.messageRes))
             }
+        }
+    }
+
+    private var resumedOnce = false
+
+    /**
+     * Find donors is in view again: a request posted or closed meanwhile changes "post a request
+     * first" (D's re-audit, FLOW-06). The first time, init has just read it.
+     */
+    fun onResume() {
+        if (resumedOnce) checkOpenRequest() else resumedOnce = true
+    }
+
+    /** FLOW-06: one read of my own counters (userStats), like the request form's limit check. */
+    private fun checkOpenRequest() {
+        viewModelScope.launch {
+            val me = session.state.mapNotNull { (it as? SessionState.Ready)?.profile }.first()
+            val stats = (profiles.stats(me.uid, refresh = true) as? AppResult.Success)?.data
+            if (stats != null) state.update { it.copy(hasOpenRequest = stats.openRequests > 0) }
         }
     }
 

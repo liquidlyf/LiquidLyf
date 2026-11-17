@@ -37,6 +37,8 @@ const people = [
   { uid: 'demo-donor-ctg', name: 'Demo Tanvir Donor', group: 'B_POS', area: 'kotwali', listed: true },
   { uid: 'demo-new', name: 'Demo Newcomer', group: 'O_POS', area: 'mirpur', listed: false, ageDays: 2 },
   { uid: 'demo-admin', name: 'Demo Moderator', group: 'A_NEG', area: 'dhanmondi', listed: false, admin: true },
+  // D1: the short setup's profile (name, phone, area). No blood group or donor details until "Become a donor".
+  { uid: 'demo-requester-only', name: 'Demo Salma Requester', area: 'mirpur', listed: false, available: false, requesterOnly: true },
 ];
 
 function email(uid) { return `${uid}@example.test`; }
@@ -69,6 +71,7 @@ function userDoc(p, i) {
     createdAt: created,
     updatedAt: created,
   };
+  if (p.requesterOnly) for (const k of ['bloodGroup', 'gender', 'birthYear', 'weightOk']) delete u[k];
   if (p.listed) u.consentAt = created;
   if (p.lastDonationDaysAgo) u.lastDonationAt = at(-p.lastDonationDaysAgo * DAY);
   return u;

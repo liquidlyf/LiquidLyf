@@ -9,6 +9,7 @@ import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.RequestStatus
+import io.github.liquidlyf.core.model.UserStats
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
@@ -204,6 +205,25 @@ class FindDonorsViewModelTest {
         assertNull(vm.uiState.value.ask)
         assertEquals(FindDonorsEvent.Message(R.string.donors_asked, "Donor d1"), events.last())
         assertTrue(vm.isAsked(sheet.requests!!.single(), d1))
+    }
+
+    @Test
+    fun `posting or closing a request elsewhere updates 'post a request first' when Find donors is back`() = runTest(dispatcher) {
+        profiles.profiles["me"] = profiles.profiles["me"] ?: TestData.profile(uid = "me")
+        val vm = vm()
+        vm.onResume() // the first time: init has just read it
+        advanceUntilIdle()
+        assertEquals(false, vm.uiState.value.hasOpenRequest)
+
+        profiles.stats["me"] = UserStats(openRequests = 1, totalRequests = 1, lastRequestId = "r1") // posted from Request blood
+        vm.onResume()
+        advanceUntilIdle()
+        assertEquals(true, vm.uiState.value.hasOpenRequest)
+
+        profiles.stats["me"] = UserStats(openRequests = 0, totalRequests = 1, lastRequestId = "r1") // closed
+        vm.onResume()
+        advanceUntilIdle()
+        assertEquals(false, vm.uiState.value.hasOpenRequest)
     }
 
     @Test
