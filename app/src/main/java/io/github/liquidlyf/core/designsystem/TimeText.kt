@@ -11,7 +11,10 @@ import io.github.liquidlyf.core.util.RelativeSpan
 import io.github.liquidlyf.core.util.RelativeTime
 import kotlinx.coroutines.delay
 import android.icu.text.DateFormat
+import android.icu.text.SimpleDateFormat
+import android.icu.util.TimeZone
 import java.time.Instant
+import java.time.ZoneId
 import java.util.Date
 
 /** The current time, ticking every [periodMillis] so countdowns stay fresh while a screen is open. */
@@ -61,8 +64,35 @@ fun relativeTimeText(target: Instant, now: Instant, long: Boolean = false): Stri
 @Composable
 fun dateTimeText(instant: Instant): String {
     val locale = LocalConfiguration.current.locales[0]
+    if (locale.language == BANGLA) {
+        // A34 item 7 = b: "১৮ নভেম্বর, ২০২৬, বিকেল ৩:২২", a part-of-day word instead of AM/PM.
+        return DateFormat.getDateInstance(DateFormat.MEDIUM, locale).format(Date.from(instant)) + ", " + banglaTime(instant, locale)
+    }
     return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale).format(Date.from(instant))
 }
+
+/** "বিকেল ৩:২২": the part of the day, then the 12-hour time in Bangla digits (ICU's own for "bn"). */
+private fun banglaTime(instant: Instant, locale: java.util.Locale): String {
+    val zone = ZoneId.systemDefault()
+    val time = SimpleDateFormat("h:mm", locale).apply { timeZone = TimeZone.getTimeZone(zone.id) }.format(Date.from(instant))
+    return banglaDayPart(instant.atZone(zone).hour) + " " + time
+}
+
+/**
+ * The Bangla word for the part of the day at [hour] (0–23), the way people say the time
+ * (the maintainer's pick, 18 Nov 2026): ভোর 4–6, সকাল 6–12, দুপুর 12–16, বিকেল 16–18,
+ * সন্ধ্যা 18–20, রাত 20–4.
+ */
+internal fun banglaDayPart(hour: Int): String = when (hour) {
+    in 4..5 -> "ভোর"
+    in 6..11 -> "সকাল"
+    in 12..15 -> "দুপুর"
+    in 16..17 -> "বিকেল"
+    in 18..19 -> "সন্ধ্যা"
+    else -> "রাত"
+}
+
+private const val BANGLA = "bn"
 
 /** Today: only the time ("9:46 AM"); another day: the date and time (UI-03's "Needed by 9:46 AM"). */
 @Composable
@@ -70,6 +100,7 @@ fun timeOrDateTimeText(instant: Instant, now: Instant): String {
     val zone = java.time.ZoneId.systemDefault()
     if (instant.atZone(zone).toLocalDate() != now.atZone(zone).toLocalDate()) return dateTimeText(instant)
     val locale = LocalConfiguration.current.locales[0]
+    if (locale.language == BANGLA) return banglaTime(instant, locale)
     return DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(Date.from(instant))
 }
 
