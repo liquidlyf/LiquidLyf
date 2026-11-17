@@ -4,8 +4,13 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -40,6 +45,22 @@ class ErrorAnchors<K : Any> internal constructor() {
 
 @Composable
 fun <K : Any> rememberErrorAnchors(): ErrorAnchors<K> = remember { ErrorAnchors() }
+
+/**
+ * After each failed tap ([attempt] counts them), brings the first of [errors] into view, once: a
+ * rotation or a theme or language change doesn't scroll there (and open the keyboard) again (D's
+ * re-audit).
+ */
+@Composable
+fun <K : Any> ShowFirstErrorOnAttempt(anchors: ErrorAnchors<K>, attempt: Int, errors: Set<K>, order: List<K>) {
+    var shown by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(attempt) {
+        if (attempt > shown) {
+            shown = attempt
+            anchors.showFirst(errors, order)
+        }
+    }
+}
 
 /** Marks [key]'s field for [anchors]. [textField]: it takes the keyboard focus when it's the first error. */
 @OptIn(ExperimentalFoundationApi::class)

@@ -177,12 +177,15 @@ fun AppNavHost(
     // App-wide messages that outlive the screen that sent them (FLOW-08: "Request hidden · Undo").
     val resources = LocalResources.current
     LaunchedEffect(snackbarHostState) {
-        AppSnackbars.messages.collect { s ->
+        AppSnackbars.current.collect { entry ->
+            val s = entry?.snackbar ?: return@collect
+            // Cancelled by a rotation mid-show: not done, so the new screen shows it again.
             val result = snackbarHostState.showSnackbar(
                 message = resources.getString(s.message),
                 actionLabel = s.actionLabel?.let(resources::getString),
                 duration = SnackbarDuration.Long,
             )
+            AppSnackbars.done(entry)
             if (result == SnackbarResult.ActionPerformed) s.onAction?.invoke()
         }
     }

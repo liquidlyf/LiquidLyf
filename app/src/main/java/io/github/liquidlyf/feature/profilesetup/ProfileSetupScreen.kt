@@ -23,7 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +51,7 @@ import io.github.liquidlyf.core.designsystem.components.FormLoadingState
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
+import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.currentAppLocale
@@ -108,9 +108,7 @@ fun ProfileSetupScreen(
         }
         val anchors = rememberErrorAnchors<SetupField>()
         // FLOW-04 (D's re-audit 4): a failed Continue brings the first error into view and focus.
-        LaunchedEffect(state.errorAttempt) {
-            if (state.errorAttempt > 0) anchors.showFirst(state.errors, SHORT_SETUP_ORDER)
-        }
+        ShowFirstErrorOnAttempt(anchors, state.errorAttempt, state.errors, SHORT_SETUP_ORDER)
         val d = state.draft
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
             Column(

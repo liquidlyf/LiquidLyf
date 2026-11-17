@@ -49,6 +49,7 @@ import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
+import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.labelRes
@@ -102,9 +103,7 @@ fun BecomeDonorScreen(
     ) { padding ->
         val anchors = rememberErrorAnchors<SetupField>()
         // FLOW-04: a failed Next brings the first error into view.
-        LaunchedEffect(state.errorAttempt) {
-            if (state.errorAttempt > 0) anchors.showFirst(state.errors, DONOR_ORDER)
-        }
+        ShowFirstErrorOnAttempt(anchors, state.errorAttempt, state.errors, DONOR_ORDER)
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
             Column(
                 Modifier

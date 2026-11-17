@@ -82,6 +82,7 @@ import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
+import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.components.unitsText
@@ -192,9 +193,7 @@ internal fun CreateRequestScreen(
             else -> Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
                 // FLOW-04: after a failed Next or Post, the first error comes into view.
                 val anchors = rememberErrorAnchors<RequestField>()
-                LaunchedEffect(state.errorAttempt) {
-                    if (state.errorAttempt > 0) anchors.showFirst(state.errors, RequestField.entries)
-                }
+                ShowFirstErrorOnAttempt(anchors, state.errorAttempt, state.errors, RequestField.entries)
                 OfflineBanner(online, text = stringResource(R.string.offline_banner_form))
                 Column(
                     Modifier

@@ -147,7 +147,7 @@ internal fun ProfileScreen(
     onBecomeDonor: () -> Unit = {},
 ) {
     var toRemove by remember { mutableStateOf<Donation?>(null) }
-    var askListing by remember { mutableStateOf(false) }
+    var askListing by rememberSaveable { mutableStateOf(false) }
     // N1: the last 3 donations first; "Load more" shows the older ones.
     var showAllDonations by rememberSaveable { mutableStateOf(false) }
     Scaffold(

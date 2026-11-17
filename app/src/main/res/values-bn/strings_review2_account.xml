@@ -144,7 +144,6 @@
         <item quantity="other">%2$s বিভাগের %1$dটি জেলা</item>
     </plurals>
     <string name="error_location_required">আপনার বিভাগ, জেলা ও উপজেলা বেছে নিন।</string>
-    <string name="setup_contact_title">ফোন ও রক্তদান</string>
     <string name="label_phone">মোবাইল নম্বর</string>
     <string name="phone_hint">আপনি কোনো অনুরোধে সাড়া দিলে, শুধু যিনি সেই অনুরোধ করেছেন তিনিই আপনার নম্বর পাবেন।</string>
     <string name="error_phone_invalid">বাংলাদেশি মোবাইল নম্বর দিন, যেমন ০১XXXXXXXXX।</string>

@@ -7,7 +7,6 @@ import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.session.SessionState
-import io.github.liquidlyf.core.designsystem.components.AppSnackbar
 import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
@@ -35,6 +34,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -47,6 +47,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -357,17 +358,22 @@ class RequestDetailViewModelTest {
     @Test
     fun `not for me offers Undo on the screen it goes back to, and Undo brings it back`() = runTest(dispatcher) {
         // FLOW-08: it used to leave with no message and no undo.
-        val shown = mutableListOf<AppSnackbar>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { AppSnackbars.messages.collect { shown += it } }
+        AppSnackbars.clear()
         val vm = vm()
         advanceUntilIdle()
         vm.hide()
         advanceUntilIdle()
-        val snackbar = shown.single()
+        val entry = AppSnackbars.current.first()!!
+        val snackbar = entry.snackbar
         assertEquals(R.string.request_hidden, snackbar.message)
         assertEquals(R.string.action_undo, snackbar.actionLabel)
+        // A rotation mid-show recreates the screen: the message is still there to show again.
+        assertSame(entry, AppSnackbars.current.first())
+        AppSnackbars.done(entry)
+        assertNull(AppSnackbars.current.first())
 
-        session.state.value = SessionState.Ready(TestData.user(uid = "donor"), profiles.profiles.getValue("donor"))
+        // Undo before the session has re-read the profile (its copy doesn't list r1 as hidden yet):
+        // Undo reads the profile itself, so it still works.
         snackbar.onAction!!.invoke()
         advanceUntilIdle()
         assertEquals(emptyList<String>(), profiles.profiles.getValue("donor").hiddenRequestIds)

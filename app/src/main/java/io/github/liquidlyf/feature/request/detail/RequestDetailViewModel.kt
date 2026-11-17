@@ -353,7 +353,9 @@ class RequestDetailViewModel @Inject constructor(
         val scope = appScope
         return {
             scope.launch {
-                val profile = (session.state.value as? SessionState.Ready)?.profile ?: return@launch
+                val stale = (session.state.value as? SessionState.Ready)?.profile ?: return@launch
+                // The session may not have re-read the profile since the hide (D's re-audit): read it now.
+                val profile = (profiles.profile(stale.uid, refresh = true) as? AppResult.Success)?.data ?: stale
                 if (profiles.unhideRequest(profile, id) is AppResult.Success) session.refresh()
             }
         }
