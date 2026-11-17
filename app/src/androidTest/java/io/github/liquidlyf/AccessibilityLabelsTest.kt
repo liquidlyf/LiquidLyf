@@ -71,6 +71,8 @@ import io.github.liquidlyf.feature.notifications.InboxEntry
 import io.github.liquidlyf.feature.notifications.InboxScreen
 import io.github.liquidlyf.feature.notifications.InboxUiState
 import io.github.liquidlyf.feature.onboarding.OnboardingScreen
+import io.github.liquidlyf.feature.profilesetup.BecomeDonorScreen
+import io.github.liquidlyf.feature.profilesetup.BecomeDonorUiState
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupScreen
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupUiState
 import io.github.liquidlyf.feature.profilesetup.SetupDraft
@@ -321,14 +323,18 @@ class AccessibilityLabelsTest {
         val geo = context.assets.open("bd-geo.json").bufferedReader().use { BdGeoParser.parse(it.readText()) }
         val draft = SetupDraft(uid = "u1", division = "BD30", district = "BD3026", upazila = "BD30262000", bloodGroup = "B_POS")
         val step = mutableIntStateOf(0)
+        // The short setup (D1), then the 3 steps of Become a donor.
         show {
-            val state = ProfileSetupUiState(draft = draft.copy(step = step.intValue), geo = geo, loaded = true, needsTerms = true)
-            ProfileSetupScreen(state, appLocale, {}, {}, {}, {}, {})
+            if (step.intValue == 0) {
+                ProfileSetupScreen(ProfileSetupUiState(draft = draft, geo = geo, loaded = true, needsTerms = true), appLocale, {}, {}, {}, {})
+            } else {
+                BecomeDonorScreen(BecomeDonorUiState(draft.copy(step = step.intValue - 1)), {}, {}, {})
+            }
         }
         for (s in 0..3) {
             compose.runOnUiThread { step.intValue = s }
             compose.waitForIdle()
-            assertControlsAreLabelledAndBigEnough("Profile setup step ${s + 1}")
+            assertControlsAreLabelledAndBigEnough(if (s == 0) "Short setup" else "Become a donor step $s")
         }
     }
 

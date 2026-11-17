@@ -90,6 +90,7 @@ import io.github.liquidlyf.feature.notifications.InboxRoute
 import io.github.liquidlyf.feature.onboarding.OnboardingScreen
 import io.github.liquidlyf.feature.placeholder.PlaceholderScreen
 import io.github.liquidlyf.feature.profile.ProfileRoute
+import io.github.liquidlyf.feature.profilesetup.BecomeDonorRoute
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupRoute
 import io.github.liquidlyf.feature.request.create.CreateRequestRoute
 import io.github.liquidlyf.feature.request.detail.RequestDetailRoute
@@ -377,6 +378,7 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                     onCreateRequest = dropUnlessResumed { navController.navigate(CreateRequest) { launchSingleTop = true } },
                     onOpenNotifications = dropUnlessResumed { navController.navigate(Notifications) { launchSingleTop = true } },
                     onEditProfile = dropUnlessResumed { navController.navigate(EditProfile) { launchSingleTop = true } },
+                    onBecomeDonor = dropUnlessResumed { navController.navigate(BecomeDonor) { launchSingleTop = true } },
                 )
             }
         }
@@ -398,6 +400,7 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                 ProfileRoute(
                     onEditProfile = dropUnlessResumed { navController.navigate(EditProfile) { launchSingleTop = true } },
                     onOpenSettings = dropUnlessResumed { navController.navigate(Settings) { launchSingleTop = true } },
+                    onBecomeDonor = dropUnlessResumed { navController.navigate(BecomeDonor) { launchSingleTop = true } },
                 )
             }
             composable<Settings> {
@@ -415,6 +418,7 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                     onOpenModeration = { navController.navigate(Moderation) { launchSingleTop = true } },
                     onOpenAbout = { navController.navigate(About) { launchSingleTop = true } },
                     onOpenHowMatchingWorks = { navController.navigate(HowMatchingWorks) { launchSingleTop = true } },
+                    onBecomeDonor = { navController.navigate(BecomeDonor) { launchSingleTop = true } },
                 )
             }
             composable<About> {
@@ -446,8 +450,10 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
             RequestDetailRoute(
                 onBack = { navController.popBackStack() },
                 onOpenSafetyTips = dropUnlessResumed { navController.navigate(SafetyTips) { launchSingleTop = true } },
+                onBecomeDonor = dropUnlessResumed { navController.navigate(BecomeDonor) { launchSingleTop = true } },
             )
         }
+        composable<BecomeDonor> { BecomeDonorRoute(onDone = { navController.popBackStack() }) }
         composable<CreateRequest> {
             CreateRequestRoute(
                 onClose = { navController.popBackStack() },

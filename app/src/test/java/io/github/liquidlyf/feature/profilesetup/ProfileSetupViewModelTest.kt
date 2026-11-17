@@ -5,10 +5,7 @@ import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.model.AppLocale
-import io.github.liquidlyf.core.model.BloodGroup
-import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.core.util.AppError
-import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.core.util.Links
 import io.github.liquidlyf.testing.FakeProfileRepository
 import io.github.liquidlyf.testing.FakeSessionManager
@@ -28,8 +25,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File
-import java.time.LocalDate
 
+/** The short setup (FLOW-01, D1 = a): name, mobile and area on one screen; no donor questions. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileSetupViewModelTest {
 
@@ -60,58 +57,37 @@ class ProfileSetupViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun vm() = ProfileSetupViewModel(session, profiles, geoRepo, store, Clock { TestData.NOW })
+    private fun vm(s: FakeSessionManager = session) = ProfileSetupViewModel(s, profiles, geoRepo, store)
 
     private fun ProfileSetupViewModel.fillAll() {
-        edit { copy(bloodGroup = BloodGroup.O_NEG.code) }
-        next(AppLocale.BN)
-        edit { copy(fullName = "Nasrin Akter", gender = Gender.FEMALE.code, birthYear = "1998", weightOk = true) }
-        next(AppLocale.BN)
+        edit { copy(fullName = "Nasrin Akter", phone = "01812345678") }
         onDivision("BD30")
         onDistrict("BD3026")
         edit { copy(upazila = "BD30262000") }
-        next(AppLocale.BN)
-        edit { copy(phone = "01812345678", neverDonated = false, lastDonationEpochDay = LocalDate.parse("2026-06-01").toEpochDay(), listed = true) }
     }
 
     @Test
-    fun `starts at step 1 with the name from the account`() = runTest(dispatcher) {
+    fun `starts with the name from the account`() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()
         assertTrue(vm.uiState.value.loaded)
-        assertEquals(0, vm.uiState.value.step)
         assertEquals("Rahim Uddin", vm.uiState.value.draft.fullName)
+        assertFalse(vm.uiState.value.needsTerms) // an email account accepted them on sign-up
     }
 
     @Test
-    fun `each step blocks Next until it is answered`() = runTest(dispatcher) {
+    fun `Continue is blocked until the name, number and area are given`() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()
+        vm.edit { copy(fullName = "") }
         vm.next(AppLocale.EN)
-        assertEquals(setOf(SetupField.BLOOD_GROUP), vm.uiState.value.errors)
-
-        vm.edit { copy(bloodGroup = "B_POS") }
+        assertEquals(setOf(SetupField.NAME, SetupField.PHONE, SetupField.LOCATION), vm.uiState.value.errors)
+        // FLOW-04: each failed Continue is counted, so the screen brings the first error into view again.
+        assertEquals(1, vm.uiState.value.errorAttempt)
+        vm.edit { copy(fullName = "Nasrin Akter", phone = "123") }
         vm.next(AppLocale.EN)
-        vm.edit { copy(fullName = "R", birthYear = "2015") }
-        vm.next(AppLocale.EN)
-        assertEquals(setOf(SetupField.NAME, SetupField.GENDER, SetupField.BIRTH_YEAR, SetupField.WEIGHT), vm.uiState.value.errors)
-
-        vm.edit { copy(fullName = "Rahim Uddin", gender = "MALE", birthYear = "1995", weightOk = false) }
-        vm.next(AppLocale.EN)
-        assertEquals(2, vm.uiState.value.step)
-        vm.onDivision("BD20") // Chattogram division
-        vm.onDistrict("BD3026") // a district from another division
-        vm.edit { copy(upazila = "BD30262000") }
-        vm.next(AppLocale.EN)
-        assertEquals(setOf(SetupField.LOCATION), vm.uiState.value.errors)
-
-        vm.onDivision("BD30")
-        vm.onDistrict("BD3026")
-        vm.edit { copy(upazila = "BD30262000") }
-        vm.next(AppLocale.EN)
-        vm.edit { copy(phone = "012345") }
-        vm.next(AppLocale.EN)
-        assertEquals(setOf(SetupField.PHONE, SetupField.LAST_DONATION, SetupField.CONSENT), vm.uiState.value.errors)
+        assertEquals(setOf(SetupField.PHONE, SetupField.LOCATION), vm.uiState.value.errors)
+        assertEquals(2, vm.uiState.value.errorAttempt)
         assertTrue(profiles.created.isEmpty())
     }
 
@@ -119,115 +95,65 @@ class ProfileSetupViewModelTest {
     fun `changing the division or district clears what's below it`() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()
-        vm.onDivision("BD30")
-        vm.onDistrict("BD3026")
-        vm.edit { copy(upazila = "BD30262000") }
+        vm.fillAll()
         vm.onDistrict("BD3033")
         assertNull(vm.uiState.value.draft.upazila)
-        vm.onDivision("BD20")
+        vm.onDivision("BD40")
         assertNull(vm.uiState.value.draft.district)
     }
 
     @Test
-    fun `every step is saved, so a killed app resumes where it was`() = runTest(dispatcher) {
-        val first = vm()
+    fun `an answer is saved at once, so a killed app comes back with it`() = runTest(dispatcher) {
+        val vm = vm()
         advanceUntilIdle()
-        first.edit { copy(bloodGroup = "A_POS") }
-        first.next(AppLocale.EN)
+        vm.edit { copy(phone = "01812345678") }
         advanceUntilIdle()
-        assertEquals(1, store.saved?.step)
-
-        val relaunched = vm()
+        assertEquals("01812345678", store.saved?.phone)
+        val again = vm()
         advanceUntilIdle()
-        assertEquals(1, relaunched.uiState.value.step)
-        assertEquals("A_POS", relaunched.uiState.value.draft.bloodGroup)
-        assertTrue(relaunched.back())
-        assertFalse(relaunched.back())
-    }
-
-    @Test
-    fun `an answer is saved at once, so a kill mid-step keeps it`() = runTest(dispatcher) {
-        val first = vm()
-        advanceUntilIdle()
-        first.edit { copy(bloodGroup = "O_POS") }
-        advanceUntilIdle()
-
-        val relaunched = vm()
-        advanceUntilIdle()
-        assertEquals(0, relaunched.uiState.value.step)
-        assertEquals("O_POS", relaunched.uiState.value.draft.bloodGroup)
+        assertEquals("01812345678", again.uiState.value.draft.phone)
     }
 
     @Test
     fun `nothing is saved before the old draft is loaded`() = runTest(dispatcher) {
-        store.saved = SetupDraft(uid = "u1", step = 2, bloodGroup = "B_NEG", fullName = "Rahim Uddin")
+        store.saved = SetupDraft(uid = "u1", phone = "01812345678")
         val vm = vm()
-        vm.edit { copy(phone = "0") } // before init has loaded the draft
+        vm.edit { copy(fullName = "Early") } // before load: not saved over the old draft
         advanceUntilIdle()
-        assertEquals(2, store.saved?.step)
-        assertEquals(2, vm.uiState.value.step)
+        assertEquals("01812345678", vm.uiState.value.draft.phone)
     }
 
     @Test
-    fun `finish writes the profile once, then clears the draft and refreshes the session`() = runTest(dispatcher) {
+    fun `Continue writes a requester's profile once, without donor details, then moves on`() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()
         vm.fillAll()
         vm.next(AppLocale.BN)
-        assertTrue(vm.uiState.value.saving)
         advanceUntilIdle()
-
         val (uid, draft) = profiles.created.single()
         assertEquals("u1", uid)
+        assertEquals("Nasrin Akter", draft.fullName)
         assertEquals("+8801812345678", draft.phone)
-        assertEquals(BloodGroup.O_NEG, draft.bloodGroup)
-        assertEquals(TestData.DHAKA_SOUTH, draft.area)
+        assertEquals("BD30262000", draft.area.upazila)
+        // D1: the donor questions come later, only in "Become a donor".
+        assertNull(draft.bloodGroup)
+        assertNull(draft.gender)
+        assertNull(draft.birthYear)
+        assertNull(draft.weightOk)
+        assertNull(draft.lastDonationAt)
+        assertFalse(draft.showInDonorSearch)
+        assertFalse(draft.available)
         assertEquals(AppLocale.BN, draft.locale)
         assertEquals(Links.TERMS_VERSION, draft.termsVersion)
-        assertTrue(draft.showInDonorSearch)
-        assertEquals(LocalDate.parse("2026-06-01"), draft.lastDonationAt?.atOffset(java.time.ZoneOffset.UTC)?.toLocalDate())
         assertTrue(store.cleared)
-        assertNull(store.saved)
+        assertTrue(vm.uiState.value.saving) // stays saving while the session moves on
         assertEquals(1, session.refreshes)
     }
 
     @Test
-    fun `I don't know my blood group skips step 1 and never lists (P1)`() = runTest(dispatcher) {
-        val vm = vm()
-        advanceUntilIdle()
-        vm.skipBloodGroup(AppLocale.EN)
-        assertEquals(1, vm.uiState.value.step)
-        vm.edit { copy(fullName = "Nasrin Akter", gender = Gender.FEMALE.code, birthYear = "1998", weightOk = true) }
-        vm.next(AppLocale.EN)
-        vm.onDivision("BD30")
-        vm.onDistrict("BD3026")
-        vm.edit { copy(upazila = "BD30262000") }
-        vm.next(AppLocale.EN)
-        // No listing question without a group: phone and last donation are enough.
-        vm.edit { copy(phone = "01812345678", neverDonated = true) }
-        vm.next(AppLocale.EN)
-        advanceUntilIdle()
-        val draft = profiles.created.single().second
-        assertNull(draft.bloodGroup)
-        assertFalse(draft.showInDonorSearch)
-        assertFalse(draft.available)
-    }
-
-    @Test
-    fun `picking a group after skipping clears the skip`() = runTest(dispatcher) {
-        val vm = vm()
-        advanceUntilIdle()
-        vm.skipBloodGroup(AppLocale.EN)
-        assertTrue(vm.back())
-        vm.edit { copy(bloodGroup = "A_NEG", bloodGroupUnknown = false) }
-        assertFalse(vm.uiState.value.draft.bloodGroupUnknown)
-        assertEquals("A_NEG", vm.uiState.value.draft.bloodGroup)
-    }
-
-    @Test
-    fun `a Google account must accept the Terms in the last step, an email account already did`() = runTest(dispatcher) {
+    fun `a Google account must accept the Terms here, an email account already did`() = runTest(dispatcher) {
         val google = FakeSessionManager(SessionState.NeedsProfile(user.copy(providers = setOf("google.com"))))
-        val vm = ProfileSetupViewModel(google, profiles, geoRepo, store, Clock { TestData.NOW })
+        val vm = vm(google)
         advanceUntilIdle()
         assertTrue(vm.uiState.value.needsTerms)
         vm.fillAll()
@@ -237,27 +163,20 @@ class ProfileSetupViewModelTest {
         vm.next(AppLocale.EN)
         advanceUntilIdle()
         assertEquals(1, profiles.created.size)
-
-        assertFalse(vm().uiState.value.needsTerms)
     }
 
     @Test
-    fun `not listed means not available, and a failed save can be retried`() = runTest(dispatcher) {
+    fun `a failed save says why and can be retried`() = runTest(dispatcher) {
+        profiles.failNext = AppError.Network
         val vm = vm()
         advanceUntilIdle()
         vm.fillAll()
-        vm.edit { copy(listed = false, neverDonated = true) }
-        profiles.failNext = AppError.Network
         vm.next(AppLocale.EN)
         advanceUntilIdle()
         assertFalse(vm.uiState.value.saving)
         assertEquals(AppError.Network.messageRes, vm.uiState.value.formError)
-
         vm.next(AppLocale.EN)
         advanceUntilIdle()
-        val draft = profiles.created.single().second
-        assertFalse(draft.showInDonorSearch)
-        assertFalse(draft.available)
-        assertNull(draft.lastDonationAt)
+        assertEquals(1, profiles.created.size)
     }
 }

@@ -1,7 +1,6 @@
 package io.github.liquidlyf.feature.home
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
@@ -91,6 +89,8 @@ import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
+import io.github.liquidlyf.feature.profile.BecomeDonorCard
+import io.github.liquidlyf.feature.profile.BloodGroupReminder
 import io.github.liquidlyf.feature.settings.ListMeDialog
 import io.github.liquidlyf.feature.settings.rememberNotificationsEnabled
 import kotlinx.coroutines.launch
@@ -102,6 +102,7 @@ fun HomeRoute(
     onCreateRequest: () -> Unit,
     onOpenNotifications: () -> Unit,
     onEditProfile: () -> Unit,
+    onBecomeDonor: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -119,7 +120,7 @@ fun HomeRoute(
     }
     HomeScreen(
         state, online, viewModel::onAvailableToggled, onOpenRequest, onCreateRequest, onOpenNotifications, onEditProfile, unreadInbox,
-        onListMe = viewModel::listMe, onRetryFeed = viewModel::retryFeed,
+        onListMe = viewModel::listMe, onRetryFeed = viewModel::retryFeed, onBecomeDonor = onBecomeDonor,
     )
 }
 
@@ -141,6 +142,7 @@ internal fun HomeScreen(
     notificationsEnabled: Boolean = rememberNotificationsEnabled(),
     onListMe: () -> Unit = {},
     onRetryFeed: () -> Unit = {},
+    onBecomeDonor: () -> Unit = {},
 ) {
     val now by rememberNow()
     val launcher = rememberSafeIntentLauncher()
@@ -187,22 +189,26 @@ internal fun HomeScreen(
                         item(key = "notifications-off") { NotificationsNotice(onTurnOn = launcher::openNotificationSettings) }
                     }
                     val p = state.profile?.takeIf { state.ownLoaded }
-                    val group = p?.bloodGroup
+                    // D1: a donor has answered the donor questions; only then is there a line, a ring and a feed.
+                    val donor = p?.hasDonorDetails == true
+                    val group = p?.bloodGroup?.takeIf { donor }
                     val own = state.ownRequests
                     val becomeDonorBelow = BECOME_DONOR_BELOW_OWN_REQUEST && own.isNotEmpty()
-                    if (p != null && group != null) {
-                        item(key = "donor-line") { DonorLine(state, notificationsEnabled, now, onAvailableToggled, onListMe) }
-                    } else if (p != null && !becomeDonorBelow) {
-                        item(key = "become-donor") { BecomeDonorCard(onBecomeDonor = onEditProfile) }
+                    when {
+                        p == null -> Unit
+                        group != null -> item(key = "donor-line") { DonorLine(state, notificationsEnabled, now, onAvailableToggled, onListMe) }
+                        // Answered the questions but doesn't know the group yet (P1).
+                        donor -> item(key = "no-group") { BloodGroupReminder(onAdd = onEditProfile) }
+                        !becomeDonorBelow -> item(key = "become-donor") { BecomeDonorCard(onBecomeDonor = onBecomeDonor) }
                     }
                     items(own, key = { "own-${it.id}" }) { r -> OwnRequestCard(r, now, onOpen = { onOpenRequest(r.id) }) }
-                    if (p != null && group == null && becomeDonorBelow) {
-                        item(key = "become-donor") { BecomeDonorCard(onBecomeDonor = onEditProfile) }
+                    if (p != null && !donor && becomeDonorBelow) {
+                        item(key = "become-donor") { BecomeDonorCard(onBecomeDonor = onBecomeDonor) }
                     }
                     val list = state.requests
                     when {
                         p == null -> item(key = "loading") { LoadingState(count = 2) }
-                        // Not a donor yet: the card above says what to do; there's no group to match.
+                        // Not a donor yet: the card above says what to do; there's nothing to answer.
                         group == null -> Unit
                         else -> {
                             item(key = "header") { SectionHeader(stringResource(R.string.home_urgent_near_you)) }
@@ -371,29 +377,6 @@ private fun NotListedLine(state: HomeUiState, now: Instant, onListMe: () -> Unit
             },
             onDismiss = { asking = false },
         )
-    }
-}
-
-/**
- * Not a donor yet (D1, N6): "Want to donate too?". Until the short setup (FLOW-01) lands, a
- * profile without donor details is one without a blood group, so the button opens Edit profile.
- */
-@Composable
-private fun BecomeDonorCard(onBecomeDonor: () -> Unit) {
-    LLCard(Modifier.fillMaxWidth()) {
-        Row(Modifier.padding(Spacing.md), horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
-            Box(
-                Modifier.size(48.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(painterResource(LLIcons.Favorite), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
-                Text(stringResource(R.string.home_become_donor_title), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.home_become_donor_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FilledTonalButton(onClick = onBecomeDonor, modifier = Modifier.padding(top = Spacing.xs)) { Text(stringResource(R.string.action_become_donor)) }
-            }
-        }
     }
 }
 

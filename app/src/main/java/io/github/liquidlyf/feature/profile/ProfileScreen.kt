@@ -80,7 +80,7 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 
 @Composable
-fun ProfileRoute(onEditProfile: () -> Unit, onOpenSettings: () -> Unit, viewModel: ProfileViewModel = hiltViewModel()) {
+fun ProfileRoute(onEditProfile: () -> Unit, onOpenSettings: () -> Unit, onBecomeDonor: () -> Unit = {}, viewModel: ProfileViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbarHostState.current
     val resources = LocalResources.current
@@ -102,6 +102,7 @@ fun ProfileRoute(onEditProfile: () -> Unit, onOpenSettings: () -> Unit, viewMode
         onRetry = viewModel::retry,
         onListedChange = viewModel::setListed,
         onAvailableChange = viewModel::setAvailable,
+        onBecomeDonor = onBecomeDonor,
     )
     if (showAddSheet) {
         AddDonationSheet(
@@ -143,6 +144,7 @@ internal fun ProfileScreen(
     onListedChange: (Boolean) -> Unit = {},
     onAvailableChange: (Boolean) -> Unit = {},
     notificationsOn: Boolean = rememberNotificationsEnabled(),
+    onBecomeDonor: () -> Unit = {},
 ) {
     var toRemove by remember { mutableStateOf<Donation?>(null) }
     var askListing by remember { mutableStateOf(false) }
@@ -173,6 +175,12 @@ internal fun ProfileScreen(
             ) {
                 // N1: you, your donor status, your donations, your impact, your badges: what you
                 // change comes before what you only look at.
+                // D1: someone who isn't a donor yet sees "Want to donate too?" instead of the donor parts.
+                if (!p.hasDonorDetails) {
+                    item { HeaderCard(state, onEditProfile) }
+                    item { BecomeDonorCard(onBecomeDonor = onBecomeDonor) }
+                    return@LazyColumn
+                }
                 if (p.bloodGroup == null) item { BloodGroupReminder(onAdd = onEditProfile) }
                 item { HeaderCard(state, onEditProfile) }
                 if (p.bloodGroup != null) {

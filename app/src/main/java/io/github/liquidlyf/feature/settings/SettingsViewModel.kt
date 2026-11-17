@@ -48,6 +48,8 @@ data class SettingsUiState(
     val alertsAgainOn: Instant? = null,
     /** The sign-out check names the account (N5). */
     val email: String? = null,
+    /** Answered the donor questions (D1); if not, Donor status offers "Become a donor". */
+    val isDonor: Boolean = true,
 )
 
 sealed interface SettingsEvent {
@@ -87,6 +89,7 @@ class SettingsViewModel @Inject constructor(
                     eligibility.evaluate(p, clock.now())?.let { e -> e.eligibleFrom.takeIf { IneligibleReason.REST_PERIOD in e.reasons } }
                 },
                 email = user?.email,
+                isDonor = profile?.hasDonorDetails ?: true,
             )
         }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())

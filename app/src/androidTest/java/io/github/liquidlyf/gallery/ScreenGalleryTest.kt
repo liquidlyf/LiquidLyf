@@ -131,6 +131,8 @@ import io.github.liquidlyf.feature.profile.ProfileRoute
 import io.github.liquidlyf.feature.profile.ProfileScreen
 import io.github.liquidlyf.feature.profile.ProfileUiState
 import io.github.liquidlyf.feature.profile.ProfileViewModel
+import io.github.liquidlyf.feature.profilesetup.BecomeDonorScreen
+import io.github.liquidlyf.feature.profilesetup.BecomeDonorUiState
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupScreen
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupUiState
 import io.github.liquidlyf.feature.profilesetup.SetupDraft
@@ -467,7 +469,7 @@ class ScreenGalleryTest {
     private val requesterProfile = TestData.profile(uid = "requester-1").copy(fullName = "Karim Hossain", email = "karim@example.test")
     private val hospital = "Dhaka Medical College Hospital"
 
-    private fun eligibility(p: UserProfile) = EligibilityCalculator().evaluate(p, now)!!
+    private fun eligibility(p: UserProfile) = EligibilityCalculator().evaluate(p, now)
 
     private val feed: List<BloodRequest> = listOf(
         TestData.request(id = "r1", neededBy = now.plus(Duration.ofHours(5))).copy(
@@ -523,6 +525,12 @@ class ScreenGalleryTest {
     )
     private val donorMe = me.copy(lastDonationAt = now.minus(Duration.ofDays(40)), donationCount = 3, verifiedDonations = 2)
 
+    /** D1: the same person straight from the short setup, before Become a donor. */
+    private fun requesterOnly(p: UserProfile) = p.copy(
+        bloodGroup = null, gender = null, birthYear = null, weightOk = null, available = false, showInDonorSearch = false,
+        consentAt = null, lastDonationAt = null,
+    )
+
     private fun ready(p: UserProfile) = FakeSessionManager(SessionState.Ready(TestData.user(uid = p.uid).copy(email = p.email ?: "", displayName = p.fullName), p))
 
     // ---- before sign-in ----
@@ -532,10 +540,14 @@ class ScreenGalleryTest {
         val signInErrors = SignInUiState(email = "nusrat@", emailError = R.string.error_invalid_email, passwordError = R.string.error_password_required)
         val draft = SetupDraft(uid = "me", division = "BD30", district = "BD3026", upazila = "BD30262000", bloodGroup = "B_POS",
             fullName = "Nusrat Jahan", gender = "FEMALE", birthYear = "1998", weightOk = true, phone = "01700000000", neverDonated = true)
-        val setup = { step: Int, d: SetupDraft, errors: Set<SetupField>, terms: Boolean ->
+        // D1: the short setup, then Become a donor's 3 steps.
+        val setup = { d: SetupDraft, errors: Set<SetupField>, terms: Boolean ->
             @Composable {
-                ProfileSetupScreen(ProfileSetupUiState(d.copy(step = step), geo, loaded = true, errors = errors, needsTerms = terms), currentAppLocale(), {}, {}, {}, {}, {})
+                ProfileSetupScreen(ProfileSetupUiState(d, geo, loaded = true, errors = errors, needsTerms = terms), currentAppLocale(), {}, {}, {}, {})
             }
+        }
+        val donorStep = { step: Int, d: SetupDraft, errors: Set<SetupField> ->
+            @Composable { BecomeDonorScreen(BecomeDonorUiState(d.copy(step = step), errors = errors), {}, {}, {}) }
         }
         val empty = SetupDraft(uid = "me")
         gallery(
@@ -568,20 +580,21 @@ class ScreenGalleryTest {
             Shot("verify-email-can-resend") { VerifyEmailScreen(VerifyEmailUiState(email = "nusrat@example.test", sender = SENDER, resendIn = 0), {}, {}, {}) },
             Shot("forgot-password-empty") { ForgotPasswordScreen(ForgotPasswordUiState(sender = SENDER), {}, {}, {}) },
             Shot("forgot-password-sent") { ForgotPasswordScreen(ForgotPasswordUiState(email = "nusrat@example.test", sentTo = "nusrat@example.test", sender = SENDER), {}, {}, {}) },
-            Shot("profile-setup-1-empty", content = setup(0, empty, emptySet(), false)),
-            Shot("profile-setup-1-errors", content = setup(0, empty, SetupField.entries.toSet(), false)),
-            Shot("profile-setup-1-filled", content = setup(0, draft, emptySet(), false)),
-            Shot("profile-setup-1-blood-help", overlay = true, prepare = { tap(R.string.setup_blood_unknown) }, content = setup(0, empty, emptySet(), false)),
-            Shot("profile-setup-2-empty", content = setup(1, empty, emptySet(), false)),
-            Shot("profile-setup-2-errors", content = setup(1, empty, SetupField.entries.toSet(), false)),
-            Shot("profile-setup-2-filled", content = setup(1, draft, emptySet(), false)),
-            Shot("profile-setup-3-empty", content = setup(2, empty, emptySet(), false)),
-            Shot("profile-setup-3-errors", content = setup(2, empty, SetupField.entries.toSet(), false)),
-            Shot("profile-setup-3-filled", content = setup(2, draft, emptySet(), false)),
-            Shot("profile-setup-4-empty", content = setup(3, empty, emptySet(), false)),
-            Shot("profile-setup-4-errors", content = setup(3, empty, SetupField.entries.toSet(), true)),
-            Shot("profile-setup-4-filled", content = setup(3, draft, emptySet(), false)),
-            Shot("profile-setup-4-google-terms", content = setup(3, draft, emptySet(), true)),
+            Shot("profile-setup-empty", content = setup(empty, emptySet(), false)),
+            Shot("profile-setup-errors", content = setup(empty, SetupField.entries.toSet(), true)),
+            Shot("profile-setup-filled", content = setup(draft, emptySet(), false)),
+            Shot("profile-setup-google-terms", content = setup(draft, emptySet(), true)),
+            Shot("become-donor-1-empty", content = donorStep(0, empty, emptySet())),
+            Shot("become-donor-1-errors", content = donorStep(0, empty, SetupField.entries.toSet())),
+            Shot("become-donor-1-filled", content = donorStep(0, draft, emptySet())),
+            Shot("become-donor-1-blood-help", overlay = true, prepare = { tap(R.string.setup_blood_unknown) }, content = donorStep(0, empty, emptySet())),
+            Shot("become-donor-2-empty", content = donorStep(1, empty, emptySet())),
+            Shot("become-donor-2-errors", content = donorStep(1, empty, SetupField.entries.toSet())),
+            Shot("become-donor-2-filled", content = donorStep(1, draft, emptySet())),
+            Shot("become-donor-3-empty", content = donorStep(2, empty.copy(bloodGroup = "B_POS"), emptySet())),
+            Shot("become-donor-3-errors", content = donorStep(2, empty.copy(bloodGroup = "B_POS"), SetupField.entries.toSet())),
+            Shot("become-donor-3-filled", content = donorStep(2, draft.copy(listed = true), emptySet())),
+            Shot("become-donor-3-no-group", content = donorStep(2, draft.copy(bloodGroup = null), emptySet())),
             Shot("notification-permission") { NotificationPermissionScreen(onDone = {}) },
             Shot("session-problem") { SessionProblemScreen(AppError.Network, onRetry = {}, onSignOut = {}) },
             Shot("suspended") { SuspendedScreen(onSignOut = {}) },
@@ -604,7 +617,9 @@ class ScreenGalleryTest {
         val tab = TopLevelDestination.HOME
         // N6: my own open request, with one offer.
         val own = listOf(myRequests[0].copy(responders = mapOf("d1" to Responder("Rahim U.", BloodGroup.B_POS, ResponseStatus.OFFERED))))
-        val notDonor = me.copy(bloodGroup = null, showInDonorSearch = false)
+        // D1: a requester from the short setup, and a donor who doesn't know the group yet (P1).
+        val notDonor = requesterOnly(me)
+        val noGroup = me.copy(bloodGroup = null, showInDonorSearch = false)
         gallery(
             Shot("home-filled", tab, content = home(me, feed, true, false, true, true, emptyList())),
             Shot("home-loading", tab, animated = true, content = home(me, null, true, false, true, true, emptyList())),
@@ -615,7 +630,8 @@ class ScreenGalleryTest {
             Shot("home-resting", tab, content = home(donorMe, feed, true, false, true, true, emptyList())),
             Shot("home-not-listed", tab, content = home(notListed, feed, true, false, true, false, emptyList())),
             Shot("home-list-me-dialog", tab, overlay = true, prepare = { tap(R.string.home_list_me) }, content = home(notListed, feed, true, false, true, false, emptyList())),
-            Shot("home-no-blood-group", tab, content = home(notDonor, feed, true, false, true, false, emptyList())),
+            Shot("home-not-donor", tab, content = home(notDonor, feed, true, false, true, false, emptyList())),
+            Shot("home-no-blood-group", tab, content = home(noGroup, feed, true, false, true, false, emptyList())),
             Shot("home-your-request", tab, content = home(me, feed, true, false, true, true, own)),
             Shot("home-your-request-notifications-off", tab, content = home(me, feed, true, false, false, true, own)),
             Shot("home-your-request-not-donor", tab, content = home(notDonor, feed, true, false, true, false, own)),
@@ -774,6 +790,8 @@ class ScreenGalleryTest {
             Shot("details-donor-report", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more); tap(R.string.detail_report) }, content = detail(donor)),
             Shot("details-donor-block", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more); tap(R.string.action_block_person) }, content = detail(donor)),
             Shot("details-donor-wrong-group", prepare = loaded, content = detail(donor.copy(bloodGroup = BloodGroup.A_POS))),
+            // D1: "I can donate" opens Become a donor for someone who isn't one yet.
+            Shot("details-not-a-donor", prepare = loaded, content = detail(requesterOnly(donor))),
             Shot("details-donor-closed", prepare = loaded, content = detail(donor, detailRequest.copy(status = RequestStatus.FULFILLED, unitsFulfilled = 2))),
             Shot("details-requester-offer", prepare = { loaded(); waitForText("Nusrat") }, content = detail(requester, offer = ResponseStatus.OFFERED)),
             Shot("details-requester-confirmed", prepare = { loaded(); waitForText("Nusrat") }, content = detail(requester, offer = ResponseStatus.CONFIRMED)),
@@ -857,6 +875,7 @@ class ScreenGalleryTest {
         gallery(
             Shot("profile-filled", tab, content = profileRoute(donorMe)),
             Shot("profile-new-user", tab, content = screen(newUser)),
+            Shot("profile-not-donor", tab, content = screen(ProfileUiState(profile = requesterOnly(me), eligibility = null, donations = emptyList(), geo = geo))),
             Shot("profile-loading", tab, animated = true, content = screen(ProfileUiState())),
             Shot("profile-history-error", tab, content = screen(newUser.copy(donations = null, donationsFailed = true))),
             Shot("profile-not-listed", tab, content = screen(newUser.copy(profile = me.copy(showInDonorSearch = false)))),
@@ -911,6 +930,7 @@ class ScreenGalleryTest {
             Shot("settings-not-listed", content = screen(state.copy(listed = false, available = false))),
             Shot("settings-no-blood-group", content = screen(state.copy(listed = false, available = false, bloodGroup = null))),
             Shot("settings-admin", content = screen(state.copy(admin = true))),
+            Shot("settings-not-donor", content = screen(state.copy(isDonor = false, listed = false, available = false, bloodGroup = null))),
             Shot("settings-loading", content = screen(state.copy(listed = null))),
             Shot("settings-list-me-dialog", overlay = true, prepare = { tap(R.string.settings_list_me) }, content = screen(state.copy(listed = false, available = false))),
             // N5: the check after tapping Sign out in the corner, and the resting line under Ready to donate.

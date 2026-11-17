@@ -56,6 +56,8 @@ import kotlinx.serialization.Serializable
 /** [notice]: a [io.github.liquidlyf.feature.request.create.PostNotice] name, shown once after posting. */
 @Serializable data class RequestDetail(val id: String, val notice: String? = null)
 @Serializable data object CreateRequest
+/** D1: the donor questions the short setup left out. */
+@Serializable data object BecomeDonor
 @Serializable data object Notifications
 @Serializable data object NotificationSettings
 @Serializable data object SafetyTips

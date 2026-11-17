@@ -13,45 +13,40 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.Area
-import io.github.liquidlyf.core.model.BloodGroup
-import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.core.model.ProfileDraft
 import io.github.liquidlyf.core.util.AppResult
-import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.core.util.Links
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
 import javax.inject.Inject
 
-/** The fields a step checks; the screen marks the ones in [ProfileSetupUiState.errors]. */
+/** The fields the screens check; they mark the ones in the state's errors. */
 enum class SetupField { BLOOD_GROUP, NAME, GENDER, BIRTH_YEAR, WEIGHT, LOCATION, PHONE, LAST_DONATION, CONSENT, TERMS }
+
+/** The short setup's fields, in the order they appear (the first error is brought into view). */
+internal val SHORT_SETUP_ORDER = listOf(SetupField.NAME, SetupField.PHONE, SetupField.LOCATION, SetupField.TERMS)
 
 data class ProfileSetupUiState(
     val draft: SetupDraft,
     val geo: BdGeo? = null,
     val loaded: Boolean = false,
     val errors: Set<SetupField> = emptySet(),
+    /** Counts failed Continue taps: each one brings the first error into view (FLOW-04). */
+    val errorAttempt: Int = 0,
     val saving: Boolean = false,
     @StringRes val formError: Int? = null,
-    /** Google sign-ins never saw the sign-up form's 18+ and Terms box: the last step asks. */
+    /** Google sign-ins never saw the sign-up form's 18+ and Terms box: this screen asks. */
     val needsTerms: Boolean = false,
-) {
-    val step: Int get() = draft.step
-    val isLastStep: Boolean get() = draft.step == ProfileSetupViewModel.STEPS - 1
-}
+)
 
 /**
- * The 4-step profile setup (Phase 3.8): blood group · about you · area · phone, last donation and
- * the donor-listing consent. The answers are saved locally after every step. The last step writes
- * users, userStats and (if listed) the donor card in one batch; the rules need the phone for that,
- * so nothing reaches Firestore before it. Then the session moves on to the app.
+ * The short setup (FLOW-01, D1 = a, N3): name, mobile number and area on one screen, so someone who
+ * needs blood can ask for it in a minute. Donor questions come later, only in "Become a donor". The
+ * answers are saved locally as they're typed; Continue writes users and userStats in one batch (the
+ * rules need the phone for that), then the session moves on to the app.
  */
 @HiltViewModel
 class ProfileSetupViewModel @Inject constructor(
@@ -59,7 +54,6 @@ class ProfileSetupViewModel @Inject constructor(
     private val profiles: ProfileRepository,
     private val geoRepository: GeoRepository,
     private val store: SetupDraftStore,
-    private val clock: Clock,
 ) : ViewModel() {
 
     private val user: AuthUser? = (session.state.value as? SessionState.NeedsProfile)?.user
@@ -79,18 +73,12 @@ class ProfileSetupViewModel @Inject constructor(
     }
 
     /**
-     * Any answer: clears the errors so the user sees fresh feedback on Next, and is saved at once,
-     * so a kill mid-step (or Android closing the app in the background) keeps it.
+     * Any answer: clears the errors so the user sees fresh feedback on Continue, and is saved at once,
+     * so a kill (or Android closing the app in the background) keeps it.
      */
     fun edit(change: SetupDraft.() -> SetupDraft) {
         state.update { it.copy(draft = it.draft.change(), errors = emptySet(), formError = null) }
         saveDraft()
-    }
-
-    /** "I don't know my blood group" → "Skip for now": on to the next step without a group (P1). */
-    fun skipBloodGroup(locale: AppLocale) {
-        edit { copy(bloodGroup = null, bloodGroupUnknown = true) }
-        next(locale)
     }
 
     fun onDivision(code: String) = edit { copy(division = code, district = null, upazila = null) }
@@ -102,27 +90,10 @@ class ProfileSetupViewModel @Inject constructor(
         if (s.saving || !s.loaded) return
         val errors = validate(s.draft, s.geo)
         if (errors.isNotEmpty()) {
-            state.update { it.copy(errors = errors) }
+            state.update { it.copy(errors = errors, errorAttempt = it.errorAttempt + 1) }
             return
         }
-        if (s.isLastStep) {
-            finish(s.draft, locale)
-        } else {
-            moveTo(s.step + 1)
-        }
-    }
-
-    /** Back inside the stepper; false at the first step (the system then closes the app). */
-    fun back(): Boolean {
-        val step = state.value.step
-        if (step == 0 || state.value.saving) return false
-        moveTo(step - 1)
-        return true
-    }
-
-    private fun moveTo(step: Int) {
-        state.update { it.copy(draft = it.draft.copy(step = step), errors = emptySet()) }
-        saveDraft()
+        finish(s.draft, locale)
     }
 
     /** Not before the saved draft is loaded (it would be overwritten), nor once the profile is being written. */
@@ -133,47 +104,27 @@ class ProfileSetupViewModel @Inject constructor(
     }
 
     internal fun validate(d: SetupDraft, geo: BdGeo?): Set<SetupField> = buildSet {
-        when (d.step) {
-            0 -> if (BloodGroup.fromCode(d.bloodGroup) == null && !d.bloodGroupUnknown) add(SetupField.BLOOD_GROUP)
-            1 -> {
-                if (!Validators.isValidName(d.fullName)) add(SetupField.NAME)
-                if (Gender.fromCode(d.gender) == null) add(SetupField.GENDER)
-                val year = d.birthYear.trim().toIntOrNull()
-                if (year == null || !Validators.isValidBirthYear(year, clock.now())) add(SetupField.BIRTH_YEAR)
-                if (d.weightOk == null) add(SetupField.WEIGHT)
-            }
-            2 -> {
-                val area = areaOf(d)
-                if (area == null || geo?.isValid(area) != true) add(SetupField.LOCATION)
-            }
-            3 -> {
-                if (Validators.normalizePhone(d.phone) == null) add(SetupField.PHONE)
-                val pickedDay = d.lastDonationEpochDay
-                val today = clock.now().atOffset(ZoneOffset.UTC).toLocalDate().toEpochDay()
-                val donationOk = d.neverDonated == true || (d.neverDonated == false && pickedDay != null && pickedDay <= today)
-                if (!donationOk) add(SetupField.LAST_DONATION)
-                // Without a known group there is no listing question (P1).
-                if (d.listed == null && BloodGroup.fromCode(d.bloodGroup) != null) add(SetupField.CONSENT)
-                if (state.value.needsTerms && !d.termsAccepted) add(SetupField.TERMS)
-            }
-        }
+        if (!Validators.isValidName(d.fullName)) add(SetupField.NAME)
+        if (Validators.normalizePhone(d.phone) == null) add(SetupField.PHONE)
+        val area = areaOf(d)
+        if (area == null || geo?.isValid(area) != true) add(SetupField.LOCATION)
+        if (state.value.needsTerms && !d.termsAccepted) add(SetupField.TERMS)
     }
 
+    /** A requester's profile (D1): no blood group or donor details yet, so not listed and not available. */
     private fun finish(d: SetupDraft, locale: AppLocale) {
         val uid = user?.uid ?: return
-        val group = BloodGroup.fromCode(d.bloodGroup)
-        val listed = d.listed == true && group != null
         val draft = ProfileDraft(
             fullName = Validators.normalizeName(d.fullName),
             phone = Validators.normalizePhone(d.phone)!!,
-            bloodGroup = group,
-            gender = Gender.fromCode(d.gender)!!,
-            birthYear = d.birthYear.trim().toInt(),
-            weightOk = d.weightOk == true,
+            bloodGroup = null,
+            gender = null,
+            birthYear = null,
+            weightOk = null,
             area = areaOf(d)!!,
-            available = listed && d.available,
-            lastDonationAt = if (d.neverDonated == true) null else d.lastDonationEpochDay?.let(::donationInstant),
-            showInDonorSearch = listed,
+            available = false,
+            lastDonationAt = null,
+            showInDonorSearch = false,
             locale = locale,
             termsVersion = Links.TERMS_VERSION,
         )
@@ -195,16 +146,5 @@ class ProfileSetupViewModel @Inject constructor(
         val district = d.district ?: return null
         val upazila = d.upazila ?: return null
         return Area(division, district, upazila)
-    }
-
-    /** Midday in Bangladesh on the picked day, but never in the future (the rules check it). */
-    private fun donationInstant(epochDay: Long): Instant {
-        val midday = LocalDate.ofEpochDay(epochDay).atStartOfDay(ZoneOffset.UTC).toInstant().plus(Duration.ofHours(6))
-        val latest = clock.now().minus(Duration.ofMinutes(5))
-        return if (midday.isAfter(latest)) latest else midday
-    }
-
-    companion object {
-        const val STEPS = 4
     }
 }

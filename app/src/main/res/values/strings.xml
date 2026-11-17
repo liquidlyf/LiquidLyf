@@ -218,11 +218,15 @@
     <string name="action_not_now">Not now</string>
     <!-- Phase 3: profile setup -->
     <string name="setup_step">Step %1$d of %2$d</string>
+    <string name="setup_short_note">Donors see your number only after they offer to donate.</string>
+    <string name="setup_donor_later">Donor questions come later, only if you choose to donate.</string>
+    <string name="become_donor_details_title">A few donor questions</string>
+    <string name="become_donor_history_title">Donating</string>
+    <string name="become_donor_done">You\'re a donor now. Thank you!</string>
     <string name="setup_blood_title">What\'s your blood group?</string>
     <string name="setup_blood_unknown">I don\'t know my blood group</string>
     <string name="setup_blood_unknown_body">Any hospital or diagnostic centre can test it, usually for a small fee, and blood banks test it free when you donate. You can skip this for now: you can still request blood, and you can add your group in your profile later to become a donor.</string>
     <string name="setup_blood_skip">Skip for now</string>
-    <string name="setup_no_group_listing">You can become a donor once you add your blood group in your profile.</string>
     <string name="reminder_add_blood_group_title">Add your blood group to become a donor</string>
     <string name="reminder_add_blood_group_body">When you know your blood group, add it here. Then people nearby who need it can find you and ask you to donate.</string>
     <string name="action_add_blood_group">Add blood group</string>

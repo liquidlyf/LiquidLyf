@@ -83,6 +83,7 @@ fun SettingsScreen(
     onOpenModeration: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
     onOpenHowMatchingWorks: () -> Unit = {},
+    onBecomeDonor: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -114,6 +115,7 @@ fun SettingsScreen(
         onLanguageChange = viewModel::setLanguage,
         onListedChange = viewModel::setListed,
         onAvailableChange = viewModel::setAvailable,
+        onBecomeDonor = dropUnlessResumed(block = onBecomeDonor),
     )
 }
 
@@ -140,6 +142,7 @@ internal fun SettingsContent(
     onOpenAbout: () -> Unit = {},
     onOpenHowMatchingWorks: () -> Unit = {},
     onShareApp: () -> Unit = {},
+    onBecomeDonor: () -> Unit = {},
 ) {
     var askListing by remember { mutableStateOf(false) }
     var askSignOut by rememberSaveable { mutableStateOf(false) }
@@ -169,7 +172,11 @@ internal fun SettingsContent(
 
             // 8.1: being listed is consent, and can be withdrawn here at any time. Each line is true
             // for its state (COPY-04), like Profile's Donor card.
-            if (uiState.listed != null) {
+            if (uiState.listed != null && !uiState.isDonor) {
+                // D1: not a donor yet, so no switches: the way in instead.
+                GroupHeader(stringResource(R.string.settings_donor_status))
+                SettingsRow(LLIcons.Favorite, stringResource(R.string.action_become_donor), stringResource(R.string.home_become_donor_body), onBecomeDonor)
+            } else if (uiState.listed != null) {
                 GroupHeader(stringResource(R.string.settings_donor_status))
                 SwitchRow(
                     icon = LLIcons.Donors,

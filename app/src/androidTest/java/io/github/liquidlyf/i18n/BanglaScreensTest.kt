@@ -148,11 +148,18 @@ class BanglaScreensTest {
         val geo = target.assets.open("bd-geo.json").bufferedReader().use { io.github.liquidlyf.core.data.geo.BdGeoParser.parse(it.readText()) }
         val draft = io.github.liquidlyf.feature.profilesetup.SetupDraft(uid = "u1", division = "BD30", district = "BD3026", upazila = "BD30262000", bloodGroup = "B_POS")
         val step = androidx.compose.runtime.mutableIntStateOf(0)
+        // The short setup (D1), then the 3 steps of Become a donor.
         show {
-            val state = io.github.liquidlyf.feature.profilesetup.ProfileSetupUiState(draft = draft.copy(step = step.intValue), geo = geo, loaded = true, needsTerms = true)
-            io.github.liquidlyf.feature.profilesetup.ProfileSetupScreen(state, io.github.liquidlyf.core.model.AppLocale.BN, {}, {}, {}, {}, {})
+            if (step.intValue == 0) {
+                val state = io.github.liquidlyf.feature.profilesetup.ProfileSetupUiState(draft = draft, geo = geo, loaded = true, needsTerms = true)
+                io.github.liquidlyf.feature.profilesetup.ProfileSetupScreen(state, io.github.liquidlyf.core.model.AppLocale.BN, {}, {}, {}, {})
+            } else {
+                io.github.liquidlyf.feature.profilesetup.BecomeDonorScreen(
+                    io.github.liquidlyf.feature.profilesetup.BecomeDonorUiState(draft.copy(step = step.intValue - 1)), {}, {}, {},
+                )
+            }
         }
-        val titles = listOf(R.string.setup_blood_title, R.string.setup_about_title, R.string.setup_location_title, R.string.setup_contact_title)
+        val titles = listOf(R.string.setup_about_title, R.string.setup_blood_title, R.string.become_donor_details_title, R.string.become_donor_history_title)
         titles.forEachIndexed { s, title ->
             compose.runOnUiThread { step.intValue = s }
             compose.waitForIdle()

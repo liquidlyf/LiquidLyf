@@ -127,7 +127,12 @@ import java.time.Instant
 import kotlinx.coroutines.launch
 
 @Composable
-fun RequestDetailRoute(onBack: () -> Unit, onOpenSafetyTips: () -> Unit = {}, viewModel: RequestDetailViewModel = hiltViewModel()) {
+fun RequestDetailRoute(
+    onBack: () -> Unit,
+    onOpenSafetyTips: () -> Unit = {},
+    onBecomeDonor: () -> Unit = {},
+    viewModel: RequestDetailViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val online by viewModel.online.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbarHostState.current
@@ -140,7 +145,7 @@ fun RequestDetailRoute(onBack: () -> Unit, onOpenSafetyTips: () -> Unit = {}, vi
             }
         }
     }
-    RequestDetailScreen(state, online, viewModel, onBack, onOpenSafetyTips)
+    RequestDetailScreen(state, online, viewModel, onBack, onOpenSafetyTips, onBecomeDonor)
 }
 
 /**
@@ -156,6 +161,7 @@ private fun RequestDetailScreen(
     vm: RequestDetailViewModel,
     onBack: () -> Unit,
     onOpenSafetyTips: () -> Unit,
+    onBecomeDonor: () -> Unit,
 ) {
     val request = state.request
     var menuOpen by rememberSaveable { mutableStateOf(false) }
@@ -217,7 +223,8 @@ private fun RequestDetailScreen(
                     onShare = { shareText?.let(launcher::shareText) },
                     onEdit = { dialog = DetailDialog.EDIT },
                     onClose = { dialog = DetailDialog.CLOSE },
-                    onOffer = { checking = true },
+                    // D1: someone who isn't a donor yet answers the donor questions first.
+                    onOffer = { if (state.offerBlock == OfferBlock.NotADonor) onBecomeDonor() else checking = true },
                     onCall = launcher::dial,
                     onCopy = copy,
                 )
@@ -367,7 +374,7 @@ private fun DetailBar(
                 state.myStatus == null -> LLBottomBar(
                     primaryText = stringResource(R.string.detail_i_can_donate),
                     onPrimary = onOffer,
-                    primaryEnabled = state.offerBlock == null && !state.working,
+                    primaryEnabled = (state.offerBlock == null || state.offerBlock == OfferBlock.NotADonor) && !state.working,
                     loading = state.working,
                     primaryIcon = LLIcons.VolunteerActivism,
                 )
