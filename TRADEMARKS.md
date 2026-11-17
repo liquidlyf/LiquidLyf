@@ -21,6 +21,10 @@ The official app is the one published by the LiquidLyf project at
 [liquidlyf.github.io](https://liquidlyf.github.io), and any store listing linked from there. It uses the
 app ID `io.github.liquidlyf`.
 
+Other names and logos in the app belong to their owners and aren't covered by this policy or by the
+AGPL. For example, the "G" on the **Continue with Google** button is a trademark of Google LLC, used as
+Google's [sign-in branding guidelines](https://developers.google.com/identity/branding-guidelines) ask.
+
 ## You may, without asking
 
 - Use the name to talk about the project: in articles, reviews, talks, tutorials and research.

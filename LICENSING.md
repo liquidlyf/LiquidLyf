@@ -74,6 +74,12 @@ unless a file says otherwise. Code samples inside the docs may also be used unde
 **not** licensed under the AGPL or CC BY 4.0. They identify the official app. If you distribute or
 host a fork, you must use your own name and logo. See [TRADEMARKS.md](TRADEMARKS.md).
 
+The Google "G" on the **Continue with Google** button
+([`app/src/main/res/drawable/ic_google_g.xml`](app/src/main/res/drawable/ic_google_g.xml)) isn't ours
+either. It's a trademark of Google LLC, used as Google's
+[sign-in branding guidelines](https://developers.google.com/identity/branding-guidelines) ask, and it
+isn't covered by the AGPL. A fork that keeps the button must follow those guidelines too.
+
 ## Third-party components
 
 Libraries and data from other projects keep their own licences. The app lists them under
