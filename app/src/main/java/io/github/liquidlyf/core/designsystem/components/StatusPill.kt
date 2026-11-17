@@ -1,6 +1,7 @@
 package io.github.liquidlyf.core.designsystem.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -18,26 +19,23 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.liquidlyf.core.designsystem.LLIcons
-import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.StatusTone
+import io.github.liquidlyf.core.designsystem.colors
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.Urgency
 
 /**
- * A small coloured label. Colour is never the only signal: there is always an icon and
- * text too (doc 04 §3), so it works for colour-blind people and in TalkBack.
+ * A small coloured label for a state. Colour is never the only signal: there is always an icon and
+ * text too (doc 04 §3), so it works for colour-blind people and in TalkBack. The colour comes from
+ * what it means ([StatusTone], COLOR-01), never picked by hand.
  */
 @Composable
-fun StatusPill(
-    label: String,
-    @DrawableRes icon: Int,
-    containerColor: Color,
-    contentColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    Surface(shape = CircleShape, color = containerColor, contentColor = contentColor, modifier = modifier) {
+fun StatusPill(label: String, @DrawableRes icon: Int, tone: StatusTone, modifier: Modifier = Modifier) {
+    val colors = tone.colors()
+    Surface(shape = CircleShape, color = colors.container, contentColor = colors.content, modifier = modifier) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.xxs),
@@ -49,46 +47,75 @@ fun StatusPill(
     }
 }
 
+/**
+ * A fact about a person, not a state: a badge, "Active this week" (COLOR-01). Outlined with
+ * small corners, so it doesn't read as a status pill; each tag has its own icon.
+ */
 @Composable
-fun StatusPill(status: RequestStatus, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    val extended = LiquidLyfTheme.extendedColors
-    val (icon, container, content) = when (status) {
-        RequestStatus.OPEN -> Triple(LLIcons.HourglassTop, colors.tertiaryContainer, colors.onTertiaryContainer)
-        RequestStatus.FULFILLED -> Triple(LLIcons.CheckCircle, extended.successContainer, extended.onSuccessContainer)
-        RequestStatus.CANCELLED -> Triple(LLIcons.Cancel, colors.surfaceContainerHighest, colors.onSurfaceVariant)
-        RequestStatus.EXPIRED -> Triple(LLIcons.History, colors.surfaceContainerHighest, colors.onSurfaceVariant)
-        RequestStatus.REMOVED -> Triple(LLIcons.Block, colors.errorContainer, colors.onErrorContainer)
+fun LLTag(label: String, @DrawableRes icon: Int, modifier: Modifier = Modifier) {
+    Surface(
+        shape = MaterialTheme.shapes.extraSmall,
+        color = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.xxs),
+            modifier = Modifier.padding(horizontal = Spacing.xs, vertical = Spacing.xxs),
+        ) {
+            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(16.dp))
+            Text(label, style = MaterialTheme.typography.labelMedium)
+        }
     }
-    StatusPill(stringResource(status.labelRes), icon, container, content, modifier)
-}
-
-@Composable
-fun StatusPill(status: ResponseStatus, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    val extended = LiquidLyfTheme.extendedColors
-    val (icon, container, content) = when (status) {
-        ResponseStatus.OFFERED -> Triple(LLIcons.VolunteerActivism, colors.tertiaryContainer, colors.onTertiaryContainer)
-        ResponseStatus.CONFIRMED -> Triple(LLIcons.Verified, colors.secondaryContainer, colors.onSecondaryContainer)
-        ResponseStatus.DECLINED -> Triple(LLIcons.Block, colors.surfaceContainerHighest, colors.onSurfaceVariant)
-        ResponseStatus.WITHDRAWN -> Triple(LLIcons.Undo, colors.surfaceContainerHighest, colors.onSurfaceVariant)
-        ResponseStatus.DONATED -> Triple(LLIcons.Favorite, extended.successContainer, extended.onSuccessContainer)
-    }
-    StatusPill(stringResource(status.labelRes), icon, container, content, modifier)
 }
 
 /**
- * How urgent a request is (doc 04 §3): Critical = error + priority icon, Urgent = warning
- * + clock, Planned = tertiary container + calendar. Red is kept for real urgency.
+ * A request's state. Open is the normal state, so where the urgency shows (lists, the detail
+ * page) an open request shows its [UrgencyBadge] instead (COLOR-01).
+ */
+@Composable
+fun StatusPill(status: RequestStatus, modifier: Modifier = Modifier) {
+    val (icon, tone) = when (status) {
+        RequestStatus.OPEN -> LLIcons.HourglassTop to StatusTone.Neutral
+        RequestStatus.FULFILLED -> LLIcons.CheckCircle to StatusTone.Success
+        RequestStatus.CANCELLED -> LLIcons.Cancel to StatusTone.Neutral
+        RequestStatus.EXPIRED -> LLIcons.History to StatusTone.Neutral
+        RequestStatus.REMOVED -> LLIcons.Block to StatusTone.Neutral
+    }
+    StatusPill(stringResource(status.labelRes), icon, tone, modifier)
+}
+
+/** An offer's state: on its way (grey, its own icon), done (green) or stopped (neutral). */
+@Composable
+fun StatusPill(status: ResponseStatus, modifier: Modifier = Modifier) {
+    val (icon, tone) = when (status) {
+        ResponseStatus.OFFERED -> LLIcons.VolunteerActivism to StatusTone.Progress
+        ResponseStatus.CONFIRMED -> LLIcons.Verified to StatusTone.Progress
+        ResponseStatus.DECLINED -> LLIcons.Block to StatusTone.Neutral
+        ResponseStatus.WITHDRAWN -> LLIcons.Undo to StatusTone.Neutral
+        ResponseStatus.DONATED -> LLIcons.Favorite to StatusTone.Success
+    }
+    StatusPill(stringResource(status.labelRes), icon, tone, modifier)
+}
+
+/**
+ * How urgent a request is (doc 04 §3, COLOR-01): Critical = red + priority icon, Urgent = amber +
+ * clock, Planned = neutral + calendar. In dark theme too, Critical stays the loudest.
  */
 @Composable
 fun UrgencyBadge(urgency: Urgency, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    val extended = LiquidLyfTheme.extendedColors
-    val (icon, container, content) = when (urgency) {
-        Urgency.CRITICAL -> Triple(LLIcons.PriorityHigh, colors.error, colors.onError)
-        Urgency.URGENT -> Triple(LLIcons.Schedule, extended.warning, extended.onWarning)
-        Urgency.PLANNED -> Triple(LLIcons.Event, colors.tertiaryContainer, colors.onTertiaryContainer)
+    val (icon, tone) = when (urgency) {
+        Urgency.CRITICAL -> LLIcons.PriorityHigh to StatusTone.Critical
+        Urgency.URGENT -> LLIcons.Schedule to StatusTone.Urgent
+        Urgency.PLANNED -> LLIcons.Event to StatusTone.Neutral
     }
-    StatusPill(stringResource(urgency.labelRes), icon, container, content, modifier)
+    StatusPill(stringResource(urgency.labelRes), icon, tone, modifier)
+}
+
+/** The pill for an open request where urgency matters, the state's otherwise. */
+@Composable
+fun RequestStatePill(status: RequestStatus, urgency: Urgency, modifier: Modifier = Modifier) {
+    if (status == RequestStatus.OPEN) UrgencyBadge(urgency, modifier) else StatusPill(status, modifier)
 }

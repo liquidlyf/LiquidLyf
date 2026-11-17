@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +47,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.StatusTone
+import io.github.liquidlyf.core.designsystem.components.LLCard
+import io.github.liquidlyf.core.designsystem.components.LLTag
 import io.github.liquidlyf.core.designsystem.numberText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.EligibilityRing
@@ -163,7 +165,7 @@ internal fun ProfileScreen(
                 state.eligibility?.let { e ->
                     if (p.bloodGroup != null) {
                         item {
-                            Card(Modifier.fillMaxWidth()) {
+                            LLCard(Modifier.fillMaxWidth()) {
                                 Row(Modifier.padding(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
                                     EligibilityRing(e, p.gender, now, size = 64.dp)
                                     Column(Modifier.padding(start = Spacing.md).weight(1f)) {
@@ -241,7 +243,7 @@ internal fun ProfileScreen(
 private fun HeaderCard(state: ProfileUiState) {
     val p = state.profile ?: return
     val locale = currentAppLocale()
-    Card(Modifier.fillMaxWidth()) {
+    LLCard(Modifier.fillMaxWidth()) {
         Row(Modifier.padding(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
             p.bloodGroup?.let { BloodGroupBadge(it, size = 64.dp, hero = true) }
             Column(Modifier.padding(start = if (p.bloodGroup != null) Spacing.md else 0.dp).weight(1f)) {
@@ -251,10 +253,7 @@ private fun HeaderCard(state: ProfileUiState) {
                     VerifiedTag(R.string.profile_email_verified)
                     if (p.phoneVerified) VerifiedTag(R.string.profile_phone_verified)
                     if (!p.showInDonorSearch) {
-                        StatusPill(
-                            stringResource(R.string.profile_not_listed), LLIcons.VisibilityOff,
-                            MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        StatusPill(stringResource(R.string.profile_not_listed), LLIcons.VisibilityOff, StatusTone.Neutral)
                     }
                 }
             }
@@ -264,14 +263,14 @@ private fun HeaderCard(state: ProfileUiState) {
 
 @Composable
 private fun VerifiedTag(@StringRes label: Int) {
-    StatusPill(stringResource(label), LLIcons.Verified, MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer)
+    StatusPill(stringResource(label), LLIcons.Verified, StatusTone.Success)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ImpactCard(state: ProfileUiState) {
     val i = state.impact
-    Card(Modifier.fillMaxWidth()) {
+    LLCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Text(stringResource(R.string.profile_impact_title), style = MaterialTheme.typography.titleMedium)
             // Three equal columns when they fit; with large text a stat whose label won't fit moves to
@@ -308,10 +307,7 @@ private fun BadgesRow(badges: List<Badge>) {
         badges.forEach { b ->
             val name = stringResource(b.nameRes)
             val desc = stringResource(b.descriptionRes)
-            StatusPill(
-                name, LLIcons.Favorite, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier = Modifier.clearAndSetSemantics { contentDescription = "$name: $desc" },
-            )
+            LLTag(name, b.icon, modifier = Modifier.clearAndSetSemantics { contentDescription = "$name: $desc" })
         }
     }
 }
@@ -359,4 +355,15 @@ private val Badge.descriptionRes: Int
         Badge.LEGEND -> R.string.badge_legend_desc
         Badge.RAPID_RESPONDER -> R.string.badge_rapid_responder_desc
         Badge.REGULAR -> R.string.badge_regular_desc
+    }
+
+/** Each badge its own icon (COLOR-01: all six used the same heart on a cyan pill). */
+private val Badge.icon: Int
+    get() = when (this) {
+        Badge.FIRST_DROP -> LLIcons.BloodDrop
+        Badge.LIFE_SAVER -> LLIcons.Favorite
+        Badge.HERO -> LLIcons.Shield
+        Badge.LEGEND -> LLIcons.Premium
+        Badge.RAPID_RESPONDER -> LLIcons.Bolt
+        Badge.REGULAR -> LLIcons.EventRepeat
     }

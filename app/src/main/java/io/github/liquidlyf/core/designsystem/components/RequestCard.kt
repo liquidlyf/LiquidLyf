@@ -2,14 +2,12 @@ package io.github.liquidlyf.core.designsystem.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,7 +42,7 @@ fun RequestCard(
     modifier: Modifier = Modifier,
     footer: (@Composable () -> Unit)? = null,
 ) {
-    Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+    LLCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
         Row(Modifier.padding(Spacing.md), horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
             BloodGroupBadge(request.bloodGroup)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
@@ -59,9 +57,7 @@ fun RequestCard(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.align(Alignment.CenterVertically).padding(end = Spacing.xs),
                     )
-                    Box(Modifier.align(Alignment.CenterVertically)) {
-                        if (request.status == RequestStatus.OPEN) UrgencyBadge(request.urgency) else StatusPill(request.status)
-                    }
+                    RequestStatePill(request.status, request.urgency, Modifier.align(Alignment.CenterVertically))
                 }
                 IconLine(LLIcons.Hospital, request.hospitalName)
                 IconLine(LLIcons.Location, placeText)

@@ -169,7 +169,7 @@ private fun TextPage(@StringRes title: Int, onBack: () -> Unit, content: @Compos
 @Composable
 private fun Section(@DrawableRes icon: Int, @StringRes title: Int, @StringRes body: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md), verticalAlignment = Alignment.Top) {
-        Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
             Text(stringResource(title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             Text(stringResource(body), style = MaterialTheme.typography.bodyMedium)

@@ -12,7 +12,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -34,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.LLFilterChip
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.SheetDragHandle
@@ -95,12 +95,7 @@ fun AddDonationSheet(
             Text(stringResource(R.string.add_donation_component), style = MaterialTheme.typography.labelLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 BloodComponent.entries.forEach { c ->
-                    FilterChip(
-                        selected = c == component,
-                        onClick = { component = c },
-                        label = { Text(stringResource(c.labelRes)) },
-                        modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
-                    )
+                    LLFilterChip(c == component, { component = c }, stringResource(c.labelRes))
                 }
             }
 

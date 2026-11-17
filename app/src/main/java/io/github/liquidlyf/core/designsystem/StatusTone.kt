@@ -15,7 +15,7 @@ enum class StatusTone {
     /** Critical urgency: needed within hours. Red (error). */
     Critical,
 
-    /** Urgent: needed soon. Amber (warning). */
+    /** Urgent: needed soon, or needs a look (a flag in moderation). Amber (warning). */
     Urgent,
 
     /** Normal, past or stopped: Planned, Expired, Cancelled, Withdrawn, Declined, tags. */

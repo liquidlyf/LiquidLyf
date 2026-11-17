@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -28,7 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -40,6 +38,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
@@ -52,12 +51,16 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.StatusTone
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.BloodGroupChip
 import io.github.liquidlyf.core.designsystem.components.DropdownField
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
+import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
+import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
+import io.github.liquidlyf.core.designsystem.components.LLTag
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
@@ -230,7 +233,7 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
 private fun FiltersCard(state: FindDonorsUiState, locale: AppLocale, actions: FindDonorsActions, onSearch: () -> Unit) {
     val f = state.filters
     val geo = state.geo
-    Card(Modifier.fillMaxWidth()) {
+    LLCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Text(stringResource(R.string.donors_filter_groups), style = MaterialTheme.typography.labelLarge)
             // A 4×2 grid, like the profile's picker, but several groups can be picked.
@@ -256,12 +259,9 @@ private fun FiltersCard(state: FindDonorsUiState, locale: AppLocale, actions: Fi
                     { code -> actions.onUpazila(code.takeUnless { it == ANY }) }, enabled = f.district != null,
                 )
             }
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.donors_filter_eligible)) },
-                supportingContent = { Text(stringResource(R.string.donors_filter_eligible_summary)) },
-                trailingContent = { Switch(checked = f.eligibleNowOnly, onCheckedChange = null) },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                modifier = Modifier.toggleable(value = f.eligibleNowOnly, role = Role.Switch, onValueChange = actions.onEligibleNowOnly),
+            LLSwitchRow(
+                stringResource(R.string.donors_filter_eligible), f.eligibleNowOnly, actions.onEligibleNowOnly,
+                summary = stringResource(R.string.donors_filter_eligible_summary),
             )
             if (f.groups.isEmpty()) {
                 Text(stringResource(R.string.donors_pick_group), style = MaterialTheme.typography.bodySmall)
@@ -300,7 +300,8 @@ private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Insta
         pluralStringResource(R.plurals.donors_eligible_in, days, days)
     }
     val activeThisWeek = card.lastActiveAt?.let { Duration.between(it, now) <= Duration.ofDays(7) } == true
-    Card(Modifier.fillMaxWidth().clickable(onClickLabel = stringResource(R.string.action_ask_to_donate), onClick = onClick)) {
+    // Clipped, so the ripple keeps the card's round corners.
+    LLCard(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable(onClickLabel = stringResource(R.string.action_ask_to_donate), onClick = onClick)) {
         Row(Modifier.padding(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
             BloodGroupBadge(card.bloodGroup, size = 48.dp)
             Column(Modifier.padding(start = Spacing.md).weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
@@ -313,17 +314,10 @@ private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Insta
                 if (card.phoneVerified || activeThisWeek) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                         if (card.phoneVerified) {
-                            StatusPill(
-                                stringResource(R.string.profile_phone_verified), LLIcons.Verified,
-                                MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer,
-                            )
+                            StatusPill(stringResource(R.string.profile_phone_verified), LLIcons.Verified, StatusTone.Success)
                         }
-                        if (activeThisWeek) {
-                            StatusPill(
-                                stringResource(R.string.donors_active_week), LLIcons.Schedule,
-                                MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer,
-                            )
-                        }
+                        // A tag with its own dot, not Urgent's clock (COLOR-01).
+                        if (activeThisWeek) LLTag(stringResource(R.string.donors_active_week), LLIcons.ActiveDot)
                     }
                 }
             }

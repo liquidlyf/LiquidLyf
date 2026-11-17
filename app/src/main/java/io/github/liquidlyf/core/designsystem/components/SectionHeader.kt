@@ -12,7 +12,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import io.github.liquidlyf.core.designsystem.Spacing
 
-/** A section title inside a screen, with an optional trailing action (e.g. "See all"). */
+/** A section title inside a screen, with an optional trailing action (e.g. "See all"). Dark ink, not red (D4 a). */
 @Composable
 fun SectionHeader(
     title: String,
@@ -28,7 +28,7 @@ fun SectionHeader(
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier
                 .weight(1f)
                 .semantics { heading() },

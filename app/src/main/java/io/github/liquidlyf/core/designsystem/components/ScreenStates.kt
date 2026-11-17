@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -76,11 +74,8 @@ fun LoadingState(modifier: Modifier = Modifier, count: Int = 3) {
 
 @Composable
 private fun SkeletonCard(modifier: Modifier = Modifier) {
-    val block = MaterialTheme.colorScheme.surfaceContainerHighest
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        modifier = modifier.fillMaxWidth(),
-    ) {
+    val block = MaterialTheme.colorScheme.surfaceContainerHigh
+    LLCard(modifier = modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Spacing.md),

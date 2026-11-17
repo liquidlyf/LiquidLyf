@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,6 +46,7 @@ import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.EligibilityRing
 import io.github.liquidlyf.core.designsystem.components.EmptyState
+import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLExtendedFab
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
@@ -183,7 +183,7 @@ private fun AvailabilityCard(state: HomeUiState, onAvailableToggled: (Boolean) -
     val p = state.profile ?: return
     when {
         p.bloodGroup == null -> BloodGroupReminder(onAdd = onEditProfile)
-        !p.showInDonorSearch -> Card {
+        !p.showInDonorSearch -> LLCard {
             Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 Text(stringResource(R.string.home_not_listed_title), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(R.string.home_not_listed_body), style = MaterialTheme.typography.bodyMedium)
@@ -202,7 +202,7 @@ private fun AvailabilityCard(state: HomeUiState, onAvailableToggled: (Boolean) -
                 }
             }
         }
-        else -> Card {
+        else -> LLCard {
             Row(Modifier.padding(start = Spacing.md, top = Spacing.md, end = Spacing.md), verticalAlignment = Alignment.CenterVertically) {
                 state.eligibility?.let { EligibilityRing(it, p.gender, Instant.now()) }
                 Text(

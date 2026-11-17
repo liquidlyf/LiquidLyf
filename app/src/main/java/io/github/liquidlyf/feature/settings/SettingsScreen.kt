@@ -5,14 +5,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +32,7 @@ import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.data.settings.ThemeMode
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.SectionHeader
@@ -253,15 +252,10 @@ private fun <T> Choices(options: List<T>, selected: T, onSelect: (T) -> Unit, la
     SegmentedChoices(options, selected, onSelect, Modifier.padding(horizontal = screenGutter(), vertical = Spacing.xs), label)
 }
 
-/** 8.5: the whole row toggles, and TalkBack reads it as one switch. */
+/** The shared switch row (DS-01), at the list's gutter like the ListItems around it. */
 @Composable
 private fun SwitchRow(title: String, summary: String, checked: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
-    ListItem(
-        headlineContent = { Text(title) },
-        supportingContent = { Text(summary) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = null, enabled = enabled) },
-        modifier = Modifier.toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onChange),
-    )
+    LLSwitchRow(title, checked, onChange, summary = summary, enabled = enabled, horizontalPadding = screenGutter())
 }
 
 private val ThemeMode.labelRes: Int

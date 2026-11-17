@@ -68,7 +68,7 @@ internal fun SafetyTipsScreen(onBack: () -> Unit, onCallEmergency: () -> Unit) {
 @Composable
 private fun Tip(@DrawableRes icon: Int, @StringRes title: Int, @StringRes body: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md), verticalAlignment = Alignment.Top) {
-        Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
             Text(stringResource(title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             Text(stringResource(body), style = MaterialTheme.typography.bodyMedium)

@@ -18,8 +18,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -65,21 +63,23 @@ import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.IconLine
+import io.github.liquidlyf.core.designsystem.components.LLCard
+import io.github.liquidlyf.core.designsystem.components.LLNoticeCard
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.NoticeTone
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
+import io.github.liquidlyf.core.designsystem.components.RequestStatePill
 import io.github.liquidlyf.core.designsystem.components.SectionHeader
 import io.github.liquidlyf.core.designsystem.components.SheetDragHandle
 import io.github.liquidlyf.core.designsystem.components.StatusPill
-import io.github.liquidlyf.core.designsystem.components.UrgencyBadge
 import io.github.liquidlyf.core.designsystem.components.neededByText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
 import io.github.liquidlyf.core.designsystem.labelRes
-import io.github.liquidlyf.core.designsystem.numberText
 import io.github.liquidlyf.core.designsystem.relativeTimeText
 import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
@@ -97,6 +97,7 @@ import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.request.create.PlannedAtPicker
 import io.github.liquidlyf.feature.request.create.PostNotice
+import io.github.liquidlyf.feature.request.create.UnitsStepper
 import io.github.liquidlyf.feature.safety.ReportDialog
 import java.time.Instant
 import kotlinx.coroutines.launch
@@ -204,7 +205,7 @@ private fun RequestDetailScreen(
                 ) {
                     Banners(state)
                     if (state.working && !online) {
-                        NoticeCard(LLIcons.WifiOff, stringResource(R.string.detail_action_waiting))
+                        LLNoticeCard(stringResource(R.string.detail_action_waiting), LLIcons.WifiOff)
                     }
                     Header(request)
                     WhereCard(request, state, onOpenMaps = { r -> r.location?.let { launcher.openMaps(it.lat, it.lng, r.hospitalName) } })
@@ -266,24 +267,14 @@ private enum class DetailDialog { WITHDRAW, DECLINE, DONATED, CLOSE, REPORT, EDI
 @Composable
 private fun Banners(state: RequestDetailUiState) {
     if (state.waitingForNetwork) {
-        NoticeCard(LLIcons.WifiOff, stringResource(R.string.detail_waiting_network))
+        LLNoticeCard(stringResource(R.string.detail_waiting_network), LLIcons.WifiOff)
     }
     if (state.notice == PostNotice.DAILY_ALERT_LIMIT) {
-        NoticeCard(LLIcons.Warning, stringResource(R.string.error_daily_alert_limit))
+        LLNoticeCard(stringResource(R.string.error_daily_alert_limit), LLIcons.Warning, tone = NoticeTone.Warning)
     }
     // 7.8: the notes mention money (the request is flagged for review).
     if (state.request?.flagged == true) {
-        NoticeCard(LLIcons.Warning, stringResource(R.string.detail_flagged_caution))
-    }
-}
-
-@Composable
-private fun NoticeCard(icon: Int, text: String) {
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-        Row(Modifier.padding(Spacing.md), horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalAlignment = Alignment.CenterVertically) {
-            Icon(painterResource(icon), contentDescription = null)
-            Text(text, style = MaterialTheme.typography.bodyMedium)
-        }
+        LLNoticeCard(stringResource(R.string.detail_flagged_caution), LLIcons.Warning, tone = NoticeTone.Warning)
     }
 }
 
@@ -302,10 +293,7 @@ private fun Header(r: BloodRequest) {
                 progress = { if (r.unitsNeeded == 0) 0f else r.unitsFulfilled.toFloat() / r.unitsNeeded },
                 modifier = Modifier.fillMaxWidth(),
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                StatusPill(r.status)
-                if (r.status == RequestStatus.OPEN) UrgencyBadge(r.urgency)
-            }
+            RequestStatePill(r.status, r.urgency)
         }
     }
     IconLine(LLIcons.Schedule, if (r.status == RequestStatus.OPEN) "${neededByText(r.neededBy, now)} · ${dateTimeText(r.neededBy)}" else dateTimeText(r.neededBy))
@@ -322,7 +310,7 @@ private fun Header(r: BloodRequest) {
 @Composable
 private fun WhereCard(r: BloodRequest, state: RequestDetailUiState, onOpenMaps: (BloodRequest) -> Unit) {
     val locale = currentAppLocale()
-    Card(Modifier.fillMaxWidth()) {
+    LLCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             IconLine(LLIcons.Hospital, r.hospitalName)
             r.hospitalAddress?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
@@ -342,7 +330,7 @@ private fun WhereCard(r: BloodRequest, state: RequestDetailUiState, onOpenMaps: 
 private fun SafetyBanner(onOpenSafetyTips: () -> Unit) {
     Column {
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalAlignment = Alignment.CenterVertically) {
-            Icon(painterResource(LLIcons.Shield), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Icon(painterResource(LLIcons.Shield), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(stringResource(R.string.detail_safety), style = MaterialTheme.typography.bodyMedium)
         }
         TextButton(onClick = onOpenSafetyTips, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
@@ -444,7 +432,7 @@ private fun ContactCard(c: RequestContact, onCall: (String) -> Unit) {
     val scope = rememberCoroutineScope()
     val snackbar = LocalSnackbarHostState.current
     val copied = stringResource(R.string.detail_copied)
-    Card(Modifier.fillMaxWidth()) {
+    LLCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Text(stringResource(R.string.detail_contact), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             Text(c.contactName, style = MaterialTheme.typography.bodyLarge)
@@ -616,16 +604,7 @@ private fun EditDialog(r: BloodRequest, onDismiss: () -> Unit, onSave: (String?,
         title = { Text(stringResource(R.string.detail_edit)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.create_units), modifier = Modifier.weight(1f))
-                    IconButton(onClick = { units-- }, enabled = units > minUnits, modifier = Modifier.size(Spacing.minTouchTarget)) {
-                        Icon(painterResource(LLIcons.Remove), contentDescription = stringResource(R.string.create_units_less))
-                    }
-                    Text(numberText(units), style = MaterialTheme.typography.titleMedium)
-                    IconButton(onClick = { units++ }, enabled = units < Validators.UNITS_MAX, modifier = Modifier.size(Spacing.minTouchTarget)) {
-                        Icon(painterResource(LLIcons.Add), contentDescription = stringResource(R.string.create_units_more))
-                    }
-                }
+                UnitsStepper(units, onChange = { units = it }, min = minUnits)
                 Text(stringResource(R.string.detail_edit_needed_by), style = MaterialTheme.typography.labelLarge)
                 PlannedAtPicker(neededByMillis ?: r.neededBy.toEpochMilli(), showError = false) { neededByMillis = it }
                 LLTextField(

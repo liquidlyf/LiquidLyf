@@ -14,29 +14,24 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -54,7 +49,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -67,12 +61,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
-import io.github.liquidlyf.core.designsystem.numberText
+import io.github.liquidlyf.core.designsystem.components.LLCard
+import io.github.liquidlyf.core.designsystem.components.LLFilterChip
+import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
+import io.github.liquidlyf.core.designsystem.components.LLStepper
+import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
 import io.github.liquidlyf.core.designsystem.components.ChoiceRow
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.FieldError
-import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
@@ -244,12 +241,7 @@ private fun PatientStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> 
     Text(stringResource(R.string.create_component), style = MaterialTheme.typography.labelLarge)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         BloodComponent.entries.forEach { c ->
-            FilterChip(
-                selected = f.component == c.code,
-                onClick = { onEdit { copy(component = c.code) } },
-                label = { Text(stringResource(c.labelRes)) },
-                modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
-            )
+            LLFilterChip(f.component == c.code, { onEdit { copy(component = c.code) } }, stringResource(c.labelRes))
         }
     }
 
@@ -258,26 +250,19 @@ private fun PatientStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> 
     Text(stringResource(R.string.create_condition), style = MaterialTheme.typography.labelLarge)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         PatientCondition.entries.forEach { c ->
-            FilterChip(
-                selected = f.condition == c.code,
-                onClick = { onEdit { copy(condition = if (condition == c.code) null else c.code) } },
-                label = { Text(stringResource(c.labelRes)) },
-                modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
+            LLFilterChip(
+                f.condition == c.code,
+                { onEdit { copy(condition = if (condition == c.code) null else c.code) } },
+                stringResource(c.labelRes),
             )
         }
     }
 
     val group = BloodGroup.fromCode(f.bloodGroup)
     val component = BloodComponent.fromCode(f.component) ?: BloodComponent.WHOLE_BLOOD
-    ListItem(
-        headlineContent = { Text(stringResource(R.string.create_accept_compatible)) },
-        supportingContent = { Text(stringResource(R.string.create_accept_compatible_info)) },
-        trailingContent = { Switch(checked = f.acceptCompatible, onCheckedChange = null) },
-        modifier = Modifier.toggleable(
-            value = f.acceptCompatible,
-            role = Role.Switch,
-            onValueChange = { v -> onEdit { copy(acceptCompatible = v) } },
-        ),
+    LLSwitchRow(
+        stringResource(R.string.create_accept_compatible), f.acceptCompatible, { v -> onEdit { copy(acceptCompatible = v) } },
+        summary = stringResource(R.string.create_accept_compatible_info),
     )
     if (group != null && f.acceptCompatible) {
         val others = BloodCompatibility.compatibleDonors(group, component).filter { it != group }
@@ -290,24 +275,18 @@ private fun PatientStep(state: CreateRequestUiState, onEdit: (RequestForm.() -> 
     }
 }
 
+/** The bags of blood, here and in Edit request (which can't go below what's already given). */
 @Composable
-private fun UnitsStepper(units: Int, onChange: (Int) -> Unit) {
-    val description = pluralStringResource(R.plurals.create_units_spoken, units, units)
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-        Text(stringResource(R.string.create_units), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
-        // 8.5: the whole 48 dp is the button, next to large text too.
-        IconButton(onClick = { onChange(units - 1) }, enabled = units > Validators.UNITS_MIN, modifier = Modifier.size(Spacing.minTouchTarget)) {
-            Icon(painterResource(LLIcons.Remove), contentDescription = stringResource(R.string.create_units_less))
-        }
-        Text(
-            numberText(units),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.clearAndSetSemantics { contentDescription = description },
-        )
-        IconButton(onClick = { onChange(units + 1) }, enabled = units < Validators.UNITS_MAX, modifier = Modifier.size(Spacing.minTouchTarget)) {
-            Icon(painterResource(LLIcons.Add), contentDescription = stringResource(R.string.create_units_more))
-        }
-    }
+internal fun UnitsStepper(units: Int, onChange: (Int) -> Unit, min: Int = Validators.UNITS_MIN) {
+    LLStepper(
+        label = stringResource(R.string.create_units),
+        value = units,
+        onChange = onChange,
+        range = min..Validators.UNITS_MAX,
+        spokenValue = pluralStringResource(R.plurals.create_units_spoken, units, units),
+        lessLabel = stringResource(R.string.create_units_less),
+        moreLabel = stringResource(R.string.create_units_more),
+    )
 }
 
 // ---- Step 2: where and when ----
@@ -347,7 +326,7 @@ private fun WhereWhenStep(
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
     )
     if (state.hospitals.isNotEmpty()) {
-        Card {
+        LLCard {
             state.hospitals.forEachIndexed { i, h ->
                 if (i > 0) HorizontalDivider()
                 val name = h.name.localized(locale)
@@ -520,7 +499,7 @@ private fun ReviewCard(state: CreateRequestUiState) {
     val component = BloodComponent.fromCode(f.component)?.let { stringResource(it.labelRes) }.orEmpty()
     val place = f.district?.let { state.geo?.placeLabel(it, f.upazila, locale) }.orEmpty()
     val urgency = Urgency.fromCode(f.urgency)?.let { stringResource(it.labelRes) }.orEmpty()
-    Card {
+    LLCard {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
             Text(stringResource(R.string.create_review), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             Text("$group · ${unitsText(f.units, component)}")

@@ -69,4 +69,11 @@ object LLIcons {
     val Remove = R.drawable.ic_remove
     val Info = R.drawable.ic_info
     val Shield = R.drawable.ic_shield
+    val Delete = R.drawable.ic_delete
+
+    // Badges and tags: each its own icon (COLOR-01)
+    val Bolt = R.drawable.ic_bolt
+    val Premium = R.drawable.ic_workspace_premium
+    val EventRepeat = R.drawable.ic_event_repeat
+    val ActiveDot = R.drawable.ic_active_dot
 }

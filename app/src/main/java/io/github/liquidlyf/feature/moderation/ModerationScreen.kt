@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,8 +41,10 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.moderation.RequestAction
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.StatusTone
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
+import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
@@ -157,7 +158,7 @@ internal fun ModerationScreen(
 @Composable
 private fun ReportCard(item: ModerationItem, now: Instant, enabled: Boolean, onOpenRequest: (String) -> Unit, onPick: (Kind) -> Unit) {
     val r = item.report
-    Card(Modifier.fillMaxWidth()) {
+    LLCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Text(
                 listOfNotNull(stringResource(r.reason.labelRes), r.createdAt?.let { relativeTimeText(it, now) }).joinToString(" · "),
@@ -215,7 +216,7 @@ private fun Button(@StringRes label: Int, enabled: Boolean, onClick: () -> Unit)
 
 @Composable
 private fun Pill(@StringRes label: Int) {
-    StatusPill(stringResource(label), LLIcons.Warning, MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer)
+    StatusPill(stringResource(label), LLIcons.Warning, StatusTone.Urgent)
 }
 
 /** The rules' limit for an adminLog note. */

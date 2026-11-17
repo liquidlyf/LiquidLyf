@@ -28,6 +28,7 @@ import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.data.settings.AppLanguageStore
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.chosenSegmentColors
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.model.AppLocale
 import javax.inject.Inject
@@ -75,6 +76,7 @@ fun LanguageSwitch(onLanguageChange: (AppLanguage) -> Unit, modifier: Modifier =
                     selected = language == shown,
                     onClick = { if (language != shown) onLanguageChange(language) },
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = choices.size),
+                    colors = chosenSegmentColors(),
                 ) {
                     Text(nameOf(language))
                 }

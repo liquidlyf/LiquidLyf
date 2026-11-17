@@ -104,9 +104,13 @@ internal val DarkColors = darkColorScheme(
     surfaceContainerHighest = Color(0xFF3D3231),
 )
 
-/** Roles Material 3 doesn't have: success (donated, fulfilled) and warning (urgent). */
+/**
+ * Roles Material 3 doesn't have: success (donated, fulfilled), warning (urgent) and [card], the
+ * fill of every card (LLCard: white in light, #231918 in dark, with an outlineVariant border).
+ */
 @Immutable
 data class ExtendedColors(
+    val card: Color,
     val success: Color,
     val onSuccess: Color,
     val successContainer: Color,
@@ -118,6 +122,7 @@ data class ExtendedColors(
 )
 
 internal val LightExtendedColors = ExtendedColors(
+    card = Color(0xFFFFFFFF),
     success = Color(0xFF1E6B35),
     onSuccess = Color(0xFFFFFFFF),
     successContainer = Color(0xFFB7F1BE),
@@ -129,6 +134,7 @@ internal val LightExtendedColors = ExtendedColors(
 )
 
 internal val DarkExtendedColors = ExtendedColors(
+    card = Color(0xFF231918),
     success = Color(0xFF9CD5A3),
     onSuccess = Color(0xFF003919),
     successContainer = Color(0xFF005322),
