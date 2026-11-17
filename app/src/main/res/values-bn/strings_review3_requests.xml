@@ -205,6 +205,7 @@
     <string name="detail_offer_seen">%1$s আপনার সাড়া আর নম্বর দেখতে পাচ্ছেন।</string>
     <string name="detail_no_offers_yet">এখনো কেউ সাড়া দেননি।</string>
     <string name="action_edit">এডিট করুন</string>
+    <string name="detail_share_instead">শেয়ার করে সাহায্য করুন</string>
     <string name="detail_i_can_donate">আমি রক্ত দিতে পারব</string>
     <string name="detail_your_offer">আপনার সাড়া</string>
     <string name="detail_donated_thanks">ধন্যবাদ! এই রক্তদান আপনার রক্তদানের ইতিহাসে আছে।</string>

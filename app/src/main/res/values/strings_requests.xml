@@ -149,6 +149,7 @@
     <string name="detail_offer_seen">%1$s can see your offer and your number.</string>
     <string name="detail_no_offers_yet">No offers yet.</string>
     <string name="action_edit">Edit</string>
+    <string name="detail_share_instead">Share it with someone who can help</string>
     <string name="detail_safety">Never pay or accept money for blood. Report requests that ask for money.</string>
     <string name="detail_i_can_donate">I can donate</string>
     <string name="detail_your_offer">Your offer</string>

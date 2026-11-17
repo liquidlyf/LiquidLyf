@@ -278,7 +278,8 @@ private fun RequestDetailScreen(
                             if (status != null) {
                                 YourOfferSection(state, status, request)
                             } else {
-                                state.offerBlock?.let { IconLine(LLIcons.Info, blockText(it)) }
+                                // Why not is in the bar now; a closed request says it here.
+                                state.offerBlock?.takeIf { it == OfferBlock.Closed }?.let { IconLine(LLIcons.Info, blockText(it)) }
                             }
                             DetailsSection(request, state)
                             if (status != null && StatusTransitions.donorCanSet(status, ResponseStatus.WITHDRAWN)) {
@@ -370,11 +371,17 @@ private fun DetailBar(
         ViewerRole.REQUESTER -> if (r.status == RequestStatus.OPEN) RequesterBar(onShare, onEdit, onClose, enabled = !state.working)
         ViewerRole.DONOR -> {
             val contact = state.contact
+            val block = state.offerBlock
             when {
+                // FLOW-02: can't offer (wrong group, resting, no group): say why, and offer what still
+                // helps, sharing it, instead of a grey button. A closed request needs nothing.
+                state.myStatus == null && block != null && block != OfferBlock.NotADonor && block != OfferBlock.Closed ->
+                    CantOfferBar(blockText(block), onShare)
+                state.myStatus == null && block == OfferBlock.Closed -> Unit
                 state.myStatus == null -> LLBottomBar(
                     primaryText = stringResource(R.string.detail_i_can_donate),
                     onPrimary = onOffer,
-                    primaryEnabled = state.offerBlock == null || state.offerBlock == OfferBlock.NotADonor,
+                    primaryEnabled = true,
                     loading = state.working,
                     primaryIcon = LLIcons.VolunteerActivism,
                 )
@@ -387,6 +394,30 @@ private fun DetailBar(
                     secondaryIcon = LLIcons.Copy,
                 )
                 else -> Unit
+            }
+        }
+    }
+}
+
+/** A donor who can't offer: the reason, then Share (they can still help find a donor). */
+@Composable
+private fun CantOfferBar(reason: String, onShare: () -> Unit) {
+    Surface(color = LiquidLyfTheme.extendedColors.card) {
+        Column {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = screenGutter(), vertical = Spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+            ) {
+                IconLine(LLIcons.Info, reason)
+                FilledTonalButton(onClick = onShare, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
+                    Icon(painterResource(LLIcons.Share), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                    Text(stringResource(R.string.detail_share_instead))
+                }
             }
         }
     }
