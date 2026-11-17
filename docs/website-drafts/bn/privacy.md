@@ -74,8 +74,8 @@ LiquidLyf একটা ওপেন সোর্স প্রজেক্ট, �
 রক্তদাতা না হওয়া পর্যন্ত অ্যাপ এগুলো জানতে চায় না। ততক্ষণ আপনার দুটো সেটিং বন্ধ থাকে:
 রক্তদাতা তালিকায় নাম রাখা, আর রক্ত দিতে প্রস্তুত থাকা।
 
-<!-- D1 = a (17 Nov 2026): the reviewed lines are kept word for word and only regrouped. New and
-     waiting for the maintainer's review (C24): "আপনার পুরো নাম আর ফোন নম্বর।", the blood-group line,
+<!-- D1 = a (17 Nov 2026): the reviewed lines are kept word for word and only regrouped. New, and
+     reviewed by the maintainer (C24 OK, 17 Nov 2026 22:50, as written): "আপনার পুরো নাম আর ফোন নম্বর।", the blood-group line,
      "রক্তদাতা হতে চাইলে অ্যাপ এগুলোও জানতে চায়:" and the last paragraph. Words as in the app's
      values-bn: "রক্তের গ্রুপ যোগ করে রক্তদাতা হতে" (setup_blood_unknown_body, setup_no_group_listing).
      Meaning check: 2 blind rounds. Facts: see the comment in en/privacy.md. -->
