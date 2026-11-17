@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Phase 4: blood requests (create, feed, detail, offers). Bangla in values-bn/ (needs native review). -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Relative times -->
     <string name="time_now">now</string>
     <plurals name="time_in_minutes">
@@ -231,4 +231,9 @@
 
     <string name="detail_share_text">%1$s blood needed: %2$s of %3$s at %4$s, %5$s. Needed by %6$s. Can you help? Shared from LiquidLyf, the free blood donation app.</string>
     <string name="deleted_user">Deleted user</string>
+
+    <!-- Phase 9.4 (A32-4): the Home card when a newer version is out. The card itself comes with
+         the UI work; its labels are fixed now because the website's download page quotes them. -->
+    <string name="update_available_title" tools:ignore="UnusedResources">Update available</string>
+    <string name="update_available_action" tools:ignore="UnusedResources">Get the update</string>
 </resources>
