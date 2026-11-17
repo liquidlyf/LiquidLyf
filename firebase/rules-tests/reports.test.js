@@ -160,9 +160,10 @@ describe('adminLog: admins append, nobody rewrites (phase-07 7.4)', () => {
 });
 
 describe('hospitals', () => {
-  test('signed-in users read; only admins write', async () => {
-    await assertSucceeds(getDoc(doc(as('eve'), 'hospitals/h1')));
+  test('the old Firestore collection is closed, even to admins (the list is hospitals.json, plan D14)', async () => {
+    await assertFails(getDoc(doc(as('eve'), 'hospitals/h1')));
     await assertFails(setDoc(doc(as('eve'), 'hospitals/h1'), { name: 'Fake Hospital' }));
-    await assertSucceeds(setDoc(doc(as('mod', { admin: true }), 'hospitals/h1'), { name: 'Test Hospital' }));
+    await assertFails(getDoc(doc(as('mod', { admin: true }), 'hospitals/h1')));
+    await assertFails(setDoc(doc(as('mod', { admin: true }), 'hospitals/h1'), { name: 'Test Hospital' }));
   });
 });

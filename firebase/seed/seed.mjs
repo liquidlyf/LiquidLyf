@@ -1,5 +1,6 @@
 // Synthetic demo data for the Firebase emulators. Nothing here is real:
-// "Demo" names, example.test emails, +88017000000xx numbers, made-up hospitals.
+// "Demo" names, example.test emails, +88017000000xx numbers.
+// The real hospital list is seed/hospitals.csv (hospitals.mjs), not Firestore.
 //
 //   npm run seed          writes fresh data into running emulators (requests dated from now)
 //   npm run seed:export   regenerates the committed snapshot in seed/emulator-data/
@@ -157,12 +158,6 @@ const responses = [
   { rid: 'demo-req-open-bpos', donor: 'demo-donor-ctg', status: 'OFFERED' },
 ];
 
-const hospitals = [
-  { id: 'demo-dmch', name: 'Demo Medical College Hospital', ...AREAS.dhanmondi, type: 'GOVERNMENT', hasBloodBank: true },
-  { id: 'demo-mirpur', name: 'Demo Mirpur General Hospital', ...AREAS.mirpur, type: 'PRIVATE', hasBloodBank: false },
-  { id: 'demo-ctg-blood-bank', name: 'Demo Chattogram Blood Bank', ...AREAS.kotwali, type: 'BLOOD_BANK', hasBloodBank: true },
-];
-
 function owner(rid) { return requests.find((r) => r.id === rid).data.requesterUid; }
 
 // ------------------------------------------------------------------ auth
@@ -235,10 +230,6 @@ export async function writeSeed(db) {
         type: 'NEW_OFFER', fromUid: x.donor, requestId: x.rid, createdAt: created,
       });
     }
-    for (const h of hospitals) {
-      const { id, ...data } = h;
-      await setDoc(doc(db, 'hospitals', id), { ...data, address: `${data.name}, demo address`, verified: true });
-    }
 }
 
 async function seedFirestore() {
@@ -252,5 +243,5 @@ async function seedFirestore() {
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   await seedAuth();
   await seedFirestore();
-  console.log(`Seeded ${people.length} users (password "${PASSWORD}"), ${requests.length} requests, ${hospitals.length} hospitals.`);
+  console.log(`Seeded ${people.length} users (password "${PASSWORD}"), ${requests.length} requests.`);
 }

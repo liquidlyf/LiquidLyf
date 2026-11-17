@@ -750,14 +750,9 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ================================================================
-    // Reference data. The app reads hospitals from the bundled JSON; this collection
-    // is the admin source of truth. config/public moved to Remote Config (doc 07 §9.1).
-    // ================================================================
-    match /hospitals/{hid} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
+    // Reference data is not in Firestore. The hospital list is seed/hospitals.csv →
+    // hospitals.json, bundled in the app and refreshed from the website (plan D14), so the
+    // old hospitals collection is closed. config/public moved to Remote Config (doc 07 §9.1).
 
     // Everything else is denied.
   }

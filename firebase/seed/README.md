@@ -3,8 +3,7 @@
 Synthetic data for the Firebase emulators (project `demo-liquidlyf`). Nothing here is real:
 - "Demo" names;
 - `example.test` emails;
-- `+88017000000xx` phone numbers;
-- made-up hospitals.
+- `+88017000000xx` phone numbers.
 
 **Never copy real user data into this folder.**
 
