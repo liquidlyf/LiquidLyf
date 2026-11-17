@@ -12,6 +12,16 @@ import androidx.compose.ui.graphics.Color
  * Values not listed in the audit table follow the Material 3 tonal palettes of the same
  * hues; every text pair meets WCAG AA (4.5:1).
  * Dynamic colour is off on purpose: the brand red is how people recognise the app.
+ *
+ * "Calm white, one red" (UI/UX review, D4 a, 17 Nov 2026):
+ * - red (primary) is for three things only: the main action, Critical urgency (error) and the
+ *   brand (logo, blood-group ring). A choice the person made (a selected chip) may be red too;
+ * - cards are white (surfaceContainerLowest; dark: surfaceContainerLow) with an outlineVariant
+ *   border, on the warm off-white background;
+ * - secondaryContainer is a warm grey (UI-02), so tonal buttons and notices are neutral. The pink
+ *   primaryContainer is left for the navigation indicator;
+ * - status colours follow one map (COLOR-01, StatusTone): Critical red, Urgent amber, done green,
+ *   everything else neutral. tertiary (cyan) is kept for Material's own parts, not for status.
  */
 
 internal val LightColors = lightColorScheme(
@@ -22,7 +32,8 @@ internal val LightColors = lightColorScheme(
     inversePrimary = Color(0xFFFFB4AB),
     secondary = Color(0xFF775653),
     onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFFFDAD6),
+    // Warm grey, not the primary pink (UI-02): 13.68:1 for its text.
+    secondaryContainer = Color(0xFFEFE3E1),
     onSecondaryContainer = Color(0xFF2C1513),
     tertiary = Color(0xFF00696F),
     onTertiary = Color(0xFFFFFFFF),
@@ -61,8 +72,9 @@ internal val DarkColors = darkColorScheme(
     inversePrimary = Color(0xFFA4161A),
     secondary = Color(0xFFE7BDB8),
     onSecondary = Color(0xFF442927),
-    secondaryContainer = Color(0xFF5D3F3C),
-    onSecondaryContainer = Color(0xFFFFDAD6),
+    // Warm grey (UI-02): 7.83:1 for its text.
+    secondaryContainer = Color(0xFF4A3F3E),
+    onSecondaryContainer = Color(0xFFF1DEDC),
     tertiary = Color(0xFF80D4DA),
     onTertiary = Color(0xFF00363A),
     tertiaryContainer = Color(0xFF004F53),
