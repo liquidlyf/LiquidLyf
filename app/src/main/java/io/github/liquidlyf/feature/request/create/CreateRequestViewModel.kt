@@ -20,6 +20,8 @@ import io.github.liquidlyf.core.data.push.Reminders
 import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
+import io.github.liquidlyf.core.designsystem.components.AppSnackbar
+import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodComponent
@@ -266,13 +268,19 @@ class CreateRequestViewModel @Inject constructor(
         val offline = !online.value
         val requestId = requests.newRequestId()
         val saved = CompletableDeferred<PostResult>()
+        // Set once the page has opened without waiting for the server (offline, or slow): a refusal
+        // after that has no form to show it on, so it goes to the app-wide snackbar (D's re-audit).
+        val openedEarly = java.util.concurrent.atomic.AtomicBoolean(false)
         // PERF-01: the request page opens as soon as the request is saved; the donor alert (up to
         // 3 tries when the Worker can't be reached, about 7 s) goes on here, in the app's scope,
         // and the page shows its progress. Leaving the page doesn't stop it.
         appScope.launch {
             alerts.rememberMyRequest(requestId) // its alert reaches my phone too: don't show it to me
             when (val created = requests.create(requester, draft, requestId)) {
-                is AppResult.Failure -> saved.complete(PostResult.Failed(created.error))
+                is AppResult.Failure -> {
+                    saved.complete(PostResult.Failed(created.error))
+                    if (openedEarly.get()) AppSnackbars.show(AppSnackbar(R.string.create_refused_later))
+                }
                 is AppResult.Success -> {
                     reminders.scheduleRequestEnding(requestId, draft.neededBy) // "ends in 2 hours"
                     alertStatuses.set(requestId, AlertStatus.Sending)
@@ -285,11 +293,15 @@ class CreateRequestViewModel @Inject constructor(
             // Offline: the request is saved on the phone and goes out later, so open its page at once
             // instead of "Posting…" for 10 s (D's re-audit, PERF-01).
             if (offline) {
+                openedEarly.set(true)
                 posted(requestId, PostNotice.WAITING_FOR_NETWORK)
                 return@launch
             }
             when (val result = withTimeoutOrNull(POST_WAIT_MS) { saved.await() }) {
-                null -> posted(requestId, PostNotice.WAITING_FOR_NETWORK)
+                null -> {
+                    openedEarly.set(true)
+                    posted(requestId, PostNotice.WAITING_FOR_NETWORK)
+                }
                 is PostResult.Failed -> state.update { it.copy(posting = false, formError = result.error.messageRes) }
                 PostResult.Saved -> posted(requestId, null)
             }

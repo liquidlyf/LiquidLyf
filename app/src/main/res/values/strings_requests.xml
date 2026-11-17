@@ -111,6 +111,7 @@
     <string name="create_contact_else">Someone else</string>
     <string name="create_contact_else_hint">For example, a relative at the hospital</string>
     <string name="create_error_me_contact">Your profile\'s mobile number can\'t be used here. Choose Someone else, or fix it in Edit profile.</string>
+    <string name="create_refused_later">Your request couldn\'t be posted when the internet came back. Please try Request blood again.</string>
     <string name="create_contact_name">Contact name</string>
     <string name="create_contact_phone">Contact mobile number</string>
     <string name="create_patient_name">Patient\'s name (optional)</string>
@@ -147,6 +148,7 @@
     <string name="detail_contact_line">Contact: %1$s</string>
     <string name="detail_contact_you">Contact: %1$s (you)</string>
     <string name="detail_offer_seen">%1$s can see your offer and your number.</string>
+    <string name="detail_offer_waiting">Your offer will reach %1$s when you\'re back online.</string>
     <string name="detail_no_offers_yet">No offers yet.</string>
     <string name="action_edit">Edit</string>
     <string name="detail_share_instead">Share it with someone who can help</string>

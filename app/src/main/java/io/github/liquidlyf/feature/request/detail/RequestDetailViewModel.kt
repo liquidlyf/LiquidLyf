@@ -200,9 +200,12 @@ class RequestDetailViewModel @Inject constructor(
                         DocState.Missing -> onRequest(null)
                         // Not saved on the phone: wait for the server while online; offline, say so.
                         // The listener answers by itself when the connection comes back.
+                        // Just posted offline: its copy on the phone is on its way, so that's loading too
+                        // (D's re-audit: it flashed "couldn't load").
                         DocState.Unknown -> isOnline.collect { online ->
+                            val justPosted = state.value.notice == PostNotice.WAITING_FOR_NETWORK
                             state.update {
-                                if (online) it.copy(loading = true, loadError = null) else it.copy(loading = false, loadError = AppError.Network)
+                                if (online || justPosted) it.copy(loading = true, loadError = null) else it.copy(loading = false, loadError = AppError.Network)
                             }
                         }
                     }

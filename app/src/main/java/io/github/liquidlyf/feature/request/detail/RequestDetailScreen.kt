@@ -276,7 +276,7 @@ private fun RequestDetailScreen(
                         ViewerRole.DONOR -> {
                             val status = state.myStatus
                             if (status != null) {
-                                YourOfferSection(state, status, request)
+                                YourOfferSection(state, status, request, online)
                             } else {
                                 // Why not is in the bar now; a closed request says it here.
                                 state.offerBlock?.takeIf { it == OfferBlock.Closed }?.let { IconLine(LLIcons.Info, blockText(it)) }
@@ -624,7 +624,7 @@ private fun SafetyBanner(onOpenSafetyTips: () -> Unit) {
 /** "Your offer" (FLOW-07, D9): the status, the message, and who can see it now. The contact is in the private card. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun YourOfferSection(state: RequestDetailUiState, status: ResponseStatus, r: BloodRequest) {
+private fun YourOfferSection(state: RequestDetailUiState, status: ResponseStatus, r: BloodRequest, online: Boolean) {
     SectionHeader(stringResource(R.string.detail_your_offer))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
         StatusPill(status)
@@ -633,7 +633,12 @@ private fun YourOfferSection(state: RequestDetailUiState, status: ResponseStatus
     val line = when (status) {
         ResponseStatus.DONATED -> stringResource(R.string.detail_donated_thanks)
         ResponseStatus.DECLINED -> stringResource(R.string.detail_declined_info)
-        ResponseStatus.OFFERED, ResponseStatus.CONFIRMED -> stringResource(R.string.detail_offer_seen, shownName(r.requesterDisplayName))
+        // Offline, the offer is on this phone only (D's re-audit): say when it goes.
+        ResponseStatus.OFFERED -> stringResource(
+            if (online) R.string.detail_offer_seen else R.string.detail_offer_waiting,
+            shownName(r.requesterDisplayName),
+        )
+        ResponseStatus.CONFIRMED -> stringResource(R.string.detail_offer_seen, shownName(r.requesterDisplayName))
         else -> null
     }
     line?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }

@@ -9,6 +9,7 @@ import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.hospital.Hospital
 import io.github.liquidlyf.core.data.session.SessionState
+import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.model.BloodComponent
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.PlaceName
@@ -131,6 +132,25 @@ class CreateRequestViewModelTest {
         assertEquals(R.string.create_error_me_contact, vm.uiState.value.formError)
         assertFalse(vm.uiState.value.posting)
         assertTrue(requests.created.isEmpty())
+    }
+
+    @Test
+    fun `an offline post the server refuses later says so on whatever screen is open`() = runTest(dispatcher) {
+        AppSnackbars.clear()
+        val gate = CompletableDeferred<Unit>()
+        requests.createGate = gate
+        val vm = vm(network = FakeNetworkMonitor(online = false))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.online.collect {} }
+        val events = events(vm)
+        advanceUntilIdle()
+        vm.fillAll()
+        vm.next()
+        runCurrent()
+        assertEquals(PostNotice.WAITING_FOR_NETWORK, (events.single() as CreateRequestEvent.Posted).notice) // the page opened
+        requests.failNext = AppError.PermissionDenied // e.g. over the open-request limit, checked only online
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(R.string.create_refused_later, AppSnackbars.current.first()?.snackbar?.message)
     }
 
     @Test

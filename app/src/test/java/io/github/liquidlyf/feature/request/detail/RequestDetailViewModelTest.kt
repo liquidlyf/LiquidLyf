@@ -449,6 +449,16 @@ class RequestDetailViewModelTest {
     }
 
     @Test
+    fun `just posted offline, its page shows loading while the copy on the phone is written, not an error`() = runTest(dispatcher) {
+        requests.notOnPhone.value = setOf("r9")
+        network.isOnline.value = false
+        val vm = vm("r9", notice = PostNotice.WAITING_FOR_NETWORK.name)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.loading)
+        assertNull(vm.uiState.value.loadError)
+    }
+
+    @Test
     fun `a request the server doesn't have is not available, with no error`() = runTest(dispatcher) {
         val vm = vm("gone")
         advanceUntilIdle()

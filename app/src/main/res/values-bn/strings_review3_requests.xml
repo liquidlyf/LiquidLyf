@@ -171,6 +171,7 @@
     <string name="create_contact_else">অন্য কেউ</string>
     <string name="create_contact_else_hint">যেমন, হাসপাতালে থাকা কোনো আত্মীয়</string>
     <string name="create_error_me_contact">আপনার প্রোফাইলের নম্বরটি এখানে ব্যবহার করা যাচ্ছে না। \"অন্য কেউ\" বেছে নিন, অথবা প্রোফাইল এডিট করে ঠিক করুন।</string>
+    <string name="create_refused_later">ইন্টারনেট ফেরার পর আপনার অনুরোধটি পোস্ট করা যায়নি। আবার \"রক্তের অনুরোধ করুন\" দিয়ে চেষ্টা করুন।</string>
     <string name="create_contact_name">যোগাযোগের নাম</string>
     <string name="create_contact_phone">যোগাযোগের মোবাইল নম্বর</string>
     <string name="create_patient_name">রোগীর নাম (ঐচ্ছিক)</string>
@@ -203,6 +204,7 @@
     <string name="detail_contact_line">যোগাযোগ: %1$s</string>
     <string name="detail_contact_you">যোগাযোগ: %1$s (আপনি)</string>
     <string name="detail_offer_seen">%1$s আপনার সাড়া আর নম্বর দেখতে পাচ্ছেন।</string>
+    <string name="detail_offer_waiting">ইন্টারনেট সংযোগ ফিরলে আপনার সাড়া %1$s-এর কাছে পৌঁছাবে।</string>
     <string name="detail_no_offers_yet">এখনো কেউ সাড়া দেননি।</string>
     <string name="action_edit">এডিট করুন</string>
     <string name="detail_share_instead">শেয়ার করে সাহায্য করুন</string>
