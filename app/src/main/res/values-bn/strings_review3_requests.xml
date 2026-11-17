@@ -79,7 +79,7 @@
         <item quantity="other">%d জন সাড়া দিয়েছেন</item>
     </plurals>
     <string name="request_needed_by">%1$s দরকার</string>
-    <string name="request_needed_on">দরকার %1$s</string>
+    <string name="request_needed_on">দরকার: %1$s</string>
     <string name="offline_banner">আপনি অফলাইনে আছেন। সেভ করা তথ্য দেখানো হচ্ছে।</string>
     <string name="offline_banner_form">ইন্টারনেট সংযোগ নেই। সংযোগ ফিরলে আপনার অনুরোধ পোস্ট হবে।</string>
     <string name="home_urgent_near_you">যেসব অনুরোধে আপনি সাহায্য করতে পারেন</string>
@@ -93,7 +93,7 @@
     <string name="home_your_request">আপনার অনুরোধ</string>
     <string name="home_see_offers">সাড়াগুলো দেখুন</string>
     <string name="home_no_offers_yet">এখনো কেউ সাড়া দেননি</string>
-    <string name="home_become_donor_title">রক্তও দিতে চান?</string>
+    <string name="home_become_donor_title">আপনিও রক্ত দিতে চান?</string>
     <string name="home_become_donor_body">রক্তদাতার কয়েকটি প্রশ্নের উত্তর দিলে কাছাকাছি অ্যালার্ট পাবেন।</string>
     <string name="action_become_donor">রক্তদাতা হোন</string>
     <string name="home_not_ready_title">এখন রক্ত দিতে প্রস্তুত নন</string>
