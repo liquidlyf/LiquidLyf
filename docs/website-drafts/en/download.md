@@ -100,8 +100,9 @@ For developers: each release also has `SHA256SUMS.txt` and a build attestation
 
 ## Updates
 
-- When a new version is out, the app shows an **Update available** card on its home screen. Tap it to
-  get the new version.
+- When a new version is out, the app shows an **Update available** card on its home screen. Tap
+  **Get the update**: your browser opens the new version's page on GitHub. Download **LiquidLyf.apk**
+  there and install it as before.
 - If you use [Obtainium](https://obtainium.imranr.dev), it can install updates for you:
   [add LiquidLyf to Obtainium](obtainium://add/https://github.com/liquidlyf/LiquidLyf). If the link
   doesn't open Obtainium, open it yourself, tap **Add App**, paste
@@ -109,7 +110,10 @@ For developers: each release also has `SHA256SUMS.txt` and a build attestation
 
 Each update installs over the old version. You keep your account and settings.
 
-<!-- CHECK after Phase 9: the update card's exact label in the app (Phase 9.4, A), that the first release
+<!-- The card's labels are A's strings (1abaaad, 17 Nov 2026): update_available_title "Update available",
+     update_available_action "Get the update"; tapping it opens the release page in the browser.
+     CHECK after Phase 9: the card on a phone, and the installer's button for an update (Install or
+     Update) on Android 7–14; that the first release
      has SHA256SUMS.txt and the attestation (Phase 9.2), and Obtainium's link and button names on a phone
      (its wiki, 17 Nov 2026: "obtainium://add/<url>" opens Add App with the URL filled in). -->
 

@@ -89,12 +89,12 @@ it does with your data.
   your account with these checks.
 
 <!-- Daily checks: A32 item 4 = yes and D14 (the maintainer, 17 Nov 2026). Checked in A's code on 17 Nov
-     2026 (DailyCheck.kt and HospitalLists.kt, not yet committed): plain GETs of
-     github.com/liquidlyf/LiquidLyf/releases/latest/download/update.json and
-     liquidlyf.github.io/data/hospitals.json (only If-None-Match), on the shared OkHttp client, which adds
-     no headers; the sign-in and App Check tokens go only on the Worker's own calls (WorkerClient.kt). The
-     staged-rollout bucket is worked out on the phone. Re-check when the daily check is committed or
-     changes. -->
+     2026, re-checked after A committed it (8907784): one silent daily worker does plain GETs of
+     liquidlyf.github.io/data/hospitals.json (every build; only If-None-Match) and
+     github.com/liquidlyf/LiquidLyf/releases/latest/download/update.json (the published prod app only),
+     on the shared OkHttp client, which adds no headers; the sign-in and App Check tokens go only on the
+     Worker's own calls (WorkerClient.kt). The staged-rollout number is a random ID that stays on the
+     phone (never backed up or sent). Re-check whenever the daily check changes. -->
 
 <!-- v1.1: add when the features ship.
 - **Phone verification with Telegram:** if you choose to verify your number, Telegram shares your

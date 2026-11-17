@@ -96,7 +96,7 @@ home-screen icon. Run it after the logo or the tagline changes (it needs Chrome 
 2. **Resolve each `CHECK` note** (HTML comments; `build_site.py` lists them): App Check
    enforced (Phase 9), the PDPA 2026 rights and authority, the Terms' governing law, and, for the
    download page, each install step on a real phone (in English and Bangla), AppVerifier and Obtainium
-   on a phone, and the app's update card label (Phase 9.4).
+   on a phone, and the update card on a phone (its labels are in the app since 17 Nov 2026, Phase 9.4).
 3. **Legal review (C7):** Terms sections 9 (liability) and 11 (law), and the privacy policy's
    publisher, rights and data-transfer sections, by someone with legal training. Bangladesh's Personal
    Data Protection Act, 2026 applies.

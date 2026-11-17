@@ -99,8 +99,9 @@ io.github.liquidlyf
 
 ## আপডেট
 
-- নতুন ভার্সন বের হলে অ্যাপের হোম স্ক্রিনে আপডেটের একটা কার্ড দেখাবে। কার্ডটায় চাপলেই নতুন ভার্সন
-  ডাউনলোড করতে পারবেন।
+- নতুন ভার্সন বের হলে অ্যাপের হোম স্ক্রিনে **"নতুন আপডেট এসেছে"** (<span lang="en">Update available</span>)
+  কার্ড দেখাবে। **"আপডেট নিন"** (<span lang="en">Get the update</span>) চাপলে ব্রাউজারে GitHub-এ নতুন
+  ভার্সনের পেজ খুলবে। সেখান থেকে **LiquidLyf.apk** ডাউনলোড করে আগের মতোই ইনস্টল করুন।
 - [Obtainium](https://obtainium.imranr.dev) ব্যবহার করলে সেটাই আপডেট ইনস্টল করে দিতে পারে:
   [Obtainium-এ LiquidLyf যোগ করুন](obtainium://add/https://github.com/liquidlyf/LiquidLyf)। এই লিংকে চাপার
   পরও যদি Obtainium না খোলে, তাহলে নিজে Obtainium খুলুন, **<span lang="en">Add App</span>** চাপুন,
@@ -108,8 +109,10 @@ io.github.liquidlyf
 
 প্রতিটা আপডেট পুরোনো ভার্সনের ওপরেই ইনস্টল হয়। আপনার অ্যাকাউন্ট আর সেটিংস যেমন ছিল তেমনই থাকে।
 
-<!-- CHECK after Phase 9, as in the English page: once A builds the update card (Phase 9.4), quote its
-     Bangla label from values-bn/. Obtainium's labels stay in English: check on a phone whether Obtainium
+<!-- The card's Bangla labels are A's (values-bn/strings_review3_requests.xml, 1abaaad): "নতুন আপডেট
+     এসেছে" / "আপডেট নিন". This line changed after C19 to quote them: meaning check, then the
+     maintainer's review together with A's label pair (C21). If the labels change, change them here too.
+     CHECK after Phase 9, as in the English page. Obtainium's labels stay in English: check on a phone whether Obtainium
      shows them in Bangla too. -->
 
 ## গুরুত্বপূর্ণ কথা
