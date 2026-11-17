@@ -23,7 +23,7 @@ export const GEO_PATH = join(HERE, '..', '..', 'app', 'src', 'main', 'assets', '
 
 export const COLUMNS = ['id', 'name', 'nameBn', 'type', 'district', 'upazila', 'address', 'lat', 'lng', 'osmId',
   'hasBloodBank', 'source', 'verified', 'notes'];
-export const TYPES = ['GOVERNMENT', 'PRIVATE', 'NGO', 'BLOOD_BANK'];
+export const TYPES = ['GOVERNMENT', 'PRIVATE', 'NGO']; // hospitals only, no blood centres (B27)
 export const NAME_MAX = 120; // = Validators.HOSPITAL_NAME_MAX and the rules' hospitalName limit
 export const ADDRESS_MAX = 200; // = Validators.HOSPITAL_ADDRESS_MAX
 const ID = /^[a-z0-9-]{3,64}$/; // inside the rules' isId() ([A-Za-z0-9_-]{1,128})

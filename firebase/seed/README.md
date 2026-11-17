@@ -50,4 +50,4 @@ Rules for the rows:
 - **Map points come only from OpenStreetMap.** Copy `lat`/`lng` from the OSM feature named in `osmId`, never from Google Maps (its terms forbid it). A hospital that isn't in OSM gets no point (no "Open in Maps") until someone adds it to OSM.
 - **The list is ODbL 1.0** because of those points: "Hospital locations © OpenStreetMap contributors". The app's code stays AGPL.
 - **Check each name and address** against the hospital's own website or an official gov.bd page, and put that link in `source`. Only rows with `verified=yes` are published.
-- **No phone numbers**, and **no commercial blood banks**. Only licensed non-profit blood centres are listed.
+- **No phone numbers.** **Hospitals only:** no blood banks or blood centres, not even non-profit ones (the maintainer, 18 Nov 2026). `hasBloodBank` marks a hospital with its own blood bank.

@@ -87,6 +87,7 @@ describe('the checks catch mistakes', () => {
     ['a map point with no OSM source', [row({ osmId: '' })], 'must come from OpenStreetMap'],
     ['an osmId without a point', [row({ lat: '', lng: '' })], 'osmId is set'],
     ['an unknown type', [row({ type: 'CLINIC' })], 'type must be'],
+    ['a blood centre (hospitals only, B27)', [row({ type: 'BLOOD_BANK' })], 'type must be'],
     ['a verified row without a source', [row({ source: '' })], 'needs the source'],
     ['a source that is not one web link', [row({ source: 'dghs website' })], 'one web link'],
     ['two links in one source', [row({ source: 'https://a.gov.bd/ https://b.gov.bd/' })], 'one web link'],
