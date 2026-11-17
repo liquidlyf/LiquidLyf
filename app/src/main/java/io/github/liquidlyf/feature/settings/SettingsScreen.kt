@@ -41,7 +41,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -300,7 +302,8 @@ private fun SettingsTopBar(onBack: () -> Unit, onSignOut: () -> Unit) {
         return
     }
     Surface(color = MaterialTheme.colorScheme.surface) {
-        Column(Modifier.fillMaxWidth().windowInsetsPadding(TopAppBarDefaults.windowInsets)) {
+        // TalkBack reads the title first, then Back and Sign out (D's re-audit: it read the buttons first).
+        Column(Modifier.fillMaxWidth().windowInsetsPadding(TopAppBarDefaults.windowInsets).semantics { isTraversalGroup = true }) {
             Row(
                 Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = Spacing.xxs),
                 verticalAlignment = Alignment.CenterVertically,
@@ -316,7 +319,10 @@ private fun SettingsTopBar(onBack: () -> Unit, onSignOut: () -> Unit) {
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .padding(start = screenGutter(), end = screenGutter(), bottom = Spacing.sm)
-                    .semantics { heading() },
+                    .semantics {
+                        heading()
+                        traversalIndex = -1f
+                    },
             )
         }
     }
