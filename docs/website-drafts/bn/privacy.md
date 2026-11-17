@@ -98,8 +98,8 @@ LiquidLyf একটা ওপেন সোর্স প্রজেক্ট, �
   এখানেও GitHub আপনার ফোনের IP ঠিকানা দেখে। এ ছাড়া এই চেকে অ্যাপ আপনার বা আপনার অ্যাকাউন্টের কোনো তথ্য
   পাঠায় না।
 
-<!-- The daily checks line (17 Nov 2026) is new: meaning check and the maintainer's review (C20) before
-     it goes live. -->
+<!-- The daily checks line (17 Nov 2026): meaning-checked (3 blind rounds) and reviewed by the maintainer
+     (C20, 17 Nov 2026, OK as written). It goes live with the hospital list's website build. -->
 
 <!-- v1.1: add when the features ship (Telegram phone verification, approximate location). -->
 
