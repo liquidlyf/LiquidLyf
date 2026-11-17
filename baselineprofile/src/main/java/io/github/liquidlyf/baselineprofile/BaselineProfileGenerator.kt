@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Direction
+import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import org.junit.Rule
@@ -61,14 +62,31 @@ class BaselineProfileGenerator {
     }
 
     private fun MacrobenchmarkScope.scrollFeed() {
-        val list = device.wait(Until.findObject(By.scrollable(true)), LONG) ?: return
-        list.setGestureMargin(device.displayWidth / 5)
-        repeat(2) {
-            list.fling(Direction.DOWN)
+        fling(Direction.DOWN)
+        fling(Direction.DOWN)
+        fling(Direction.UP)
+    }
+
+    /**
+     * One fling on the feed: the tallest scrollable (Requests also has a tab row). The list is found
+     * again for every fling, because it can be replaced while it loads or while the screen changes:
+     * CI's first run (18 Nov 2026) flung a list that had just gone (StaleObjectException).
+     */
+    private fun MacrobenchmarkScope.fling(direction: Direction) {
+        repeat(STALE_TRIES) {
             device.waitForIdle()
+            try {
+                val list = device.wait(Until.findObjects(By.scrollable(true)), LONG)
+                    ?.maxByOrNull { it.visibleBounds.height() } ?: return
+                list.setGestureMargin(device.displayWidth / 5)
+                list.fling(direction)
+                device.waitForIdle()
+                return
+            } catch (_: StaleObjectException) {
+                // Replaced under us: look for it again.
+            }
         }
-        list.fling(Direction.UP)
-        device.waitForIdle()
+        error("the feed kept changing under the fling")
     }
 
     /** The bottom bar's item: the lowest node with that text. */
@@ -94,5 +112,8 @@ class BaselineProfileGenerator {
     private companion object {
         /** CI's emulator and the Firebase emulators share a 4-core runner: be patient. */
         const val LONG = 30_000L
+
+        /** How often a fling looks for the feed again when it was replaced. */
+        const val STALE_TRIES = 3
     }
 }
