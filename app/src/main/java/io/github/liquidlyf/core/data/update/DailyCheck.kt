@@ -21,9 +21,10 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 /**
- * The once-a-day background check (Phase 9.4, plan D14): the hospital list from the website now,
- * and the app's own `update.json` once A32 item 4 is decided. Silent: no notification, no prompt,
- * and the screens never wait for it.
+ * The once-a-day background check (Phase 9.4): the hospital list from our website (plan D14) and
+ * the app's own `update.json` from GitHub (A32-4). Silent: no notification, no prompt, and the
+ * screens never wait for it. Each check keeps its own "last answered" time, so a retry only
+ * repeats the one that failed.
  *
  * It runs from two places, both waiting for any network:
  * - every day (WorkManager's periodic work);
@@ -69,17 +70,19 @@ object DailyChecks {
 @InstallIn(SingletonComponent::class)
 interface DailyCheckEntryPoint {
     fun hospitals(): HospitalListRefresher
+
+    fun updates(): AppUpdateChecker
 }
 
 class DailyCheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val graph = EntryPointAccessors.fromApplication(applicationContext, DailyCheckEntryPoint::class.java)
         val after = Duration.ofHours(inputData.getLong(DailyChecks.CHECK_AFTER_HOURS, DailyChecks.ON_OPEN_AFTER_HOURS))
-        return when (graph.hospitals().refreshIfDue(after)) {
-            // Offline in practice, though the network constraint was met: a couple of retries with
-            // WorkManager's backoff, then wait for the next open or the next day.
-            HospitalRefresh.Failed -> if (runAttemptCount < 2) Result.retry() else Result.success()
-            else -> Result.success()
-        }
+        val hospitals = graph.hospitals().refreshIfDue(after)
+        val updates = graph.updates().checkIfDue(after)
+        // Offline in practice, though the network constraint was met: a couple of retries with
+        // WorkManager's backoff, then wait for the next open or the next day.
+        val failed = hospitals == HospitalRefresh.Failed || updates == UpdateCheck.Failed
+        return if (failed && runAttemptCount < 2) Result.retry() else Result.success()
     }
 }
