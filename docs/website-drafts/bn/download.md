@@ -4,13 +4,13 @@ lang: bn
 permalink: /bn/download
 description: রক্তদাতা খোঁজার ফ্রি অ্যাপ LiquidLyf ডাউনলোড করুন, আর ধাপে ধাপে আপনার অ্যান্ড্রয়েড ফোনে ইনস্টল করুন।
 alternate: /download
-status: draft, meaning-checked, waits for the maintainer's review (C19)
+status: draft, meaning-checked, reviewed by the maintainer (C19, 17 Nov 2026)
 ---
 
 <!-- DRAFT for Phase 10.3, published only with build_site.py --released. Rewritten 17 Nov 2026 from the
      English draft (`en/download.md`) in the C13 style (everyday Bangla, as on the five reviewed pages).
      Not part of C8: its own meaning check (17 Nov 2026, blind back-translations, 9 lines made clearer)
-     is done, and the maintainer's review (C19) comes before --released. App labels come from `values-bn/` ("Google দিয়ে চালিয়ে যান"). The phone's own buttons
+     is done, and the maintainer reviewed it (C19, 17 Nov 2026: all 32 lines OK). App labels come from `values-bn/` ("Google দিয়ে চালিয়ে যান"). The phone's own buttons
      (browser, Android, Play Protect) are shown in Bangla with the English in brackets, because many
      phones in Bangladesh are set to English: check both on a real phone (one set to Bangla, one to
      English) and take the screenshots in Bangla. Screenshots are on hold until the UI/UX review's fixes

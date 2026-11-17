@@ -21,7 +21,7 @@ download button. The request share page (`/r/`, v1.1) comes later.
 checkers translated each Bangla line back into English without seeing the English, and the lines that
 didn't match were fixed. Give every new or changed Bangla line the same check. The v1.0 download page
 (`bn/download.md`) wasn't part of C8. It had its own meaning check on 17 Nov 2026 (C19: 32 lines, 9
-made clearer, every meaning matched) and waits for the maintainer's review before `--released`.
+made clearer, every meaning matched), and the maintainer reviewed it the same day (all 32 lines OK).
 
 **The notice stays (the maintainer, 16 Nov 2026):** every Bangla page still says the English version
 applies if the two differ (`bn_reviewed: false` in [site/_config.yml](site/_config.yml)), with its
@@ -101,7 +101,7 @@ home-screen icon. Run it after the logo or the tagline changes (it needs Chrome 
    publisher, rights and data-transfer sections, by someone with legal training. Bangladesh's Personal
    Data Protection Act, 2026 applies.
 4. **Native Bangla review (C8):** done for the five pages on 16 Nov 2026. The v1.0 download page had its
-   meaning check on 17 Nov 2026 and waits for the maintainer's review (C19). Any Bangla line added or
+   meaning check and the maintainer's review on 17 Nov 2026 (C19). Any Bangla line added or
    changed later needs both.
 5. **v1.1 features** (Telegram phone verification, approximate location) are in a hidden comment in the
    English privacy policy. Add them, in both languages, only when they ship.
