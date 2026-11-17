@@ -435,3 +435,78 @@ describe('unknown blood group (P1): absent or null, never a made-up value', () =
     await assertSucceeds(createRequest(as('zed'), 'zed', 'r1'));
   });
 });
+
+describe('requester profile (D1): no donor details until "Become a donor"', () => {
+  /** The short setup's profile: name, phone and area. No group, gender, birth year, weight or last donation. */
+  const requester = (make, uid, o = {}) => {
+    const u = make(uid, { available: false });
+    for (const k of ['bloodGroup', 'gender', 'birthYear', 'weightOk']) delete u[k];
+    return { ...u, ...o };
+  };
+  /** "Become a donor": the three donor details, plus availability (and listing, if chosen). */
+  const details = { gender: 'FEMALE', birthYear: 1998, weightOk: true };
+
+  test('the short setup creates a profile, with the donor fields absent or null (Kotlin DTOs)', async () => {
+    await assertSucceeds(profileSetup(as('zed'), 'zed', requester(newUserDoc, 'zed')));
+    await assertSucceeds(profileSetup(as('yan'), 'yan', requester(newUserDoc, 'yan',
+      { bloodGroup: null, gender: null, birthYear: null, weightOk: null, lastDonationAt: null, consentAt: null })));
+    await assertSucceeds(profileSetup(as('xia'), 'xia', requester(newUserDoc, 'xia', { bloodGroup: 'B_POS' })));
+  });
+
+  test('the donor details come all three together, or not at all', async () => {
+    const db = as('zed');
+    await assertFails(profileSetup(db, 'zed', requester(newUserDoc, 'zed', { gender: 'MALE' })));
+    await assertFails(profileSetup(db, 'zed', requester(newUserDoc, 'zed', { birthYear: 1995 })));
+    await assertFails(profileSetup(db, 'zed', requester(newUserDoc, 'zed', { gender: 'MALE', birthYear: 1995 })));
+    await assertFails(profileSetup(db, 'zed', requester(newUserDoc, 'zed', { weightOk: true })));
+  });
+
+  test('without them: never listed, never available, no last donation', async () => {
+    const db = as('zed');
+    const listed = requester(newUserDoc, 'zed', { bloodGroup: 'B_POS', showInDonorSearch: true, consentAt: serverTimestamp() });
+    await assertFails(profileSetup(db, 'zed', listed, donorCard({ ...userDoc('zed'), available: false })));
+    await assertFails(profileSetup(db, 'zed', requester(newUserDoc, 'zed', { available: true })));
+    await assertFails(profileSetup(db, 'zed', requester(newUserDoc, 'zed', { lastDonationAt: ts(-40 * DAY) })));
+  });
+
+  test('a stored requester can\'t switch on availability or write a donor card without the details', async () => {
+    const stored = requester(userDoc, 'yan', { bloodGroup: 'B_POS' });
+    await seedUsers({ yan: stored });
+    const db = as('yan');
+    await assertFails(updateProfile(db, 'yan', { available: true }));
+    await assertFails(setDoc(doc(db, 'donors/yan'), donorCard(stored)));
+    const b = writeBatch(db);
+    b.update(doc(db, 'users', 'yan'), { showInDonorSearch: true, consentAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    b.set(doc(db, 'donors', 'yan'), donorCard(stored));
+    await assertFails(b.commit());
+  });
+
+  test('"Become a donor" adds the details, availability, listing and the card in one batch', async () => {
+    const stored = requester(userDoc, 'yan', { bloodGroup: 'B_POS' });
+    await seedUsers({ yan: stored, xia: requester(userDoc, 'xia') });
+    const db = as('yan');
+    const b = writeBatch(db);
+    b.update(doc(db, 'users', 'yan'), {
+      ...details, available: true, showInDonorSearch: true, consentAt: serverTimestamp(), updatedAt: serverTimestamp(),
+    });
+    b.set(doc(db, 'donors', 'yan'), donorCard({ ...stored, available: true }));
+    await assertSucceeds(b.commit());
+    // Unlisted is fine too, and the group can come in the same edit. The age rule still holds.
+    await assertFails(updateProfile(as('xia'), 'xia', { ...details, birthYear: new Date().getFullYear() - 10, bloodGroup: 'O_POS' }));
+    await assertSucceeds(updateProfile(as('xia'), 'xia', { ...details, available: true, bloodGroup: 'O_POS' }));
+  });
+
+  test('a listed donor can\'t drop the details', async () => {
+    await assertFails(updateProfile(as('bob'), 'bob', { gender: deleteField(), birthYear: deleteField(), weightOk: deleteField() }));
+  });
+
+  test('offering needs the donor details, even with a known group; posting a request doesn\'t', async () => {
+    const zed = requester(userDoc, 'zed', { bloodGroup: 'B_POS' });
+    await seedUsers({ zed });
+    await seedRequest('r1', 'alice');
+    await assertFails(offer(as('zed'), 'zed', 'r1', 'alice', zed));
+    await assertSucceeds(createRequest(as('zed'), 'zed', 'r2'));
+    await seedUsers({ zed: { ...zed, ...details, available: true } });
+    await assertSucceeds(offer(as('zed'), 'zed', 'r1', 'alice', zed));
+  });
+});

@@ -64,6 +64,8 @@ General:
 1. **Profile setup:**
    - `users/{uid}`: all required fields, with `donationCount: 0`, `verifiedDonations: 0`. Email = the auth email. No `phoneVerified`, no `role`;
    - **`bloodGroup` may be unknown (P1)**. Leave the field out, or set it to `null`; never use a made-up value such as `"UNKNOWN"`. Without a group you can post requests, but you can't be listed (`showInDonorSearch` needs a group) and you can't offer. Adding the group later is a normal profile edit;
+   - **the donor details are `gender`, `birthYear` and `weightOk`: all three or none (D1)**. A requester's short setup writes none of them (absent or `null`), and then `available: false`, `showInDonorSearch: false` and no `lastDonationAt`. Such a profile can post requests but is never listed and can't offer;
+   - **"Become a donor"** is a normal profile edit that adds all three, with `available` (and `bloodGroup` if it's new). If the person also chooses to be listed, the same batch sets `showInDonorSearch: true` + `consentAt` and creates `donors/{uid}`. A listed donor can't drop the details;
    - `userStats/{uid}` = `{openRequests: 0, totalRequests: 0}` (it must exist before the first request);
    - if `showInDonorSearch`: `consentAt` on the profile, plus `donors/{uid}`.
 2. **Profile edit:** `users/{uid}`. If listed and a mirrored field changes (`bloodGroup`, area codes, `available`, `lastDonationAt`, counters, `lastActiveAt`), update `donors/{uid}` in the same batch with equal values.
@@ -149,5 +151,6 @@ Decisions made while turning doc 07's draft into tested rules:
 - **Donation counters live on `users`** (mirrored to the card). They move by +1/−1 only with a donation doc created or deleted in the same batch, so `verifiedDonations` can't be faked.
 - **Removed:** the `devices`, `hiddenRequests` and `blocked` subcollections (replaced by topics and the `users` arrays) and `config/public` (Remote Config).
 - **`acceptedGroups` is checked against the compatibility table** in the rules (`backend/shared/blood-compatibility.json`, needs medical review). This means a request can never list an incompatible group.
-- **A new phone number resets `phoneVerified`.** The account `birthYear` must make the user 18–100.
+- **A new phone number resets `phoneVerified`.** The account `birthYear`, when given, must make the user 18–100.
+- **Requesters give no donor details (D1, 17 Nov 2026).** Without `gender`, `birthYear` and `weightOk`, the rules hold `showInDonorSearch` and `available` at `false`, so the person has no donor card (never in Find donors, never asked to donate). The app subscribes to the donor alert topics only while listed and available (`PushTopicManager`), so they are never alerted either. An offer needs the details too.
 - **Left to the Worker** (service account, bypasses the rules): `fanoutTier`, `nextTierAt`, `EXPIRED`, and `users.rapidResponder` (the Phase 6 badge: an offer within 15 minutes of the post; the app can't create, change or remove it, so profile edits must stay `update()`s, never a whole-document `set()`). When it expires a request it must also do `userStats.openRequests −1` in the same commit. A REMOVED request keeps counting toward its owner's limit until an admin cancels it (that batch gives the slot back) or the owner deletes their account (B15); a restore makes it OPEN again, still counted.
