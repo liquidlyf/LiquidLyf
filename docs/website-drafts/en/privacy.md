@@ -99,9 +99,11 @@ it does with your data.
      Accept-Encoding: gzip, User-Agent "okhttp/5.5.1" (the library's version, not LiquidLyf's); the
      hospital request adds If-None-Match with GitHub Pages' ETag (the same for every phone). No cookies,
      app version, account or rollout ID. Re-check whenever the daily check changes.
-     CHECK (A, when the in-app update download is built; "update a", 17 Nov 2026): what that download
-     sends. On the same OkHttp client, nothing more. Android's DownloadManager would add a User-Agent
-     with the Android version and phone model: then say so here. -->
+     The in-app update download ("update a", 17 Nov 2026), confirmed by A the same day: the app's own
+     OkHttp client (not Android's DownloadManager, which would add the Android version and phone
+     model), so the same headers and no IDs; the file comes from the release's download link, which
+     redirects to GitHub's file host (release-assets.githubusercontent.com). If that ever changes,
+     say so here. -->
 
 <!-- v1.1: add when the features ship.
 - **Phone verification with Telegram:** if you choose to verify your number, Telegram shares your
