@@ -281,12 +281,12 @@
     <string name="update_available_body" tools:ignore="UnusedResources">LiquidLyf %1$s ইনস্টল করার জন্য তৈরি। আপনার অ্যাকাউন্ট আর সেটিংস যেমন আছে তেমনই থাকবে।</string>
     <string name="update_not_now" tools:ignore="UnusedResources">এখন না</string>
     <string name="update_download_size" tools:ignore="UnusedResources">ডাউনলোডের আকার: প্রায় %1$s</string>
-    <string name="update_data_note" tools:ignore="UnusedResources">মোবাইল ডেটার খরচ বাঁচাতে Wi-Fi ব্যবহার করুন।</string>
+    <string name="update_data_note" tools:ignore="UnusedResources">Wi-Fi থাকলে ব্যবহার করুন, মোবাইল ডেটা বাঁচবে।</string>
     <string name="update_downloading" tools:ignore="UnusedResources">আপডেট ডাউনলোড হচ্ছে… %1$d%%</string>
     <string name="update_allow_title" tools:ignore="UnusedResources">LiquidLyf-কে আপডেট ইনস্টল করার অনুমতি দিন</string>
     <string name="update_allow_body" tools:ignore="UnusedResources">Android এটা একবারই জিজ্ঞেস করে। পরের স্ক্রিনে LiquidLyf-এর সুইচটি চালু করুন, তারপর এখানে ফিরে আসুন।</string>
     <string name="update_allow_action" tools:ignore="UnusedResources">সেটিংস খুলুন</string>
-    <string name="update_error_wrong_file" tools:ignore="UnusedResources">ডাউনলোড করা ফাইলটি রিলিজের সঙ্গে মেলেনি, তাই মুছে ফেলা হয়েছে। আবার চেষ্টা করুন, অথবা ব্রাউজারে ডাউনলোড করুন।</string>
+    <string name="update_error_wrong_file" tools:ignore="UnusedResources">ডাউনলোড করা ফাইলটি ঠিক ছিল না, তাই মুছে ফেলা হয়েছে। আবার চেষ্টা করুন, অথবা ব্রাউজারে ডাউনলোড করুন।</string>
     <string name="update_error_network" tools:ignore="UnusedResources">ডাউনলোড থেমে গেছে। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।</string>
     <string name="update_error_install" tools:ignore="UnusedResources">আপডেট ইনস্টল হয়নি। আবার চেষ্টা করতে পারেন।</string>
     <string name="update_in_browser" tools:ignore="UnusedResources">ব্রাউজারে ডাউনলোড করুন</string>
