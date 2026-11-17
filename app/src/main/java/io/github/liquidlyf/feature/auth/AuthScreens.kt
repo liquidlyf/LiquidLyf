@@ -71,6 +71,7 @@ import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.StackedLogo
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.designsystem.currentAppLocale
@@ -211,7 +212,21 @@ fun SignInScreen(
     onLanguageChange: (AppLanguage) -> Unit = {},
 ) {
     // Before sign-in, Settings → Language can't be reached: the switch is in the top bar.
-    AuthLayout(title = stringResource(R.string.title_sign_in), onBack = null, actions = { LanguageToggle(onLanguageChange) }) {
+    // N4 (BRAND-01): the big stacked logo on top, and "Sign in" pinned above the keyboard (UI-05).
+    AuthLayout(
+        title = stringResource(R.string.title_sign_in),
+        onBack = null,
+        actions = { LanguageToggle(onLanguageChange) },
+        bottomBar = {
+            LLBottomBar(
+                primaryText = stringResource(R.string.action_sign_in),
+                onPrimary = onSignIn,
+                loading = state.loading,
+                loadingText = stringResource(R.string.action_signing_in),
+            )
+        },
+    ) {
+        StackedLogo(Modifier.align(Alignment.CenterHorizontally).padding(bottom = Spacing.xs))
         if (onContinueWithGoogle != null) GoogleOption(onContinueWithGoogle, enabled = !state.loading)
         LLTextField(
             value = state.email,
@@ -235,12 +250,6 @@ fun SignInScreen(
         )
         EdgeTextButton(stringResource(R.string.action_forgot_password), dropUnlessResumed(block = onForgotPassword), enabled = !state.loading)
         FormError(state.formError)
-        LLPrimaryButton(
-            text = stringResource(R.string.action_sign_in),
-            onClick = onSignIn,
-            loading = state.loading,
-            loadingText = stringResource(R.string.action_signing_in),
-        )
         // A flow row: with large text the button goes under the question instead of being squeezed.
         FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.sign_in_no_account), style = MaterialTheme.typography.bodyMedium)

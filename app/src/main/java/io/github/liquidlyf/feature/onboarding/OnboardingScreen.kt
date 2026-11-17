@@ -46,6 +46,7 @@ import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.LARGE_FONT_SCALE
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
+import io.github.liquidlyf.core.designsystem.components.StackedLogo
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.feature.settings.LanguageSwitch
 import kotlinx.coroutines.launch
@@ -111,7 +112,8 @@ fun OnboardingScreen(onFinished: () -> Unit, onLanguageChange: (AppLanguage) -> 
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Box(
+                        // BRAND-01: the welcome page names the app, with the big stacked logo.
+                        if (index == 0) StackedLogo() else Box(
                             Modifier
                                 .size(if (largeText) 64.dp else 112.dp)
                                 .clip(CircleShape)
