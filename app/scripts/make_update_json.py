@@ -34,6 +34,7 @@ def make(apk: Path, version_code: int, version_name: str, tag: str, rollout: int
         "notesUrl": f"{RELEASES}/tag/{tag}",
         "rolloutPercent": rollout,
         "minSupportedVersionCode": min_supported,
+        "apkSizeBytes": apk.stat().st_size,
     }
 
 

@@ -170,4 +170,13 @@ object UpdateModule {
         clock = clock,
         enabled = BuildConfig.FLAVOR == "prod",
     )
+
+    /** In the cache: the APK is needed only until Android has installed it. */
+    @Provides
+    @Singleton
+    fun downloader(@ApplicationContext context: Context, http: OkHttpClient): ApkDownloader =
+        ApkDownloader(http, File(context.cacheDir, "update-apk"))
+
+    @Provides
+    fun installer(@ApplicationContext context: Context): ApkInstaller = ApkInstaller(context)
 }

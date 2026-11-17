@@ -16,7 +16,7 @@ import java.security.MessageDigest
  *   "apkUrl": "https://github.com/liquidlyf/LiquidLyf/releases/download/v1.0.0/LiquidLyf.apk",
  *   "sha256": "<64 hex digits of LiquidLyf.apk>",
  *   "notesUrl": "https://github.com/liquidlyf/LiquidLyf/releases/tag/v1.0.0",
- *   "rolloutPercent": 100, "minSupportedVersionCode": 1 }
+ *   "rolloutPercent": 100, "minSupportedVersionCode": 1, "apkSizeBytes": 4456291 }
  * ```
  */
 @Serializable
@@ -33,6 +33,8 @@ data class UpdateInfo(
     val rolloutPercent: Int = 100,
     /** Older installed versions must update: they get a blocking "Please update" screen. */
     val minSupportedVersionCode: Int = 0,
+    /** The APK's size, shown before the in-app download ("about 4.5 MB"). Older files lack it. */
+    val apkSizeBytes: Long? = null,
 )
 
 /** What the app should show for an [UpdateInfo]. */
@@ -54,13 +56,17 @@ object AppUpdates {
     private val SHA256 = Regex("[0-9a-f]{64}")
     private val JSON = Json { ignoreUnknownKeys = true }
 
+    /** Ours is about 4.5 MB; anything near this is a mistake, and the download refuses more. */
+    const val MAX_APK_BYTES = 100L * 1024 * 1024
+
     /** The downloaded file, or null if it isn't a well-formed update.json for LiquidLyf. */
     fun parse(text: String): UpdateInfo? =
         runCatching { JSON.decodeFromString(UpdateInfo.serializer(), text) }.getOrNull()?.takeIf { it.isValid() }
 
     private fun UpdateInfo.isValid(): Boolean =
         versionCode > 0 && versionName.isNotBlank() && rolloutPercent in 0..100 && minSupportedVersionCode >= 0 &&
-            SHA256.matches(sha256) && apkUrl.startsWith(RELEASES) && apkUrl.endsWith(".apk") && notesUrl.startsWith(RELEASES)
+            SHA256.matches(sha256) && apkUrl.startsWith(RELEASES) && apkUrl.endsWith(".apk") && notesUrl.startsWith(RELEASES) &&
+            (apkSizeBytes == null || apkSizeBytes in 1..MAX_APK_BYTES)
 
     /**
      * [installed] is this build's `versionCode`. [forceBelowVersionCode] is the emergency switch

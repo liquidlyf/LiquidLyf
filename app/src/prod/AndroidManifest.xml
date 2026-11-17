@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The published GitHub build only ("update a", 17 Nov 2026): it downloads its own update and
+    hands it to Android's installer, which always asks the person first (ApkInstaller). demo and
+    dev builds can't, and a Play build must leave this out (Play forbids self-updates).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <application>
+        <receiver
+            android:name="io.github.liquidlyf.core.data.update.ApkInstallReceiver"
+            android:exported="false" />
+    </application>
+</manifest>
