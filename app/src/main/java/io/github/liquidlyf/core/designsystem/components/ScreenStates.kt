@@ -185,11 +185,12 @@ fun ErrorState(
     )
 }
 
-/** [ErrorState] for an [AppError]; offline errors get the no-Wi-Fi icon. */
+/** [ErrorState] for an [AppError]; offline errors get the no-Wi-Fi icon. [title] says what didn't load. */
 @Composable
-fun ErrorState(error: AppError, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+fun ErrorState(error: AppError, onRetry: () -> Unit, modifier: Modifier = Modifier, title: String = stringResource(R.string.state_error_title)) {
     ErrorState(
         onRetry = onRetry,
+        title = title,
         body = stringResource(error.messageRes),
         icon = if (error == AppError.Network) LLIcons.WifiOff else LLIcons.Error,
         modifier = modifier,

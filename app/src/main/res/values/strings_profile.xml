@@ -19,6 +19,8 @@
         <item quantity="one">Up to %1$d life helped</item>
         <item quantity="other">Up to %1$d lives helped</item>
     </plurals>
+    <!-- COPY-04: before the first donation ("Up to 0 lives helped" read badly). -->
+    <string name="profile_impact_first">Your first donation can help up to 3 people.</string>
     <string name="profile_impact_lives_info">One whole-blood donation can help up to 3 people, so this is the most it could be.</string>
 
     <!-- Badges -->

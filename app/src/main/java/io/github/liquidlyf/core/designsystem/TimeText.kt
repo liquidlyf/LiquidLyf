@@ -23,17 +23,31 @@ fun rememberNow(periodMillis: Long = 60_000): State<Instant> = produceState(Inst
     }
 }
 
-/** "in 3 h", "2 days ago", "now". */
+/** "in 3 h", "2 days ago", "now". [long]: "in 3 hours", for a page with room (COPY-02). */
 @Composable
-fun relativeTimeText(target: Instant, now: Instant): String {
+fun relativeTimeText(target: Instant, now: Instant, long: Boolean = false): String {
     val span = RelativeTime.between(now, target)
     val n = span.count.toInt()
     return when (span.unit) {
         RelativeSpan.Unit.NOW -> stringResource(R.string.time_now)
         RelativeSpan.Unit.MINUTES ->
-            pluralStringResource(if (span.future) R.plurals.time_in_minutes else R.plurals.time_minutes_ago, n, n)
+            pluralStringResource(
+                when {
+                    !span.future -> R.plurals.time_minutes_ago
+                    long -> R.plurals.time_in_minutes_long
+                    else -> R.plurals.time_in_minutes
+                },
+                n, n,
+            )
         RelativeSpan.Unit.HOURS ->
-            pluralStringResource(if (span.future) R.plurals.time_in_hours else R.plurals.time_hours_ago, n, n)
+            pluralStringResource(
+                when {
+                    !span.future -> R.plurals.time_hours_ago
+                    long -> R.plurals.time_in_hours_long
+                    else -> R.plurals.time_in_hours
+                },
+                n, n,
+            )
         RelativeSpan.Unit.DAYS ->
             pluralStringResource(if (span.future) R.plurals.time_in_days else R.plurals.time_days_ago, n, n)
     }

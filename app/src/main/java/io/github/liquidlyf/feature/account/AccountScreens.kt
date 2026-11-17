@@ -148,7 +148,11 @@ fun DeletingAccountRoute(viewModel: DeletingAccountViewModel = hiltViewModel()) 
             verticalArrangement = Arrangement.spacedBy(Spacing.md, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(stringResource(R.string.deleting_title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+            Text(
+                stringResource(if (state.error != null) R.string.deleting_failed_title else R.string.deleting_title),
+                style = MaterialTheme.typography.headlineSmall,
+                textAlign = TextAlign.Center,
+            )
             if (state.running) {
                 CircularProgressIndicator()
                 Text(stringResource(state.step?.labelRes ?: R.string.deleting_step_offers), style = MaterialTheme.typography.bodyMedium)

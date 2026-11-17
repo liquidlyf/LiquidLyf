@@ -279,7 +279,10 @@ private fun ImpactCard(state: ProfileUiState) {
                 Stat(i.verifiedDonations, R.string.profile_impact_verified, Modifier.weight(1f))
                 Stat(i.requestsHelped, R.string.profile_impact_requests, Modifier.weight(1f))
             }
-            Text(pluralStringResource(R.plurals.profile_impact_lives, i.livesHelped, i.livesHelped), style = MaterialTheme.typography.titleSmall)
+            Text(
+                if (i.livesHelped == 0) stringResource(R.string.profile_impact_first) else pluralStringResource(R.plurals.profile_impact_lives, i.livesHelped, i.livesHelped),
+                style = MaterialTheme.typography.titleSmall,
+            )
             Text(stringResource(R.string.profile_impact_lives_info), style = MaterialTheme.typography.bodySmall)
         }
     }

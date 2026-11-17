@@ -59,7 +59,7 @@
     </plurals>
     <string name="moderation_flagged">Mentions money</string>
     <string name="moderation_reporter_offered">The reporter offered on it</string>
-    <string name="moderation_ban_hint">To ban this person, run revokeAndBan.mjs from backend/admin-scripts.</string>
+    <string name="moderation_ban_hint">Banning someone is done outside the app, by the project maintainer.</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_open_request">Open request</string>
     <string name="action_dismiss">Dismiss</string>

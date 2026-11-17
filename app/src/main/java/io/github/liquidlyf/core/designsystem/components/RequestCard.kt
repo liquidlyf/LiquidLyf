@@ -26,6 +26,7 @@ import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.relativeTimeText
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.RequestStatus
+import io.github.liquidlyf.core.model.Urgency
 import java.time.Instant
 
 /**
@@ -62,7 +63,15 @@ fun RequestCard(
                 IconLine(LLIcons.Hospital, request.hospitalName)
                 IconLine(LLIcons.Location, placeText)
                 // A closed request needs nothing any more: its date, not "Needed in 5 h".
-                IconLine(LLIcons.Schedule, if (request.status == RequestStatus.OPEN) neededByText(request.neededBy, now) else dateTimeText(request.neededBy))
+                // A planned request shows its date, not "Needed in 47 h" (COPY-04).
+                IconLine(
+                    LLIcons.Schedule,
+                    when {
+                        request.status != RequestStatus.OPEN -> dateTimeText(request.neededBy)
+                        request.urgency == Urgency.PLANNED -> stringResource(R.string.request_needed_on, dateTimeText(request.neededBy))
+                        else -> neededByText(request.neededBy, now)
+                    },
+                )
                 val extras = listOfNotNull(
                     request.condition?.let { stringResource(it.labelRes) },
                     request.liveOffers.takeIf { it > 0 }?.let {
@@ -86,10 +95,10 @@ fun RequestCard(
 @Composable
 fun unitsText(units: Int, component: String): String = pluralStringResource(R.plurals.request_units, units, units, component)
 
-/** "Needed in 3 h" / "Needed 2 h ago". */
+/** "Needed in 3 h" / "Needed 2 h ago"; [long]: "Needed in 3 hours". */
 @Composable
-fun neededByText(neededBy: Instant, now: Instant): String =
-    stringResource(R.string.request_needed_by, relativeTimeText(neededBy, now))
+fun neededByText(neededBy: Instant, now: Instant, long: Boolean = false): String =
+    stringResource(R.string.request_needed_by, relativeTimeText(neededBy, now, long))
 
 /**
  * A small icon and its text. The text wraps as far as it needs: with 200% text even an area like

@@ -15,6 +15,15 @@
         <item quantity="one">in %d day</item>
         <item quantity="other">in %d days</item>
     </plurals>
+    <!-- COPY-02: the long form, for the request page (cards keep "in 4 h"). -->
+    <plurals name="time_in_minutes_long">
+        <item quantity="one">in %d minute</item>
+        <item quantity="other">in %d minutes</item>
+    </plurals>
+    <plurals name="time_in_hours_long">
+        <item quantity="one">in %d hour</item>
+        <item quantity="other">in %d hours</item>
+    </plurals>
     <plurals name="time_minutes_ago">
         <item quantity="one">%d min ago</item>
         <item quantity="other">%d min ago</item>
@@ -52,12 +61,14 @@
         <item quantity="other">%d offers</item>
     </plurals>
     <string name="request_needed_by">Needed %1$s</string>
+    <!-- COPY-04: a planned request, by its date ("Needed on 20 Nov 2026, 10:00 AM"). -->
+    <string name="request_needed_on">Needed on %1$s</string>
 
     <!-- Create request -->
     <string name="create_step">Step %1$d of %2$d</string>
     <string name="action_post_request">Post request</string>
     <string name="action_posting">Posting…</string>
-    <string name="create_limit_title">You have the most open requests allowed</string>
+    <string name="create_limit_title">You\'ve reached your limit of open requests</string>
     <plurals name="create_limit_body">
         <item quantity="one">You can have %1$d open request at a time. Close it when it\'s fulfilled or no longer needed, then post again.</item>
         <item quantity="other">You can have up to %1$d open requests at a time. Close one that\'s fulfilled or no longer needed, then post again.</item>
@@ -89,7 +100,7 @@
     <string name="create_urgency">How soon?</string>
     <string name="create_urgency_critical_help">Needed within 6 hours.</string>
     <string name="create_urgency_urgent_help">Needed within 24 hours.</string>
-    <string name="create_urgency_planned_help">For a set day, such as a planned operation or a thalassaemia transfusion.</string>
+    <string name="create_urgency_planned_help">For a set day, such as a planned operation or a thalassemia transfusion.</string>
     <string name="create_error_urgency">Choose how soon blood is needed.</string>
     <string name="create_pick_time">Pick the date and time</string>
     <string name="create_error_planned">Pick a time between 15 minutes and 30 days from now.</string>
@@ -171,6 +182,7 @@
     <string name="detail_donated_body">It counts as a unit received, and it\'s added to their donation history as verified.</string>
     <string name="detail_close_request">Close request</string>
     <string name="detail_close_title">Close this request</string>
+    <string name="detail_close_body">Donors who offered will be told, and the request leaves the list.</string>
     <string name="detail_close_found">Found blood</string>
     <string name="detail_close_not_needed">No longer needed</string>
     <string name="detail_close_reason">Note (optional)</string>
@@ -202,7 +214,7 @@
     <string name="offline_banner">You\'re offline. Showing saved data.</string>
     <!-- STATE-06: on the request form, "showing saved data" meant nothing; posting offline does work. -->
     <string name="offline_banner_form">You\'re offline. Your request will be posted when you\'re back online.</string>
-    <string name="home_urgent_near_you">Urgent near you</string>
+    <string name="home_urgent_near_you">Requests you can help with</string>
     <string name="home_no_group_title">Add your blood group</string>
     <string name="home_no_group_body">Then you\'ll see requests near you that you can answer.</string>
     <string name="home_empty_title">No one near you needs %1$s right now</string>
@@ -213,6 +225,8 @@
     <string name="home_list_me">List me as a donor</string>
     <string name="home_ready_to_donate">Ready to donate</string>
     <string name="home_ready_on">People nearby can find you and alert you.</string>
+    <!-- COPY-04: "Ready" during the rest period: alerts pause until the donor can give again. -->
+    <string name="home_ready_on_resting">People nearby can find you. Alerts start again when you can donate.</string>
     <!-- STATE-04: "Ready" while the phone blocks LiquidLyf's notifications: the alerts part isn't true. -->
     <string name="home_ready_on_notifications_off">People nearby can find you, but you won\'t get alerts until notifications are on.</string>
     <string name="home_ready_off">You won\'t get alerts or appear in donor search.</string>
@@ -224,7 +238,7 @@
 
     <!-- Requests tab -->
     <string name="requests_tab_nearby">Nearby</string>
-    <string name="requests_tab_mine">Mine</string>
+    <string name="requests_tab_mine">My requests</string>
     <string name="requests_tab_offers">My offers</string>
     <string name="requests_nearby_empty_title">No open requests in your district</string>
     <string name="requests_nearby_empty_body">Pull down to check again.</string>

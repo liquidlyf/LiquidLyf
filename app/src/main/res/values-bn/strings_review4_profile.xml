@@ -19,6 +19,7 @@
         <item quantity="one">সর্বোচ্চ %1$d জনকে সাহায্য করেছেন</item>
         <item quantity="other">সর্বোচ্চ %1$d জনকে সাহায্য করেছেন</item>
     </plurals>
+    <string name="profile_impact_first">আপনার প্রথম রক্তদান সর্বোচ্চ ৩ জন মানুষকে সাহায্য করতে পারে।</string>
     <string name="profile_impact_lives_info">একবার পূর্ণ রক্ত (হোল ব্লাড) দিলে তা সর্বোচ্চ ৩ জনকে সাহায্য করতে পারে, তাই এটি সম্ভাব্য সর্বোচ্চ সংখ্যা।</string>
     <string name="profile_badges_title">ব্যাজ</string>
     <string name="profile_badges_none">প্রথম রক্তদানে আপনি \"প্রথম ফোঁটা\" ব্যাজ পাবেন।</string>
@@ -147,7 +148,7 @@
     </plurals>
     <string name="moderation_flagged">টাকার কথা আছে</string>
     <string name="moderation_reporter_offered">রিপোর্টকারী এতে সাড়া দিয়েছিলেন</string>
-    <string name="moderation_ban_hint">এই ব্যক্তিকে নিষিদ্ধ করতে backend/admin-scripts থেকে revokeAndBan.mjs চালান।</string>
+    <string name="moderation_ban_hint">কাউকে নিষিদ্ধ করার কাজটি অ্যাপের বাইরে, প্রজেক্টের রক্ষণাবেক্ষণকারী করেন।</string>
     <string name="action_refresh">রিফ্রেশ করুন</string>
     <string name="action_open_request">অনুরোধ খুলুন</string>
     <string name="action_dismiss">খারিজ করুন</string>

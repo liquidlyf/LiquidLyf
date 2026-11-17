@@ -64,6 +64,7 @@ import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
+import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.profile.BloodGroupReminder
 import io.github.liquidlyf.feature.settings.ListMeDialog
@@ -157,7 +158,7 @@ internal fun HomeScreen(
                     val list = state.requests
                     val group = state.profile?.bloodGroup
                     when {
-                        list == null && state.feedError != null -> item(key = "error") { ErrorState(state.feedError, onRetry = onRetryFeed) }
+                        list == null && state.feedError != null -> item(key = "error") { ErrorState(state.feedError, onRetry = onRetryFeed, title = stringResource(R.string.home_load_error)) }
                         list == null -> item(key = "loading") { LoadingState(count = 2) }
                         group == null -> item(key = "no-group") {
                             EmptyState(
@@ -236,7 +237,8 @@ private fun AvailabilityCard(
             ListItem(
                 headlineContent = { Text(stringResource(R.string.home_ready_to_donate)) },
                 supportingContent = {
-                    Text(stringResource(readyText(state.available, notificationsOn)))
+                    val resting = state.eligibility?.let { IneligibleReason.REST_PERIOD in it.reasons } == true
+                    Text(stringResource(readyText(state.available, notificationsOn, resting)))
                 },
                 trailingContent = { Switch(checked = state.available, onCheckedChange = null) },
                 colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
@@ -251,10 +253,14 @@ private fun AvailabilityCard(
     }
 }
 
-/** What "Ready to donate" means right now: no promise of alerts while notifications are off (STATE-04). */
+/**
+ * What "Ready to donate" means right now: no promise of alerts while notifications are off
+ * (STATE-04), or during the rest period, when the Worker sends none (COPY-04).
+ */
 @StringRes
-internal fun readyText(available: Boolean, notificationsOn: Boolean): Int = when {
+internal fun readyText(available: Boolean, notificationsOn: Boolean, resting: Boolean = false): Int = when {
     !available -> R.string.home_ready_off
-    notificationsOn -> R.string.home_ready_on
-    else -> R.string.home_ready_on_notifications_off
+    !notificationsOn -> R.string.home_ready_on_notifications_off
+    resting -> R.string.home_ready_on_resting
+    else -> R.string.home_ready_on
 }

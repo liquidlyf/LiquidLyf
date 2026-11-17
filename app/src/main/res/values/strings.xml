@@ -101,7 +101,7 @@
 
     <!-- Request status -->
     <string name="request_status_open">Open</string>
-    <string name="request_status_fulfilled">Fulfilled</string>
+    <string name="request_status_fulfilled">Found blood</string>
     <string name="request_status_cancelled">Cancelled</string>
     <string name="request_status_expired">Expired</string>
     <string name="request_status_removed">Removed</string>
@@ -110,7 +110,7 @@
     <string name="response_status_offered">Offered</string>
     <string name="response_status_confirmed">Confirmed</string>
     <string name="response_status_declined">Declined</string>
-    <string name="response_status_withdrawn">Withdrawn</string>
+    <string name="response_status_withdrawn">Offer taken back</string>
     <string name="response_status_donated">Donated</string>
 
     <!-- Notification channels (Phase 5 sends to them) -->
@@ -135,10 +135,14 @@
     <string name="gallery_empty_title" translatable="false">No requests near you yet</string>
     <string name="gallery_empty_body" translatable="false">When someone nearby needs blood, it shows up here.</string>
     <string name="state_error_title">Couldn\'t load this</string>
+    <!-- COPY-04: what didn't load ("Couldn't load this" was vague). -->
+    <string name="home_load_error">Couldn\'t load requests near you</string>
+    <string name="detail_load_error">Couldn\'t load this request</string>
+    <string name="inbox_load_error">Couldn\'t load your notifications</string>
     <!-- Phase 3: onboarding -->
     <string name="onboarding_find_title">Find donors near you</string>
     <string name="onboarding_find_body">Post a request, and donors nearby whose blood group matches get an alert.</string>
-    <string name="onboarding_alert_title">Get alerted when your blood type is needed</string>
+    <string name="onboarding_alert_title">Get alerted when your blood group is needed</string>
     <string name="onboarding_alert_body">List yourself as a donor, and you\'ll hear when someone near you needs your blood group.</string>
     <string name="onboarding_money_title">Never pay or take money for blood</string>
     <string name="onboarding_money_body">Giving blood is free. If anyone asks for money, report the request.</string>
@@ -202,8 +206,8 @@
     <!-- Phase 3: session problems and notification permission -->
     <string name="session_problem_title">Couldn\'t load your profile</string>
     <string name="action_sign_out">Sign out</string>
-    <string name="notifications_rationale_title">Get alerted when someone nearby needs your blood group</string>
-    <string name="notifications_rationale_body">LiquidLyf alerts you only when a request near you matches your blood group. You can turn alerts off at any time in Settings.</string>
+    <string name="notifications_rationale_title">Hear right away when someone can help</string>
+    <string name="notifications_rationale_body">We\'ll tell you when a donor offers on your request, and when someone near you needs your blood group. Nothing else. You can change this any time in Settings.</string>
     <string name="action_allow_alerts">Allow alerts</string>
     <string name="action_not_now">Not now</string>
     <!-- Phase 3: profile setup -->
@@ -289,6 +293,7 @@
     <string name="delete_account_password_hint">Enter your password to confirm it\'s you.</string>
     <string name="action_delete_account">Delete my account</string>
     <string name="deleting_title">Deleting your account…</string>
+    <string name="deleting_failed_title">Couldn\'t finish deleting your account</string>
     <string name="deleting_body">Keep the app open. If it closes, the deletion carries on the next time you open LiquidLyf.</string>
     <string name="deleting_step_offers">Withdrawing your offers</string>
     <string name="deleting_step_requests">Removing your name from your requests</string>

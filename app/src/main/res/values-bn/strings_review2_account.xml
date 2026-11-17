@@ -17,6 +17,9 @@
     <string name="action_show_password">পাসওয়ার্ড দেখান</string>
     <string name="action_hide_password">পাসওয়ার্ড লুকান</string>
     <string name="state_error_title">লোড করা যায়নি</string>
+    <string name="home_load_error">কাছাকাছি অনুরোধগুলো লোড করা যায়নি</string>
+    <string name="detail_load_error">অনুরোধটি লোড করা যায়নি</string>
+    <string name="inbox_load_error">আপনার নোটিফিকেশন লোড করা যায়নি</string>
     <string name="action_ok">ঠিক আছে</string>
     <string name="action_save">সেভ করুন</string>
     <string name="action_saving">সেভ হচ্ছে…</string>
@@ -97,8 +100,8 @@
     <string name="signing_out">সাইন আউট হচ্ছে…</string>
 
     <!-- Notification permission -->
-    <string name="notifications_rationale_title">কাছাকাছি কারও আপনার গ্রুপের রক্ত দরকার হলে অ্যালার্ট পান</string>
-    <string name="notifications_rationale_body">LiquidLyf আপনাকে অ্যালার্ট পাঠায় শুধু তখনই, যখন আপনার কাছাকাছি কোনো অনুরোধ আপনার রক্তের গ্রুপের সঙ্গে মেলে। সেটিংস থেকে যেকোনো সময় অ্যালার্ট বন্ধ করতে পারবেন।</string>
+    <string name="notifications_rationale_title">কেউ সাহায্য করতে পারলে সঙ্গে সঙ্গে জানুন</string>
+    <string name="notifications_rationale_body">কেউ আপনার অনুরোধে রক্ত দিতে চাইলে, আর কাছাকাছি কারও আপনার গ্রুপের রক্ত দরকার হলে আমরা আপনাকে জানাব। এর বাইরে কিছু নয়। সেটিংসে যেকোনো সময় এটা বদলাতে পারবেন।</string>
     <string name="action_allow_alerts">অ্যালার্ট চালু করুন</string>
 
     <!-- Profile setup -->
@@ -186,6 +189,7 @@
     <string name="delete_account_password_hint">আপনিই যে এটা করছেন, তা নিশ্চিত করতে পাসওয়ার্ড দিন।</string>
     <string name="action_delete_account">আমার অ্যাকাউন্ট মুছে ফেলুন</string>
     <string name="deleting_title">আপনার অ্যাকাউন্ট মুছে ফেলা হচ্ছে…</string>
+    <string name="deleting_failed_title">অ্যাকাউন্ট মোছা শেষ করা যায়নি</string>
     <string name="deleting_body">অ্যাপটি খোলা রাখুন। বন্ধ হয়ে গেলে, পরের বার LiquidLyf খুললে মুছে ফেলার বাকি কাজ চলতে থাকবে।</string>
     <string name="deleting_step_offers">আপনার সাড়াগুলো ফিরিয়ে নেওয়া হচ্ছে</string>
     <string name="deleting_step_requests">আপনার অনুরোধ থেকে আপনার নাম সরানো হচ্ছে</string>

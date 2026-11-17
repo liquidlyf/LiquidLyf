@@ -96,6 +96,7 @@ internal fun InboxScreen(
             // STATE-05: the shared error state (icon, title, message, Retry), not bare red text.
             entries == null -> ErrorState(
                 onRetry = onLoadMore,
+                title = stringResource(R.string.inbox_load_error),
                 body = stringResource(state.error ?: R.string.error_unknown),
                 modifier = Modifier.padding(padding),
             )

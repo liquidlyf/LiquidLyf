@@ -90,15 +90,18 @@ import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
+import io.github.liquidlyf.core.domain.PhoneDisplay
 import io.github.liquidlyf.core.domain.StatusTransitions
 import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.firebase.dto.RequestDoc
+import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.DonorResponse
 import io.github.liquidlyf.core.model.ReportReason
 import io.github.liquidlyf.core.model.RequestContact
 import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.ResponseStatus
+import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.request.create.PlannedAtPicker
 import io.github.liquidlyf.feature.request.create.PostNotice
@@ -193,7 +196,7 @@ private fun RequestDetailScreen(
         when {
             state.loading -> LoadingState(Modifier.padding(padding).padding(horizontal = screenGutter(), vertical = Spacing.md))
             // STATE-05: couldn't load is not "removed": the shared error state with Retry.
-            state.loadError != null -> ErrorState(state.loadError, onRetry = vm::retry, modifier = Modifier.padding(padding))
+            state.loadError != null -> ErrorState(state.loadError, onRetry = vm::retry, title = stringResource(R.string.detail_load_error), modifier = Modifier.padding(padding))
             // STATE-02: surely gone, with a way out.
             request == null -> EmptyState(
                 icon = LLIcons.Inbox,
@@ -306,7 +309,14 @@ private fun Header(r: BloodRequest) {
             RequestStatePill(r.status, r.urgency)
         }
     }
-    IconLine(LLIcons.Schedule, if (r.status == RequestStatus.OPEN) "${neededByText(r.neededBy, now)} · ${dateTimeText(r.neededBy)}" else dateTimeText(r.neededBy))
+    IconLine(
+        LLIcons.Schedule,
+        when {
+            r.status != RequestStatus.OPEN -> dateTimeText(r.neededBy)
+            r.urgency == Urgency.PLANNED -> stringResource(R.string.request_needed_on, dateTimeText(r.neededBy))
+            else -> "${neededByText(r.neededBy, now, long = true)} · ${dateTimeText(r.neededBy)}"
+        },
+    )
     r.condition?.let { IconLine(LLIcons.Info, stringResource(it.labelRes)) }
     r.notes?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
     val posted = r.createdAt?.let { relativeTimeText(it, now) }
@@ -448,7 +458,8 @@ private fun ContactCard(c: RequestContact, onCall: (String) -> Unit) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Text(stringResource(R.string.detail_contact), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             Text(c.contactName, style = MaterialTheme.typography.bodyLarge)
-            Text(c.contactPhone, style = MaterialTheme.typography.bodyLarge)
+            // L10N-01: "+88 01700-000000" (Bangla digits on Bangla screens); Call and Copy use the full number.
+            Text(PhoneDisplay.format(c.contactPhone, banglaDigits = currentAppLocale() == AppLocale.BN), style = MaterialTheme.typography.bodyLarge)
             c.patientName?.let { Text(stringResource(R.string.detail_patient, it), style = MaterialTheme.typography.bodyMedium) }
             // Copy moves under Call when both don't fit (200% text squeezed "কপি করুন" letter by letter).
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
@@ -601,13 +612,15 @@ private fun ConfirmDialog(title: Int, body: Int, confirm: Int, onDismiss: () -> 
 
 @Composable
 private fun CloseDialog(onDismiss: () -> Unit, onClose: (RequestStatus, String?) -> Unit) {
-    var choice by rememberSaveable { mutableStateOf(RequestStatus.FULFILLED) }
+    // COPY-04: nothing preselected; the person says which it is.
+    var choice by rememberSaveable { mutableStateOf<RequestStatus?>(null) }
     var reason by rememberSaveable { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.detail_close_title)) },
         text = {
             Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                Text(stringResource(R.string.detail_close_body), style = MaterialTheme.typography.bodyMedium)
                 RadioRow(stringResource(R.string.detail_close_found), choice == RequestStatus.FULFILLED) { choice = RequestStatus.FULFILLED }
                 RadioRow(stringResource(R.string.detail_close_not_needed), choice == RequestStatus.CANCELLED) { choice = RequestStatus.CANCELLED }
                 LLTextField(
@@ -617,7 +630,9 @@ private fun CloseDialog(onDismiss: () -> Unit, onClose: (RequestStatus, String?)
                 )
             }
         },
-        confirmButton = { TextButton(onClick = { onClose(choice, reason) }) { Text(stringResource(R.string.detail_close_request)) } },
+        confirmButton = {
+            TextButton(onClick = { choice?.let { onClose(it, reason) } }, enabled = choice != null) { Text(stringResource(R.string.detail_close_request)) }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
