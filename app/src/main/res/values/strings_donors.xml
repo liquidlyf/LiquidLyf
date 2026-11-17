@@ -10,6 +10,9 @@
     <string name="donors_filter_eligible">Eligible now only</string>
     <string name="donors_filter_eligible_summary">Hide donors who are still in their rest period</string>
     <string name="donors_any_upazila">Whole district</string>
+    <!-- N3 / FLOW-06: said up front, not after picking a donor. -->
+    <string name="donors_post_first_title">To ask a donor, post a request first</string>
+    <string name="donors_post_first_body">Donors see your request, never your number, until they offer.</string>
     <string name="donors_pick_group">Pick at least one blood group.</string>
     <string name="action_search">Search</string>
     <string name="action_change_filters">Change filters</string>

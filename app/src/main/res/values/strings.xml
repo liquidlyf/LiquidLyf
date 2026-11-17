@@ -238,6 +238,16 @@
     <string name="label_division">Division</string>
     <string name="label_district">District</string>
     <string name="label_upazila">Upazila or city corporation</string>
+    <!-- N3 / FORM-01: the area pickers, one at a time; a locked box says why. -->
+    <string name="area_choose_division">Choose your division</string>
+    <string name="area_choose_district">Choose your district</string>
+    <string name="area_choose_upazila">Choose your upazila or city corporation</string>
+    <string name="area_division_first">Choose a division first</string>
+    <string name="area_district_first">Choose a district first</string>
+    <plurals name="area_districts_in">
+        <item quantity="one">%1$d district in %2$s division</item>
+        <item quantity="other">%1$d districts in %2$s division</item>
+    </plurals>
     <string name="error_location_required">Choose your division, district and upazila.</string>
     <string name="setup_contact_title">Phone and donating</string>
     <string name="label_phone">Mobile number</string>

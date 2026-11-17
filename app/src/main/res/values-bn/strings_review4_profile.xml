@@ -80,6 +80,8 @@
     <string name="donors_filter_eligible">শুধু যাঁরা এখন রক্ত দিতে পারবেন</string>
     <string name="donors_filter_eligible_summary">যাঁরা এখনো রক্তদানের পরের বিরতিতে আছেন, তাঁদের লুকান</string>
     <string name="donors_any_upazila">পুরো জেলা</string>
+    <string name="donors_post_first_title">কাউকে অনুরোধ করতে আগে একটি অনুরোধ পোস্ট করুন</string>
+    <string name="donors_post_first_body">সাড়া না দেওয়া পর্যন্ত রক্তদাতারা আপনার অনুরোধ দেখেন, নম্বর নয়।</string>
     <string name="donors_pick_group">অন্তত একটি রক্তের গ্রুপ বেছে নিন।</string>
     <string name="action_search">খুঁজুন</string>
     <string name="action_change_filters">ফিল্টার বদলান</string>

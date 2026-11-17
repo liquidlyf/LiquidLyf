@@ -130,6 +130,15 @@
     <string name="label_division">বিভাগ</string>
     <string name="label_district">জেলা</string>
     <string name="label_upazila">উপজেলা বা সিটি কর্পোরেশন</string>
+    <string name="area_choose_division">আপনার বিভাগ বেছে নিন</string>
+    <string name="area_choose_district">আপনার জেলা বেছে নিন</string>
+    <string name="area_choose_upazila">আপনার উপজেলা বা সিটি কর্পোরেশন বেছে নিন</string>
+    <string name="area_division_first">আগে বিভাগ বেছে নিন</string>
+    <string name="area_district_first">আগে জেলা বেছে নিন</string>
+    <plurals name="area_districts_in">
+        <item quantity="one">%2$s বিভাগের %1$dটি জেলা</item>
+        <item quantity="other">%2$s বিভাগের %1$dটি জেলা</item>
+    </plurals>
     <string name="error_location_required">আপনার বিভাগ, জেলা ও উপজেলা বেছে নিন।</string>
     <string name="setup_contact_title">ফোন ও রক্তদান</string>
     <string name="label_phone">মোবাইল নম্বর</string>

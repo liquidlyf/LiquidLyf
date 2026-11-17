@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
@@ -362,10 +363,26 @@ internal fun AreaPickers(
     /** The area is needed and incomplete (FLOW-04): the empty pickers go red. */
     isError: Boolean = false,
 ) {
+    // N3 / FORM-01: Division → District → Upazila or city corporation, each opening only after the
+    // one above it and listing only the places inside it; labels above the boxes (a two-line label
+    // can't run across the outline at 200%); a locked box says why.
     val divisions = geo.divisions.map { it.code to it.name.localized(locale) }.sortedBy { it.second }
-    DropdownField(stringResource(R.string.label_division), divisions, division, onDivision, isError = isError && division == null)
-    val districts = division?.let(geo::division)?.districts.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
-    DropdownField(stringResource(R.string.label_district), districts, district, onDistrict, enabled = division != null, isError = isError && district == null)
+    DropdownField(
+        stringResource(R.string.label_division), divisions, division, onDivision,
+        isError = isError && division == null, placeholder = stringResource(R.string.area_choose_division), labelAbove = true,
+    )
+    val divisionInfo = division?.let(geo::division)
+    val districts = divisionInfo?.districts.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
+    DropdownField(
+        stringResource(R.string.label_district), districts, district, onDistrict, enabled = division != null,
+        isError = isError && district == null, labelAbove = true,
+        placeholder = stringResource(if (division == null) R.string.area_division_first else R.string.area_choose_district),
+        menuTitle = divisionInfo?.let { pluralStringResource(R.plurals.area_districts_in, districts.size, districts.size, it.name.localized(locale)) },
+    )
     val areas = district?.let(geo::district)?.areas.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
-    DropdownField(stringResource(R.string.label_upazila), areas, upazila, onUpazila, enabled = district != null, isError = isError && upazila == null)
+    DropdownField(
+        stringResource(R.string.label_upazila), areas, upazila, onUpazila, enabled = district != null,
+        isError = isError && upazila == null, labelAbove = true,
+        placeholder = stringResource(if (district == null) R.string.area_district_first else R.string.area_choose_upazila),
+    )
 }

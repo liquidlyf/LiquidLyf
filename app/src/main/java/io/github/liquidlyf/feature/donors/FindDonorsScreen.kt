@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,7 +24,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -185,6 +190,8 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
                 contentPadding = PaddingValues(horizontal = screenGutter(), vertical = Spacing.md),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm),
             ) {
+                // FLOW-06: said up front, not only after picking a donor.
+                if (state.hasOpenRequest == false) item(key = "post-first") { PostFirstCard(actions.onCreateRequest) }
                 item {
                     if (filtersOpen || state.applied == null) {
                         FiltersCard(state, locale, actions, onSearch = { filtersOpen = false; actions.onSearch() })
@@ -250,15 +257,25 @@ private fun FiltersCard(state: FindDonorsUiState, locale: AppLocale, actions: Fi
                 }
             }
             if (geo != null) {
+                // N3 / FORM-01: the same one-at-a-time pickers as the setup, with "Whole district" last.
                 val divisions = geo.divisions.map { it.code to it.name.localized(locale) }.sortedBy { it.second }
-                DropdownField(stringResource(R.string.label_division), divisions, f.division, actions.onDivision)
-                val districts = f.division?.let(geo::division)?.districts.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
-                DropdownField(stringResource(R.string.label_district), districts, f.district, actions.onDistrict, enabled = f.division != null)
+                DropdownField(
+                    stringResource(R.string.label_division), divisions, f.division, actions.onDivision,
+                    placeholder = stringResource(R.string.area_choose_division), labelAbove = true,
+                )
+                val divisionInfo = f.division?.let(geo::division)
+                val districts = divisionInfo?.districts.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
+                DropdownField(
+                    stringResource(R.string.label_district), districts, f.district, actions.onDistrict, enabled = f.division != null, labelAbove = true,
+                    placeholder = stringResource(if (f.division == null) R.string.area_division_first else R.string.area_choose_district),
+                    menuTitle = divisionInfo?.let { pluralStringResource(R.plurals.area_districts_in, districts.size, districts.size, it.name.localized(locale)) },
+                )
                 val any = ANY to stringResource(R.string.donors_any_upazila)
                 val areas = listOf(any) + f.district?.let(geo::district)?.areas.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
                 DropdownField(
-                    stringResource(R.string.label_upazila), areas, f.upazila ?: ANY,
-                    { code -> actions.onUpazila(code.takeUnless { it == ANY }) }, enabled = f.district != null,
+                    stringResource(R.string.label_upazila), areas, if (f.district == null) null else f.upazila ?: ANY,
+                    { code -> actions.onUpazila(code.takeUnless { it == ANY }) }, enabled = f.district != null, labelAbove = true,
+                    placeholder = stringResource(R.string.area_district_first),
                 )
             }
             LLSwitchRow(
@@ -402,6 +419,22 @@ private fun AskToDonateSheet(
                 TextButton(onClick = onBlock, colors = quiet, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
                     Text(stringResource(R.string.action_block_person))
                 }
+            }
+        }
+    }
+}
+
+/** N3 / FLOW-06: asking a donor needs an open request; say so before the search, with the way to post one. */
+@Composable
+private fun PostFirstCard(onCreateRequest: () -> Unit) {
+    LLCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            Text(stringResource(R.string.donors_post_first_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.donors_post_first_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            FilledTonalButton(onClick = onCreateRequest, modifier = Modifier.padding(top = Spacing.xs).heightIn(min = Spacing.minTouchTarget)) {
+                Icon(painterResource(LLIcons.Add), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text(stringResource(R.string.action_request_blood))
             }
         }
     }

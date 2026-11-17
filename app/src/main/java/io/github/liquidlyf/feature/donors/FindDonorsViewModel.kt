@@ -31,6 +31,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -76,6 +78,8 @@ data class FindDonorsUiState(
     val asking: Boolean = false,
     /** "requestId:donorUid" asked on this screen, so the sheet says "Asked". */
     val asked: Set<String> = emptySet(),
+    /** Null until known: false shows "To ask a donor, post a request first" up front (FLOW-06). */
+    val hasOpenRequest: Boolean? = null,
 )
 
 sealed interface FindDonorsEvent {
@@ -116,6 +120,12 @@ class FindDonorsViewModel @Inject constructor(
         viewModelScope.launch {
             val geo = geoRepository.geo()
             state.update { it.copy(geo = geo) }
+        }
+        viewModelScope.launch {
+            // FLOW-06: one read of my own counters (userStats), like the request form's limit check.
+            val me = session.state.mapNotNull { (it as? SessionState.Ready)?.profile }.first()
+            val stats = (profiles.stats(me.uid, refresh = true) as? AppResult.Success)?.data
+            if (stats != null) state.update { it.copy(hasOpenRequest = stats.openRequests > 0) }
         }
         viewModelScope.launch {
             session.state.collect { s ->

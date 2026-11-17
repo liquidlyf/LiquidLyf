@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -197,10 +198,15 @@ fun DropdownField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isError: Boolean = false,
+    /** Shown in the box while nothing is picked; when disabled, why ("Choose a division first", FORM-01). */
+    placeholder: String? = null,
+    /** The label above the box, not on its border (always for the area pickers, N3; else with large text). */
+    labelAbove: Boolean = isLargeText(),
+    /** A heading at the top of the open list, e.g. "13 districts in Dhaka division". */
+    menuTitle: String? = null,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val selectedLabel = options.firstOrNull { it.first == selected }?.second.orEmpty()
-    val labelAbove = isLargeText()
     Column(modifier) {
         if (labelAbove) FieldLabelAbove(label, isError)
         ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { if (enabled) expanded = it }) {
@@ -211,6 +217,7 @@ fun DropdownField(
                 enabled = enabled,
                 isError = isError && enabled,
                 label = if (labelAbove) null else { { Text(label) } },
+                placeholder = placeholder?.let { p -> { Text(p) } },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -218,6 +225,14 @@ fun DropdownField(
                     .semantics { if (labelAbove) contentDescription = label },
             )
             ExposedDropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }) {
+                menuTitle?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs),
+                    )
+                }
                 options.forEach { (key, text) ->
                     DropdownMenuItem(
                         text = { Text(text) },

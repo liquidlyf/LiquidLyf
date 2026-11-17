@@ -793,6 +793,8 @@ class ScreenGalleryTest {
         gallery(
             Shot("find-donors-filters", tab, content = screen(ready)),
             Shot("find-donors-filters-empty", tab, content = screen(ready.copy(filters = DonorFilters()))),
+            // N3 / FLOW-06: no open request, said up front.
+            Shot("find-donors-no-request", tab, content = screen(ready.copy(hasOpenRequest = false))),
             Shot("find-donors-loading", tab, animated = true, content = screen(FindDonorsUiState())),
             Shot("find-donors-off", tab, content = screen(FindDonorsUiState(enabled = false))),
             Shot("find-donors-searching", tab, animated = true, content = screen(ready.copy(applied = filters, searching = true))),
