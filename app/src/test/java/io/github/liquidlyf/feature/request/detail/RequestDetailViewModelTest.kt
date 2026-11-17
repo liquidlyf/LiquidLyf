@@ -12,6 +12,7 @@ import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.model.BloodGroup
+import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.ReportReason
 import io.github.liquidlyf.core.model.RequestContact
 import io.github.liquidlyf.core.model.RequestStatus
@@ -112,6 +113,21 @@ class RequestDetailViewModelTest {
         assertEquals(contact, vm.uiState.value.contact)
         assertEquals(listOf("r1" to "donor"), worker.offerNotices)
         assertEquals(listOf<DetailEvent>(DetailEvent.Message(R.string.detail_offer_sent)), events)
+        assertEquals("Coming at 4 pm", vm.uiState.value.myMessage) // "Your offer" shows it (D9)
+        assertEquals(donor.phone, vm.uiState.value.myPhone)
+
+        // Opened again later: the message is read back from my offer.
+        val later = vm()
+        advanceUntilIdle()
+        assertEquals("Coming at 4 pm", later.uiState.value.myMessage)
+    }
+
+    @Test
+    fun `an alert held back by the daily limit is known from the request itself`() {
+        val r = TestData.request(id = "r9").copy(fanoutTier = 0, nextTierAt = TestData.NOW)
+        assertFalse(r.alertHeldBack) // new: due now, tier 0
+        assertTrue(r.copy(nextTierAt = BloodRequest.ALERT_NEVER_DUE).alertHeldBack)
+        assertFalse(r.copy(fanoutTier = 3, nextTierAt = BloodRequest.ALERT_NEVER_DUE).alertHeldBack) // sent, then finished
     }
 
     @Test

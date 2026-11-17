@@ -128,7 +128,7 @@ class PushHandlerTest {
 
         // Tapping the notification opens the request (a fresh task, through the deep link).
         notificationFor(rid)!!.notification.contentIntent.send()
-        compose.waitUntil(20_000) { compose.onAllNodesWithText(str(R.string.title_request_detail)).fetchSemanticsNodes().isNotEmpty() }
+        // Its title names the group once loaded ("B+ blood needed", UI-03), so wait for the hospital.
         compose.waitUntil(20_000) { compose.onAllNodesWithText("Dhaka Medical College Hospital").fetchSemanticsNodes().isNotEmpty() }
     }
 

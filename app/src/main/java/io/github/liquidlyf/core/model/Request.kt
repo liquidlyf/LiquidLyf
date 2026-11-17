@@ -43,6 +43,17 @@ data class BloodRequest(
 
     val unitsStillNeeded: Int get() = (unitsNeeded - unitsFulfilled).coerceAtLeast(0)
 
+    /**
+     * The Worker held back the first alert: the requester's daily alert limit (tier 0, never due,
+     * backend/worker dispatch.ts). It stays in the feed, unalerted (STATE-03).
+     */
+    val alertHeldBack: Boolean get() = fanoutTier == 0 && nextTierAt?.let { !it.isBefore(ALERT_NEVER_DUE) } == true
+
+    companion object {
+        /** The Worker's FAR_FUTURE (backend/worker/src/fanout.ts): a request it won't alert again. */
+        val ALERT_NEVER_DUE: Instant = Instant.parse("2100-01-01T00:00:00Z")
+    }
+
     /** Offers still standing. `responseCount` only ever grows, so it also counts withdrawn and declined ones. */
     val liveOffers: Int
         get() = responders.values.count { it.status == ResponseStatus.OFFERED || it.status == ResponseStatus.CONFIRMED || it.status == ResponseStatus.DONATED }

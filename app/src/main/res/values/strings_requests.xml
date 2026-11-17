@@ -133,6 +133,16 @@
     <string name="detail_posted_by_unsent">By %1$s · not posted yet</string>
     <string name="detail_ward">Ward or bed: %1$s</string>
     <string name="detail_open_maps">Open in Maps</string>
+    <string name="detail_title_needed">%1$s blood needed</string>
+    <string name="detail_needed_by_time">Needed by %1$s</string>
+    <string name="detail_details">Details</string>
+    <string name="detail_private_requester">Only you and donors who offer see this</string>
+    <string name="detail_private_donor">Only the requester and donors who offer see this</string>
+    <string name="detail_contact_line">Contact: %1$s</string>
+    <string name="detail_contact_you">Contact: %1$s (you)</string>
+    <string name="detail_offer_seen">%1$s can see your offer and your number.</string>
+    <string name="detail_no_offers_yet">No offers yet.</string>
+    <string name="action_edit">Edit</string>
     <string name="detail_safety">Never pay or accept money for blood. Report requests that ask for money.</string>
     <string name="detail_i_can_donate">I can donate</string>
     <string name="detail_your_offer">Your offer</string>
@@ -162,7 +172,6 @@
     </plurals>
     <string name="detail_block_weight">Donors must weigh at least 45 kg.</string>
     <string name="detail_block_age">Donors must be 18 to 60 years old.</string>
-    <string name="detail_contact">Contact</string>
     <string name="detail_patient">Patient: %1$s</string>
     <string name="detail_copied">Number copied</string>
     <plurals name="detail_offers_title">

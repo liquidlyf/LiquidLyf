@@ -5,13 +5,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -20,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
@@ -43,6 +48,7 @@ fun LLBottomBar(
     secondaryText: String? = null,
     onSecondary: () -> Unit = {},
     secondaryEnabled: Boolean = true,
+    @DrawableRes secondaryIcon: Int? = null,
 ) {
     val stacked = LocalDensity.current.fontScale >= LARGE_FONT_SCALE
     Surface(color = LiquidLyfTheme.extendedColors.card, modifier = modifier) {
@@ -73,7 +79,13 @@ fun LLBottomBar(
                             onClick = onSecondary,
                             enabled = secondaryEnabled && !loading,
                             modifier = m.heightIn(min = Spacing.minTouchTarget),
-                        ) { Text(secondaryText) }
+                        ) {
+                            secondaryIcon?.let {
+                                Icon(painterResource(it), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                            }
+                            Text(secondaryText)
+                        }
                     }
                 }
                 if (stacked) {

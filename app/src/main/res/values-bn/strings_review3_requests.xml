@@ -188,6 +188,16 @@
     <string name="detail_posted_by_unsent">%1$s-এর অনুরোধ · এখনো পোস্ট হয়নি</string>
     <string name="detail_ward">ওয়ার্ড বা বেড: %1$s</string>
     <string name="detail_open_maps">ম্যাপে খুলুন</string>
+    <string name="detail_title_needed">%1$s রক্ত দরকার</string>
+    <string name="detail_needed_by_time">%1$s-এর মধ্যে দরকার</string>
+    <string name="detail_details">বিস্তারিত</string>
+    <string name="detail_private_requester">শুধু আপনি আর সাড়া দেওয়া রক্তদাতারা এটি দেখবেন</string>
+    <string name="detail_private_donor">শুধু অনুরোধকারী আর সাড়া দেওয়া রক্তদাতারা এটি দেখবেন</string>
+    <string name="detail_contact_line">যোগাযোগ: %1$s</string>
+    <string name="detail_contact_you">যোগাযোগ: %1$s (আপনি)</string>
+    <string name="detail_offer_seen">%1$s আপনার সাড়া আর নম্বর দেখতে পাচ্ছেন।</string>
+    <string name="detail_no_offers_yet">এখনো কেউ সাড়া দেননি।</string>
+    <string name="action_edit">এডিট করুন</string>
     <string name="detail_i_can_donate">আমি রক্ত দিতে পারব</string>
     <string name="detail_your_offer">আপনার সাড়া</string>
     <string name="detail_donated_thanks">ধন্যবাদ! এই রক্তদান আপনার রক্তদানের ইতিহাসে আছে।</string>
@@ -204,7 +214,6 @@
     </plurals>
     <string name="detail_block_weight">রক্তদাতার ওজন অন্তত ৪৫ কেজি হতে হবে।</string>
     <string name="detail_block_age">রক্তদাতার বয়স ১৮ থেকে ৬০ বছর হতে হবে।</string>
-    <string name="detail_contact">যোগাযোগ</string>
     <string name="detail_patient">রোগী: %1$s</string>
     <string name="detail_copied">নম্বর কপি হয়েছে</string>
     <plurals name="detail_offers_title">

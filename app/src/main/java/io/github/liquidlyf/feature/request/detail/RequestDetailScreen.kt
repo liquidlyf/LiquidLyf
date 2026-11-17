@@ -4,11 +4,14 @@ import android.content.ClipData
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -18,19 +21,22 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -53,21 +59,28 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.backend.AlertStatus
 import io.github.liquidlyf.core.designsystem.LLIcons
+import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.IconLine
+import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLNoticeCard
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
@@ -81,13 +94,16 @@ import io.github.liquidlyf.core.designsystem.components.RequestStatePill
 import io.github.liquidlyf.core.designsystem.components.SectionHeader
 import io.github.liquidlyf.core.designsystem.components.SheetDragHandle
 import io.github.liquidlyf.core.designsystem.components.StatusPill
-import io.github.liquidlyf.core.designsystem.components.neededByText
+import io.github.liquidlyf.core.designsystem.components.UnitDrops
+import io.github.liquidlyf.core.designsystem.components.isLargeText
+import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.relativeTimeText
 import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
+import io.github.liquidlyf.core.designsystem.timeOrDateTimeText
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.domain.PhoneDisplay
@@ -97,7 +113,6 @@ import io.github.liquidlyf.core.firebase.dto.RequestDoc
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.DonorResponse
-import io.github.liquidlyf.core.model.ReportReason
 import io.github.liquidlyf.core.model.RequestContact
 import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.ResponseStatus
@@ -107,6 +122,7 @@ import io.github.liquidlyf.feature.request.create.PlannedAtPicker
 import io.github.liquidlyf.feature.request.create.PostNotice
 import io.github.liquidlyf.feature.request.create.UnitsStepper
 import io.github.liquidlyf.feature.safety.ReportDialog
+import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.launch
 
@@ -127,6 +143,11 @@ fun RequestDetailRoute(onBack: () -> Unit, onOpenSafetyTips: () -> Unit = {}, vi
     RequestDetailScreen(state, online, viewModel, onBack, onOpenSafetyTips)
 }
 
+/**
+ * The request page as D drew it (N2, OK'd 18 Nov 02:11 and 02:20): one summary card (UI-03), then
+ * what the viewer came for (the requester's offers first, FLOW-11; a donor's own offer), then the
+ * details with the private card, and the main action pinned at the bottom (FLOW-02).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RequestDetailScreen(
@@ -142,12 +163,17 @@ private fun RequestDetailScreen(
     // The donor a Decline / Mark donated dialog is about.
     var dialogDonorUid by rememberSaveable { mutableStateOf<String?>(null) }
     val dialogResponse = state.responses.firstOrNull { it.donorUid == dialogDonorUid }
+    // The check before offering (FORM-03), opened from the bar's "I can donate".
+    var checking by rememberSaveable { mutableStateOf(false) }
     val launcher = rememberSafeIntentLauncher()
+    val copy = rememberCopy()
     val shareText = request?.let { shareText(it, state) }
     Scaffold(
         topBar = {
             LLTopBar(
-                title = stringResource(R.string.title_request_detail),
+                // UI-03: "B+ blood needed", not the generic "Request details".
+                title = request?.let { stringResource(R.string.detail_title_needed, stringResource(it.bloodGroup.labelRes)) }
+                    ?: stringResource(R.string.title_request_detail),
                 onBack = onBack,
                 actions = {
                     if (shareText != null) {
@@ -155,42 +181,47 @@ private fun RequestDetailScreen(
                             Icon(painterResource(LLIcons.Share), contentDescription = stringResource(R.string.action_share))
                         }
                     }
-                    if (request != null) {
+                    // The requester's actions are in the bar (FLOW-02, FLOW-05); a donor's extras stay here.
+                    if (request != null && state.role == ViewerRole.DONOR) {
                         Box {
                             IconButton(onClick = { menuOpen = true }) {
                                 Icon(painterResource(LLIcons.MoreVert), contentDescription = stringResource(R.string.action_more))
                             }
                             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                                if (state.role == ViewerRole.REQUESTER) {
-                                    if (request.status == RequestStatus.OPEN) {
-                                        DropdownMenuItem(
-                                            text = { Text(stringResource(R.string.detail_edit)) },
-                                            leadingIcon = { Icon(painterResource(LLIcons.Edit), contentDescription = null) },
-                                            onClick = { menuOpen = false; dialog = DetailDialog.EDIT },
-                                        )
-                                    }
-                                } else {
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.detail_not_for_me)) },
-                                        leadingIcon = { Icon(painterResource(LLIcons.VisibilityOff), contentDescription = null) },
-                                        onClick = { menuOpen = false; vm.hide() },
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.detail_report)) },
-                                        leadingIcon = { Icon(painterResource(LLIcons.Flag), contentDescription = null) },
-                                        onClick = { menuOpen = false; dialog = DetailDialog.REPORT },
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.action_block_person)) },
-                                        leadingIcon = { Icon(painterResource(LLIcons.Block), contentDescription = null) },
-                                        onClick = { menuOpen = false; dialog = DetailDialog.BLOCK_REQUESTER },
-                                    )
-                                }
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.detail_not_for_me)) },
+                                    leadingIcon = { Icon(painterResource(LLIcons.VisibilityOff), contentDescription = null) },
+                                    onClick = { menuOpen = false; vm.hide() },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.detail_report)) },
+                                    leadingIcon = { Icon(painterResource(LLIcons.Flag), contentDescription = null) },
+                                    onClick = { menuOpen = false; dialog = DetailDialog.REPORT },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.action_block_person)) },
+                                    leadingIcon = { Icon(painterResource(LLIcons.Block), contentDescription = null) },
+                                    onClick = { menuOpen = false; dialog = DetailDialog.BLOCK_REQUESTER },
+                                )
                             }
                         }
                     }
                 },
             )
+        },
+        bottomBar = {
+            if (request != null && !state.loading && state.loadError == null) {
+                DetailBar(
+                    r = request,
+                    state = state,
+                    onShare = { shareText?.let(launcher::shareText) },
+                    onEdit = { dialog = DetailDialog.EDIT },
+                    onClose = { dialog = DetailDialog.CLOSE },
+                    onOffer = { checking = true },
+                    onCall = launcher::dial,
+                    onCopy = copy,
+                )
+            }
         },
     ) { padding ->
         when {
@@ -220,27 +251,48 @@ private fun RequestDetailScreen(
                     if (state.working && !online) {
                         LLNoticeCard(stringResource(R.string.detail_action_waiting), LLIcons.WifiOff)
                     }
-                    Header(request)
-                    WhereCard(request, state, onOpenMaps = { r -> r.location?.let { launcher.openMaps(it.lat, it.lng, r.hospitalName) } })
-                    SafetyBanner(onOpenSafetyTips)
+                    Summary(request, state, onOpenMaps = { request.location?.let { launcher.openMaps(it.lat, it.lng, request.hospitalName) } })
                     when (state.role) {
-                        ViewerRole.DONOR -> DonorSection(state, vm, onCall = launcher::dial, onWithdraw = { dialog = DetailDialog.WITHDRAW })
-                        ViewerRole.REQUESTER -> RequesterSection(
-                            state = state,
-                            onCall = launcher::dial,
-                            onConfirm = vm::confirm,
-                            onDecline = { r -> dialog = DetailDialog.DECLINE; dialogDonorUid = r.donorUid },
-                            onDonated = { r -> dialog = DetailDialog.DONATED; dialogDonorUid = r.donorUid },
-                            onReportPerson = { r -> dialog = DetailDialog.REPORT_PERSON; dialogDonorUid = r.donorUid },
-                            onBlockPerson = { r -> dialog = DetailDialog.BLOCK_DONOR; dialogDonorUid = r.donorUid },
-                            onClose = { dialog = DetailDialog.CLOSE },
-                        )
+                        ViewerRole.REQUESTER -> {
+                            OffersSection(
+                                state = state,
+                                onCall = launcher::dial,
+                                onConfirm = vm::confirm,
+                                onDecline = { r -> dialog = DetailDialog.DECLINE; dialogDonorUid = r.donorUid },
+                                onDonated = { r -> dialog = DetailDialog.DONATED; dialogDonorUid = r.donorUid },
+                                onReportPerson = { r -> dialog = DetailDialog.REPORT_PERSON; dialogDonorUid = r.donorUid },
+                                onBlockPerson = { r -> dialog = DetailDialog.BLOCK_DONOR; dialogDonorUid = r.donorUid },
+                            )
+                            DetailsSection(request, state)
+                            PostedBy(request)
+                        }
+                        ViewerRole.DONOR -> {
+                            val status = state.myStatus
+                            if (status != null) {
+                                YourOfferSection(state, status, request)
+                            } else {
+                                state.offerBlock?.let { IconLine(LLIcons.Info, blockText(it)) }
+                            }
+                            DetailsSection(request, state)
+                            if (status != null && StatusTransitions.donorCanSet(status, ResponseStatus.WITHDRAWN)) {
+                                TextButton(
+                                    onClick = { dialog = DetailDialog.WITHDRAW },
+                                    enabled = !state.working,
+                                    modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
+                                ) { Text(stringResource(R.string.detail_withdraw)) }
+                            }
+                            PostedBy(request)
+                            SafetyBanner(onOpenSafetyTips)
+                        }
                     }
                 }
             }
         }
     }
 
+    if (checking) {
+        OfferSheet(onDismiss = { checking = false }, onOffer = { message -> checking = false; vm.offer(message) })
+    }
     when (dialog) {
         DetailDialog.WITHDRAW -> ConfirmDialog(R.string.detail_withdraw_title, R.string.detail_withdraw_body, R.string.detail_withdraw, onDismiss = { dialog = null }) {
             vm.withdraw()
@@ -275,14 +327,110 @@ private fun RequestDetailScreen(
 
 private enum class DetailDialog { WITHDRAW, DECLINE, DONATED, CLOSE, REPORT, EDIT, BLOCK_REQUESTER, REPORT_PERSON, BLOCK_DONOR }
 
-// ---- Header and details ----
+/** Copies a number and says so. */
+@Composable
+private fun rememberCopy(): (RequestContact) -> Unit {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val snackbar = LocalSnackbarHostState.current
+    val copied = stringResource(R.string.detail_copied)
+    return { c ->
+        scope.launch {
+            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(c.contactName, c.contactPhone)))
+            snackbar.showSnackbar(copied)
+        }
+    }
+}
+
+// ---- The bar ----
+
+/**
+ * The main action, pinned so it never scrolls away (FLOW-02): "I can donate" for a donor, then
+ * "Call <name>" with Copy once they offered; Share, Edit and Close request for the requester.
+ */
+@Composable
+private fun DetailBar(
+    r: BloodRequest,
+    state: RequestDetailUiState,
+    onShare: () -> Unit,
+    onEdit: () -> Unit,
+    onClose: () -> Unit,
+    onOffer: () -> Unit,
+    onCall: (String) -> Unit,
+    onCopy: (RequestContact) -> Unit,
+) {
+    when (state.role) {
+        ViewerRole.REQUESTER -> if (r.status == RequestStatus.OPEN) RequesterBar(onShare, onEdit, onClose, enabled = !state.working)
+        ViewerRole.DONOR -> {
+            val contact = state.contact
+            when {
+                state.myStatus == null -> LLBottomBar(
+                    primaryText = stringResource(R.string.detail_i_can_donate),
+                    onPrimary = onOffer,
+                    primaryEnabled = state.offerBlock == null && !state.working,
+                    loading = state.working,
+                    primaryIcon = LLIcons.VolunteerActivism,
+                )
+                contact != null -> LLBottomBar(
+                    primaryText = stringResource(R.string.detail_call_donor, contact.contactName),
+                    onPrimary = { onCall(contact.contactPhone) },
+                    primaryIcon = LLIcons.Call,
+                    secondaryText = stringResource(R.string.action_copy),
+                    onSecondary = { onCopy(contact) },
+                    secondaryIcon = LLIcons.Copy,
+                )
+                else -> Unit
+            }
+        }
+    }
+}
+
+/**
+ * Share, Edit and Close request side by side, centred. Each keeps its words on one line, so when
+ * they don't fit (Bangla, large text) a button moves to the next line instead of squeezing them.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RequesterBar(onShare: () -> Unit, onEdit: () -> Unit, onClose: () -> Unit, enabled: Boolean) {
+    Surface(color = LiquidLyfTheme.extendedColors.card) {
+        Column {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            FlowRow(
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = screenGutter(), vertical = Spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+            ) {
+                val button = Modifier.heightIn(min = Spacing.minTouchTarget)
+                val padding = ButtonDefaults.TextButtonContentPadding
+                FilledTonalButton(onClick = onShare, modifier = button, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
+                    Icon(painterResource(LLIcons.Share), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                    Text(stringResource(R.string.action_share), maxLines = 1, softWrap = false)
+                }
+                OutlinedButton(onClick = onEdit, enabled = enabled, modifier = button, contentPadding = padding) {
+                    Text(stringResource(R.string.action_edit), maxLines = 1, softWrap = false)
+                }
+                OutlinedButton(onClick = onClose, enabled = enabled, modifier = button, contentPadding = padding) {
+                    Text(stringResource(R.string.detail_close_request), maxLines = 1, softWrap = false)
+                }
+            }
+        }
+    }
+}
+
+// ---- Summary and details ----
 
 @Composable
 private fun Banners(state: RequestDetailUiState) {
     if (state.waitingForNetwork) {
         LLNoticeCard(stringResource(R.string.detail_waiting_network), LLIcons.WifiOff)
     }
-    if (state.notice == PostNotice.DAILY_ALERT_LIMIT || state.alertStatus == AlertStatus.DailyLimit) {
+    // STATE-03: from the request itself too, so it's still true after a restart or opened later.
+    val heldBack = state.role == ViewerRole.REQUESTER && state.request?.let { it.status == RequestStatus.OPEN && it.alertHeldBack } == true
+    if (heldBack || state.notice == PostNotice.DAILY_ALERT_LIMIT || state.alertStatus == AlertStatus.DailyLimit) {
         LLNoticeCard(stringResource(R.string.error_daily_alert_limit), LLIcons.Warning, tone = NoticeTone.Warning)
     }
     // 7.8: the notes mention money (the request is flagged for review).
@@ -291,59 +439,133 @@ private fun Banners(state: RequestDetailUiState) {
     }
 }
 
+/**
+ * Everything that decides "can I help?" in one card (UI-03): the group and units, urgency, when
+ * ("Needed by 9:46 AM · in 4 hours"), the bags received as drops, the hospital with Open in Maps
+ * (FORM-02, only with a map point), and the area.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Header(r: BloodRequest) {
+private fun Summary(r: BloodRequest, state: RequestDetailUiState, onOpenMaps: () -> Unit) {
     val now by rememberNow()
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
-        BloodGroupBadge(r.bloodGroup, size = 72.dp, hero = true)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
-            Text(stringResource(r.component.labelRes), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
-            Text(
-                pluralStringResource(R.plurals.detail_units_progress, r.unitsNeeded, r.unitsFulfilled, r.unitsNeeded),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            LinearProgressIndicator(
-                progress = { if (r.unitsNeeded == 0) 0f else r.unitsFulfilled.toFloat() / r.unitsNeeded },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            RequestStatePill(r.status, r.urgency)
+    val locale = currentAppLocale()
+    LLCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+                BloodGroupBadge(r.bloodGroup, size = 64.dp, hero = true)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                    Text(
+                        unitsText(r.unitsNeeded, stringResource(r.component.labelRes)),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                        RequestStatePill(r.status, r.urgency)
+                        if (state.role == ViewerRole.DONOR) state.myStatus?.let { StatusPill(it) }
+                    }
+                }
+            }
+            Spacer(Modifier.size(Spacing.xxs))
+            SummaryLine(LLIcons.Schedule) {
+                Text(
+                    buildAnnotatedString {
+                        when {
+                            r.status != RequestStatus.OPEN -> append(dateTimeText(r.neededBy))
+                            r.urgency == Urgency.PLANNED -> append(stringResource(R.string.request_needed_on, dateTimeText(r.neededBy)))
+                            else -> {
+                                withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
+                                    append(stringResource(R.string.detail_needed_by_time, timeOrDateTimeText(r.neededBy, now)))
+                                }
+                                append(" · ")
+                                append(relativeTimeText(r.neededBy, now, long = true))
+                            }
+                        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                UnitDrops(r.unitsFulfilled, r.unitsNeeded)
+                Text(
+                    pluralStringResource(R.plurals.detail_units_progress, r.unitsNeeded, r.unitsFulfilled, r.unitsNeeded),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            SummaryLine(LLIcons.Hospital) {
+                Column {
+                    Text(r.hospitalName, style = MaterialTheme.typography.bodyMedium)
+                    r.hospitalAddress?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
+            }
+            state.geo?.let { IconLine(LLIcons.Location, it.placeLabel(r.district, r.upazila, locale)) }
+            if (r.location != null) {
+                OutlinedButton(onClick = onOpenMaps, modifier = Modifier.padding(top = Spacing.xxs).heightIn(min = Spacing.minTouchTarget)) {
+                    Icon(painterResource(LLIcons.Map), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                    Text(stringResource(R.string.detail_open_maps))
+                }
+            }
         }
     }
-    IconLine(
-        LLIcons.Schedule,
-        when {
-            r.status != RequestStatus.OPEN -> dateTimeText(r.neededBy)
-            r.urgency == Urgency.PLANNED -> stringResource(R.string.request_needed_on, dateTimeText(r.neededBy))
-            else -> "${neededByText(r.neededBy, now, long = true)} · ${dateTimeText(r.neededBy)}"
-        },
-    )
+}
+
+/** A small icon at the top of its text, for lines that may wrap. */
+@Composable
+private fun SummaryLine(icon: Int, content: @Composable () -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        Icon(
+            painterResource(icon),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 2.dp).size(16.dp),
+        )
+        content()
+    }
+}
+
+/**
+ * The condition, the note and the private card: contact, number, patient and ward, which only the
+ * requester and donors who offered can read (the rules; L10N-01, N2 and D9 for the donor's side).
+ */
+@Composable
+private fun DetailsSection(r: BloodRequest, state: RequestDetailUiState) {
+    val contact = state.contact
+    if (r.condition == null && r.notes == null && contact == null) return
+    SectionHeader(stringResource(R.string.detail_details))
     r.condition?.let { IconLine(LLIcons.Info, stringResource(it.labelRes)) }
     r.notes?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
+    contact?.let { c ->
+        val requester = state.role == ViewerRole.REQUESTER
+        LLCard(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                    Text(
+                        stringResource(if (requester) R.string.detail_private_requester else R.string.detail_private_donor),
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.weight(1f).semantics { heading() },
+                    )
+                    Icon(painterResource(LLIcons.Visibility), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                }
+                val isMe = requester && c.contactPhone == state.myPhone
+                IconLine(LLIcons.Profile, stringResource(if (isMe) R.string.detail_contact_you else R.string.detail_contact_line, c.contactName))
+                // L10N-01: "+88 01700-000000" (Bangla digits on Bangla screens); Call and Copy use the full number.
+                IconLine(LLIcons.Call, PhoneDisplay.format(c.contactPhone, banglaDigits = currentAppLocale() == AppLocale.BN))
+                c.patientName?.let { IconLine(LLIcons.Favorite, stringResource(R.string.detail_patient, it)) }
+                c.wardOrBed?.let { IconLine(LLIcons.Hospital, stringResource(R.string.detail_ward, it)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PostedBy(r: BloodRequest) {
+    val now by rememberNow()
     val posted = r.createdAt?.let { relativeTimeText(it, now) }
     Text(
         if (posted != null) stringResource(R.string.detail_posted_by, posted, shownName(r.requesterDisplayName)) else stringResource(R.string.detail_posted_by_unsent, shownName(r.requesterDisplayName)),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-}
-
-@Composable
-private fun WhereCard(r: BloodRequest, state: RequestDetailUiState, onOpenMaps: (BloodRequest) -> Unit) {
-    val locale = currentAppLocale()
-    LLCard(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            IconLine(LLIcons.Hospital, r.hospitalName)
-            r.hospitalAddress?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-            state.geo?.let { IconLine(LLIcons.Location, it.placeLabel(r.district, r.upazila, locale)) }
-            state.contact?.wardOrBed?.let { Text(stringResource(R.string.detail_ward, it), style = MaterialTheme.typography.bodyMedium) }
-            if (r.location != null) {
-                OutlinedButton(onClick = { onOpenMaps(r) }, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
-                    Icon(painterResource(LLIcons.Map), contentDescription = null)
-                    Text(stringResource(R.string.detail_open_maps), modifier = Modifier.padding(start = Spacing.xs))
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -361,74 +583,60 @@ private fun SafetyBanner(onOpenSafetyTips: () -> Unit) {
 
 // ---- Donor ----
 
+/** "Your offer" (FLOW-07, D9): the status, the message, and who can see it now. The contact is in the private card. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun YourOfferSection(state: RequestDetailUiState, status: ResponseStatus, r: BloodRequest) {
+    SectionHeader(stringResource(R.string.detail_your_offer))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+        StatusPill(status)
+        state.myMessage?.let { Text("“$it”", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(Alignment.CenterVertically)) }
+    }
+    val line = when (status) {
+        ResponseStatus.DONATED -> stringResource(R.string.detail_donated_thanks)
+        ResponseStatus.DECLINED -> stringResource(R.string.detail_declined_info)
+        ResponseStatus.OFFERED, ResponseStatus.CONFIRMED -> stringResource(R.string.detail_offer_seen, shownName(r.requesterDisplayName))
+        else -> null
+    }
+    line?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+}
+
+/** The check before offering (FORM-03), fully open and scrollable so the offer button is reachable with large text or in landscape. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DonorSection(state: RequestDetailUiState, vm: RequestDetailViewModel, onCall: (String) -> Unit, onWithdraw: () -> Unit) {
-    var checking by rememberSaveable { mutableStateOf(false) }
-    val status = state.myStatus
-    if (status == null) {
-        val block = state.offerBlock
-        LLPrimaryButton(
-            text = stringResource(R.string.detail_i_can_donate),
-            onClick = { checking = true },
-            enabled = block == null && !state.working,
-            loading = state.working,
-            icon = LLIcons.VolunteerActivism,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        block?.let { Text(blockText(it), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-    } else {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            Text(stringResource(R.string.detail_your_offer), style = MaterialTheme.typography.titleMedium)
-            StatusPill(status)
-        }
-        when (status) {
-            ResponseStatus.DONATED -> Text(stringResource(R.string.detail_donated_thanks), style = MaterialTheme.typography.bodyMedium)
-            ResponseStatus.DECLINED -> Text(stringResource(R.string.detail_declined_info), style = MaterialTheme.typography.bodyMedium)
-            else -> Unit
-        }
-        state.contact?.let { ContactCard(it, onCall) }
-        if (StatusTransitions.donorCanSet(status, ResponseStatus.WITHDRAWN)) {
-            OutlinedButton(onClick = onWithdraw, enabled = !state.working, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
-                Text(stringResource(R.string.detail_withdraw))
-            }
-        }
-    }
-    if (checking) {
-        var message by rememberSaveable { mutableStateOf("") }
-        // Fully open and scrollable, so the offer button is reachable with large text or in landscape.
-        ModalBottomSheet(onDismissRequest = { checking = false }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), dragHandle = { SheetDragHandle() }) {
-            Column(
-                Modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = screenGutter())
-                    .padding(bottom = Spacing.lg),
-                verticalArrangement = Arrangement.spacedBy(Spacing.sm),
-            ) {
-                Text(stringResource(R.string.detail_check_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
-                // FORM-03: a lead-in and plain bullets; with ✓ icons the list looked already ticked.
-                Text(stringResource(R.string.detail_check_lead), style = MaterialTheme.typography.bodyMedium)
-                listOf(
-                    R.string.detail_check_well, R.string.detail_check_interval, R.string.detail_check_weight,
-                    R.string.detail_check_illness, R.string.detail_check_meal,
-                ).forEach { IconLine(LLIcons.Bullet, stringResource(it)) }
-                Text(stringResource(R.string.detail_check_guidance), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                LLTextField(
-                    value = message,
-                    onValueChange = { message = it.take(Validators.OFFER_MESSAGE_MAX) },
-                    label = stringResource(R.string.detail_offer_message),
-                    singleLine = false,
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                )
-                // 8.3: the donor's part of the medical disclaimer.
-                IconLine(LLIcons.Hospital, stringResource(R.string.detail_offer_disclaimer))
-                Text(stringResource(R.string.detail_offer_consent), style = MaterialTheme.typography.bodyMedium)
-                LLPrimaryButton(
-                    text = stringResource(R.string.detail_offer_confirm),
-                    onClick = { checking = false; vm.offer(message) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+private fun OfferSheet(onDismiss: () -> Unit, onOffer: (String) -> Unit) {
+    var message by rememberSaveable { mutableStateOf("") }
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), dragHandle = { SheetDragHandle() }) {
+        Column(
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = screenGutter())
+                .padding(bottom = Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm),
+        ) {
+            Text(stringResource(R.string.detail_check_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
+            // FORM-03: a lead-in and plain bullets; with ✓ icons the list looked already ticked.
+            Text(stringResource(R.string.detail_check_lead), style = MaterialTheme.typography.bodyMedium)
+            listOf(
+                R.string.detail_check_well, R.string.detail_check_interval, R.string.detail_check_weight,
+                R.string.detail_check_illness, R.string.detail_check_meal,
+            ).forEach { IconLine(LLIcons.Bullet, stringResource(it)) }
+            Text(stringResource(R.string.detail_check_guidance), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            LLTextField(
+                value = message,
+                onValueChange = { message = it.take(Validators.OFFER_MESSAGE_MAX) },
+                label = stringResource(R.string.detail_offer_message),
+                singleLine = false,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            )
+            // 8.3: the donor's part of the medical disclaimer.
+            IconLine(LLIcons.Hospital, stringResource(R.string.detail_offer_disclaimer))
+            Text(stringResource(R.string.detail_offer_consent), style = MaterialTheme.typography.bodyMedium)
+            LLPrimaryButton(
+                text = stringResource(R.string.detail_offer_confirm),
+                onClick = { onOffer(message) },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
@@ -448,43 +656,11 @@ private fun blockText(block: OfferBlock): String = when (block) {
     }
 }
 
-@Composable
-private fun ContactCard(c: RequestContact, onCall: (String) -> Unit) {
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
-    val snackbar = LocalSnackbarHostState.current
-    val copied = stringResource(R.string.detail_copied)
-    LLCard(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            Text(stringResource(R.string.detail_contact), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
-            Text(c.contactName, style = MaterialTheme.typography.bodyLarge)
-            // L10N-01: "+88 01700-000000" (Bangla digits on Bangla screens); Call and Copy use the full number.
-            Text(PhoneDisplay.format(c.contactPhone, banglaDigits = currentAppLocale() == AppLocale.BN), style = MaterialTheme.typography.bodyLarge)
-            c.patientName?.let { Text(stringResource(R.string.detail_patient, it), style = MaterialTheme.typography.bodyMedium) }
-            // Copy moves under Call when both don't fit (200% text squeezed "কপি করুন" letter by letter).
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                LLPrimaryButton(text = stringResource(R.string.action_call), onClick = { onCall(c.contactPhone) }, icon = LLIcons.Call)
-                OutlinedButton(
-                    onClick = {
-                        scope.launch {
-                            clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(c.contactName, c.contactPhone)))
-                            snackbar.showSnackbar(copied)
-                        }
-                    },
-                    modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
-                ) {
-                    Icon(painterResource(LLIcons.Copy), contentDescription = null)
-                    Text(stringResource(R.string.action_copy), modifier = Modifier.padding(start = Spacing.xs))
-                }
-            }
-        }
-    }
-}
-
 // ---- Requester ----
 
+/** FLOW-11: the offers right after the summary, the reason the requester opens the page. */
 @Composable
-private fun RequesterSection(
+private fun OffersSection(
     state: RequestDetailUiState,
     onCall: (String) -> Unit,
     onConfirm: (DonorResponse) -> Unit,
@@ -492,53 +668,75 @@ private fun RequesterSection(
     onDonated: (DonorResponse) -> Unit,
     onReportPerson: (DonorResponse) -> Unit,
     onBlockPerson: (DonorResponse) -> Unit,
-    onClose: () -> Unit,
 ) {
     val r = state.request ?: return
     SectionHeader(pluralStringResource(R.plurals.detail_offers_title, state.responses.size, state.responses.size))
-    if (state.responses.isEmpty()) {
-        val group = stringResource(r.bloodGroup.labelRes)
-        val locale = currentAppLocale()
-        val alert = state.alertStatus
-        // PERF-01 / STATE-03: the alert's progress, once the page opened right after posting.
-        val text = when {
-            r.status != RequestStatus.OPEN -> stringResource(R.string.detail_no_offers)
-            state.waitingForNetwork -> stringResource(R.string.detail_no_offers_unsent)
-            alert == AlertStatus.Sending -> stringResource(R.string.detail_alerting, group)
-            alert is AlertStatus.Sent -> {
-                // Tier 1 is the request's upazila, tier 3 its district (B, 17 Nov 2026).
-                val upazila = r.upazila.takeIf { alert.tier == 1 }
-                val place = state.geo?.placeLabel(r.district, upazila, locale)
-                if (place != null) stringResource(R.string.detail_alerted_in, group, place) else stringResource(R.string.detail_no_offers_open)
-            }
-            alert == AlertStatus.Failed -> stringResource(R.string.detail_alert_soon)
-            else -> stringResource(R.string.detail_no_offers_open)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalAlignment = Alignment.CenterVertically) {
-            if (alert == AlertStatus.Sending && r.status == RequestStatus.OPEN) {
-                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-            }
-            Text(
-                text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-            )
-        }
-    }
-    state.responses.forEachIndexed { i, response ->
-        if (i > 0) HorizontalDivider()
-        ResponderRow(response, enabled = !state.working, onCall, onConfirm, onDecline, onDonated, onReportPerson, onBlockPerson)
-    }
-    if (r.status == RequestStatus.OPEN) {
-        OutlinedButton(onClick = onClose, enabled = !state.working, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
-            Text(stringResource(R.string.detail_close_request))
-        }
+    if (state.responses.isEmpty()) AlertLine(r, state)
+    state.responses.forEach { response ->
+        OfferCard(response, enabled = !state.working, onCall, onConfirm, onDecline, onDonated, onReportPerson, onBlockPerson)
     }
 }
 
+/**
+ * Where the first alert is (STATE-03, PERF-01): "Alerting B+ donors near you…" right after
+ * posting, then "We alerted B+ donors in <area>". It reads the request's own fan-out fields, which
+ * the Worker writes, so it stays true after a restart or when the page opens later (D's re-audit).
+ */
 @Composable
-private fun ResponderRow(
+private fun AlertLine(r: BloodRequest, state: RequestDetailUiState) {
+    val now by rememberNow(periodMillis = 15_000)
+    val group = stringResource(r.bloodGroup.labelRes)
+    val locale = currentAppLocale()
+    val alert = state.alertStatus
+    val tier = maxOf(r.fanoutTier, (alert as? AlertStatus.Sent)?.tier ?: 0)
+    val heldBack = r.alertHeldBack || alert == AlertStatus.DailyLimit
+    val fresh = r.createdAt?.let { Duration.between(it, now) < ALERT_WAIT } ?: false
+    val sending = r.status == RequestStatus.OPEN && !state.waitingForNetwork && tier == 0 && !heldBack &&
+        alert != AlertStatus.Failed && (alert == AlertStatus.Sending || fresh)
+    val text = when {
+        r.status != RequestStatus.OPEN -> stringResource(R.string.detail_no_offers)
+        state.waitingForNetwork -> stringResource(R.string.detail_no_offers_unsent)
+        tier >= 1 -> {
+            // Tiers 1–2 are the request's upazila, 3 and up its district (backend/worker/src/tiers.ts).
+            val place = state.geo?.placeLabel(r.district, r.upazila.takeIf { tier <= 2 }, locale)
+            if (place != null) stringResource(R.string.detail_alerted_in, group, place) else stringResource(R.string.detail_no_offers_open)
+        }
+        heldBack -> stringResource(R.string.detail_no_offers_yet) // the notice at the top says why
+        sending -> stringResource(R.string.detail_alerting, group)
+        // The app couldn't send it: the Worker's round every 5 minutes does.
+        else -> stringResource(R.string.detail_alert_soon)
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalAlignment = Alignment.CenterVertically) {
+        if (sending) {
+            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+        } else {
+            Icon(
+                painterResource(if (tier >= 1) LLIcons.Notifications else LLIcons.Schedule),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        )
+    }
+}
+
+/** How long a new request may take to reach its first tier before the line says "within a few minutes". */
+private val ALERT_WAIT: Duration = Duration.ofMinutes(1)
+
+/**
+ * One offer as a card (FLOW-07): name, message and status, then Call (with its word) and the next
+ * step, filled. Decline is in the card's ⋮ menu, away from Confirm. The buttons wrap at large text
+ * instead of squeezing a word letter by letter (A11Y-03).
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun OfferCard(
     response: DonorResponse,
     enabled: Boolean,
     onCall: (String) -> Unit,
@@ -550,48 +748,69 @@ private fun ResponderRow(
 ) {
     val next = StatusTransitions.requesterNext(response.status)
     var menuOpen by remember { mutableStateOf(false) }
-    Column(Modifier.padding(vertical = Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            BloodGroupBadge(response.donorBloodGroup, size = 40.dp)
-            // The status sits under the name, so a long label (Bangla, large text) can't squeeze it.
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
-                Text(shownName(response.donorDisplayName), style = MaterialTheme.typography.titleMedium)
-                response.message?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                StatusPill(response.status)
-            }
-            // 7.1/7.2: report or block this person.
-            Box {
-                IconButton(onClick = { menuOpen = true }, enabled = enabled, modifier = Modifier.size(Spacing.minTouchTarget)) {
-                    Icon(painterResource(LLIcons.MoreVert), contentDescription = stringResource(R.string.detail_more_about, shownName(response.donorDisplayName)))
+    val name = shownName(response.donorDisplayName)
+    LLCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(start = Spacing.md, top = Spacing.sm, end = Spacing.xs, bottom = Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                BloodGroupBadge(response.donorBloodGroup, modifier = Modifier.padding(top = Spacing.xxs), size = 40.dp)
+                Column(Modifier.weight(1f).padding(top = Spacing.xxs), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                    Text(name, style = MaterialTheme.typography.titleMedium)
+                    response.message?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    StatusPill(response.status)
                 }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_report_person)) },
-                        leadingIcon = { Icon(painterResource(LLIcons.Flag), contentDescription = null) },
-                        onClick = { menuOpen = false; onReportPerson(response) },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_block_person)) },
-                        leadingIcon = { Icon(painterResource(LLIcons.Block), contentDescription = null) },
-                        onClick = { menuOpen = false; onBlockPerson(response) },
-                    )
+                // 7.1/7.2: decline, report or block this person.
+                Box {
+                    IconButton(onClick = { menuOpen = true }, enabled = enabled, modifier = Modifier.size(Spacing.minTouchTarget)) {
+                        Icon(painterResource(LLIcons.MoreVert), contentDescription = stringResource(R.string.detail_more_about, name))
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        if (ResponseStatus.DECLINED in next) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.detail_decline)) },
+                                leadingIcon = { Icon(painterResource(LLIcons.Cancel), contentDescription = null) },
+                                onClick = { menuOpen = false; onDecline(response) },
+                            )
+                        }
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_report_person)) },
+                            leadingIcon = { Icon(painterResource(LLIcons.Flag), contentDescription = null) },
+                            onClick = { menuOpen = false; onReportPerson(response) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_block_person)) },
+                            leadingIcon = { Icon(painterResource(LLIcons.Block), contentDescription = null) },
+                            onClick = { menuOpen = false; onBlockPerson(response) },
+                        )
+                    }
                 }
             }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-            response.donorPhone?.takeIf { response.status != ResponseStatus.WITHDRAWN }?.let { phone ->
-                IconButton(onClick = { onCall(phone) }, modifier = Modifier.size(Spacing.minTouchTarget)) {
-                    Icon(painterResource(LLIcons.Call), contentDescription = stringResource(R.string.detail_call_donor, shownName(response.donorDisplayName)))
+            val phone = response.donorPhone?.takeIf { response.status != ResponseStatus.WITHDRAWN }
+            val step: Pair<Int, () -> Unit>? = when {
+                ResponseStatus.CONFIRMED in next -> R.string.detail_confirm to { onConfirm(response) }
+                ResponseStatus.DONATED in next -> R.string.detail_mark_donated to { onDonated(response) }
+                else -> null
+            }
+            if (phone != null || step != null) {
+                FlowRow(
+                    Modifier.padding(end = Spacing.xs),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                ) {
+                    phone?.let {
+                        val callName = stringResource(R.string.detail_call_donor, name)
+                        FilledTonalButton(
+                            onClick = { onCall(it) },
+                            modifier = Modifier.heightIn(min = Spacing.minTouchTarget).semantics { contentDescription = callName },
+                        ) {
+                            Icon(painterResource(LLIcons.Call), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                            Text(stringResource(R.string.action_call))
+                        }
+                    }
+                    step?.let { (label, action) ->
+                        Button(onClick = action, enabled = enabled, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) { Text(stringResource(label)) }
+                    }
                 }
-            }
-            if (ResponseStatus.CONFIRMED in next) {
-                TextButton(onClick = { onConfirm(response) }, enabled = enabled) { Text(stringResource(R.string.detail_confirm)) }
-            }
-            if (ResponseStatus.DONATED in next) {
-                TextButton(onClick = { onDonated(response) }, enabled = enabled) { Text(stringResource(R.string.detail_mark_donated)) }
-            }
-            if (ResponseStatus.DECLINED in next) {
-                TextButton(onClick = { onDecline(response) }, enabled = enabled) { Text(stringResource(R.string.detail_decline)) }
             }
         }
     }

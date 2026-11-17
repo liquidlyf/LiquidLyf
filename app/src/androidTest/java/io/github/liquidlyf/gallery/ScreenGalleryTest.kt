@@ -425,6 +425,9 @@ class ScreenGalleryTest {
 
         fun tapDescribed(@StringRes id: Int) = tapOn(hasContentDescription(str(id)) and hasClickAction())
 
+        /** For a label with a placeholder ("More about %1$s"): the first button whose label starts so. */
+        fun tapDescribedStart(@StringRes id: Int) = tapOn(hasContentDescription(str(id).substringBefore("%").trim(), substring = true) and hasClickAction())
+
         fun tapOn(matcher: SemanticsMatcher) {
             val found = { compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }
             if (!runCatching { compose.waitUntil(3_000) { found() } }.isSuccess) {
@@ -754,6 +757,8 @@ class ScreenGalleryTest {
         val loaded: Steps.() -> Unit = { waitForText(hospital) }
         val donor = donorViewer
         val requester = requesterProfile
+        // A request no alert has gone out for yet (the Worker writes tier 1 or 3 when it sends).
+        val unalerted = detailRequest.copy(fanoutTier = 0, nextTierAt = detailRequest.createdAt)
         gallery(
             Shot("details-donor", prepare = loaded, content = detail(donor)),
             Shot("details-donor-offer-sheet", overlay = true, scrollIn = { sheetWith(R.string.detail_check_title) },
@@ -770,14 +775,21 @@ class ScreenGalleryTest {
             Shot("details-donor-closed", prepare = loaded, content = detail(donor, detailRequest.copy(status = RequestStatus.FULFILLED, unitsFulfilled = 2))),
             Shot("details-requester-offer", prepare = { loaded(); waitForText("Nusrat") }, content = detail(requester, offer = ResponseStatus.OFFERED)),
             Shot("details-requester-confirmed", prepare = { loaded(); waitForText("Nusrat") }, content = detail(requester, offer = ResponseStatus.CONFIRMED)),
-            Shot("details-requester-no-offers", prepare = loaded, content = detail(requester)),
+            // Not alerted 12 minutes after posting (the app couldn't send it): the Worker's next round will.
+            Shot("details-requester-no-offers", prepare = loaded, content = detail(requester, unalerted)),
             // PERF-01: the page opens right after posting and shows the alert's progress.
-            Shot("details-requester-alerting", prepare = loaded, content = detail(requester, alert = AlertStatus.Sending)),
-            Shot("details-requester-alerted", prepare = loaded, content = detail(requester, alert = AlertStatus.Sent(1))),
-            Shot("details-requester-menu", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more) }, content = detail(requester)),
-            Shot("details-requester-edit", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more); tap(R.string.detail_edit) }, content = detail(requester)),
+            Shot("details-requester-alerting", prepare = loaded, content = detail(requester, unalerted.copy(createdAt = now), alert = AlertStatus.Sending)),
+            Shot("details-requester-alerted", prepare = loaded, content = detail(requester, unalerted, alert = AlertStatus.Sent(1))),
+            // STATE-03 from the request itself (D's re-audit): alerted district-wide, and held back by the daily limit.
+            Shot("details-requester-alerted-district", prepare = loaded, content = detail(requester, detailRequest.copy(fanoutTier = 3))),
+            Shot("details-requester-held-back", prepare = loaded, content = detail(requester, unalerted.copy(nextTierAt = BloodRequest.ALERT_NEVER_DUE))),
+            Shot("details-requester-edit", overlay = true, prepare = { loaded(); tap(R.string.action_edit) }, content = detail(requester)),
             Shot("details-requester-close", overlay = true, prepare = { loaded(); tap(R.string.detail_close_request) }, content = detail(requester)),
-            Shot("details-requester-decline", overlay = true, prepare = { loaded(); waitForText("Nusrat"); tap(R.string.detail_decline) },
+            // FLOW-07: Decline is in the offer's ⋮ menu, away from Confirm.
+            Shot("details-requester-offer-menu", overlay = true, prepare = { loaded(); waitForText("Nusrat"); tapDescribedStart(R.string.detail_more_about) },
+                content = detail(requester, offer = ResponseStatus.OFFERED)),
+            Shot("details-requester-decline", overlay = true,
+                prepare = { loaded(); waitForText("Nusrat"); tapDescribedStart(R.string.detail_more_about); tap(R.string.detail_decline) },
                 content = detail(requester, offer = ResponseStatus.OFFERED)),
             Shot("details-requester-mark-donated", overlay = true, prepare = { loaded(); waitForText("Nusrat"); tap(R.string.detail_mark_donated) },
                 content = detail(requester, offer = ResponseStatus.CONFIRMED)),

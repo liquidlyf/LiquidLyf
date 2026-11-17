@@ -64,6 +64,15 @@ fun dateTimeText(instant: Instant): String {
     return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale).format(Date.from(instant))
 }
 
+/** Today: only the time ("9:46 AM"); another day: the date and time (UI-03's "Needed by 9:46 AM"). */
+@Composable
+fun timeOrDateTimeText(instant: Instant, now: Instant): String {
+    val zone = java.time.ZoneId.systemDefault()
+    if (instant.atZone(zone).toLocalDate() != now.atZone(zone).toLocalDate()) return dateTimeText(instant)
+    val locale = LocalConfiguration.current.locales[0]
+    return DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(Date.from(instant))
+}
+
 /** A date in the phone's time zone and the app's language, e.g. "14 Nov 2026". */
 @Composable
 fun dateText(instant: Instant): String {

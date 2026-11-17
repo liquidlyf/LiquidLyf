@@ -95,6 +95,10 @@ data class RequestDetailUiState(
     val responses: List<DonorResponse> = emptyList(),
     val working: Boolean = false,
     val notice: PostNotice? = null,
+    /** My own number: the private card says "(you)" when the contact is me (N2). */
+    val myPhone: String? = null,
+    /** The donor's own message with their offer, for "Your offer" (N2, D9). */
+    val myMessage: String? = null,
 ) {
     /** Created offline and not on the server yet: the server time is still empty. */
     val waitingForNetwork: Boolean get() = request != null && request.createdAt == null
@@ -152,6 +156,7 @@ class RequestDetailViewModel @Inject constructor(
 
     private var listeningToResponses = false
     private var contactLoaded = false
+    private var myOfferLoaded = false
     private var donationChecked = false
     private var endingReminderFor: Pair<RequestStatus, java.time.Instant>? = null
     private val donations = VerifiedDonationRecorder(profiles, offers, requests, clock)
@@ -217,6 +222,7 @@ class RequestDetailViewModel @Inject constructor(
                 myStatus = myStatus,
                 offerBlock = if (r != null && profile != null && !mine) offerBlock(r, profile) else null,
                 contact = if (seesContact) it.contact else null,
+                myPhone = profile?.phone,
             )
         }
         if (r == null || profile == null) return
@@ -225,6 +231,7 @@ class RequestDetailViewModel @Inject constructor(
             keepEndingReminder(r)
         }
         if (seesContact) loadContact()
+        if (myStatus != null) loadMyOffer(profile.uid)
         if (myStatus == ResponseStatus.DONATED) recordDonationOnce(r)
     }
 
@@ -272,6 +279,18 @@ class RequestDetailViewModel @Inject constructor(
         }
     }
 
+    /** My message with my offer, once ("Your offer"). */
+    private fun loadMyOffer(uid: String) {
+        if (myOfferLoaded) return
+        myOfferLoaded = true
+        viewModelScope.launch {
+            when (val o = offers.myOffer(requestId, uid)) {
+                is AppResult.Success -> state.update { it.copy(myMessage = o.data?.message) }
+                is AppResult.Failure -> myOfferLoaded = false // try again on the next update
+            }
+        }
+    }
+
     /** Contract 12: my verified donation, once per request (also done from the push and the inbox). */
     private fun recordDonationOnce(r: BloodRequest) {
         if (donationChecked) return
@@ -289,8 +308,13 @@ class RequestDetailViewModel @Inject constructor(
 
     /** "I can donate": shares my phone with the requester (the consent point), then tells them. */
     fun offer(message: String?) = act(R.string.detail_offer_sent) { r, p ->
-        offers.offer(r, p, message?.trim()?.ifEmpty { null }).also { result ->
-            if (result is AppResult.Success) viewModelScope.launch { worker.notifyOffer(r.id, p.uid) }
+        val text = message?.trim()?.ifEmpty { null }
+        offers.offer(r, p, text).also { result ->
+            if (result is AppResult.Success) {
+                myOfferLoaded = true
+                state.update { it.copy(myMessage = text) }
+                viewModelScope.launch { worker.notifyOffer(r.id, p.uid) }
+            }
         }
     }
 
