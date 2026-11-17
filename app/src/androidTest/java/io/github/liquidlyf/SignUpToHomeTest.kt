@@ -5,6 +5,7 @@ import android.view.View
 import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -42,9 +43,10 @@ import java.net.URL
 import javax.inject.Inject
 
 /**
- * Phase 3.14: the whole way from install to Home in the real app, on the Firebase emulators
- * (demo flavor): sign up → verify (the Auth emulator's admin API stands in for the email link)
- * → the 4 profile-setup steps → Home. Then the users, userStats and donors documents are checked.
+ * Phase 3.14 and D1: the whole way from install to Home in the real app, on the Firebase emulators
+ * (demo flavor) with their rules: sign up → verify (the Auth emulator's admin API stands in for the
+ * email link) → the short setup → Home with "Want to donate too?" → Become a donor's 3 steps → Home
+ * as a listed donor. The users, userStats and donors documents are checked after each part.
  * Needs `npm run emulators` in firebase/ and adb reverse for 8085 and 9099; skipped otherwise.
  */
 @HiltAndroidTest
@@ -122,9 +124,12 @@ class SignUpToHomeTest {
         compose.waitForIdle()
     }
 
-    /** Opens a dropdown field and picks [item] from its menu (the menu item is the last match). */
+    /**
+     * Opens a dropdown field and picks [item] from its menu (the menu item is the last match). The
+     * area pickers' labels sit above their boxes (N3), so the box is found by its description.
+     */
     private fun pick(@StringRes field: Int, item: String) {
-        compose.onNode(hasText(str(field)) and hasClickAction()).performClick()
+        compose.onNode((hasText(str(field)) or hasContentDescription(str(field), substring = true)) and hasClickAction()).performClick()
         waitFor(item)
         compose.onAllNodesWithText(item).onLast().performClick()
         compose.waitForIdle()
@@ -163,31 +168,49 @@ class SignUpToHomeTest {
         verifyEmail(auth.currentUser!!.uid)
         tap(R.string.action_i_have_verified)
 
-        // Profile setup, 4 steps
+        // The short setup (D1): the name from sign-up, the number and the area, nothing else.
+        waitFor(str(R.string.setup_short_note))
+        type(R.string.label_phone, "01712345678")
+        pick(R.string.label_division, "Dhaka")
+        pick(R.string.label_district, "Dhaka")
+        pick(R.string.label_upazila, "Dhaka South City Corporation")
+        tap(R.string.action_continue)
+
+        // Home as a requester (Android 11 has no notification permission screen)
+        waitFor(str(R.string.home_become_donor_title), timeoutMs = 15_000)
+        val uid = auth.currentUser!!.uid
+        val requester = db.userRef(uid).get(Source.SERVER).await()
+        assertEquals("+8801712345678", requester.getString("phone"))
+        listOf("bloodGroup", "gender", "birthYear", "weightOk", "lastDonationAt", "consentAt").forEach {
+            assertTrue("A requester's profile has no $it", requester.get(it) == null)
+        }
+        assertEquals(false, requester.getBoolean("showInDonorSearch"))
+        assertEquals(false, requester.getBoolean("available"))
+        assertEquals(0L, db.statsRef(uid).get(Source.SERVER).await().getLong("openRequests"))
+        assertTrue("No donor card before Become a donor", !db.donorRef(uid).get(Source.SERVER).await().exists())
+
+        // Become a donor: one profile edit with the details, the listing and the card.
+        tap(R.string.action_become_donor)
         waitFor(str(R.string.setup_blood_title))
         tapText("B+")
         tap(R.string.action_next)
-        waitFor(str(R.string.setup_about_title))
+        waitFor(str(R.string.become_donor_details_title))
         tap(R.string.gender_male)
         type(R.string.label_birth_year, "1995")
         tap(R.string.answer_yes)
         tap(R.string.action_next)
-        waitFor(str(R.string.setup_location_title))
-        pick(R.string.label_division, "Dhaka")
-        pick(R.string.label_district, "Dhaka")
-        pick(R.string.label_upazila, "Dhaka South City Corporation")
-        tap(R.string.action_next)
-        waitFor(str(R.string.setup_contact_title))
-        type(R.string.label_phone, "01712345678")
+        waitFor(str(R.string.become_donor_history_title))
         tap(R.string.last_donation_never)
         tap(R.string.consent_yes)
         tap(R.string.action_finish)
 
-        // Home (Android 11 has no notification permission screen)
+        // Home as a listed donor
         waitFor(str(R.string.home_urgent_near_you), timeoutMs = 15_000)
-
-        val uid = auth.currentUser!!.uid
         val user = db.userRef(uid).get(Source.SERVER).await()
+        assertEquals("MALE", user.getString("gender"))
+        assertEquals(1995L, user.getLong("birthYear"))
+        assertEquals(true, user.getBoolean("weightOk"))
+        assertEquals(true, user.getBoolean("available"))
         assertEquals("B_POS", user.getString("bloodGroup"))
         assertEquals("+8801712345678", user.getString("phone"))
         assertEquals("BD30262000", user.getString("upazila"))
