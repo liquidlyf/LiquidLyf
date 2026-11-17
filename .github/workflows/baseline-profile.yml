@@ -1,12 +1,19 @@
 # Makes the app's Baseline Profile (A32-5): baselineprofile/'s generator runs the demo build on a
 # GitHub-hosted Android 14 emulator, against the Firebase emulators with the demo seed data.
-# Started by hand: Actions → baseline-profile → Run workflow. It only uploads the profile as the
-# `baseline-profile` artifact; commit its files into app/src/main/generated/baselineProfiles/.
-# No secrets, a read-only token, nothing pushed. Actions are pinned to full commit SHAs.
+# It runs by hand (Actions → baseline-profile → Run workflow; GitHub shows that button only once
+# this file is on main) and whenever the generator or this file changes on rebuild or main. It
+# only uploads the profile as the `baseline-profile` artifact; commit its files into
+# app/src/main/generated/baselineProfiles/. Not a required check (so its path filter can't block a
+# PR). No secrets, a read-only token, nothing pushed. Actions are pinned to full commit SHAs.
 name: baseline-profile
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main, rebuild]
+    paths:
+      - 'baselineprofile/**'
+      - '.github/workflows/baseline-profile.yml'
 
 permissions:
   contents: read
