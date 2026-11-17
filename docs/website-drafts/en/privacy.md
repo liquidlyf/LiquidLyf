@@ -83,6 +83,18 @@ it does with your data.
 - **Crash reports:** if the app crashes, Firebase Crashlytics receives the technical details: phone
   model, Android version, app version, what the app was doing and a random installation ID. They
   contain no names, phone numbers or blood groups.
+- **Daily checks:** about once a day, the app downloads two small files from GitHub: the hospital
+  list, and the details of the newest app version, so it can tell you when an update is available. As
+  with any download, GitHub sees your phone's IP address. The app sends nothing else about you or
+  your account with these checks.
+
+<!-- Daily checks: A32 item 4 = yes and D14 (the maintainer, 17 Nov 2026). Checked in A's code on 17 Nov
+     2026 (DailyCheck.kt and HospitalLists.kt, not yet committed): plain GETs of
+     github.com/liquidlyf/LiquidLyf/releases/latest/download/update.json and
+     liquidlyf.github.io/data/hospitals.json (only If-None-Match), on the shared OkHttp client, which adds
+     no headers; the sign-in and App Check tokens go only on the Worker's own calls (WorkerClient.kt). The
+     staged-rollout bucket is worked out on the phone. Re-check when the daily check is committed or
+     changes. -->
 
 <!-- v1.1: add when the features ship.
 - **Phone verification with Telegram:** if you choose to verify your number, Telegram shares your
@@ -143,7 +155,7 @@ We use a few services to run LiquidLyf. They process data for us and only on our
 |---|---|---|
 | Google Firebase: Authentication, Cloud Firestore, Cloud Messaging, Crashlytics, Remote Config, App Check | Sign-in, the database, notifications, crash reports, app settings, abuse protection | The database is in Mumbai, India. Sign-in, notifications and crash reports may be processed in other countries, including the United States |
 | Cloudflare Workers | Sends the request alerts to donors. When your app asks it to, it receives your user ID, the request ID, the donor's user ID for a notification about an offer or an ask, and, like any web server, your IP address. It stores none of them. A maintainer fixing a problem can watch the calls live, with the IP address and its approximate location; that live view isn't saved. To stop abuse, Cloudflare counts each user's calls for 60 seconds, then forgets them. Its technical logs contain no names, phone numbers or user IDs | Cloudflare's worldwide network |
-| GitHub | Hosts the app download, this website and the source code. It sees your IP address when you visit | United States and worldwide |
+| GitHub | Hosts the app download, this website and the source code. It sees your IP address when you visit, and when the app does its daily checks (section 2) | United States and worldwide |
 
 <!-- Confirmed 13 Nov 2026: the production Firestore database is in asia-south1 (Mumbai).
      Confirmed with session B, 13 Nov 2026 (Worker code at 2616359), re-checked 15 Nov 2026: KV holds the
