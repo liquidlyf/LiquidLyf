@@ -132,6 +132,7 @@ internal fun AboutScreen(
                 Text(stringResource(R.string.about_based_on), style = small, color = muted)
                 Text(stringResource(R.string.about_trademark), style = small, color = muted)
                 Text(stringResource(R.string.about_area_credit), style = small, color = muted)
+                Text(stringResource(R.string.about_hospital_credit), style = small, color = muted)
             }
         }
     }

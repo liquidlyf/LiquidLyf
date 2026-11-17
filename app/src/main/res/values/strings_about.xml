@@ -23,6 +23,8 @@
     <string name="about_based_on" translatable="false">Based on LiquidLyf — https://github.com/liquidlyf/LiquidLyf</string>
     <string name="about_trademark">The LiquidLyf name and logo are not covered by that licence.</string>
     <string name="about_area_credit">Area data: BBS via UN OCHA HDX (CC BY-IGO). Bangla area names: bangladesh-geojson (MIT).</string>
+    <!-- Plan D14: the hospital list's map points come from OpenStreetMap (ODbL 1.0, credit required). -->
+    <string name="about_hospital_credit">Hospital locations © OpenStreetMap contributors (ODbL).</string>
 
     <string name="title_licences">Open-source licences</string>
     <string name="licences_area_title">Bangladesh area list</string>

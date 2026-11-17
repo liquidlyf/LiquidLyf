@@ -124,6 +124,8 @@
     <string name="about_legal_licence">LiquidLyf একটি মুক্ত সফটওয়্যার: GNU Affero General Public License-এর সংস্করণ ৩ বা তার পরের যেকোনো সংস্করণের শর্ত মেনে আপনি এটি শেয়ার ও পরিবর্তন করতে পারেন। এটি কোনো ওয়ারেন্টি ছাড়াই দেওয়া হয়।</string>
     <string name="about_trademark">LiquidLyf নাম ও লোগো ওই লাইসেন্সের আওতায় পড়ে না।</string>
     <string name="about_area_credit">এলাকার তথ্য: BBS, UN OCHA HDX-এর মাধ্যমে (CC BY-IGO)। এলাকার বাংলা নাম: bangladesh-geojson (MIT)।</string>
+    <!-- Added 17 Nov 2026 (plan D14), after the review: needs the maintainer's check. OSM's credit stays in English, as its guidelines allow. -->
+    <string name="about_hospital_credit">হাসপাতালের অবস্থান © OpenStreetMap contributors (ODbL)।</string>
     <string name="title_licences">ওপেন-সোর্স লাইসেন্স</string>
     <string name="licences_area_title">বাংলাদেশের এলাকার তালিকা</string>
     <string name="licences_area_hdx">বিভাগ, জেলা ও উপজেলার কোড ও ইংরেজি নাম: বাংলাদেশ পরিসংখ্যান ব্যুরো (BBS), UN OCHA-র Humanitarian Data Exchange (cod-ab-bgd)-এর মাধ্যমে, CC BY-IGO লাইসেন্সের অধীনে।</string>
