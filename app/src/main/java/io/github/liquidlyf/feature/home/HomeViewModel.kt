@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -54,6 +55,8 @@ data class HomeUiState(
     /** The feed couldn't load (STATE-01): an error with Retry, never "no one needs blood". */
     val feedError: AppError? = null,
     val geo: BdGeo? = null,
+    /** My own open requests, newest first: "Your request" while it's open (FLOW-03, N6). */
+    val ownRequests: List<BloodRequest> = emptyList(),
 )
 
 sealed interface HomeEvent {
@@ -108,7 +111,38 @@ class HomeViewModel @Inject constructor(
             }
         }
 
-    val uiState: StateFlow<HomeUiState> = combine(profileFlow, feed, pendingAvailable, geo) { p, f, pending, g ->
+    /** Bumped when Home comes back into view (after posting a request, say), to look again. */
+    private val ownAttempt = MutableStateFlow(0)
+    private var resumedOnce = false
+
+    /**
+     * My open requests (FLOW-03): one small query for my latest ones, then a live listener on each
+     * still open, so the offers count and units update. None open: no listener at all.
+     */
+    private val ownRequests: Flow<List<BloodRequest>> = combine(profileFlow.map { it?.uid }.distinctUntilChanged(), ownAttempt) { uid, _ -> uid }
+        .flatMapLatest { uid ->
+            if (uid == null) {
+                flowOf(emptyList())
+            } else {
+                flow {
+                    val open = (requests.mine(uid, limit = OWN_REQUESTS_LIMIT) as? AppResult.Success)?.data.orEmpty()
+                        .filter { it.isActive(clock.now()) }
+                    if (open.isEmpty()) {
+                        emit(emptyList())
+                    } else {
+                        emitAll(
+                            combine(open.map { r -> requests.observe(r.id).onStart { emit(r) } }) { live ->
+                                live.filterNotNull().filter { it.isActive(clock.now()) }
+                            },
+                        )
+                    }
+                }.endOnListenError("own requests") { emit(emptyList()) }
+            }
+        }
+        // Home doesn't wait for this query: the card appears when it's back.
+        .onStart { emit(emptyList()) }
+
+    val uiState: StateFlow<HomeUiState> = combine(profileFlow, feed, pendingAvailable, geo, ownRequests) { p, f, pending, g, own ->
         HomeUiState(
             profile = p,
             eligibility = p?.let { eligibility.evaluate(it.birthYear, it.weightOk, it.gender, it.lastDonationAt, clock.now()) },
@@ -117,11 +151,17 @@ class HomeViewModel @Inject constructor(
             requests = f.list?.let { visible(it, p) },
             feedError = f.error,
             geo = g,
+            ownRequests = own,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
     /** Retry on the feed's error state. */
     fun retryFeed() = feedAttempt.update { it + 1 }
+
+    /** Home is in view again: a request posted meanwhile shows as "Your request". The first time, the flow has just looked. */
+    fun onResume() {
+        if (resumedOnce) ownAttempt.update { it + 1 } else resumedOnce = true
+    }
 
     /**
      * The bell's badge (phase-05 5.9): anything newer than my last visit to the inbox. One read
@@ -201,6 +241,9 @@ class HomeViewModel @Inject constructor(
 
     private companion object {
         const val PENDING_TIMEOUT_MS = 10_000L
+
+        /** Enough for anyone's open requests: posting is limited per day (the rules). */
+        const val OWN_REQUESTS_LIMIT = 5L
 
         fun urgencyOrder(u: Urgency): Int = when (u) {
             Urgency.CRITICAL -> 0

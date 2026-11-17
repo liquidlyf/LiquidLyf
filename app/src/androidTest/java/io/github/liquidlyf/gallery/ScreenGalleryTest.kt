@@ -83,6 +83,7 @@ import io.github.liquidlyf.core.model.ReportStatus
 import io.github.liquidlyf.core.model.ReportTarget
 import io.github.liquidlyf.core.model.RequestContact
 import io.github.liquidlyf.core.model.RequestStatus
+import io.github.liquidlyf.core.model.Responder
 import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.model.UserProfile
@@ -589,25 +590,32 @@ class ScreenGalleryTest {
 
     @Test
     fun home() {
-        val home = { p: UserProfile, requests: List<BloodRequest>?, online: Boolean, unread: Boolean, notifications: Boolean, available: Boolean ->
+        val home = { p: UserProfile, requests: List<BloodRequest>?, online: Boolean, unread: Boolean, notifications: Boolean, available: Boolean,
+                     own: List<BloodRequest> ->
             @Composable {
-                HomeScreen(HomeUiState(p, eligibility(p), available = available, requests = requests, geo = geo), online, {}, {}, {}, {}, {},
+                HomeScreen(HomeUiState(p, eligibility(p), available = available, requests = requests, geo = geo, ownRequests = own), online, {}, {}, {}, {}, {},
                     unreadInbox = unread, notificationsEnabled = notifications)
             }
         }
         val notListed = me.copy(showInDonorSearch = false)
         val tab = TopLevelDestination.HOME
+        // N6: my own open request, with one offer.
+        val own = listOf(myRequests[0].copy(responders = mapOf("d1" to Responder("Rahim U.", BloodGroup.B_POS, ResponseStatus.OFFERED))))
+        val notDonor = me.copy(bloodGroup = null, showInDonorSearch = false)
         gallery(
-            Shot("home-filled", tab, content = home(me, feed, true, false, true, true)),
-            Shot("home-loading", tab, animated = true, content = home(me, null, true, false, true, true)),
-            Shot("home-empty", tab, content = home(me, emptyList(), true, false, true, true)),
-            Shot("home-offline", tab, content = home(me, feed, false, false, true, true)),
-            Shot("home-notifications-off-unread", tab, content = home(me, feed, true, true, false, true)),
-            Shot("home-not-ready", tab, content = home(me, feed, true, false, true, false)),
-            Shot("home-resting", tab, content = home(donorMe, feed, true, false, true, true)),
-            Shot("home-not-listed", tab, content = home(notListed, feed, true, false, true, false)),
-            Shot("home-list-me-dialog", tab, overlay = true, prepare = { tap(R.string.home_list_me) }, content = home(notListed, feed, true, false, true, false)),
-            Shot("home-no-blood-group", tab, content = home(me.copy(bloodGroup = null, showInDonorSearch = false), feed, true, false, true, false)),
+            Shot("home-filled", tab, content = home(me, feed, true, false, true, true, emptyList())),
+            Shot("home-loading", tab, animated = true, content = home(me, null, true, false, true, true, emptyList())),
+            Shot("home-empty", tab, content = home(me, emptyList(), true, false, true, true, emptyList())),
+            Shot("home-offline", tab, content = home(me, feed, false, false, true, true, emptyList())),
+            Shot("home-notifications-off-unread", tab, content = home(me, feed, true, true, false, true, emptyList())),
+            Shot("home-not-ready", tab, content = home(me, feed, true, false, true, false, emptyList())),
+            Shot("home-resting", tab, content = home(donorMe, feed, true, false, true, true, emptyList())),
+            Shot("home-not-listed", tab, content = home(notListed, feed, true, false, true, false, emptyList())),
+            Shot("home-list-me-dialog", tab, overlay = true, prepare = { tap(R.string.home_list_me) }, content = home(notListed, feed, true, false, true, false, emptyList())),
+            Shot("home-no-blood-group", tab, content = home(notDonor, feed, true, false, true, false, emptyList())),
+            Shot("home-your-request", tab, content = home(me, feed, true, false, true, true, own)),
+            Shot("home-your-request-notifications-off", tab, content = home(me, feed, true, false, false, true, own)),
+            Shot("home-your-request-not-donor", tab, content = home(notDonor, feed, true, false, true, false, own)),
         )
     }
 

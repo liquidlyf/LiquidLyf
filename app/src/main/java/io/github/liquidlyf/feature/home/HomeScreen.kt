@@ -1,29 +1,35 @@
 package io.github.liquidlyf.feature.home
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,21 +41,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
+import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.EligibilityRing
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
-import io.github.liquidlyf.core.designsystem.components.LARGE_FONT_SCALE
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLExtendedFab
@@ -58,17 +72,25 @@ import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.RequestCard
+import io.github.liquidlyf.core.designsystem.components.RequestStatePill
 import io.github.liquidlyf.core.designsystem.components.SectionHeader
+import io.github.liquidlyf.core.designsystem.components.UnitDrops
 import io.github.liquidlyf.core.designsystem.components.eligibilityText
+import io.github.liquidlyf.core.designsystem.components.isLargeText
+import io.github.liquidlyf.core.designsystem.components.neededByText
+import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
+import io.github.liquidlyf.core.designsystem.dateText
+import io.github.liquidlyf.core.designsystem.dateTimeText
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.domain.IneligibleReason
+import io.github.liquidlyf.core.model.AppLocale
+import io.github.liquidlyf.core.model.BloodRequest
+import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
-import io.github.liquidlyf.feature.profile.BloodGroupReminder
 import io.github.liquidlyf.feature.settings.ListMeDialog
-import io.github.liquidlyf.feature.settings.NotificationsOffBanner
 import io.github.liquidlyf.feature.settings.rememberNotificationsEnabled
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -89,12 +111,21 @@ fun HomeRoute(
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { e -> if (e is HomeEvent.Message) launch { snackbar.showSnackbar(resources.getString(e.text)) } }
     }
+    // Back on Home after posting a request: it shows as "Your request" (FLOW-03).
+    LifecycleResumeEffect(viewModel) {
+        viewModel.onResume()
+        onPauseOrDispose { }
+    }
     HomeScreen(
         state, online, viewModel::onAvailableToggled, onOpenRequest, onCreateRequest, onOpenNotifications, onEditProfile, unreadInbox,
         onListMe = viewModel::listMe, onRetryFeed = viewModel::retryFeed,
     )
 }
 
+/**
+ * Home in the maintainer's order (N6, D8): the one-line donor status, then "Your request" while it's
+ * open, then the requests you can help with. With notifications off, a small notice comes first.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeScreen(
@@ -115,11 +146,12 @@ internal fun HomeScreen(
     val locale = currentAppLocale()
     // UI-08: with large text "Request blood" is a full-width bar above the navigation instead of
     // floating, where it covered a request's hospital and area at 200%.
-    val actionAsBar = LocalDensity.current.fontScale >= LARGE_FONT_SCALE
+    val actionAsBar = isLargeText()
     Scaffold(
         topBar = {
             LLTopBar(
-                title = stringResource(R.string.nav_home),
+                title = stringResource(R.string.app_name),
+                brand = true,
                 actions = {
                     IconButton(onClick = onOpenNotifications) {
                         BadgedBox(badge = { if (unreadInbox) Badge() }) {
@@ -149,40 +181,53 @@ internal fun HomeScreen(
                     contentPadding = PaddingValues(horizontal = screenGutter(), vertical = Spacing.md),
                     verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                 ) {
-                    // Phase 5.10: without notifications a donor never hears about a request.
+                    // Phase 5.10, STATE-04: without notifications a donor never hears about a request.
                     if (!notificationsEnabled) {
-                        item(key = "notifications-off") { NotificationsOffBanner(onTurnOn = launcher::openNotificationSettings) }
+                        item(key = "notifications-off") { NotificationsNotice(onTurnOn = launcher::openNotificationSettings) }
                     }
-                    item(key = "availability") { AvailabilityCard(state, notificationsEnabled, onAvailableToggled, onEditProfile, onListMe) }
-                    item(key = "header") { SectionHeader(stringResource(R.string.home_urgent_near_you)) }
+                    val p = state.profile
+                    val group = p?.bloodGroup
+                    val own = state.ownRequests
+                    val becomeDonorBelow = BECOME_DONOR_BELOW_OWN_REQUEST && own.isNotEmpty()
+                    if (p != null && group != null) {
+                        item(key = "donor-line") { DonorLine(state, notificationsEnabled, now, onAvailableToggled, onListMe) }
+                    } else if (p != null && !becomeDonorBelow) {
+                        item(key = "become-donor") { BecomeDonorCard(onBecomeDonor = onEditProfile) }
+                    }
+                    items(own, key = { "own-${it.id}" }) { r -> OwnRequestCard(r, now, onOpen = { onOpenRequest(r.id) }) }
+                    if (p != null && group == null && becomeDonorBelow) {
+                        item(key = "become-donor") { BecomeDonorCard(onBecomeDonor = onEditProfile) }
+                    }
                     val list = state.requests
-                    val group = state.profile?.bloodGroup
                     when {
-                        list == null && state.feedError != null -> item(key = "error") { ErrorState(state.feedError, onRetry = onRetryFeed, title = stringResource(R.string.home_load_error)) }
-                        list == null -> item(key = "loading") { LoadingState(count = 2) }
-                        group == null -> item(key = "no-group") {
-                            EmptyState(
-                                icon = LLIcons.BloodDrop,
-                                title = stringResource(R.string.home_no_group_title),
-                                body = stringResource(R.string.home_no_group_body),
-                            )
-                        }
-                        list.isEmpty() -> item(key = "empty") {
-                            EmptyState(
-                                icon = LLIcons.Favorite,
-                                title = stringResource(R.string.home_empty_title, stringResource(group.labelRes)),
-                                body = stringResource(R.string.home_empty_body),
-                                actionLabel = stringResource(R.string.home_change_area),
-                                onAction = onEditProfile,
-                            )
-                        }
-                        else -> items(list, key = { it.id }) { r ->
-                            RequestCard(
-                                request = r,
-                                placeText = state.geo?.placeLabel(r.district, r.upazila, locale) ?: r.district,
-                                now = now,
-                                onClick = { onOpenRequest(r.id) },
-                            )
+                        p == null -> item(key = "loading") { LoadingState(count = 2) }
+                        // Not a donor yet: the card above says what to do; there's no group to match.
+                        group == null -> Unit
+                        else -> {
+                            item(key = "header") { SectionHeader(stringResource(R.string.home_urgent_near_you)) }
+                            when {
+                                list == null && state.feedError != null -> item(key = "error") {
+                                    ErrorState(state.feedError, onRetry = onRetryFeed, title = stringResource(R.string.home_load_error))
+                                }
+                                list == null -> item(key = "loading") { LoadingState(count = 2) }
+                                list.isEmpty() -> item(key = "empty") {
+                                    EmptyState(
+                                        icon = LLIcons.Favorite,
+                                        title = stringResource(R.string.home_empty_title, stringResource(group.labelRes)),
+                                        body = stringResource(R.string.home_empty_body),
+                                        actionLabel = stringResource(R.string.home_change_area),
+                                        onAction = onEditProfile,
+                                    )
+                                }
+                                else -> items(list, key = { it.id }) { r ->
+                                    RequestCard(
+                                        request = r,
+                                        placeText = state.geo?.placeLabel(r.district, r.upazila, locale) ?: r.district,
+                                        now = now,
+                                        onClick = { onOpenRequest(r.id) },
+                                    )
+                                }
+                            }
                         }
                     }
                     if (!actionAsBar) item(key = "fab-space") { Spacer(Modifier.height(FAB_CLEARANCE)) }
@@ -194,73 +239,236 @@ internal fun HomeScreen(
 
 private val FAB_CLEARANCE = 88.dp
 
-/** Availability and eligibility (doc 04 §4): the whole row toggles, for TalkBack too. */
+/**
+ * Where "Want to donate too?" goes while the person's own request is open: below it, so an urgent
+ * request of their own comes first (D's suggestion, P's pick; the maintainer may still move it).
+ */
+private const val BECOME_DONOR_BELOW_OWN_REQUEST = true
+
+/**
+ * Notifications off (STATE-04, N6): a small amber notice with "Turn on" beside it, not a tall card.
+ * With large text only its title and the button stay, so a request still starts on the first screen.
+ */
 @Composable
-private fun AvailabilityCard(
-    state: HomeUiState,
-    notificationsOn: Boolean,
-    onAvailableToggled: (Boolean) -> Unit,
-    onEditProfile: () -> Unit,
-    onListMe: () -> Unit,
-) {
-    val p = state.profile ?: return
-    when {
-        p.bloodGroup == null -> BloodGroupReminder(onAdd = onEditProfile)
-        !p.showInDonorSearch -> LLCard {
-            Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                Text(stringResource(R.string.home_not_listed_title), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.home_not_listed_body), style = MaterialTheme.typography.bodyMedium)
-                var asking by remember { mutableStateOf(false) }
-                TextButton(onClick = { asking = true }) { Text(stringResource(R.string.home_list_me)) }
-                val group = p.bloodGroup
-                if (asking && group != null) {
-                    ListMeDialog(
-                        bloodGroup = group,
-                        onConfirm = {
-                            asking = false
-                            onListMe()
-                        },
-                        onDismiss = { asking = false },
-                    )
-                }
-            }
+private fun NotificationsNotice(onTurnOn: () -> Unit) {
+    val colors = LiquidLyfTheme.extendedColors
+    val large = isLargeText()
+    Surface(color = colors.warningContainer, contentColor = colors.onWarningContainer, shape = MaterialTheme.shapes.medium) {
+        val icon = @Composable { Icon(painterResource(LLIcons.NotificationsOff), contentDescription = null) }
+        val button = @Composable { modifier: Modifier ->
+            Button(onClick = onTurnOn, modifier = modifier.heightIn(min = Spacing.minTouchTarget)) { Text(stringResource(R.string.notif_off_turn_on)) }
         }
-        else -> LLCard {
-            Row(Modifier.padding(start = Spacing.md, top = Spacing.md, end = Spacing.md), verticalAlignment = Alignment.CenterVertically) {
-                state.eligibility?.let { EligibilityRing(it, p.gender, Instant.now()) }
-                Text(
-                    state.eligibility?.let { eligibilityText(it, Instant.now()) }.orEmpty(),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(start = Spacing.md).weight(1f),
-                )
+        if (large) {
+            Column(Modifier.fillMaxWidth().padding(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    icon()
+                    Text(stringResource(R.string.home_notif_off_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+                }
+                button(Modifier.padding(start = 36.dp))
             }
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.home_ready_to_donate)) },
-                supportingContent = {
-                    val resting = state.eligibility?.let { IneligibleReason.REST_PERIOD in it.reasons } == true
-                    Text(stringResource(readyText(state.available, notificationsOn, resting)))
-                },
-                trailingContent = { Switch(checked = state.available, onCheckedChange = null) },
-                colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                modifier = Modifier.toggleable(
-                    value = state.available,
-                    enabled = !state.savingAvailability,
-                    role = Role.Switch,
-                    onValueChange = onAvailableToggled,
-                ),
-            )
+        } else {
+            Row(
+                Modifier.fillMaxWidth().padding(start = 14.dp, top = Spacing.xs, end = Spacing.xs, bottom = Spacing.xs),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                icon()
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.home_notif_off_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+                    Text(stringResource(R.string.home_notif_off_body), style = MaterialTheme.typography.bodySmall)
+                }
+                button(Modifier)
+            }
         }
     }
 }
 
 /**
- * What "Ready to donate" means right now: no promise of alerts while notifications are off
- * (STATE-04), or during the rest period, when the Worker sends none (COPY-04).
+ * The one-line donor status (UI-04, COPY-04, N6): the ring (full = can donate now, the days left
+ * inside it while resting, grey when switched off), what it means, and "Ready to donate" as the
+ * switch. Each line is true for its state. The whole card toggles, for TalkBack too.
+ */
+@Composable
+private fun DonorLine(
+    state: HomeUiState,
+    notificationsOn: Boolean,
+    now: Instant,
+    onAvailableToggled: (Boolean) -> Unit,
+    onListMe: () -> Unit,
+) {
+    val p = state.profile ?: return
+    val e = state.eligibility ?: return
+    if (!p.showInDonorSearch) {
+        NotListedLine(state, now, onListMe)
+        return
+    }
+    val on = state.available
+    val large = isLargeText()
+    val resting = IneligibleReason.REST_PERIOD in e.reasons
+    val title = if (on) eligibilityText(e, now) else stringResource(R.string.home_not_ready_title)
+    val line = when {
+        !on -> stringResource(R.string.home_ready_off)
+        // With large text the notice above already says why: only "Ready to donate" here.
+        !notificationsOn -> stringResource(if (large) R.string.home_ready_to_donate else R.string.home_line_notifications_off)
+        resting -> stringResource(R.string.home_line_resting, dateText(e.eligibleFrom))
+        else -> stringResource(R.string.home_line_ready)
+    }
+    val ring = @Composable { EligibilityRing(e, p.gender, now, size = 48.dp, showDays = true, dimmed = !on) }
+    val switch = @Composable { Switch(checked = on, onCheckedChange = null, enabled = !state.savingAvailability) }
+    LLCard(Modifier.fillMaxWidth()) {
+        val toggle = Modifier
+            .fillMaxWidth()
+            .toggleable(value = on, enabled = !state.savingAvailability, role = Role.Switch, onValueChange = onAvailableToggled)
+            .padding(Spacing.md)
+        if (large) {
+            Column(toggle, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    ring()
+                    Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    Text(line, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                    switch()
+                }
+            }
+        } else {
+            Row(toggle, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+                ring()
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                    Text(title, style = MaterialTheme.typography.titleMedium)
+                    Text(line, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                switch()
+            }
+        }
+    }
+}
+
+/** A donor who isn't listed: the grey ring and "List me as a donor", which asks for consent first (8.1). */
+@Composable
+private fun NotListedLine(state: HomeUiState, now: Instant, onListMe: () -> Unit) {
+    val p = state.profile ?: return
+    val e = state.eligibility ?: return
+    var asking by remember { mutableStateOf(false) }
+    LLCard(Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(Spacing.md), horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+            EligibilityRing(e, p.gender, now, size = 48.dp, showDays = true, dimmed = true)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                Text(stringResource(R.string.home_not_listed_title), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.home_not_listed_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = { asking = true }) { Text(stringResource(R.string.home_list_me)) }
+            }
+        }
+    }
+    val group = p.bloodGroup
+    if (asking && group != null) {
+        ListMeDialog(
+            bloodGroup = group,
+            onConfirm = {
+                asking = false
+                onListMe()
+            },
+            onDismiss = { asking = false },
+        )
+    }
+}
+
+/**
+ * Not a donor yet (D1, N6): "Want to donate too?". Until the short setup (FLOW-01) lands, a
+ * profile without donor details is one without a blood group, so the button opens Edit profile.
+ */
+@Composable
+private fun BecomeDonorCard(onBecomeDonor: () -> Unit) {
+    LLCard(Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(Spacing.md), horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+            Box(
+                Modifier.size(48.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(painterResource(LLIcons.Favorite), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                Text(stringResource(R.string.home_become_donor_title), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.home_become_donor_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = onBecomeDonor) { Text(stringResource(R.string.action_become_donor)) }
+            }
+        }
+    }
+}
+
+/**
+ * "Your request" (FLOW-03, N6) while it's open: what's received, how many offered and when it's
+ * needed, with "See offers". It goes when the request is closed.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun OwnRequestCard(r: BloodRequest, now: Instant, onOpen: () -> Unit) {
+    val label = stringResource(R.string.home_your_request)
+    LLCard(Modifier.fillMaxWidth(), onClick = onOpen) {
+        Column(Modifier.padding(start = Spacing.md, top = Spacing.md, end = Spacing.md, bottom = Spacing.xs)) {
+            Text(
+                // Capitals help English scan; Bangla has none.
+                if (currentAppLocale() == AppLocale.BN) label else label.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.semantics { heading() },
+            )
+            Row(Modifier.padding(top = Spacing.xs), horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+                BloodGroupBadge(r.bloodGroup)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalArrangement = Arrangement.spacedBy(Spacing.xxs),
+                    ) {
+                        Text(
+                            unitsText(r.unitsNeeded, stringResource(r.component.labelRes)),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.align(Alignment.CenterVertically).padding(end = Spacing.xs),
+                        )
+                        RequestStatePill(r.status, r.urgency, Modifier.align(Alignment.CenterVertically))
+                    }
+                    Text(r.hospitalName, style = MaterialTheme.typography.bodyMedium)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                        UnitDrops(r.unitsFulfilled, r.unitsNeeded)
+                        Text(
+                            pluralStringResource(R.plurals.detail_units_progress, r.unitsNeeded, r.unitsFulfilled, r.unitsNeeded),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    val offers = if (r.liveOffers > 0) {
+                        pluralStringResource(R.plurals.request_offers_count, r.liveOffers, r.liveOffers)
+                    } else {
+                        stringResource(R.string.home_no_offers_yet)
+                    }
+                    val needed = if (r.urgency == Urgency.PLANNED) {
+                        stringResource(R.string.request_needed_on, dateTimeText(r.neededBy))
+                    } else {
+                        neededByText(r.neededBy, now)
+                    }
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(fontWeight = FontWeight.Medium)) { append(offers) }
+                            append(" · ")
+                            append(needed)
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+            TextButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.home_see_offers)) }
+        }
+    }
+}
+
+/**
+ * What "Ready to donate" means right now (Profile and Settings): no promise of alerts while
+ * notifications are off (STATE-04).
  */
 @StringRes
-internal fun readyText(available: Boolean, notificationsOn: Boolean, resting: Boolean = false): Int = when {
+internal fun readyText(available: Boolean, notificationsOn: Boolean): Int = when {
     !available -> R.string.home_ready_off
     !notificationsOn -> R.string.home_ready_on_notifications_off
-    resting -> R.string.home_ready_on_resting
     else -> R.string.home_ready_on
 }

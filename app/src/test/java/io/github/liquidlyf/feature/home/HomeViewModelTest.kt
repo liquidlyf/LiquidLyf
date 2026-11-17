@@ -96,6 +96,32 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `my open request shows as Your request, live, and goes when it's closed`() = runTest(dispatcher) {
+        val mine = TestData.request(id = "mine", requesterUid = "me").copy(unitsNeeded = 2)
+        requests.put(mine, TestData.request(id = "old", requesterUid = "me", status = RequestStatus.FULFILLED), TestData.request(id = "theirs"))
+        val vm = vm()
+        vm.onResume() // the first time: the flow has just looked
+        advanceUntilIdle()
+        assertEquals(listOf("mine"), vm.uiState.value.ownRequests.map { it.id })
+
+        requests.put(mine.copy(unitsFulfilled = 1)) // a donor gave: the card follows
+        advanceUntilIdle()
+        assertEquals(1, vm.uiState.value.ownRequests.single().unitsFulfilled)
+
+        requests.put(mine.copy(status = RequestStatus.FULFILLED))
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.ownRequests.isEmpty())
+
+        // Posted elsewhere, then back on Home: it shows.
+        requests.put(TestData.request(id = "new", requesterUid = "me"))
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.ownRequests.isEmpty())
+        vm.onResume()
+        advanceUntilIdle()
+        assertEquals(listOf("new"), vm.uiState.value.ownRequests.map { it.id })
+    }
+
+    @Test
     fun `without a blood group there's no feed to show`() = runTest(dispatcher) {
         requests.put(TestData.request(id = "r1"))
         session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(bloodGroup = null))

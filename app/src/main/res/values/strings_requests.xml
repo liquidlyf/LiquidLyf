@@ -215,8 +215,6 @@
     <!-- STATE-06: on the request form, "showing saved data" meant nothing; posting offline does work. -->
     <string name="offline_banner_form">You\'re offline. Your request will be posted when you\'re back online.</string>
     <string name="home_urgent_near_you">Requests you can help with</string>
-    <string name="home_no_group_title">Add your blood group</string>
-    <string name="home_no_group_body">Then you\'ll see requests near you that you can answer.</string>
     <string name="home_empty_title">No one near you needs %1$s right now</string>
     <string name="home_empty_body">We\'ll notify you when someone does.</string>
     <string name="home_change_area">Change area</string>
@@ -224,9 +222,19 @@
     <string name="home_not_listed_body">List yourself so people nearby who need your blood group can find you and alert you.</string>
     <string name="home_list_me">List me as a donor</string>
     <string name="home_ready_to_donate">Ready to donate</string>
+    <string name="home_your_request">Your request</string>
+    <string name="home_see_offers">See offers</string>
+    <string name="home_no_offers_yet">No offers yet</string>
+    <string name="home_become_donor_title">Want to donate too?</string>
+    <string name="home_become_donor_body">Answer a few donor questions to get alerts near you.</string>
+    <string name="action_become_donor">Become a donor</string>
+    <string name="home_not_ready_title">Not ready to donate</string>
+    <string name="home_line_ready">Ready to donate · people nearby can alert you</string>
+    <string name="home_line_resting">Ready to donate · alerts start again on %1$s</string>
+    <string name="home_line_notifications_off">Ready to donate · no alerts until notifications are on</string>
+    <string name="home_notif_off_title">Notifications off</string>
+    <string name="home_notif_off_body">You\'ll miss alerts and offers.</string>
     <string name="home_ready_on">People nearby can find you and alert you.</string>
-    <!-- COPY-04: "Ready" during the rest period: alerts pause until the donor can give again. -->
-    <string name="home_ready_on_resting">People nearby can find you. Alerts start again when you can donate.</string>
     <!-- STATE-04: "Ready" while the phone blocks LiquidLyf's notifications: the alerts part isn't true. -->
     <string name="home_ready_on_notifications_off">People nearby can find you, but you won\'t get alerts until notifications are on.</string>
     <string name="home_ready_off">You won\'t get alerts or appear in donor search.</string>

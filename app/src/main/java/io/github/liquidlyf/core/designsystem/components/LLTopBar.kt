@@ -40,11 +40,15 @@ fun LLTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     scrollBehavior: TopAppBarScrollBehavior? = null,
+    /** The horizontal logo instead of [title] (Home only, BRAND-01): TalkBack reads it as the app's name, a heading. */
+    brand: Boolean = false,
 ) {
     val large = isLargeText()
     TopAppBar(
         title = {
-            if (large) {
+            if (brand) {
+                HorizontalLogo(Modifier.semantics { heading() })
+            } else if (large) {
                 val style = LocalTextStyle.current
                 BasicText(
                     text = title,

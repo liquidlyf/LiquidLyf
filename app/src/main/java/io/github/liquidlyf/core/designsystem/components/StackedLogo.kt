@@ -42,3 +42,20 @@ fun StackedLogo(modifier: Modifier = Modifier) {
 
 /** branding/logo-full.svg's viewBox, 1087.41 × 782.3. */
 private const val LOGO_RATIO = 1087.41f / 782.3f
+
+/**
+ * The horizontal logo (branding/logo-horizontal.svg, dark: logo-horizontal-dark.svg), for Home's
+ * top bar only (BRAND-01, N6). Its words are the app's name, so TalkBack reads that.
+ */
+@Composable
+fun HorizontalLogo(modifier: Modifier = Modifier) {
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    Image(
+        painterResource(if (dark) R.drawable.logo_horizontal_dark else R.drawable.logo_horizontal),
+        contentDescription = stringResource(R.string.app_name),
+        modifier = modifier.height(28.dp).aspectRatio(HORIZONTAL_RATIO),
+    )
+}
+
+/** branding/logo-horizontal.svg's viewBox, 1417.6 × 300.14. */
+private const val HORIZONTAL_RATIO = 1417.6f / 300.14f
