@@ -100,10 +100,14 @@ For developers: each release also has `SHA256SUMS.txt` and a build attestation
 
 ## Updates
 
-- When a new version is out, the app shows an **Update available** card on its home screen. Tap
-  **Get the update**, and the app downloads the new version itself. The first time, Android says
-  LiquidLyf isn't allowed to install apps. Tap **Settings**, turn on **Allow from this source**, then
-  go back. Then tap **Install** (on some phones, **Update**).
+- When a new version is out, the app shows an **Update available** card on its home screen.
+  1. Tap **Get the update**. The app downloads the new version.
+  2. The first time you update, the app shows **Allow LiquidLyf to install its update**. Tap
+     **Open settings**, turn on the switch for LiquidLyf, then come back to the app.
+  3. Android asks whether to install the update. Tap **Install** (on some phones, **Update**).
+
+  If the update fails, tap **Download in the browser instead**, then install it as in "How to install"
+  above.
 - If you use [Obtainium](https://obtainium.imranr.dev), it can install updates for you:
   [add LiquidLyf to Obtainium](obtainium://add/https://github.com/liquidlyf/LiquidLyf). If the link
   doesn't open Obtainium, open it yourself, tap **Add App**, paste
@@ -113,10 +117,12 @@ Each update installs over the old version. You keep your account and settings.
 
 <!-- The card's labels are A's strings (1abaaad, 17 Nov 2026): update_available_title "Update available",
      update_available_action "Get the update". The update downloads inside the app (the maintainer,
-     17 Nov 2026, "update a"), so the first update asks to allow LiquidLyf itself to install apps.
-     CHECK after Phase 9: the whole flow on a phone (A): any screen or dialog of the app's own in it
-     (quote its labels here), Android's prompt for an app that may not install apps, and the
-     installer's button for an update (Install or Update) on Android 7–14; that the first release
+     17 Nov 2026, "update a"); the flow's texts are A's (e6f8c80): update_allow_title "Allow LiquidLyf
+     to install its update", update_allow_action "Open settings", update_in_browser "Download in the
+     browser instead". Android's own switch label differs by phone and language, so the page (like the
+     app) says "the switch for LiquidLyf". If A's texts change, change them here.
+     CHECK after Phase 9: the whole flow on a phone (A), and the installer's button for an update
+     (Install or Update) on Android 7–14; that the first release
      has SHA256SUMS.txt and the attestation (Phase 9.2), and Obtainium's link and button names on a phone
      (its wiki, 17 Nov 2026: "obtainium://add/<url>" opens Add App with the URL filled in). -->
 

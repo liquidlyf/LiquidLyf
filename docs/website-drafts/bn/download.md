@@ -100,12 +100,17 @@ io.github.liquidlyf
 ## আপডেট
 
 - নতুন ভার্সন বের হলে অ্যাপের হোম স্ক্রিনে **"নতুন আপডেট এসেছে"** (<span lang="en">Update available</span>)
-  কার্ড দেখাবে। **"আপডেট নিন"** (<span lang="en">Get the update</span>) চাপলে অ্যাপ নিজেই নতুন ভার্সন
-  ডাউনলোড করবে। প্রথমবার অ্যান্ড্রয়েড জানাবে, LiquidLyf-কে অ্যাপ ইনস্টল করার অনুমতি দেওয়া নেই।
-  **"সেটিংস"** (<span lang="en">Settings</span>) চাপুন, **"এই উৎস থেকে অনুমতি দিন"**
-  (<span lang="en">Allow from this source</span>) চালু করুন, তারপর আগের স্ক্রিনে ফিরে যান। এরপর
-  **"ইনস্টল করুন"** (<span lang="en">Install</span>) চাপুন (কিছু ফোনে **"আপডেট করুন"**,
-  <span lang="en">Update</span>)।
+  কার্ড দেখাবে।
+  1. **"আপডেট নিন"** (<span lang="en">Get the update</span>) চাপুন। অ্যাপ নিজেই নতুন ভার্সন ডাউনলোড করবে।
+  2. প্রথম আপডেটের সময় অ্যাপে দেখাবে **"LiquidLyf-কে আপডেট ইনস্টল করার অনুমতি দিন"**
+     (<span lang="en">Allow LiquidLyf to install its update</span>)। **"সেটিংস খুলুন"**
+     (<span lang="en">Open settings</span>) চাপুন, LiquidLyf-এর সুইচটা চালু করুন, তারপর অ্যাপে ফিরে আসুন।
+  3. অ্যান্ড্রয়েড জিজ্ঞেস করবে আপডেটটা ইনস্টল করবেন কি না। **"ইনস্টল করুন"**
+     (<span lang="en">Install</span>) চাপুন। কিছু ফোনে এই বাটনের নাম **"আপডেট করুন"**
+     (<span lang="en">Update</span>)।
+
+  আপডেট না হলে অ্যাপে **"ব্রাউজারে ডাউনলোড করুন"** (<span lang="en">Download in the browser instead</span>)
+  চাপুন, তারপর ওপরের "কীভাবে ইনস্টল করবেন" অংশের মতো ইনস্টল করুন।
 - [Obtainium](https://obtainium.imranr.dev) ব্যবহার করলে সেটাই আপডেট ইনস্টল করে দিতে পারে:
   [Obtainium-এ LiquidLyf যোগ করুন](obtainium://add/https://github.com/liquidlyf/LiquidLyf)। এই লিংকে চাপার
   পরও যদি Obtainium না খোলে, তাহলে নিজে Obtainium খুলুন, **<span lang="en">Add App</span>** চাপুন,
@@ -115,8 +120,11 @@ io.github.liquidlyf
 
 <!-- The card's Bangla labels are A's (values-bn/strings_review3_requests.xml, 1abaaad): "নতুন আপডেট
      এসেছে" / "আপডেট নিন" (C21, OK). Changed again for the in-app download ("update a", 17 Nov 2026):
-     meaning check, then the maintainer's review (C22). Android's own Bangla names here are guesses like
-     those in the install steps. If any label changes, change it here too.
+     meaning check, then the maintainer's review (C22). The flow's Bangla texts are A's (e6f8c80, also
+     waiting for the maintainer's check): "LiquidLyf-কে আপডেট ইনস্টল করার অনুমতি দিন", "সেটিংস খুলুন",
+     "ব্রাউজারে ডাউনলোড করুন". Android's switch label differs by phone, so the page says "LiquidLyf-এর
+     সুইচটা"; "ইনস্টল করুন" / "আপডেট করুন" are Android's and guesses until the phone check. If any label
+     changes, change it here too.
      CHECK after Phase 9, as in the English page. Obtainium's labels stay in English: check on a phone whether Obtainium
      shows them in Bangla too. -->
 
