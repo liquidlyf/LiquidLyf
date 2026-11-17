@@ -1,5 +1,6 @@
 package io.github.liquidlyf.feature.settings
 
+import android.content.Context
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -52,6 +53,7 @@ import io.github.liquidlyf.core.designsystem.components.NoticeTone
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.util.ApplicationScope
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
+import io.github.liquidlyf.notifications.NotificationChannels
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -89,7 +91,8 @@ fun NotificationPrefsRoute(onBack: () -> Unit, viewModel: NotificationPrefsViewM
     val launcher = rememberSafeIntentLauncher()
     NotificationPrefsScreen(
         state = state,
-        systemEnabled = rememberNotificationsEnabled(),
+        // This screen is about the app-wide block; the channels are in the phone's own settings.
+        systemEnabled = rememberNotificationsEnabled(alertsChannel = false),
         onChange = viewModel::set,
         onOpenSystemSettings = launcher::openNotificationSettings,
         onBack = onBack,
@@ -148,16 +151,29 @@ private fun PrefSwitch(@StringRes title: Int, @StringRes summary: Int, checked: 
     )
 }
 
-/** True while the app may post notifications; checked again each time the screen comes back. */
+/**
+ * True while request alerts can reach this phone; checked again each time the screen comes back.
+ * [alertsChannel]: the "Urgent blood requests" channel counts too, since it can be turned off on its
+ * own in the phone's settings (D's re-audit: only the app-wide block was noticed).
+ */
 @Composable
-fun rememberNotificationsEnabled(): Boolean {
+fun rememberNotificationsEnabled(alertsChannel: Boolean = true): Boolean {
     val context = LocalContext.current
-    var enabled by remember { mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled()) }
+    var enabled by remember { mutableStateOf(notificationsEnabled(context, alertsChannel)) }
     LifecycleResumeEffect(context) {
-        enabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        enabled = notificationsEnabled(context, alertsChannel)
         onPauseOrDispose {}
     }
     return enabled
+}
+
+private fun notificationsEnabled(context: Context, alertsChannel: Boolean): Boolean {
+    val manager = NotificationManagerCompat.from(context)
+    if (!manager.areNotificationsEnabled()) return false
+    if (!alertsChannel) return true
+    // Below Android 8 there are no channels (null): the app-wide switch is all there is.
+    val urgent = manager.getNotificationChannelCompat(NotificationChannels.URGENT_REQUESTS) ?: return true
+    return urgent.importance != NotificationManagerCompat.IMPORTANCE_NONE
 }
 
 /**
