@@ -14,6 +14,7 @@ Design: `project-plan` doc 07 §5 + §9 and doc 10 §4. Where this folder and th
 | `rules-tests/` | vitest + `@firebase/rules-unit-testing`, run on the Firestore emulator |
 | `seed/seed.mjs` | Synthetic demo data (source of truth) |
 | `seed/emulator-data/` | The committed emulator snapshot, generated from `seed.mjs` |
+| `seed/hospitals.csv`, `seed/hospitals.mjs` | The real hospital list (ODbL) and the script that writes `seed/hospitals.json` for the app and the website. See [seed/README.md](seed/README.md#the-real-hospital-list-hospitalscsv) |
 | `../backend/shared/blood-compatibility.json` | Compatibility test vectors, shared with the Worker and the Android app |
 
 ## Run it
