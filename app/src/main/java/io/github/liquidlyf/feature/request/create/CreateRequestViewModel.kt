@@ -87,7 +87,9 @@ data class RequestForm(
     val urgency: String? = null,
     /** Planned requests only: the chosen date and time, epoch milliseconds. */
     val plannedAtMillis: Long? = null,
-    // Step 3: contact
+    // Step 3: how donors reach you (PERF-01, N2): me (the profile's name and number) or someone else.
+    val contactIsMe: Boolean = true,
+    /** Someone else's name and number; unused while [contactIsMe]. */
     val contactName: String = "",
     val contactPhone: String = "",
     val patientName: String = "",
@@ -117,6 +119,9 @@ data class CreateRequestUiState(
     val moneyWarning: Boolean = false,
     val moneyAcknowledged: Boolean = false,
     @param:StringRes val formError: Int? = null,
+    /** "Me": the profile's name and number, shown so nothing needs typing. */
+    val myName: String? = null,
+    val myPhone: String? = null,
 ) {
     val step: Int get() = form.step
     val isLastStep: Boolean get() = form.step == CreateRequestViewModel.STEPS - 1
@@ -163,7 +168,7 @@ class CreateRequestViewModel @Inject constructor(
 
     private val me: UserProfile? = (session.state.value as? SessionState.Ready)?.profile
 
-    private val state = MutableStateFlow(CreateRequestUiState(form = restoreForm()))
+    private val state = MutableStateFlow(CreateRequestUiState(form = restoreForm(), myName = me?.fullName, myPhone = me?.phone))
     val uiState: StateFlow<CreateRequestUiState> = state.asStateFlow()
 
     private val events = Channel<CreateRequestEvent>(Channel.BUFFERED)
@@ -253,6 +258,7 @@ class CreateRequestViewModel @Inject constructor(
         val requester = me ?: return
         val draft = toDraft(state.value.form) ?: return
         state.update { it.copy(posting = true, formError = null) }
+        val offline = !online.value
         val requestId = requests.newRequestId()
         val saved = CompletableDeferred<PostResult>()
         // PERF-01: the request page opens as soon as the request is saved; the donor alert (up to
@@ -271,6 +277,12 @@ class CreateRequestViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            // Offline: the request is saved on the phone and goes out later, so open its page at once
+            // instead of "Posting…" for 10 s (D's re-audit, PERF-01).
+            if (offline) {
+                posted(requestId, PostNotice.WAITING_FOR_NETWORK)
+                return@launch
+            }
             when (val result = withTimeoutOrNull(POST_WAIT_MS) { saved.await() }) {
                 null -> posted(requestId, PostNotice.WAITING_FOR_NETWORK)
                 is PostResult.Failed -> state.update { it.copy(posting = false, formError = result.error.messageRes) }
@@ -305,10 +317,7 @@ class CreateRequestViewModel @Inject constructor(
     private fun UserProfile?.defaultForm(): RequestForm = if (this == null) {
         RequestForm()
     } else {
-        RequestForm(
-            division = area.division, district = area.district, upazila = area.upazila,
-            contactName = fullName, contactPhone = "0" + phone.removePrefix("+880"),
-        )
+        RequestForm(division = area.division, district = area.district, upazila = area.upazila)
     }
 
     internal fun validate(f: RequestForm, step: Int): Set<RequestField> = buildSet {
@@ -331,8 +340,10 @@ class CreateRequestViewModel @Inject constructor(
                 }
             }
             else -> {
-                if (!Validators.isValidName(f.contactName)) add(RequestField.CONTACT_NAME)
-                if (Validators.normalizePhone(f.contactPhone) == null) add(RequestField.CONTACT_PHONE)
+                if (!f.contactIsMe) {
+                    if (!Validators.isValidName(f.contactName)) add(RequestField.CONTACT_NAME)
+                    if (Validators.normalizePhone(f.contactPhone) == null) add(RequestField.CONTACT_PHONE)
+                }
                 if (f.patientName.trim().length > Validators.PATIENT_NAME_MAX) add(RequestField.PATIENT_NAME)
                 if (f.notes.trim().length > Validators.NOTES_MAX) add(RequestField.NOTES)
                 if (!f.genuine) add(RequestField.GENUINE)
@@ -359,8 +370,8 @@ class CreateRequestViewModel @Inject constructor(
             urgency = Urgency.fromCode(f.urgency) ?: return null,
             neededBy = neededBy(f, now) ?: return null,
             notes = f.notes.trim().ifEmpty { null },
-            contactName = Validators.normalizeName(f.contactName),
-            contactPhone = Validators.normalizePhone(f.contactPhone) ?: return null,
+            contactName = Validators.normalizeName(if (f.contactIsMe) me?.fullName ?: return null else f.contactName),
+            contactPhone = Validators.normalizePhone(if (f.contactIsMe) me?.phone ?: return null else f.contactPhone) ?: return null,
             patientName = f.patientName.trim().ifEmpty { null },
             wardOrBed = f.wardOrBed.trim().ifEmpty { null },
         )

@@ -77,8 +77,8 @@ class CreateRequestViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun TestScope.vm(appScope: CoroutineScope = backgroundScope) =
-        CreateRequestViewModel(saved, session, profiles, requests, hospitals, geoRepo, worker, Clock { TestData.NOW }, appScope, FakeNetworkMonitor(), alerts, reminders, alertStatuses)
+    private fun TestScope.vm(appScope: CoroutineScope = backgroundScope, network: FakeNetworkMonitor = FakeNetworkMonitor()) =
+        CreateRequestViewModel(saved, session, profiles, requests, hospitals, geoRepo, worker, Clock { TestData.NOW }, appScope, network, alerts, reminders, alertStatuses)
 
     private fun TestScope.events(vm: CreateRequestViewModel): List<CreateRequestEvent> =
         mutableListOf<CreateRequestEvent>().also { list -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { list += it } } }
@@ -93,7 +93,7 @@ class CreateRequestViewModelTest {
     }
 
     @Test
-    fun `starts on step 1 with my area and contact filled in`() = runTest(dispatcher) {
+    fun `starts on step 1 with my area, and Me as the contact`() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()
         val f = vm.uiState.value.form
@@ -101,8 +101,36 @@ class CreateRequestViewModelTest {
         assertNull(vm.uiState.value.limit)
         assertEquals(0, f.step)
         assertEquals(TestData.DHAKA_SOUTH.district, f.district)
-        assertEquals("Rahim Uddin", f.contactName)
-        assertEquals("01712345678", f.contactPhone)
+        // PERF-01, N2: "Me" shows the profile's name and number, nothing to type.
+        assertTrue(f.contactIsMe)
+        assertEquals("Rahim Uddin", vm.uiState.value.myName)
+        assertEquals("+8801712345678", vm.uiState.value.myPhone)
+    }
+
+    @Test
+    fun `Someone else posts their name and number instead of mine`() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.fillAll()
+        vm.edit { copy(contactIsMe = false, contactName = "Rahima Khatun", contactPhone = "01811-234567") }
+        vm.next()
+        advanceUntilIdle()
+        val draft = requests.created.single().second
+        assertEquals("Rahima Khatun", draft.contactName)
+        assertEquals("+8801811234567", draft.contactPhone)
+    }
+
+    @Test
+    fun `offline, the page opens at once instead of waiting 10 s`() = runTest(dispatcher) {
+        requests.createGate = CompletableDeferred() // the write waits for the network
+        val vm = vm(network = FakeNetworkMonitor(online = false))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.online.collect {} } // as the screen does
+        val events = events(vm)
+        advanceUntilIdle()
+        vm.fillAll()
+        vm.next()
+        runCurrent()
+        assertEquals(PostNotice.WAITING_FOR_NETWORK, (events.single() as CreateRequestEvent.Posted).notice)
     }
 
     @Test
@@ -129,9 +157,9 @@ class CreateRequestViewModelTest {
         vm.next()
         assertEquals(2, vm.uiState.value.step)
 
-        vm.edit { copy(contactPhone = "123") }
+        vm.edit { copy(contactIsMe = false, contactPhone = "123") }
         vm.next()
-        assertEquals(setOf(RequestField.CONTACT_PHONE, RequestField.GENUINE), vm.uiState.value.errors)
+        assertEquals(setOf(RequestField.CONTACT_NAME, RequestField.CONTACT_PHONE, RequestField.GENUINE), vm.uiState.value.errors)
         assertTrue(requests.created.isEmpty())
     }
 

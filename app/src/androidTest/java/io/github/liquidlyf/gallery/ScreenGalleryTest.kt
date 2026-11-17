@@ -666,7 +666,7 @@ class ScreenGalleryTest {
         val form = { state: CreateRequestUiState, online: Boolean ->
             @Composable { CreateRequestScreen(state, online, {}, {}, {}, {}, { _, _ -> }, {}, {}, {}) }
         }
-        val at = { f: RequestForm -> CreateRequestUiState(f, loaded = true, geo = geo) }
+        val at = { f: RequestForm -> CreateRequestUiState(f, loaded = true, geo = geo, myName = "Karim Hossain", myPhone = "+8801700000000") }
         gallery(
             Shot("request-blood-1-empty", content = form(at(RequestForm()), true)),
             Shot("request-blood-1-errors", content = form(at(RequestForm()).copy(errors = setOf(RequestField.BLOOD_GROUP, RequestField.UNITS)), true)),
@@ -678,8 +678,10 @@ class ScreenGalleryTest {
             Shot("request-blood-2-planned", content = form(at(filled.copy(step = 1, urgency = Urgency.PLANNED.code, plannedAtMillis = now.plus(Duration.ofDays(2)).toEpochMilli())), true)),
             Shot("request-blood-2-planned-missing-date", content = form(at(filled.copy(step = 1, urgency = Urgency.PLANNED.code)).copy(errors = setOf(RequestField.PLANNED_AT)), true)),
             Shot("request-blood-3-empty", content = form(at(RequestForm(step = 2, bloodGroup = "B_POS", division = "BD30", district = "BD3026", upazila = "BD30262000", hospitalName = hospital, urgency = Urgency.URGENT.code)), true)),
-            Shot("request-blood-3-errors", content = form(at(filled.copy(step = 2, contactName = "", contactPhone = "017", genuine = false)).copy(errors = setOf(RequestField.CONTACT_NAME, RequestField.CONTACT_PHONE, RequestField.GENUINE)), true)),
+            Shot("request-blood-3-errors", content = form(at(filled.copy(step = 2, contactIsMe = false, contactName = "", contactPhone = "017", genuine = false)).copy(errors = setOf(RequestField.CONTACT_NAME, RequestField.CONTACT_PHONE, RequestField.GENUINE)), true)),
+            // PERF-01, N2: "Me" (nothing to type) or "Someone else" (their name and number).
             Shot("request-blood-3-filled", content = form(at(filled.copy(step = 2)), true)),
+            Shot("request-blood-3-someone-else", content = form(at(filled.copy(step = 2, contactIsMe = false, contactName = "Rahima Khatun", contactPhone = "01811-234567")), true)),
             Shot("request-blood-3-posting", animated = true, content = form(at(filled.copy(step = 2)).copy(posting = true), true)),
             Shot("request-blood-offline", content = form(at(filled.copy(step = 2)), false)),
             Shot("request-blood-loading", animated = true, content = form(CreateRequestUiState(RequestForm()), true)),

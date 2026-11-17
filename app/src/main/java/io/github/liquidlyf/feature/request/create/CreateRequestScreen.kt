@@ -1,7 +1,9 @@
 package io.github.liquidlyf.feature.request.create
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +17,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -30,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
@@ -45,6 +50,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -84,7 +90,9 @@ import io.github.liquidlyf.core.designsystem.dateTimeText
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.domain.BloodCompatibility
+import io.github.liquidlyf.core.domain.PhoneDisplay
 import io.github.liquidlyf.core.domain.Validators
+import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodComponent
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.PatientCondition
@@ -448,24 +456,46 @@ private fun ContactStep(state: CreateRequestUiState, anchors: ErrorAnchors<Reque
     val f = state.form
     StepTitle(stringResource(R.string.create_contact_title))
     Text(stringResource(R.string.create_contact_info), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    LLTextField(
-        value = f.contactName,
-        onValueChange = { v -> onEdit { copy(contactName = v.take(Validators.NAME_MAX)) } },
-        label = stringResource(R.string.create_contact_name),
-        errorText = if (RequestField.CONTACT_NAME in state.errors) stringResource(R.string.error_name_invalid) else null,
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
-        fieldModifier = Modifier.errorAnchor(anchors, RequestField.CONTACT_NAME, textField = true),
-    )
-    LLTextField(
-        value = f.contactPhone,
-        onValueChange = { v -> onEdit { copy(contactPhone = v.take(20)) } },
-        label = stringResource(R.string.create_contact_phone),
-        // The requester's number, not the donor's own (that one's hint is phone_hint).
-        supportingText = stringResource(R.string.create_private_hint),
-        errorText = if (RequestField.CONTACT_PHONE in state.errors) stringResource(R.string.error_phone_invalid) else null,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
-        fieldModifier = Modifier.errorAnchor(anchors, RequestField.CONTACT_PHONE, textField = true),
-    )
+    // PERF-01, N2: "Me" fills in the profile's name and number, so most people type nothing here.
+    Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        // The name and the number on their own lines, so "+88 01700-000000" never breaks.
+        val phone = state.myPhone?.let { PhoneDisplay.format(it, banglaDigits = currentAppLocale() == AppLocale.BN) }
+        ContactChoice(
+            icon = LLIcons.Profile,
+            title = stringResource(R.string.create_contact_me),
+            lines = listOfNotNull(state.myName, phone, stringResource(R.string.create_contact_from_profile)),
+            selected = f.contactIsMe,
+            onClick = { onEdit { copy(contactIsMe = true) } },
+        )
+        ContactChoice(
+            icon = LLIcons.Group,
+            title = stringResource(R.string.create_contact_else),
+            lines = listOf(stringResource(R.string.create_contact_else_hint)),
+            selected = !f.contactIsMe,
+            onClick = { onEdit { copy(contactIsMe = false) } },
+        )
+    }
+    if (!f.contactIsMe) {
+        LLTextField(
+            value = f.contactName,
+            onValueChange = { v -> onEdit { copy(contactName = v.take(Validators.NAME_MAX)) } },
+            label = stringResource(R.string.create_contact_name),
+            errorText = if (RequestField.CONTACT_NAME in state.errors) stringResource(R.string.error_name_invalid) else null,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+            fieldModifier = Modifier.errorAnchor(anchors, RequestField.CONTACT_NAME, textField = true),
+        )
+        LLTextField(
+            value = f.contactPhone,
+            onValueChange = { v -> onEdit { copy(contactPhone = v.take(20)) } },
+            label = stringResource(R.string.create_contact_phone),
+            // The requester's number, not the donor's own (that one's hint is phone_hint).
+            supportingText = stringResource(R.string.create_private_hint),
+            errorText = if (RequestField.CONTACT_PHONE in state.errors) stringResource(R.string.error_phone_invalid) else null,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+            fieldModifier = Modifier.errorAnchor(anchors, RequestField.CONTACT_PHONE, textField = true),
+        )
+    }
+    HorizontalDivider(Modifier.padding(vertical = Spacing.xs), color = MaterialTheme.colorScheme.outlineVariant)
     LLTextField(
         value = f.patientName,
         onValueChange = { v -> onEdit { copy(patientName = v.take(Validators.PATIENT_NAME_MAX)) } },
@@ -511,6 +541,36 @@ private fun ContactStep(state: CreateRequestUiState, anchors: ErrorAnchors<Reque
             Text(stringResource(R.string.create_genuine), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = Spacing.xs))
         }
         FieldError(RequestField.GENUINE in state.errors, stringResource(R.string.create_error_genuine))
+    }
+}
+
+/**
+ * One answer to "How can donors reach you?" as a card: an icon, its words and a radio. The chosen
+ * one has a red outline and icon (PERF-01, N2). The whole card is one radio for TalkBack.
+ */
+@Composable
+private fun ContactChoice(@DrawableRes icon: Int, title: String, lines: List<String>, selected: Boolean, onClick: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .border(
+                width = if (selected) 2.dp else 1.dp,
+                color = if (selected) primary else MaterialTheme.colorScheme.outline,
+                shape = MaterialTheme.shapes.medium,
+            )
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .padding(Spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+    ) {
+        Icon(painterResource(icon), contentDescription = null, tint = if (selected) primary else MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            lines.forEach { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
+        RadioButton(selected = selected, onClick = null)
     }
 }
 

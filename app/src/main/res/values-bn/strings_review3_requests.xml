@@ -165,6 +165,10 @@
     <string name="create_error_planned">১৫ মিনিট পর থেকে ৩০ দিনের মধ্যে একটি সময় বেছে নিন।</string>
     <string name="create_contact_title">রক্তদাতারা কীভাবে আপনার সঙ্গে যোগাযোগ করবেন?</string>
     <string name="create_contact_info">শুধু রক্ত দিতে সাড়া দেওয়ার পরেই রক্তদাতারা এটি দেখতে পাবেন।</string>
+    <string name="create_contact_me">আমি</string>
+    <string name="create_contact_from_profile">আপনার প্রোফাইল থেকে: কিছু লিখতে হবে না</string>
+    <string name="create_contact_else">অন্য কেউ</string>
+    <string name="create_contact_else_hint">যেমন, হাসপাতালে থাকা কোনো আত্মীয়</string>
     <string name="create_contact_name">যোগাযোগের নাম</string>
     <string name="create_contact_phone">যোগাযোগের মোবাইল নম্বর</string>
     <string name="create_patient_name">রোগীর নাম (ঐচ্ছিক)</string>
