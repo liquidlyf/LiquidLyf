@@ -31,14 +31,14 @@ fun Throwable.toAppError(): AppError = when (this) {
 
 /**
  * Runs [block] and wraps its outcome in an [AppResult]. Coroutine cancellation is rethrown,
- * never reported as an error.
+ * never reported as an error. An unexpected failure also goes to Crashlytics ([CrashReports]).
  */
 suspend inline fun <T> appResultOf(crossinline block: suspend () -> T): AppResult<T> = try {
     AppResult.Success(block())
 } catch (e: CancellationException) {
     throw e
 } catch (e: Exception) {
-    AppResult.Failure(e.toAppError())
+    AppResult.Failure(CrashReports.appError(e))
 }
 
 /**

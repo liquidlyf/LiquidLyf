@@ -28,7 +28,7 @@ import kotlinx.coroutines.tasks.await
  */
 fun <T> Flow<T>.endOnListenError(what: String, onError: suspend FlowCollector<T>.(AppError) -> Unit = {}): Flow<T> =
     catch { e ->
-        val error = e.toAppError()
+        val error = CrashReports.appError(e)
         Log.w("LiquidLyfFirestore", "$what listener stopped: $error")
         onError(error)
     }

@@ -53,6 +53,7 @@ import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.windowWidth
+import io.github.liquidlyf.core.firebase.CrashReports
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.feature.about.AboutRoute
 import io.github.liquidlyf.feature.about.HowMatchingWorksScreen
@@ -131,6 +132,9 @@ fun AppNavHost(
         TopLevelDestination.entries.firstOrNull { destination.isInTab(it) }
     }
     val useRail = windowWidth() >= ExpandedLayoutMinWidth
+    // Crashlytics' "screen" key (A32): the route's name, never its arguments.
+    val route = currentEntry?.destination?.route
+    LaunchedEffect(route) { route?.let { CrashReports.screen(CrashReports.screenName(it)) } }
 
     // Reopen the tab used last time, once per launch (not after rotation), but only when the
     // app opens on a tab's root. A notification's deep link (Moderation, a request) opens its

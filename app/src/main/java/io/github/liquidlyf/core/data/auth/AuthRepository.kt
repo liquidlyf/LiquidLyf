@@ -6,8 +6,8 @@ import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.userProfileChangeRequest
+import io.github.liquidlyf.core.firebase.CrashReports
 import io.github.liquidlyf.core.firebase.appResultOf
-import io.github.liquidlyf.core.firebase.toAppError
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
 import kotlinx.coroutines.CancellationException
@@ -208,7 +208,7 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            AppResult.Failure(e.toAppError())
+            AppResult.Failure(CrashReports.appError(e))
         }
     }
 
