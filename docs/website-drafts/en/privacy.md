@@ -49,14 +49,28 @@ it does with your data.
 - That you are 18 or older and accepted these terms, with the date and the version you accepted.
 
 ### Your profile
-- Full name, phone number, blood group.
+- Your full name and phone number.
+- Your area: division, district, and upazila or city corporation.
+- Your blood group, if you add it. Donors need it.
+- Your app language.
+
+If you choose to become a donor, the app also asks for:
 - Gender and birth year. We use them only to check whether you can donate and to count your rest
   period after a donation. They are never shown to other users.
 - Whether you weigh at least 45 kg (yes or no).
-- Your area: division, district, and upazila or city corporation.
 - Whether you are available to donate, and the date of your last donation.
 - Whether you chose to be listed as a donor, and when you chose it.
-- Your app language.
+
+Until you choose to become a donor, the app doesn't ask for these. Until then, two of your settings are
+simply off: being listed as a donor, and being available to donate.
+
+<!-- D1 = a (the maintainer, 17 Nov 2026 22:31): people who only ask for blood skip the donor questions.
+     Fields from B (rules 92218d2, 17 Nov): everyone has name, phone, area, app language; blood group is
+     optional for everyone (the app needs it to list a donor: setup_no_group_listing); available and
+     showInDonorSearch are stored as false for everyone; gender, birthYear, weightOk, lastDonationAt and
+     consentAt are absent until the person chooses to donate, and the rules keep a profile without them
+     unlisted, unavailable and unable to offer. Nothing new is stored (no "need blood / want to donate"
+     field). The page doesn't name the app's button, so it holds if A's label changes. -->
 
 ### When you use the app
 - **Blood requests you post:** the patient's blood group, the blood component and number of units,
