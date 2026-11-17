@@ -4,18 +4,24 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.backend.WorkerClient
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.inbox.InboxRepository
 import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.push.AlertStore
+import io.github.liquidlyf.core.data.request.OfferRepository
 import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.domain.Eligibility
 import io.github.liquidlyf.core.domain.EligibilityCalculator
+import io.github.liquidlyf.core.domain.StatusTransitions
 import io.github.liquidlyf.core.firebase.endOnListenError
 import io.github.liquidlyf.core.model.BloodRequest
+import io.github.liquidlyf.core.model.RequestStatus
+import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppError
@@ -34,6 +40,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -81,6 +88,8 @@ class HomeViewModel @Inject constructor(
     private val network: NetworkMonitor,
     private val inbox: InboxRepository,
     private val alerts: AlertStore,
+    private val offers: OfferRepository,
+    private val worker: WorkerClient,
 ) : ViewModel() {
 
     private val profileFlow: Flow<UserProfile?> =
@@ -164,6 +173,40 @@ class HomeViewModel @Inject constructor(
             ownLoaded = own != null,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
+
+    private val askedLater = MutableStateFlow<Set<String>>(emptySet())
+
+    /** FLOW-10: requests whose "Did <donor> donate?" got "Not yet" (until the app restarts). */
+    val notYet: StateFlow<Set<String>> = askedLater.asStateFlow()
+
+    fun notYet(requestId: String) = askedLater.update { it + requestId }
+
+    /**
+     * FLOW-10: "Yes, mark donated" on Home, the same write as on the request page: the donor gets
+     * credit and a thank-you push, and the last unit closes the request.
+     */
+    fun markDonated(requestId: String, donorUid: String) {
+        val me = (session.state.value as? SessionState.Ready)?.profile ?: return
+        val r = uiState.value.ownRequests.firstOrNull { it.id == requestId } ?: return
+        viewModelScope.launch {
+            val response = runCatching { offers.responders(requestId, me.uid).first() }.getOrNull()
+                ?.firstOrNull { it.donorUid == donorUid && it.status == ResponseStatus.CONFIRMED }
+            if (response == null) {
+                events.send(HomeEvent.Message(AppError.Network.messageRes))
+                return@launch
+            }
+            when (val result = offers.decide(r, response, ResponseStatus.DONATED)) {
+                is AppResult.Success -> {
+                    events.send(HomeEvent.Message(R.string.detail_marked_donated))
+                    worker.notifyOffer(r.id, donorUid)
+                    val fills = r.status == RequestStatus.OPEN &&
+                        StatusTransitions.statusAfterDonation(r.unitsFulfilled + 1, r.unitsNeeded) == RequestStatus.FULFILLED
+                    if (fills) worker.notifyResponders(r.id)
+                }
+                is AppResult.Failure -> events.send(HomeEvent.Message(result.error.messageRes))
+            }
+        }
+    }
 
     /** Retry on the feed's error state. */
     fun retryFeed() = feedAttempt.update { it + 1 }

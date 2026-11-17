@@ -368,10 +368,21 @@ class FakeReminders : io.github.liquidlyf.core.data.push.Reminders {
         ending -= requestId
     }
 
+    val didDonate = mutableMapOf<String, java.time.Instant>()
+
+    override fun scheduleDidDonate(requestId: String, neededBy: java.time.Instant) {
+        didDonate[requestId] = neededBy
+    }
+
+    override fun cancelDidDonate(requestId: String) {
+        didDonate -= requestId
+    }
+
     override fun cancelAll() {
         cancelledAll++
         eligibleAgain = null
         ending.clear()
+        didDonate.clear()
     }
 }
 

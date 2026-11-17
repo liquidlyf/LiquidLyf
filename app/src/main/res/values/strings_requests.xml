@@ -238,6 +238,10 @@
     <string name="home_ready_to_donate">Ready to donate</string>
     <string name="home_your_request">Your request</string>
     <string name="home_see_offers">See offers</string>
+    <string name="home_did_donate_title">Did %1$s donate?</string>
+    <string name="home_did_donate_body">Mark it so they get credit and a thank-you.</string>
+    <string name="home_did_donate_yes">Yes, mark donated</string>
+    <string name="home_did_donate_not_yet">Not yet</string>
     <string name="home_no_offers_yet">No offers yet</string>
     <string name="home_become_donor_title">Want to donate too?</string>
     <string name="home_become_donor_body">Answer a few donor questions to get alerts near you.</string>

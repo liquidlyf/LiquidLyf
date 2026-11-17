@@ -21,6 +21,7 @@ import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.model.RequestStatus
+import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
 import kotlinx.coroutines.flow.first
@@ -68,6 +69,21 @@ class WorkManagerReminders @Inject constructor(
         work.cancelUniqueWork(ending(requestId))
     }
 
+    override fun scheduleDidDonate(requestId: String, neededBy: Instant) {
+        val at = maxOf(neededBy, clock.now()).plus(DID_DONATE_AFTER)
+        val request = OneTimeWorkRequestBuilder<DidDonateWorker>()
+            .setInitialDelay(delayUntil(at), TimeUnit.MILLISECONDS)
+            .setInputData(workDataOf(RequestEndingWorker.REQUEST_ID to requestId))
+            .addTag(TAG)
+            .build()
+        // KEEP: a later update of the same request doesn't push the reminder further back.
+        work.enqueueUniqueWork(didDonate(requestId), ExistingWorkPolicy.KEEP, request)
+    }
+
+    override fun cancelDidDonate(requestId: String) {
+        work.cancelUniqueWork(didDonate(requestId))
+    }
+
     override fun cancelAll() {
         work.cancelAllWorkByTag(TAG)
     }
@@ -78,8 +94,10 @@ class WorkManagerReminders @Inject constructor(
         const val TAG = "liquidlyf_reminder"
         const val ELIGIBLE_AGAIN = "eligible_again"
         val ENDING_NOTICE: Duration = Duration.ofHours(2)
+        val DID_DONATE_AFTER: Duration = Duration.ofHours(1)
 
         fun ending(requestId: String) = "request_ending_$requestId"
+        fun didDonate(requestId: String) = "did_donate_$requestId"
     }
 }
 
@@ -126,6 +144,28 @@ class RequestEndingWorker(context: Context, params: WorkerParameters) : Coroutin
 
     companion object {
         const val REQUEST_ID = "requestId"
+    }
+}
+
+/**
+ * FLOW-10: my request's needed-by time has passed and a donor I confirmed isn't marked yet: ask
+ * "Did <donor> donate?", so they get credit and a thank-you. Nothing if it's settled or closed.
+ */
+class DidDonateWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val id = inputData.getString(RequestEndingWorker.REQUEST_ID) ?: return Result.success()
+        val graph = EntryPointAccessors.fromApplication(applicationContext, ReminderEntryPoint::class.java)
+        val uid = readySession(graph.session())?.user?.uid ?: return Result.success()
+        val request = when (val r = graph.requests().byIds(listOf(id))) {
+            is AppResult.Success -> r.data.firstOrNull() ?: return Result.success()
+            is AppResult.Failure -> return if (runAttemptCount < 3) Result.retry() else Result.success()
+        }
+        val donor = request.responders.values.firstOrNull { it.status == ResponseStatus.CONFIRMED }
+        val settled = request.status == RequestStatus.CANCELLED || request.status == RequestStatus.FULFILLED
+        if (graph.alertPrefs().current().reminders && request.requesterUid == uid && donor != null && !settled) {
+            graph.notifier().showDidDonate(id, donor.name)
+        }
+        return Result.success()
     }
 }
 

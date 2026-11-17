@@ -5,7 +5,7 @@ import java.time.Instant
 /**
  * On-device reminders (phase-05 5.4), so they cost no server work: "You can donate again" at the
  * end of the rest period (it also re-subscribes the alert topics), and "Your request ends soon"
- * 2 hours before a request's needed-by time. WorkManager keeps them across restarts and reboots.
+ * 2 hours before a request's needed-by time, and "Did <donor> donate?" an hour after it (FLOW-10). WorkManager keeps them across restarts and reboots.
  */
 interface Reminders {
     /** Null cancels it. Replaces any earlier one. */
@@ -14,6 +14,14 @@ interface Reminders {
     fun scheduleRequestEnding(requestId: String, neededBy: Instant)
 
     fun cancelRequestEnding(requestId: String)
+
+    /**
+     * FLOW-10 (D5 a): an hour after [neededBy] (or after now, if that's later), "Did <donor> donate?"
+     * when a confirmed donor hasn't been marked yet. Replaces any earlier one for the request.
+     */
+    fun scheduleDidDonate(requestId: String, neededBy: Instant)
+
+    fun cancelDidDonate(requestId: String)
 
     /** Sign-out: nothing of this person's may fire. */
     fun cancelAll()

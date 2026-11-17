@@ -355,6 +355,8 @@
     <string name="notification_eligible_again_body">Your rest period is over. You\'ll get alerts again when someone near you needs your blood group.</string>
     <string name="notification_request_ending_title">Your request ends in 2 hours</string>
     <string name="notification_request_ending_body">Still need blood? Open it to change the time, or close it if you found blood.</string>
+    <string name="notification_did_donate_title">Did %1$s donate?</string>
+    <string name="notification_did_donate_body">Mark it on your request so they get credit and a thank-you.</string>
 
     <!-- Inbox, the bell (Phase 5.9) -->
     <string name="inbox_empty_title">No notifications yet</string>

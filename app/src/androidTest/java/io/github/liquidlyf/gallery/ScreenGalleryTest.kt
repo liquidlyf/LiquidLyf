@@ -619,6 +619,12 @@ class ScreenGalleryTest {
         val own = listOf(myRequests[0].copy(responders = mapOf("d1" to Responder("Rahim U.", BloodGroup.B_POS, ResponseStatus.OFFERED))))
         // D1: a requester from the short setup, and a donor who doesn't know the group yet (P1).
         val notDonor = requesterOnly(me)
+        val didDonate = listOf(
+            myRequests[0].copy(
+                neededBy = now.minus(Duration.ofHours(2)),
+                responders = mapOf("d1" to Responder("Rahim U.", BloodGroup.B_POS, ResponseStatus.CONFIRMED)),
+            ),
+        )
         val noGroup = me.copy(bloodGroup = null, showInDonorSearch = false)
         gallery(
             Shot("home-filled", tab, content = home(me, feed, true, false, true, true, emptyList())),
@@ -635,6 +641,8 @@ class ScreenGalleryTest {
             Shot("home-your-request", tab, content = home(me, feed, true, false, true, true, own)),
             Shot("home-your-request-notifications-off", tab, content = home(me, feed, true, false, false, true, own)),
             Shot("home-your-request-not-donor", tab, content = home(notDonor, feed, true, false, true, false, own)),
+            // FLOW-10: past its needed-by time with a donor I confirmed: "Did Rahim U. donate?".
+            Shot("home-did-donate", tab, content = home(me, feed, true, false, true, true, didDonate)),
         )
     }
 

@@ -161,6 +161,7 @@ class RequestDetailViewModel @Inject constructor(
     private var myOfferLoaded = false
     private var donationChecked = false
     private var endingReminderFor: Pair<RequestStatus, java.time.Instant>? = null
+    private var didDonateFor: Pair<Boolean, java.time.Instant>? = null
     private val donations = VerifiedDonationRecorder(profiles, offers, requests, clock)
 
     private val isOnline: Flow<Boolean> = network.isOnline
@@ -234,6 +235,7 @@ class RequestDetailViewModel @Inject constructor(
         if (mine) {
             listenToResponses(profile.uid)
             keepEndingReminder(r)
+            keepDidDonateReminder(r)
         }
         if (seesContact) loadContact()
         if (myStatus != null) loadMyOffer(profile.uid)
@@ -246,6 +248,15 @@ class RequestDetailViewModel @Inject constructor(
         if (key == endingReminderFor) return
         endingReminderFor = key
         if (r.status == RequestStatus.OPEN) reminders.scheduleRequestEnding(r.id, r.neededBy) else reminders.cancelRequestEnding(r.id)
+    }
+
+    /** FLOW-10: "Did <donor> donate?" after needed-by, while a donor I confirmed isn't marked yet. */
+    private fun keepDidDonateReminder(r: BloodRequest) {
+        val waiting = r.status == RequestStatus.OPEN && r.responders.values.any { it.status == ResponseStatus.CONFIRMED }
+        val key = waiting to r.neededBy
+        if (key == didDonateFor) return
+        didDonateFor = key
+        if (waiting) reminders.scheduleDidDonate(r.id, r.neededBy) else reminders.cancelDidDonate(r.id)
     }
 
     private fun offerBlock(r: BloodRequest, p: UserProfile): OfferBlock? {

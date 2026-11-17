@@ -92,6 +92,10 @@
     <string name="home_ready_to_donate">রক্ত দিতে প্রস্তুত</string>
     <string name="home_your_request">আপনার অনুরোধ</string>
     <string name="home_see_offers">সাড়াগুলো দেখুন</string>
+    <string name="home_did_donate_title">%1$s কি রক্ত দিয়েছেন?</string>
+    <string name="home_did_donate_body">রেকর্ড করুন, যাতে তিনি কৃতিত্ব ও ধন্যবাদ পান।</string>
+    <string name="home_did_donate_yes">হ্যাঁ, রক্তদান রেকর্ড করুন</string>
+    <string name="home_did_donate_not_yet">এখনো না</string>
     <string name="home_no_offers_yet">এখনো কেউ সাড়া দেননি</string>
     <string name="home_become_donor_title">আপনিও রক্ত দিতে চান?</string>
     <string name="home_become_donor_body">রক্তদাতার কয়েকটি প্রশ্নের উত্তর দিলে কাছাকাছি অ্যালার্ট পাবেন।</string>
@@ -288,6 +292,8 @@
     <string name="notification_eligible_again_body">আপনার রক্তদানের পরের বিরতি শেষ হয়েছে। কাছাকাছি কারও আপনার গ্রুপের রক্ত দরকার হলে আবার অ্যালার্ট পাবেন।</string>
     <string name="notification_request_ending_title">২ ঘণ্টা পর আপনার অনুরোধের মেয়াদ শেষ হবে</string>
     <string name="notification_request_ending_body">এখনো রক্ত দরকার? সময় বদলাতে অনুরোধটি খুলুন, অথবা রক্ত পেয়ে গেলে বন্ধ করে দিন।</string>
+    <string name="notification_did_donate_title">%1$s কি রক্ত দিয়েছেন?</string>
+    <string name="notification_did_donate_body">আপনার অনুরোধে রেকর্ড করুন, যাতে তিনি কৃতিত্ব ও ধন্যবাদ পান।</string>
     <string name="inbox_empty_title">এখনো কোনো নোটিফিকেশন নেই</string>
     <string name="inbox_empty_body">কাছের অনুরোধের অ্যালার্ট, আর আপনার সাড়া ও অনুরোধের খবর এখানে দেখা যাবে।</string>
     <string name="inbox_new">নতুন</string>

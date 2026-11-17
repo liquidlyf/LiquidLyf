@@ -13,15 +13,18 @@ import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.InboxItem
 import io.github.liquidlyf.core.model.InboxType
 import io.github.liquidlyf.core.model.RequestStatus
+import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.testing.FakeAlertStore
 import io.github.liquidlyf.testing.FakeInboxRepository
 import io.github.liquidlyf.testing.FakeNetworkMonitor
+import io.github.liquidlyf.testing.FakeOfferRepository
 import io.github.liquidlyf.testing.FakeProfileRepository
 import io.github.liquidlyf.testing.FakeRequestRepository
 import io.github.liquidlyf.testing.FakeSessionManager
+import io.github.liquidlyf.testing.FakeWorkerClient
 import io.github.liquidlyf.testing.TestData
 import io.github.liquidlyf.testing.request
 import java.io.File
@@ -68,8 +71,11 @@ class HomeViewModelTest {
 
     private val network = FakeNetworkMonitor()
 
+    private val offers = FakeOfferRepository(requests)
+    private val worker = FakeWorkerClient()
+
     private fun TestScope.vm() = HomeViewModel(
-        session, requests, profiles, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, network, inbox, alerts,
+        session, requests, profiles, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, network, inbox, alerts, offers, worker,
     ).also { vm -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} } }
 
     @Test
@@ -139,6 +145,27 @@ class HomeViewModelTest {
         requests.feedUnknown.value = false
         advanceUntilIdle()
         assertEquals(emptyList<Any>(), vm.uiState.value.requests)
+    }
+
+    @Test
+    fun `the Did-they-donate card marks my confirmed donor donated and tells them, and Not yet sets it aside`() = runTest(dispatcher) {
+        val mine = TestData.request(id = "mine", requesterUid = "me", neededBy = TestData.NOW.minus(Duration.ofHours(2))).copy(unitsNeeded = 2)
+        requests.put(mine)
+        offers.offer(mine, TestData.profile(uid = "d1"), "I can come")
+        offers.decide(requests.requests.value.getValue("mine"), offers.responses.value.getValue("mine" to "d1"), ResponseStatus.CONFIRMED)
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(ResponseStatus.CONFIRMED, vm.uiState.value.ownRequests.single().responders.getValue("d1").status)
+
+        vm.notYet("mine")
+        assertEquals(setOf("mine"), vm.notYet.value)
+
+        vm.markDonated("mine", "d1")
+        advanceUntilIdle()
+        assertEquals(ResponseStatus.DONATED, offers.responses.value.getValue("mine" to "d1").status)
+        assertEquals(1, vm.uiState.value.ownRequests.single().unitsFulfilled)
+        assertEquals(listOf("mine" to "d1"), worker.offerNotices)
+        assertTrue(worker.responderNotices.isEmpty()) // 1 of 2 units: still open
     }
 
     @Test

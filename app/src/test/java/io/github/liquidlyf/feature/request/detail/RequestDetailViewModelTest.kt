@@ -223,11 +223,15 @@ class RequestDetailViewModelTest {
         assertEquals("donor", offer.donorUid)
         assertEquals("+8801712345678", offer.donorPhone)
 
+        assertFalse("r1" in reminders.didDonate)
         vm.confirm(offer)
         advanceUntilIdle()
         assertEquals(ResponseStatus.CONFIRMED, vm.uiState.value.responses.single().status)
+        // FLOW-10: a confirmed donor waits to be marked: "Did <donor> donate?" after needed-by.
+        assertTrue("r1" in reminders.didDonate)
         vm.markDonated(vm.uiState.value.responses.single())
         advanceUntilIdle()
+        assertFalse("r1" in reminders.didDonate) // settled: no reminder
         val r = vm.uiState.value.request!!
         assertEquals(1, r.unitsFulfilled)
         assertEquals(RequestStatus.FULFILLED, r.status)

@@ -117,6 +117,16 @@ class AlertNotifier @Inject constructor(
         priority = NotificationCompat.PRIORITY_DEFAULT,
     )
 
+    /** FLOW-10: "Did <donor> donate?"; a tap opens the request, where "Mark donated" is. */
+    fun showDidDonate(requestId: String, donorName: String) = post(
+        id = notificationId(requestId, "did_donate"),
+        channel = NotificationChannels.REMINDERS,
+        title = context.getString(R.string.notification_did_donate_title, donorName),
+        body = context.getString(R.string.notification_did_donate_body),
+        requestId = requestId,
+        priority = NotificationCompat.PRIORITY_DEFAULT,
+    )
+
     override fun cancelAll() = NotificationManagerCompat.from(context).cancelAll()
 
     /** Opens the request in a fresh task: the deep link builds Home → request under it. */

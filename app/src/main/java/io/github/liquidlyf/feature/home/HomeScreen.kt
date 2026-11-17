@@ -87,6 +87,7 @@ import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodRequest
+import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.profile.BecomeDonorCard
@@ -108,6 +109,7 @@ fun HomeRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val online by viewModel.online.collectAsStateWithLifecycle()
     val unreadInbox by viewModel.unreadInbox.collectAsStateWithLifecycle()
+    val notYet by viewModel.notYet.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbarHostState.current
     val resources = LocalResources.current
     LaunchedEffect(viewModel) {
@@ -121,6 +123,7 @@ fun HomeRoute(
     HomeScreen(
         state, online, viewModel::onAvailableToggled, onOpenRequest, onCreateRequest, onOpenNotifications, onEditProfile, unreadInbox,
         onListMe = viewModel::listMe, onRetryFeed = viewModel::retryFeed, onBecomeDonor = onBecomeDonor,
+        askedLater = notYet, onMarkDonated = viewModel::markDonated, onNotYet = viewModel::notYet,
     )
 }
 
@@ -143,6 +146,9 @@ internal fun HomeScreen(
     onListMe: () -> Unit = {},
     onRetryFeed: () -> Unit = {},
     onBecomeDonor: () -> Unit = {},
+    askedLater: Set<String> = emptySet(),
+    onMarkDonated: (requestId: String, donorUid: String) -> Unit = { _, _ -> },
+    onNotYet: (String) -> Unit = {},
 ) {
     val now by rememberNow()
     val launcher = rememberSafeIntentLauncher()
@@ -201,7 +207,19 @@ internal fun HomeScreen(
                         donor -> item(key = "no-group") { BloodGroupReminder(onAdd = onEditProfile) }
                         !becomeDonorBelow -> item(key = "become-donor") { BecomeDonorCard(onBecomeDonor = onBecomeDonor) }
                     }
-                    items(own, key = { "own-${it.id}" }) { r -> OwnRequestCard(r, now, onOpen = { onOpenRequest(r.id) }) }
+                    items(own, key = { "own-${it.id}" }) { r ->
+                        // FLOW-10: after needed-by, a donor I confirmed and haven't marked: ask.
+                        val confirmed = r.responders.entries.firstOrNull { it.value.status == ResponseStatus.CONFIRMED }
+                        if (confirmed != null && now.isAfter(r.neededBy) && r.id !in askedLater) {
+                            DidDonateCard(
+                                donorName = confirmed.value.name,
+                                onYes = { onMarkDonated(r.id, confirmed.key) },
+                                onNotYet = { onNotYet(r.id) },
+                            )
+                        } else {
+                            OwnRequestCard(r, now, onOpen = { onOpenRequest(r.id) })
+                        }
+                    }
                     if (p != null && !donor && becomeDonorBelow) {
                         item(key = "become-donor") { BecomeDonorCard(onBecomeDonor = onBecomeDonor) }
                     }
@@ -379,6 +397,39 @@ private fun NotListedLine(state: HomeUiState, now: Instant, onListMe: () -> Unit
             },
             onDismiss = { asking = false },
         )
+    }
+}
+
+/** FLOW-10 (D5 a): "Did Nusrat J. donate?" on Home, with "Yes, mark donated" and "Not yet". */
+@Composable
+private fun DidDonateCard(donorName: String, onYes: () -> Unit, onNotYet: () -> Unit) {
+    val label = stringResource(R.string.home_your_request)
+    LLCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+            Text(
+                if (currentAppLocale() == AppLocale.BN) label else label.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                stringResource(R.string.home_did_donate_title, donorName),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = Spacing.xxs).semantics { heading() },
+            )
+            Text(stringResource(R.string.home_did_donate_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            FlowRow(
+                Modifier.padding(top = Spacing.xs),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+            ) {
+                FilledTonalButton(onClick = onYes, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                    Text(stringResource(R.string.home_did_donate_yes))
+                }
+                TextButton(onClick = onNotYet, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                    Text(stringResource(R.string.home_did_donate_not_yet))
+                }
+            }
+        }
     }
 }
 
