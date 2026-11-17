@@ -16,6 +16,8 @@
     <string name="onboarding_medical_title">LiquidLyf কোনো চিকিৎসা সেবা নয়</string>
     <string name="onboarding_medical_body">এটি আপনাকে স্বেচ্ছাসেবী রক্তদাতা খুঁজে পেতে সাহায্য করে। এটি রক্ত পরীক্ষা বা সরবরাহ করে না, রক্তদাতাদের স্বাস্থ্যও যাচাই করে না। শুধু লাইসেন্সপ্রাপ্ত হাসপাতাল বা ব্লাড ব্যাংকে রক্ত দিন, আর চিকিৎসার বিষয়ে ডাক্তারের পরামর্শ নিন। জরুরি অবস্থায় ৯৯৯-এ কল করুন।</string>
     <string name="action_i_understand">বুঝেছি</string>
+    <string name="onboarding_more_below">নিচে আরও আছে</string>
+    <string name="action_read_to_end">শেষ পর্যন্ত পড়ুন</string>
     <string name="onboarding_page">পৃষ্ঠা %1$d, মোট %2$d</string>
     <string name="action_next">পরবর্তী</string>
     <string name="action_skip">এড়িয়ে যান</string>
