@@ -14,7 +14,8 @@
     <string name="profile_listed_on">"রক্তদাতা খুঁজুন"-এ আপনাকে দেখা যায়। আপনার নম্বর কখনো দেখানো হয় না।</string>
     <string name="profile_listed_off">চালু করলে "রক্তদাতা খুঁজুন"-এ আপনাকে দেখা যাবে, আর অনুরোধের অ্যালার্ট পাবেন।</string>
     <string name="profile_alerts_again_on">%1$s থেকে আবার অ্যালার্ট পাবেন।</string>
-    <plurals name="ring_days">
+    <!-- The number shows above the word; "দিন" is the same for every count. -->
+    <plurals name="ring_days" tools:ignore="ImpliedQuantity">
         <item quantity="one">দিন</item>
         <item quantity="other">দিন</item>
     </plurals>
