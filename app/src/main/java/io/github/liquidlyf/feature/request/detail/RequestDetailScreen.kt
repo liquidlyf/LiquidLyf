@@ -671,7 +671,7 @@ private fun OffersSection(
     onBlockPerson: (DonorResponse) -> Unit,
 ) {
     val r = state.request ?: return
-    SectionHeader(pluralStringResource(R.plurals.detail_offers_title, state.responses.size, state.responses.size))
+    SectionHeader(stringResource(R.string.detail_offers))
     if (state.responses.isEmpty()) AlertLine(r, state)
     state.responses.forEach { response ->
         OfferCard(response, enabled = !state.working, onCall, onConfirm, onDecline, onDonated, onReportPerson, onBlockPerson)

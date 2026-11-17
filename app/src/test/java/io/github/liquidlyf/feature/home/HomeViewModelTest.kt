@@ -102,6 +102,7 @@ class HomeViewModelTest {
         val vm = vm()
         vm.onResume() // the first time: the flow has just looked
         advanceUntilIdle()
+        assertTrue(vm.uiState.value.ownLoaded) // the screen held the list until now, so nothing jumps
         assertEquals(listOf("mine"), vm.uiState.value.ownRequests.map { it.id })
 
         requests.put(mine.copy(unitsFulfilled = 1)) // a donor gave: the card follows

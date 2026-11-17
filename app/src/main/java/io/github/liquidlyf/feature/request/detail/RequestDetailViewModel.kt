@@ -276,7 +276,15 @@ class RequestDetailViewModel @Inject constructor(
         contactLoaded = true
         viewModelScope.launch {
             when (val c = requests.contact(requestId)) {
-                is AppResult.Success -> state.update { it.copy(contact = c.data) }
+                // Only if I may still see it: a withdraw or decline may have landed while it loaded (D's re-audit).
+                is AppResult.Success -> state.update {
+                    if (it.role == ViewerRole.REQUESTER || it.myStatus in CONTACT_STATUSES) {
+                        it.copy(contact = c.data)
+                    } else {
+                        contactLoaded = false
+                        it
+                    }
+                }
                 is AppResult.Failure -> contactLoaded = false // try again on the next update
             }
         }

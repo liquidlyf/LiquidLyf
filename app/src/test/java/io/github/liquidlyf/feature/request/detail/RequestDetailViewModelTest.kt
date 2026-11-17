@@ -31,6 +31,7 @@ import io.github.liquidlyf.testing.FakeSessionManager
 import io.github.liquidlyf.testing.FakeWorkerClient
 import io.github.liquidlyf.testing.TestData
 import io.github.liquidlyf.testing.request
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -120,6 +121,22 @@ class RequestDetailViewModelTest {
         val later = vm()
         advanceUntilIdle()
         assertEquals("Coming at 4 pm", later.uiState.value.myMessage)
+    }
+
+    @Test
+    fun `a decline that lands while the contact loads keeps it hidden`() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        requests.contactGate = gate
+        val vm = vm()
+        advanceUntilIdle()
+        vm.offer("")
+        advanceUntilIdle() // offered: the contact is loading
+        offers.decide(requests.requests.value.getValue("r1"), offers.responses.value.getValue("r1" to "donor"), ResponseStatus.DECLINED)
+        advanceUntilIdle()
+        gate.complete(Unit) // the read comes back after the decline
+        advanceUntilIdle()
+        assertEquals(ResponseStatus.DECLINED, vm.uiState.value.myStatus)
+        assertNull(vm.uiState.value.contact)
     }
 
     @Test

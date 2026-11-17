@@ -25,6 +25,7 @@ import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -185,7 +186,7 @@ internal fun HomeScreen(
                     if (!notificationsEnabled) {
                         item(key = "notifications-off") { NotificationsNotice(onTurnOn = launcher::openNotificationSettings) }
                     }
-                    val p = state.profile
+                    val p = state.profile?.takeIf { state.ownLoaded }
                     val group = p?.bloodGroup
                     val own = state.ownRequests
                     val becomeDonorBelow = BECOME_DONOR_BELOW_OWN_REQUEST && own.isNotEmpty()
@@ -390,7 +391,7 @@ private fun BecomeDonorCard(onBecomeDonor: () -> Unit) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                 Text(stringResource(R.string.home_become_donor_title), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(R.string.home_become_donor_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick = onBecomeDonor) { Text(stringResource(R.string.action_become_donor)) }
+                FilledTonalButton(onClick = onBecomeDonor, modifier = Modifier.padding(top = Spacing.xs)) { Text(stringResource(R.string.action_become_donor)) }
             }
         }
     }
@@ -405,7 +406,7 @@ private fun BecomeDonorCard(onBecomeDonor: () -> Unit) {
 private fun OwnRequestCard(r: BloodRequest, now: Instant, onOpen: () -> Unit) {
     val label = stringResource(R.string.home_your_request)
     LLCard(Modifier.fillMaxWidth(), onClick = onOpen) {
-        Column(Modifier.padding(start = Spacing.md, top = Spacing.md, end = Spacing.md, bottom = Spacing.xs)) {
+        Column(Modifier.padding(Spacing.md)) {
             Text(
                 // Capitals help English scan; Bangla has none.
                 if (currentAppLocale() == AppLocale.BN) label else label.uppercase(),
@@ -457,7 +458,7 @@ private fun OwnRequestCard(r: BloodRequest, now: Instant, onOpen: () -> Unit) {
                     )
                 }
             }
-            TextButton(onClick = onOpen, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.home_see_offers)) }
+            FilledTonalButton(onClick = onOpen, modifier = Modifier.fillMaxWidth().padding(top = Spacing.xs)) { Text(stringResource(R.string.home_see_offers)) }
         }
     }
 }

@@ -195,6 +195,7 @@
     <string name="detail_title_needed">%1$s রক্ত দরকার</string>
     <string name="detail_needed_by_time">%1$s-এর মধ্যে দরকার</string>
     <string name="detail_details">বিস্তারিত</string>
+    <string name="detail_offers">সাড়া</string>
     <string name="detail_private_requester">শুধু আপনি আর সাড়া দেওয়া রক্তদাতারা এটি দেখবেন</string>
     <string name="detail_private_donor">শুধু অনুরোধকারী আর সাড়া দেওয়া রক্তদাতারা এটি দেখবেন</string>
     <string name="detail_contact_line">যোগাযোগ: %1$s</string>
@@ -220,10 +221,6 @@
     <string name="detail_block_age">রক্তদাতার বয়স ১৮ থেকে ৬০ বছর হতে হবে।</string>
     <string name="detail_patient">রোগী: %1$s</string>
     <string name="detail_copied">নম্বর কপি হয়েছে</string>
-    <plurals name="detail_offers_title">
-        <item quantity="one">%d জন সাড়া দিয়েছেন</item>
-        <item quantity="other">%d জন সাড়া দিয়েছেন</item>
-    </plurals>
     <string name="detail_no_offers_open">এখনো কেউ সাড়া দেননি। কাছাকাছি যাঁদের গ্রুপ মেলে, সেই রক্তদাতাদের অ্যালার্ট পাঠানো হয়েছে।</string>
     <string name="detail_no_offers_unsent">এখনো কেউ সাড়া দেননি। অনুরোধ পোস্ট হলে কাছাকাছি যাঁদের গ্রুপ মেলে, সেই রক্তদাতাদের অ্যালার্ট পাঠানো হবে।</string>
     <string name="detail_no_offers">এই অনুরোধে কেউ সাড়া দেননি।</string>

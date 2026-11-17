@@ -91,6 +91,10 @@ class FakeRequestRepository(private val now: Instant = TestData.NOW) : RequestRe
         AppResult.Success(all.drop(start).take(limit.toInt()))
     }
 
+    override suspend fun openMine(uid: String) = result {
+        AppResult.Success(requests.value.values.filter { it.requesterUid == uid && it.status == RequestStatus.OPEN }.sortedByDescending { it.createdAt })
+    }
+
     override fun newRequestId(): String = "req-${nextId++}"
 
     override suspend fun create(requester: UserProfile, draft: RequestDraft, requestId: String): AppResult<String> {
@@ -131,7 +135,13 @@ class FakeRequestRepository(private val now: Instant = TestData.NOW) : RequestRe
         AppResult.Success(Unit)
     }
 
-    override suspend fun contact(requestId: String) = result { AppResult.Success(contacts[requestId]) }
+    /** Holds contact() until completed, like a slow network. */
+    var contactGate: CompletableDeferred<Unit>? = null
+
+    override suspend fun contact(requestId: String): AppResult<RequestContact?> {
+        contactGate?.await()
+        return result { AppResult.Success(contacts[requestId]) }
+    }
 }
 
 /**

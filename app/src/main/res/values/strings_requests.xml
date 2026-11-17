@@ -140,6 +140,7 @@
     <string name="detail_title_needed">%1$s blood needed</string>
     <string name="detail_needed_by_time">Needed by %1$s</string>
     <string name="detail_details">Details</string>
+    <string name="detail_offers">Offers</string>
     <string name="detail_private_requester">Only you and donors who offer see this</string>
     <string name="detail_private_donor">Only the requester and donors who offer see this</string>
     <string name="detail_contact_line">Contact: %1$s</string>
@@ -178,10 +179,6 @@
     <string name="detail_block_age">Donors must be 18 to 60 years old.</string>
     <string name="detail_patient">Patient: %1$s</string>
     <string name="detail_copied">Number copied</string>
-    <plurals name="detail_offers_title">
-        <item quantity="one">%d offer</item>
-        <item quantity="other">%d offers</item>
-    </plurals>
     <string name="detail_no_offers_open">No offers yet. Matching donors nearby have been alerted.</string>
     <string name="detail_no_offers_unsent">No offers yet. Matching donors nearby will be alerted once your request is posted.</string>
     <string name="detail_no_offers">No one offered on this request.</string>

@@ -66,6 +66,12 @@ interface RequestRepository {
     /** Several requests by id (My offers), in any status; missing ones are left out. */
     suspend fun byIds(ids: List<String>): AppResult<List<BloodRequest>>
 
+    /**
+     * My open requests (Home's "Your request"). Two equality filters, so Firestore merges its
+     * single-field indexes; no composite index. The open-request limit keeps it to a few.
+     */
+    suspend fun openMine(uid: String): AppResult<List<BloodRequest>>
+
     /** My requests, newest first, one page at a time ([after] = last item of the previous page). */
     suspend fun mine(uid: String, after: BloodRequest? = null, limit: Long = PAGE_SIZE): AppResult<List<BloodRequest>>
 
@@ -89,6 +95,9 @@ interface RequestRepository {
 
     companion object {
         const val PAGE_SIZE = 20L
+
+        /** More than anyone can have open (the rules allow 3). */
+        const val OPEN_MINE_LIMIT = 10L
         const val FEED_LIMIT = 50L
     }
 }
@@ -137,6 +146,16 @@ class FirestoreRequestRepository @Inject constructor(
             .orderBy(RequestDoc.CREATED_AT, Query.Direction.DESCENDING)
         after?.createdAt?.let { query = query.startAfter(it.toTimestamp()) }
         query.limit(limit).get().await().documents.mapNotNull { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
+    }
+
+    override suspend fun openMine(uid: String): AppResult<List<BloodRequest>> = appResultOf {
+        db.requests()
+            .whereEqualTo(RequestDoc.REQUESTER_UID, uid)
+            .whereEqualTo(RequestDoc.STATUS, RequestStatus.OPEN.code)
+            .limit(RequestRepository.OPEN_MINE_LIMIT)
+            .get().await().documents
+            .mapNotNull { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
+            .sortedByDescending { it.createdAt }
     }
 
     override fun newRequestId(): String = db.requests().document().id

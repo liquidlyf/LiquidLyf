@@ -57,6 +57,8 @@ data class HomeUiState(
     val geo: BdGeo? = null,
     /** My own open requests, newest first: "Your request" while it's open (FLOW-03, N6). */
     val ownRequests: List<BloodRequest> = emptyList(),
+    /** False while my own requests load, so the screen doesn't jump when "Your request" arrives. */
+    val ownLoaded: Boolean = true,
 )
 
 sealed interface HomeEvent {
@@ -119,13 +121,13 @@ class HomeViewModel @Inject constructor(
      * My open requests (FLOW-03): one small query for my latest ones, then a live listener on each
      * still open, so the offers count and units update. None open: no listener at all.
      */
-    private val ownRequests: Flow<List<BloodRequest>> = combine(profileFlow.map { it?.uid }.distinctUntilChanged(), ownAttempt) { uid, _ -> uid }
+    private val ownRequests: Flow<List<BloodRequest>?> = combine(profileFlow.map { it?.uid }.distinctUntilChanged(), ownAttempt) { uid, _ -> uid }
         .flatMapLatest { uid ->
             if (uid == null) {
                 flowOf(emptyList())
             } else {
-                flow {
-                    val open = (requests.mine(uid, limit = OWN_REQUESTS_LIMIT) as? AppResult.Success)?.data.orEmpty()
+                flow<List<BloodRequest>?> {
+                    val open = (requests.openMine(uid) as? AppResult.Success)?.data.orEmpty()
                         .filter { it.isActive(clock.now()) }
                     if (open.isEmpty()) {
                         emit(emptyList())
@@ -139,8 +141,8 @@ class HomeViewModel @Inject constructor(
                 }.endOnListenError("own requests") { emit(emptyList()) }
             }
         }
-        // Home doesn't wait for this query: the card appears when it's back.
-        .onStart { emit(emptyList()) }
+        // Null until the first answer: the screen holds the list meanwhile instead of jumping.
+        .onStart { emit(null) }
 
     val uiState: StateFlow<HomeUiState> = combine(profileFlow, feed, pendingAvailable, geo, ownRequests) { p, f, pending, g, own ->
         HomeUiState(
@@ -151,7 +153,8 @@ class HomeViewModel @Inject constructor(
             requests = f.list?.let { visible(it, p) },
             feedError = f.error,
             geo = g,
-            ownRequests = own,
+            ownRequests = own.orEmpty(),
+            ownLoaded = own != null,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
@@ -241,9 +244,6 @@ class HomeViewModel @Inject constructor(
 
     private companion object {
         const val PENDING_TIMEOUT_MS = 10_000L
-
-        /** Enough for anyone's open requests: posting is limited per day (the rules). */
-        const val OWN_REQUESTS_LIMIT = 5L
 
         fun urgencyOrder(u: Urgency): Int = when (u) {
             Urgency.CRITICAL -> 0

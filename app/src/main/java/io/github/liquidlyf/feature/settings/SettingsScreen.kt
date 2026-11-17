@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -25,7 +26,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -338,8 +338,8 @@ private fun SignOutDialog(email: String?, onConfirm: () -> Unit, onDismiss: () -
                 email?.let { Text(stringResource(R.string.sign_out_account, it), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
         },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.answer_yes)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.answer_no)) } },
+        confirmButton = { Button(onClick = onConfirm) { Text(stringResource(R.string.answer_yes)) } },
+        dismissButton = { OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.answer_no)) } },
     )
 }
 
