@@ -78,7 +78,7 @@ class HomeViewModel @Inject constructor(
     private val geoRepository: GeoRepository,
     private val eligibility: EligibilityCalculator,
     private val clock: Clock,
-    network: NetworkMonitor,
+    private val network: NetworkMonitor,
     private val inbox: InboxRepository,
     private val alerts: AlertStore,
 ) : ViewModel() {
@@ -102,8 +102,15 @@ class HomeViewModel @Inject constructor(
             if (key == null || group == null) {
                 flowOf(FeedState(emptyList()))
             } else {
-                requests.feed(key.second, group)
-                    .map { FeedState(it) }
+                // Not known yet (only an empty cache) and offline: say it couldn't load, not "no one
+                // near you needs B+" (D's re-audit); online, it's still loading.
+                combine(requests.feed(key.second, group), network.isOnline) { list, online ->
+                    when {
+                        list != null -> FeedState(list)
+                        online -> FeedState(null)
+                        else -> FeedState(null, AppError.Network)
+                    }
+                }
                     .onStart { emit(FeedState(null)) }
                     .endOnListenError("feed") { error ->
                         // Signed out under the listener: the screen is leaving, so quietly empty.

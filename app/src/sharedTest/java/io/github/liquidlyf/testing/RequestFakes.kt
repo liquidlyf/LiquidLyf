@@ -63,9 +63,16 @@ class FakeRequestRepository(private val now: Instant = TestData.NOW) : RequestRe
         value
     }
 
-    override fun feed(district: String, group: BloodGroup): Flow<List<BloodRequest>> = requests.map { all ->
-        all.values.filter { it.status == RequestStatus.OPEN && it.district == district && group in it.acceptedGroups }
-            .sortedBy { it.neededBy }
+    /** True: the feed has only an empty cache to go on (offline on a fresh install). */
+    val feedUnknown = MutableStateFlow(false)
+
+    override fun feed(district: String, group: BloodGroup): Flow<List<BloodRequest>?> = combine(requests, feedUnknown) { all, unknown ->
+        if (unknown) {
+            null
+        } else {
+            all.values.filter { it.status == RequestStatus.OPEN && it.district == district && group in it.acceptedGroups }
+                .sortedBy { it.neededBy }
+        }
     }.failingOnRequest()
 
     override suspend fun nearby(district: String, after: BloodRequest?, limit: Long) = result {

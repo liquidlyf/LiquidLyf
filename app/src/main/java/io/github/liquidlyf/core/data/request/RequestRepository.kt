@@ -17,6 +17,7 @@ import io.github.liquidlyf.core.firebase.dto.requestRef
 import io.github.liquidlyf.core.firebase.dto.requests
 import io.github.liquidlyf.core.firebase.dto.statsRef
 import io.github.liquidlyf.core.firebase.dto.toTimestamp
+import io.github.liquidlyf.core.firebase.knownSnapshots
 import io.github.liquidlyf.core.firebase.snapshots
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.BloodRequest
@@ -44,7 +45,8 @@ interface RequestRepository {
      * Home feed: OPEN requests in [district] that accept [group], soonest first. The caller drops
      * expired, hidden and blocked ones, and its own.
      */
-    fun feed(district: String, group: BloodGroup): Flow<List<BloodRequest>>
+    /** Null while only the phone's empty cache has answered: not known yet (offline on a fresh install). */
+    fun feed(district: String, group: BloodGroup): Flow<List<BloodRequest>?>
 
     /**
      * Requests → Nearby: every OPEN request in [district], including groups I can't give, soonest
@@ -108,14 +110,14 @@ class FirestoreRequestRepository @Inject constructor(
     private val clock: Clock,
 ) : RequestRepository {
 
-    override fun feed(district: String, group: BloodGroup): Flow<List<BloodRequest>> =
+    override fun feed(district: String, group: BloodGroup): Flow<List<BloodRequest>?> =
         db.requests()
             .whereEqualTo(RequestDoc.STATUS, RequestStatus.OPEN.code)
             .whereEqualTo(RequestDoc.DISTRICT, district)
             .whereArrayContains(RequestDoc.ACCEPTED_GROUPS, group.code)
             .orderBy(RequestDoc.NEEDED_BY)
             .limit(RequestRepository.FEED_LIMIT)
-            .snapshots { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
+            .knownSnapshots { d -> d.data?.let { RequestDoc.fromMap(d.id, it) } }
 
     override suspend fun nearby(district: String, after: BloodRequest?, limit: Long): AppResult<List<BloodRequest>> = appResultOf {
         var query = db.requests()

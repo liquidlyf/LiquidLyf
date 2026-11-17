@@ -94,6 +94,24 @@ fun <T : Any> Query.snapshots(mapper: (DocumentSnapshot) -> T?): Flow<List<T>> =
 }
 
 /**
+ * Like [snapshots], but null while all it has is the phone's cache and that's empty: then it doesn't
+ * know yet (a fresh install offline said "No one near you needs B+", D's re-audit). Once the server
+ * answers, or the cache has something, it's the list.
+ */
+fun <T : Any> Query.knownSnapshots(mapper: (DocumentSnapshot) -> T?): Flow<List<T>?> = callbackFlow {
+    val registration = addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
+        if (error != null) {
+            close(error)
+            return@addSnapshotListener
+        }
+        if (snapshot != null) {
+            trySend(if (snapshot.metadata.isFromCache && snapshot.isEmpty) null else snapshot.documents.mapNotNull(mapper))
+        }
+    }
+    awaitClose { registration.remove() }
+}.distinctUntilChanged()
+
+/**
  * One read, from the local cache when the document is there (0 billed reads), otherwise from the
  * server (doc 10 §5.1 rule 2). [refresh] skips the cache, for pull-to-refresh.
  */

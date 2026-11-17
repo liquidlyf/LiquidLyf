@@ -66,8 +66,10 @@ class HomeViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
+    private val network = FakeNetworkMonitor()
+
     private fun TestScope.vm() = HomeViewModel(
-        session, requests, profiles, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, FakeNetworkMonitor(), inbox, alerts,
+        session, requests, profiles, geoRepo, EligibilityCalculator(), Clock { TestData.NOW }, network, inbox, alerts,
     ).also { vm -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} } }
 
     @Test
@@ -120,6 +122,23 @@ class HomeViewModelTest {
         vm.onResume()
         advanceUntilIdle()
         assertEquals(listOf("new"), vm.uiState.value.ownRequests.map { it.id })
+    }
+
+    @Test
+    fun `offline with nothing on the phone yet, the feed says it couldn't load, not that no one needs blood`() = runTest(dispatcher) {
+        requests.feedUnknown.value = true
+        network.isOnline.value = false
+        val vm = vm()
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.requests)
+        assertEquals(AppError.Network, vm.uiState.value.feedError)
+
+        network.isOnline.value = true // online: still loading until the server answers
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.feedError)
+        requests.feedUnknown.value = false
+        advanceUntilIdle()
+        assertEquals(emptyList<Any>(), vm.uiState.value.requests)
     }
 
     @Test
