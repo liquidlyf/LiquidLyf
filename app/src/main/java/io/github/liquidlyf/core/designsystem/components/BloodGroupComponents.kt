@@ -80,7 +80,8 @@ fun BloodGroupChip(
             border = if (isError && !selected) {
                 FilterChipDefaults.filterChipBorder(enabled = true, selected = false, borderColor = MaterialTheme.colorScheme.error)
             } else {
-                FilterChipDefaults.filterChipBorder(enabled = true, selected = selected)
+                // 3:1 against the background, like every unselected outline (D's re-audit).
+                FilterChipDefaults.filterChipBorder(enabled = true, selected = selected, borderColor = MaterialTheme.colorScheme.outline)
             },
             modifier = Modifier
                 .fillMaxWidth()

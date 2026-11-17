@@ -121,6 +121,19 @@ class CreateRequestViewModelTest {
     }
 
     @Test
+    fun `Me with a profile number the rules wouldn't take says why instead of doing nothing`() = runTest(dispatcher) {
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), profile.copy(phone = "+880123"))
+        val vm = vm()
+        advanceUntilIdle()
+        vm.fillAll()
+        vm.next()
+        advanceUntilIdle()
+        assertEquals(R.string.create_error_me_contact, vm.uiState.value.formError)
+        assertFalse(vm.uiState.value.posting)
+        assertTrue(requests.created.isEmpty())
+    }
+
+    @Test
     fun `offline, the page opens at once instead of waiting 10 s`() = runTest(dispatcher) {
         requests.createGate = CompletableDeferred() // the write waits for the network
         val vm = vm(network = FakeNetworkMonitor(online = false))

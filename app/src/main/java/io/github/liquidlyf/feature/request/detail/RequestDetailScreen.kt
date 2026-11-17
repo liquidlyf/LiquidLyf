@@ -374,7 +374,7 @@ private fun DetailBar(
                 state.myStatus == null -> LLBottomBar(
                     primaryText = stringResource(R.string.detail_i_can_donate),
                     onPrimary = onOffer,
-                    primaryEnabled = (state.offerBlock == null || state.offerBlock == OfferBlock.NotADonor) && !state.working,
+                    primaryEnabled = state.offerBlock == null || state.offerBlock == OfferBlock.NotADonor,
                     loading = state.working,
                     primaryIcon = LLIcons.VolunteerActivism,
                 )

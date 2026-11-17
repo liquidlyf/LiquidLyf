@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -262,7 +263,9 @@ private fun TabLabel(text: String) {
             style = style.copy(color = LocalContentColor.current),
             maxLines = 1,
             softWrap = false,
-            autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp),
+            // Never below 11 sp (D's re-audit: 9 sp on a narrow phone); a longer word ends in "…".
+            autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp),
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

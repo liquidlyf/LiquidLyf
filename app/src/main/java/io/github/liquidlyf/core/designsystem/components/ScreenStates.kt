@@ -150,7 +150,11 @@ fun EmptyState(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center,
-            modifier = Modifier.semantics { heading() },
+            // Said when it appears, e.g. after a failed load (D's re-audit).
+            modifier = Modifier.semantics {
+                heading()
+                liveRegion = LiveRegionMode.Polite
+            },
         )
         Spacer(Modifier.height(Spacing.xs))
         Text(

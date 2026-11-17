@@ -27,7 +27,10 @@ sealed interface AlertStatus {
     data object Failed : AlertStatus
 }
 
-/** In memory only: after a restart the request page says what it always said. */
+/**
+ * The app's own view of a first alert it just asked for, in memory. The request page reads the
+ * request's fan-out fields too, so it stays true after a restart (D's re-audit).
+ */
 @Singleton
 class AlertStatusStore @Inject constructor() {
     private val statuses = MutableStateFlow<Map<String, AlertStatus>>(emptyMap())

@@ -110,6 +110,7 @@
     <string name="create_contact_from_profile">From your profile: nothing to type</string>
     <string name="create_contact_else">Someone else</string>
     <string name="create_contact_else_hint">For example, a relative at the hospital</string>
+    <string name="create_error_me_contact">Your profile\'s mobile number can\'t be used here. Choose Someone else, or fix it in Edit profile.</string>
     <string name="create_contact_name">Contact name</string>
     <string name="create_contact_phone">Contact mobile number</string>
     <string name="create_patient_name">Patient\'s name (optional)</string>
@@ -242,6 +243,7 @@
     <string name="home_line_ready">Ready to donate · people nearby can alert you</string>
     <string name="home_line_resting">Ready to donate · alerts start again on %1$s</string>
     <string name="home_line_notifications_off">Ready to donate · no alerts until notifications are on</string>
+    <string name="home_line_blocked">Ready to donate · no alerts until you can donate</string>
     <string name="home_notif_off_title">Notifications off</string>
     <string name="home_notif_off_body">You\'ll miss alerts and offers.</string>
     <string name="home_ready_on">People nearby can find you and alert you.</string>

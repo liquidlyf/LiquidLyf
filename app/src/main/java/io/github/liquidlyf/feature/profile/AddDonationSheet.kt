@@ -112,7 +112,6 @@ fun AddDonationSheet(
             LLPrimaryButton(
                 text = stringResource(R.string.add_donation_save),
                 loading = saving,
-                enabled = !saving,
                 onClick = {
                     showErrors = true
                     val d = date

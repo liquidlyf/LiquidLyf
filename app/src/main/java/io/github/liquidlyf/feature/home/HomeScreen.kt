@@ -312,15 +312,17 @@ private fun DonorLine(
     val on = state.available
     val large = isLargeText()
     val resting = IneligibleReason.REST_PERIOD in e.reasons
+    val blocked = !e.eligibleNow && !resting // age or weight: the Worker sends no alerts
     val title = if (on) eligibilityText(e, now) else stringResource(R.string.home_not_ready_title)
     val line = when {
         !on -> stringResource(R.string.home_ready_off)
         // With large text the notice above already says why: only "Ready to donate" here.
         !notificationsOn -> stringResource(if (large) R.string.home_ready_to_donate else R.string.home_line_notifications_off)
         resting -> stringResource(R.string.home_line_resting, dateText(e.eligibleFrom))
+        blocked -> stringResource(R.string.home_line_blocked)
         else -> stringResource(R.string.home_line_ready)
     }
-    val ring = @Composable { EligibilityRing(e, p.gender, now, size = 48.dp, showDays = true, dimmed = !on) }
+    val ring = @Composable { EligibilityRing(e, p.gender, now, size = 48.dp, showDays = true, dimmed = !on || blocked) }
     val switch = @Composable { Switch(checked = on, onCheckedChange = null, enabled = !state.savingAvailability) }
     LLCard(Modifier.fillMaxWidth()) {
         val toggle = Modifier
@@ -388,7 +390,8 @@ private fun NotListedLine(state: HomeUiState, now: Instant, onListMe: () -> Unit
 @Composable
 private fun OwnRequestCard(r: BloodRequest, now: Instant, onOpen: () -> Unit) {
     val label = stringResource(R.string.home_your_request)
-    LLCard(Modifier.fillMaxWidth(), onClick = onOpen) {
+    // One action, one TalkBack stop: "See offers" (D's re-audit), not the card and the button.
+    LLCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md)) {
             Text(
                 // Capitals help English scan; Bangla has none.

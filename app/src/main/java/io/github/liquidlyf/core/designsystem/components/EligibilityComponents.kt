@@ -38,7 +38,12 @@ import java.time.Instant
 fun EligibilityRing(eligibility: Eligibility, gender: Gender?, now: Instant, size: Dp = 48.dp, showDays: Boolean = false, dimmed: Boolean = false) {
     val total = Duration.ofDays(EligibilityRules().intervalDays(gender).toLong()).toMillis().toFloat()
     val left = Duration.between(now, eligibility.eligibleFrom).toMillis().coerceAtLeast(0).toFloat()
-    val progress = if (IneligibleReason.REST_PERIOD in eligibility.reasons) (1f - left / total).coerceIn(0f, 1f) else 1f
+    val progress = when {
+        eligibility.eligibleNow -> 1f
+        IneligibleReason.REST_PERIOD in eligibility.reasons -> (1f - left / total).coerceIn(0f, 1f)
+        // Age or weight: no countdown; full would say "can donate now" (D's re-audit).
+        else -> 0f
+    }
     Box(Modifier.size(size).clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
         val tint = if (dimmed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
         CircularProgressIndicator(
@@ -53,7 +58,7 @@ fun EligibilityRing(eligibility: Eligibility, gender: Gender?, now: Instant, siz
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(numberText(days), style = MaterialTheme.typography.titleMedium, color = tint)
                     if (size >= 64.dp) {
-                        Text(pluralStringResource(R.plurals.ring_days, days), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(pluralStringResource(R.plurals.ring_days, days), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }

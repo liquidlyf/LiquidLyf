@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.backend.AlertStatus
 import io.github.liquidlyf.core.data.backend.AlertStatusStore
 import io.github.liquidlyf.core.data.backend.Dispatch
@@ -256,7 +257,11 @@ class CreateRequestViewModel @Inject constructor(
 
     private fun post() {
         val requester = me ?: return
-        val draft = toDraft(state.value.form) ?: return
+        val draft = toDraft(state.value.form) ?: run {
+            // Only "Me" with a profile number the rules wouldn't take (D's re-audit): say so.
+            state.update { it.copy(formError = R.string.create_error_me_contact) }
+            return
+        }
         state.update { it.copy(posting = true, formError = null) }
         val offline = !online.value
         val requestId = requests.newRequestId()

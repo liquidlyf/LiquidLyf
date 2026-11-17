@@ -69,7 +69,7 @@ fun LLTag(label: String, @DrawableRes icon: Int, modifier: Modifier = Modifier) 
         shape = MaterialTheme.shapes.extraSmall,
         color = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         modifier = modifier,
     ) {
         PillContent(label, icon, Modifier.padding(horizontal = Spacing.xs, vertical = Spacing.xxs))

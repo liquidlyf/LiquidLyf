@@ -43,6 +43,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -158,7 +163,7 @@ internal fun SettingsContent(
         ) {
             // N5: Language first, its title in both languages, so someone who opened the app in the
             // wrong language still finds it at the top.
-            GroupHeader(stringResource(R.string.settings_language_both), first = true)
+            GroupHeader(bilingual(stringResource(R.string.settings_language_both)), first = true)
             Choices(AppLanguage.entries, uiState.language, onLanguageChange) { stringResource(it.labelRes) }
 
             // Phase 5.10: which notifications this phone gets.
@@ -350,9 +355,24 @@ private fun SignOutDialog(email: String?, onConfirm: () -> Unit, onDismiss: () -
     )
 }
 
+/**
+ * "Language · ভাষা" with each half tagged with its language, so TalkBack reads the Bangla word with
+ * a Bangla voice (D's re-audit: an English voice garbled it).
+ */
+private fun bilingual(text: String): AnnotatedString = buildAnnotatedString {
+    text.split(" · ").forEachIndexed { i, part ->
+        if (i > 0) append(" · ")
+        val bangla = part.any { it in '\u0980'..'\u09FF' } // the Bangla block
+        withStyle(SpanStyle(localeList = LocaleList(if (bangla) "bn" else "en"))) { append(part) }
+    }
+}
+
 /** A group's title: small and grey, so the rows stay what people read (N5). */
 @Composable
-private fun GroupHeader(text: String, first: Boolean = false) {
+private fun GroupHeader(text: String, first: Boolean = false) = GroupHeader(AnnotatedString(text), first)
+
+@Composable
+private fun GroupHeader(text: AnnotatedString, first: Boolean = false) {
     Text(
         text,
         style = MaterialTheme.typography.titleSmall,

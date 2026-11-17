@@ -28,6 +28,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.SegmentedButton
@@ -182,6 +183,7 @@ fun LLFilterChip(selected: Boolean, onClick: () -> Unit, label: String, modifier
         selected = selected,
         onClick = onClick,
         label = { Text(label) },
+        border = FilterChipDefaults.filterChipBorder(enabled = true, selected = selected, borderColor = MaterialTheme.colorScheme.outline),
         leadingIcon = if (selected) {
             { Icon(painterResource(LLIcons.Check), contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
         } else {
@@ -224,10 +226,21 @@ fun DropdownField(
                 label = if (labelAbove) null else { { Text(label) } },
                 placeholder = placeholder?.let { p -> { Text(p) } },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                // A locked box stays readable: its words say why ("Choose a division first", D's re-audit).
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    disabledTrailingIconColor = MaterialTheme.colorScheme.outlineVariant,
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled)
-                    .semantics { if (labelAbove) contentDescription = label },
+                    .semantics {
+                        when {
+                            !enabled && placeholder != null -> contentDescription = "$label, $placeholder"
+                            labelAbove -> contentDescription = label
+                        }
+                    },
             )
             ExposedDropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }) {
                 menuTitle?.let {
@@ -242,7 +255,8 @@ fun DropdownField(
                     DropdownMenuItem(
                         text = { Text(text) },
                         onClick = {
-                            onSelect(key)
+                            // The same place again changes nothing (it used to clear the boxes below it).
+                            if (key != selected) onSelect(key)
                             expanded = false
                         },
                     )

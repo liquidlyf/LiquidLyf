@@ -100,6 +100,7 @@
     <string name="home_line_ready">রক্ত দিতে প্রস্তুত · কাছাকাছি মানুষ আপনাকে অ্যালার্ট পাঠাতে পারবেন</string>
     <string name="home_line_resting">রক্ত দিতে প্রস্তুত · %1$s থেকে আবার অ্যালার্ট পাবেন</string>
     <string name="home_line_notifications_off">রক্ত দিতে প্রস্তুত · নোটিফিকেশন চালু না করা পর্যন্ত অ্যালার্ট পাবেন না</string>
+    <string name="home_line_blocked">রক্ত দিতে প্রস্তুত · রক্ত দিতে পারার আগ পর্যন্ত অ্যালার্ট পাবেন না</string>
     <string name="home_notif_off_title">নোটিফিকেশন বন্ধ</string>
     <string name="home_notif_off_body">অ্যালার্ট আর সাড়ার খবর পাবেন না।</string>
     <string name="home_ready_on">কাছাকাছি মানুষ আপনাকে খুঁজে অ্যালার্ট পাঠাতে পারবেন।</string>
@@ -169,6 +170,7 @@
     <string name="create_contact_from_profile">আপনার প্রোফাইল থেকে: কিছু লিখতে হবে না</string>
     <string name="create_contact_else">অন্য কেউ</string>
     <string name="create_contact_else_hint">যেমন, হাসপাতালে থাকা কোনো আত্মীয়</string>
+    <string name="create_error_me_contact">আপনার প্রোফাইলের নম্বরটি এখানে ব্যবহার করা যাচ্ছে না। \"অন্য কেউ\" বেছে নিন, অথবা প্রোফাইল এডিট করে ঠিক করুন।</string>
     <string name="create_contact_name">যোগাযোগের নাম</string>
     <string name="create_contact_phone">যোগাযোগের মোবাইল নম্বর</string>
     <string name="create_patient_name">রোগীর নাম (ঐচ্ছিক)</string>

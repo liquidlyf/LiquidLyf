@@ -117,13 +117,13 @@ fun OnboardingScreen(onFinished: () -> Unit, onLanguageChange: (AppLanguage) -> 
                             Modifier
                                 .size(if (largeText) 64.dp else 112.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 painterResource(page.icon),
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(if (largeText) 32.dp else 56.dp),
                             )
                         }
