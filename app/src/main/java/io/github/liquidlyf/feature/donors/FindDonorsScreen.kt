@@ -229,7 +229,15 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
                         EmptyState(
                             icon = LLIcons.Donors,
                             title = stringResource(R.string.donors_empty_title),
-                            body = stringResource(R.string.donors_empty_body),
+                            // Low 24: only the hints that still apply to the search on screen.
+                            body = stringResource(
+                                when {
+                                    state.applied?.upazila != null && state.applied.eligibleNowOnly -> R.string.donors_empty_body
+                                    state.applied?.upazila != null -> R.string.donors_empty_body_district
+                                    state.applied?.eligibleNowOnly == true -> R.string.donors_empty_body_eligible
+                                    else -> R.string.donors_empty_body_post
+                                },
+                            ),
                             actionLabel = stringResource(R.string.action_request_blood),
                             onAction = actions.onCreateRequest,
                         )

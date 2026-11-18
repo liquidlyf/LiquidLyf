@@ -7,13 +7,13 @@ import org.junit.Test
 class PhoneDisplayTest {
     @Test
     fun `a Bangladeshi mobile number keeps the +88 and groups the local digits`() {
-        assertEquals("+88\u00A001700\u2011000000", PhoneDisplay.format("+8801700000000"))
-        assertEquals("+88\u00A001812\u2011345678", PhoneDisplay.format("+8801812345678"))
+        assertEquals("+88 01700\u2011000000", PhoneDisplay.format("+8801700000000"))
+        assertEquals("+88 01812\u2011345678", PhoneDisplay.format("+8801812345678"))
     }
 
     @Test
     fun `Bangla screens get Bangla digits`() {
-        assertEquals("+৮৮\u00A0০১৮১২\u2011৩৪৫৬৭৮", PhoneDisplay.format("+8801812345678", banglaDigits = true))
+        assertEquals("+৮৮ ০১৮১২\u2011৩৪৫৬৭৮", PhoneDisplay.format("+8801812345678", banglaDigits = true))
     }
 
     @Test
