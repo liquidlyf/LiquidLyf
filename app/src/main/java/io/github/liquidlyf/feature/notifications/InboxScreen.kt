@@ -150,7 +150,9 @@ private fun InboxRow(entry: InboxEntry, isNew: Boolean, state: InboxUiState, onC
     }
     val newLabel = stringResource(R.string.inbox_new)
     // A card like every other list (UI-07); the icon in grey, red is for actions (D4 a).
-    LLCard(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable(onClick = onClick).semantics { if (isNew) stateDescription = newLabel }) {
+    // The tap is on the list item, not the card: the item merges its own words, so with the tap on
+    // the card TalkBack's stop had no label (AccessibilityLabelsTest).
+    LLCard(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)) {
     ListItem(
         leadingContent = { Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
         // Low 23: the unread dot at the end of the title's first line, in the same place on every card.
@@ -173,7 +175,10 @@ private fun InboxRow(entry: InboxEntry, isNew: Boolean, state: InboxUiState, onC
             }
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .semantics { if (isNew) stateDescription = newLabel }
+            .heightIn(min = Spacing.minTouchTarget),
     )
     }
 }

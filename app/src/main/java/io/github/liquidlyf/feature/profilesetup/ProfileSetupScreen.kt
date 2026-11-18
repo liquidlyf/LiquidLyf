@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -183,6 +184,7 @@ private fun TermsBlock(accepted: Boolean, isError: Boolean, anchors: ErrorAnchor
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(min = Spacing.minTouchTarget) // 48 dp even when the text is one line
                 .toggleable(value = accepted, role = Role.Checkbox, onValueChange = { v -> onEdit { copy(termsAccepted = v) } }),
         ) {
             Checkbox(
@@ -196,7 +198,9 @@ private fun TermsBlock(accepted: Boolean, isError: Boolean, anchors: ErrorAnchor
         // The second link moves below the first when both don't fit (200% text).
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             EdgeTextButton(stringResource(R.string.action_read_terms), { links.openUrl(Links.terms(locale)) })
-            TextButton(onClick = { links.openUrl(Links.privacy(locale)) }) { Text(stringResource(R.string.action_read_privacy)) }
+            TextButton(onClick = { links.openUrl(Links.privacy(locale)) }, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                Text(stringResource(R.string.action_read_privacy))
+            }
         }
     }
 }
