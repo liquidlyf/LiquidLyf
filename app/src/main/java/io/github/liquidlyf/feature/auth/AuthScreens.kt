@@ -33,7 +33,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -73,6 +72,7 @@ import io.github.liquidlyf.core.data.auth.requestGoogleIdToken
 import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.ButtonLabel
 import io.github.liquidlyf.core.designsystem.components.EdgeTextButton
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
@@ -348,9 +348,12 @@ fun SignUpScreen(
         onBack = onBack,
         actions = { LanguageToggle(onLanguageChange) },
         bottomBar = {
+            // Low 6: "already has an account" makes Sign in (with this email) the main button;
+            // Create account would only fail again. Editing the email brings it back.
+            val inUse = state.emailError == R.string.error_email_in_use
             LLBottomBar(
-                primaryText = stringResource(R.string.action_create_account),
-                onPrimary = onSignUp,
+                primaryText = stringResource(if (inUse) R.string.action_sign_in else R.string.action_create_account),
+                onPrimary = if (inUse) dropUnlessResumed(block = onSignInWithEmail) else onSignUp,
                 loading = state.loading,
                 loadingText = stringResource(R.string.action_creating_account),
             )
@@ -378,12 +381,7 @@ fun SignUpScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
             fieldModifier = Modifier.errorAnchor(anchors, SignUpField.EMAIL, textField = true),
         )
-        // FORM-04: the error says "Sign in instead", so offer it right there, with the email filled in.
-        if (state.emailError == R.string.error_email_in_use) {
-            FilledTonalButton(onClick = dropUnlessResumed(block = onSignInWithEmail), modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
-                Text(stringResource(R.string.action_sign_in))
-            }
-        }
+        // FORM-04 and Low 6: "Sign in instead" is the bar's main button while the email is in use.
         LLTextField(
             value = state.password,
             onValueChange = onPasswordChange,
@@ -492,7 +490,7 @@ private fun emailSpamHint(sender: String): String =
 @Composable
 fun ForgotPasswordRoute(onBack: () -> Unit, viewModel: ForgotPasswordViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ForgotPasswordScreen(state, viewModel::onEmailChange, viewModel::send, onBack)
+    ForgotPasswordScreen(state, viewModel::onEmailChange, viewModel::send, onBack, onUseDifferentEmail = viewModel::useDifferentEmail)
 }
 
 @Composable
@@ -501,6 +499,7 @@ fun ForgotPasswordScreen(
     onEmailChange: (String) -> Unit,
     onSend: () -> Unit,
     onBack: () -> Unit,
+    onUseDifferentEmail: () -> Unit = {},
 ) {
     // UI-05 and UI-07: the main action is pinned; "Back to sign in" lives in the same bar before and
     // after sending (it was a text button on one screen and a tonal button on the next).
@@ -531,6 +530,13 @@ fun ForgotPasswordScreen(
                 title = stringResource(R.string.forgot_password_sent_title),
                 body = stringResource(R.string.forgot_password_sent_body, sentTo) + " " + emailSpamHint(state.sender),
             )
+            // Low 25: not there? Send it again, or fix the address.
+            TextButton(onClick = onSend, enabled = !state.loading, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
+                ButtonLabel(stringResource(R.string.action_resend_email))
+            }
+            TextButton(onClick = onUseDifferentEmail, enabled = !state.loading, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
+                ButtonLabel(stringResource(R.string.action_use_different_email))
+            }
             return@AuthLayout
         }
         Text(stringResource(R.string.forgot_password_body), style = MaterialTheme.typography.bodyLarge)

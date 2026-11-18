@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -34,12 +35,16 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.account.DeletionStep
+import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
 import io.github.liquidlyf.core.designsystem.components.ChoiceRow
+import io.github.liquidlyf.core.designsystem.components.DialogBody
 import io.github.liquidlyf.core.designsystem.components.DialogText
+import io.github.liquidlyf.core.designsystem.components.EdgeTextButton
 import io.github.liquidlyf.core.designsystem.components.FieldError
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
+import io.github.liquidlyf.core.designsystem.components.LLNoticeCard
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
@@ -83,6 +88,13 @@ fun ChangePasswordRoute(onDone: () -> Unit, viewModel: ChangePasswordViewModel =
             contentType = ContentType.Password,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
         )
+        // Low 25: forgot the current one? The reset link goes to this account's email.
+        val sentTo = state.resetSentTo
+        if (sentTo == null) {
+            EdgeTextButton(stringResource(R.string.action_forgot_password), viewModel::sendReset, enabled = !state.saving)
+        } else {
+            LLNoticeCard(stringResource(R.string.reset_link_sent_to, sentTo), LLIcons.CheckCircle)
+        }
         LLTextField(
             value = state.new,
             onValueChange = viewModel::onNewChange,
@@ -307,7 +319,16 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
         AlertDialog(
             onDismissRequest = { viewModel.onBloodGroupConfirmed(false) },
             title = { Text(stringResource(R.string.confirm_blood_group_title)) },
-            text = { DialogText(stringResource(R.string.confirm_blood_group_body)) },
+            text = {
+                DialogBody {
+                    val from = state.previousBloodGroup
+                    val to = state.bloodGroup
+                    if (from != null && to != null) {
+                        Text(stringResource(R.string.confirm_blood_group_from_to, stringResource(from.labelRes), stringResource(to.labelRes)), fontWeight = FontWeight.Medium)
+                    }
+                    Text(stringResource(R.string.confirm_blood_group_body))
+                }
+            },
             confirmButton = { TextButton(onClick = { viewModel.onBloodGroupConfirmed(true) }) { Text(stringResource(R.string.action_change)) } },
             dismissButton = { TextButton(onClick = { viewModel.onBloodGroupConfirmed(false) }) { Text(stringResource(R.string.action_cancel)) } },
         )

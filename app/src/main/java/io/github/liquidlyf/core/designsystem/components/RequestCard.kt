@@ -97,7 +97,7 @@ private fun RequestCardDetails(request: BloodRequest, placeText: String, now: In
     IconLine(
         LLIcons.Schedule,
         when {
-            request.status != RequestStatus.OPEN -> dateTimeText(request.neededBy)
+            request.status != RequestStatus.OPEN -> stringResource(R.string.request_was_needed_by, dateTimeText(request.neededBy)) // Low 11
             request.urgency == Urgency.PLANNED -> stringResource(R.string.request_needed_on, dateTimeText(request.neededBy))
             else -> neededByText(request.neededBy, now)
         },

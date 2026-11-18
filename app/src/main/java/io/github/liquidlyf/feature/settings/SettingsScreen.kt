@@ -62,6 +62,7 @@ import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.DialogBody
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
+import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.SegmentedChoices
 import io.github.liquidlyf.core.designsystem.components.isLargeText
@@ -180,7 +181,11 @@ internal fun SettingsContent(
 
             // 8.1: being listed is consent, and can be withdrawn here at any time. Each line is true
             // for its state (COPY-04), like Profile's Donor card.
-            if (uiState.listed != null && !uiState.isDonor) {
+            if (uiState.listed == null) {
+                // Low 19: while loading, the donor status section is there as a placeholder too.
+                GroupHeader(stringResource(R.string.settings_donor_status))
+                LoadingState(Modifier.padding(horizontal = screenGutter()), count = 1)
+            } else if (!uiState.isDonor) {
                 // D1: not a donor yet, so no switches: the way in instead.
                 GroupHeader(stringResource(R.string.settings_donor_status))
                 SettingsRow(LLIcons.Favorite, stringResource(R.string.action_become_donor), stringResource(R.string.home_become_donor_body), onBecomeDonor)
@@ -188,7 +193,7 @@ internal fun SettingsContent(
                 // P2-15: no blood group yet, so nothing to list: a readable line that opens Edit profile
                 // (it was a grey switch that couldn't be tapped).
                 GroupHeader(stringResource(R.string.settings_donor_status))
-                SettingsRow(LLIcons.Donors, stringResource(R.string.action_add_blood_group), stringResource(R.string.settings_list_me_needs_group), onEditProfile)
+                SettingsRow(LLIcons.Donors, stringResource(R.string.action_add_blood_group), stringResource(R.string.settings_add_group_why), onEditProfile)
             } else if (uiState.listed != null) {
                 GroupHeader(stringResource(R.string.settings_donor_status))
                 SwitchRow(

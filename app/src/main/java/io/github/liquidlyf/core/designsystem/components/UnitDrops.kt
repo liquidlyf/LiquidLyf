@@ -25,7 +25,7 @@ fun UnitDrops(received: Int, needed: Int, modifier: Modifier = Modifier) {
             Icon(
                 painterResource(LLIcons.BloodDrop),
                 contentDescription = null,
-                tint = if (i < received) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                tint = if (i < received) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, // Low 22: outlineVariant was too faint
                 modifier = Modifier.size(16.dp),
             )
         }

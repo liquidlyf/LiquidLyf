@@ -21,6 +21,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -64,6 +65,7 @@ import io.github.liquidlyf.core.designsystem.StatusTone
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.BloodGroupChip
 import io.github.liquidlyf.core.designsystem.components.ButtonLabel
+import io.github.liquidlyf.core.designsystem.components.ChooseHint
 import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.DropdownField
 import io.github.liquidlyf.core.designsystem.components.EmptyState
@@ -129,6 +131,7 @@ fun FindDonorsRoute(onCreateRequest: () -> Unit, viewModel: FindDonorsViewModel 
     state.ask?.let { sheet ->
         AskToDonateSheet(
             sheet = sheet,
+            place = state.geo?.placeLabel(sheet.donor.area.district, sheet.donor.area.upazila, currentAppLocale()),
             asking = state.asking,
             isAsked = { r -> viewModel.isAsked(r, sheet.donor) },
             onSelect = viewModel::selectRequest,
@@ -149,7 +152,13 @@ fun FindDonorsRoute(onCreateRequest: () -> Unit, viewModel: FindDonorsViewModel 
                 onDismissRequest = { blocking = false },
                 title = { Text(stringResource(R.string.block_title)) },
                 text = { DialogText(stringResource(R.string.block_body)) },
-                confirmButton = { TextButton(onClick = { blocking = false; viewModel.blockDonor() }) { Text(stringResource(R.string.action_block)) } },
+                confirmButton = {
+                    // Low 7: blocking can't be undone here, so it's a filled error button, unlike Cancel.
+                    Button(
+                        onClick = { blocking = false; viewModel.blockDonor() },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
+                    ) { Text(stringResource(R.string.action_block)) }
+                },
                 dismissButton = { TextButton(onClick = { blocking = false }) { Text(stringResource(R.string.action_cancel)) } },
             )
         }
@@ -349,8 +358,10 @@ private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Insta
         val details = @Composable { modifier: Modifier ->
             Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                 Text(card.displayName, style = MaterialTheme.typography.titleMedium)
+                // Low 3: with large text the count gets its own line (a line began "· ২ বার রক্তদান").
+                val count = pluralStringResource(R.plurals.donors_donations, card.donationCount, card.donationCount)
                 Text(
-                    listOf(eligibleText, pluralStringResource(R.plurals.donors_donations, card.donationCount, card.donationCount)).joinToString(" · "),
+                    if (large) eligibleText + "\n" + count else "$eligibleText · $count",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -397,6 +408,7 @@ private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Insta
 @Composable
 private fun AskToDonateSheet(
     sheet: AskSheet,
+    place: String?,
     asking: Boolean,
     isAsked: (io.github.liquidlyf.core.model.BloodRequest) -> Boolean,
     onSelect: (String) -> Unit,
@@ -413,6 +425,12 @@ private fun AskToDonateSheet(
             verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
             Text(stringResource(R.string.donors_ask_title, donor.displayName), style = MaterialTheme.typography.titleLarge)
+            // Low 28: whose group and where, so the right request is easy to pick.
+            Text(
+                listOfNotNull(stringResource(donor.bloodGroup.labelRes), place).joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Text(stringResource(R.string.donors_ask_body), style = MaterialTheme.typography.bodyMedium)
             val requests = sheet.requests
             when {
@@ -445,6 +463,7 @@ private fun AskToDonateSheet(
                         }
                     }
                     val selected = requests.firstOrNull { it.id == sheet.selected }
+                    if (selected == null && requests.size > 1) ChooseHint() // Low 8
                     LLPrimaryButton(
                         text = stringResource(if (selected != null && isAsked(selected)) R.string.donors_asked_label else R.string.action_ask_to_donate),
                         onClick = onAsk,

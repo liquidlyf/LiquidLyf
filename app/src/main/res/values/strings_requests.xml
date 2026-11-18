@@ -63,6 +63,7 @@
     <string name="request_needed_by">Needed %1$s</string>
     <!-- COPY-04: a planned request, by its date ("Needed on 20 Nov 2026, 10:00 AM"). -->
     <string name="request_needed_on">Needed on %1$s</string>
+    <string name="request_was_needed_by">Was needed by %1$s</string>
 
     <!-- Create request -->
     <string name="create_step">Step %1$d of %2$d</string>
@@ -173,6 +174,7 @@
     <string name="detail_offer_consent">Your name, blood group and mobile number will be shared with the requester.</string>
     <string name="detail_offer_confirm">Share my number and offer</string>
     <string name="detail_block_closed">This request is closed.</string>
+    <string name="detail_see_nearby">See other requests near you</string>
     <string name="detail_block_no_group">Add your blood group in your profile to offer.</string>
     <string name="detail_block_incompatible">Your blood group isn\'t one this request can use.</string>
     <plurals name="detail_block_rest">
@@ -189,7 +191,7 @@
     <string name="detail_call_donor">Call %1$s</string>
     <string name="detail_confirm">Confirm</string>
     <string name="detail_decline">Decline</string>
-    <string name="detail_decline_title">Decline this offer?</string>
+    <string name="detail_decline_title_named">Decline %1$s\'s offer?</string>
     <string name="detail_decline_body">The donor will be told you don\'t need them for this request.</string>
     <string name="detail_mark_donated">Mark donated</string>
     <string name="detail_donated_title">Did this donor give blood?</string>
@@ -200,6 +202,7 @@
     <string name="detail_close_found">Found blood</string>
     <string name="detail_close_not_needed">No longer needed</string>
     <string name="detail_close_reason">Note (optional)</string>
+    <string name="hint_choose_one">Choose one above to continue.</string>
     <string name="detail_edit">Edit request</string>
     <string name="detail_edit_needed_by">Needed by</string>
     <string name="detail_not_for_me">Not for me</string>
@@ -231,6 +234,8 @@
     <!-- STATE-06: on the request form, "showing saved data" meant nothing; posting offline does work. -->
     <string name="offline_banner_form">You\'re offline. Your request will be posted when you\'re back online.</string>
     <string name="home_urgent_near_you">Requests you can help with</string>
+    <string name="home_requests_near_you">Requests near you</string>
+    <string name="home_share_while_resting">You can\'t donate right now, but sharing a request can find someone who can.</string>
     <string name="home_empty_title">No one near you needs %1$s right now</string>
     <string name="home_empty_body">We\'ll notify you when someone does.</string>
     <string name="home_change_area">Change area</string>

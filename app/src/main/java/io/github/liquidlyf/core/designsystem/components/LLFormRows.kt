@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -67,10 +68,11 @@ fun LLSwitchRow(
                 modifier = Modifier.alpha(if (enabled) 1f else DISABLED_ALPHA),
             )
         }
+        // Low 27: the words stay readable when the row is off (0.38 made the reason unreadable).
         Column(
             Modifier
                 .weight(1f)
-                .alpha(if (enabled) 1f else DISABLED_ALPHA),
+                .alpha(if (enabled) 1f else DISABLED_TEXT_ALPHA),
             verticalArrangement = Arrangement.spacedBy(Spacing.xxs),
         ) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
@@ -103,19 +105,24 @@ fun LLStepper(
         horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
     ) {
         Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
-        IconButton(onClick = { onChange(value - 1) }, enabled = value > range.first, modifier = Modifier.size(Spacing.minTouchTarget)) {
-            Icon(painterResource(LLIcons.Remove), contentDescription = lessLabel)
+        // Low 12: − and + grow with the text (up to 1.5x), so they don't look tiny next to the number.
+        val grow = LocalDensity.current.fontScale.coerceIn(1f, MAX_LABEL_SCALE)
+        IconButton(onClick = { onChange(value - 1) }, enabled = value > range.first, modifier = Modifier.size(Spacing.minTouchTarget * grow)) {
+            Icon(painterResource(LLIcons.Remove), contentDescription = lessLabel, modifier = Modifier.size(24.dp * grow))
         }
         Text(
             numberText(value),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.clearAndSetSemantics { contentDescription = spokenValue },
         )
-        IconButton(onClick = { onChange(value + 1) }, enabled = value < range.last, modifier = Modifier.size(Spacing.minTouchTarget)) {
-            Icon(painterResource(LLIcons.Add), contentDescription = moreLabel)
+        IconButton(onClick = { onChange(value + 1) }, enabled = value < range.last, modifier = Modifier.size(Spacing.minTouchTarget * grow)) {
+            Icon(painterResource(LLIcons.Add), contentDescription = moreLabel, modifier = Modifier.size(24.dp * grow))
         }
     }
 }
 
 /** Material's alpha for disabled content. */
 private const val DISABLED_ALPHA = 0.38f
+
+/** A disabled row's words: still dimmer than enabled, but readable (Low 27). */
+private const val DISABLED_TEXT_ALPHA = 0.7f

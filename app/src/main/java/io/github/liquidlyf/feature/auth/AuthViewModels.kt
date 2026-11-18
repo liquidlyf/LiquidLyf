@@ -306,6 +306,9 @@ class ForgotPasswordViewModel @Inject constructor(private val auth: AuthReposito
 
     fun onEmailChange(value: String) = state.update { it.copy(email = value, emailError = null, formError = null) }
 
+    /** Low 25: back to the form, with the address as it was, to correct it. */
+    fun useDifferentEmail() = state.update { it.copy(sentTo = null) }
+
     fun send() {
         val s = state.value
         if (s.loading) return

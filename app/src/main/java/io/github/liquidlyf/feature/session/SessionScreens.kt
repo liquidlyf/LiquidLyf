@@ -61,6 +61,7 @@ fun SuspendedScreen(onSignOut: () -> Unit) {
                 body = stringResource(R.string.suspended_body, Links.SUPPORT_EMAIL),
                 actionLabel = stringResource(R.string.action_write_to_us),
                 onAction = { links.email(Links.SUPPORT_EMAIL, subject) },
+                filledAction = true,
             )
             TextButton(onClick = onSignOut) { Text(stringResource(R.string.action_sign_out)) }
         }
@@ -99,6 +100,7 @@ fun SessionProblemScreen(error: AppError, onRetry: () -> Unit, onSignOut: () -> 
                 title = stringResource(R.string.session_problem_title),
                 body = stringResource(error.messageRes),
                 icon = if (error == AppError.Network) LLIcons.WifiOff else LLIcons.Error,
+                filledAction = true,
             )
             TextButton(onClick = onSignOut) { Text(stringResource(R.string.action_sign_out)) }
         }

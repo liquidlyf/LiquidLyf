@@ -78,6 +78,7 @@ import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.ButtonLabel
+import io.github.liquidlyf.core.designsystem.components.ChooseHint
 import io.github.liquidlyf.core.designsystem.components.DialogBody
 import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.EmptyState
@@ -140,6 +141,8 @@ fun RequestDetailRoute(
     onBecomeDonor: () -> Unit = {},
     /** FLOW-06 part 1: to Find donors, which runs the search handed over. */
     onAskDonors: () -> Unit = {},
+    /** Low 10: to Requests, from a closed request. */
+    onSeeNearby: () -> Unit = {},
     viewModel: RequestDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -154,7 +157,7 @@ fun RequestDetailRoute(
             }
         }
     }
-    RequestDetailScreen(state, online, viewModel, onBack, onOpenSafetyTips, onBecomeDonor, onAskDonors)
+    RequestDetailScreen(state, online, viewModel, onBack, onOpenSafetyTips, onBecomeDonor, onAskDonors, onSeeNearby)
 }
 
 /**
@@ -172,6 +175,7 @@ private fun RequestDetailScreen(
     onOpenSafetyTips: () -> Unit,
     onBecomeDonor: () -> Unit,
     onAskDonors: () -> Unit,
+    onSeeNearby: () -> Unit,
 ) {
     val request = state.request
     var menuOpen by rememberSaveable { mutableStateOf(false) }
@@ -317,7 +321,13 @@ private fun RequestDetailScreen(
                                 YourOfferSection(state, status, request, online)
                             } else {
                                 // Why not is in the bar now; a closed request says it here.
-                                state.offerBlock?.takeIf { it == OfferBlock.Closed }?.let { IconLine(LLIcons.Info, blockText(it)) }
+                                state.offerBlock?.takeIf { it == OfferBlock.Closed }?.let {
+                                    IconLine(LLIcons.Info, blockText(it))
+                                    // Low 10: a way on from a closed request.
+                                    TextButton(onClick = onSeeNearby, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                                        ButtonLabel(stringResource(R.string.detail_see_nearby))
+                                    }
+                                }
                             }
                             DetailsSection(request, state)
                             if (status != null && StatusTransitions.donorCanSet(status, ResponseStatus.WITHDRAWN)) {
@@ -340,18 +350,21 @@ private fun RequestDetailScreen(
         OfferSheet(onDismiss = { checking = false }, onOffer = { message -> checking = false; vm.offer(message) })
     }
     when (dialog) {
-        DetailDialog.WITHDRAW -> ConfirmDialog(R.string.detail_withdraw_title, R.string.detail_withdraw_body, R.string.detail_withdraw, onDismiss = { dialog = null }) {
+        DetailDialog.WITHDRAW -> ConfirmDialog(R.string.detail_withdraw_title, R.string.detail_withdraw_body, R.string.detail_withdraw, onDismiss = { dialog = null }, destructive = true) {
             vm.withdraw()
         }
         DetailDialog.DECLINE -> dialogResponse?.let { r ->
-            ConfirmDialog(R.string.detail_decline_title, R.string.detail_decline_body, R.string.detail_decline, onDismiss = { dialog = null }) { vm.decline(r) }
+            ConfirmDialog(
+                R.string.detail_decline_title_named, R.string.detail_decline_body, R.string.detail_decline, onDismiss = { dialog = null },
+                titleArg = r.donorDisplayName, destructive = true,
+            ) { vm.decline(r) }
         }
         DetailDialog.DONATED -> dialogResponse?.let { r ->
             ConfirmDialog(R.string.detail_donated_title, R.string.detail_donated_body, R.string.detail_mark_donated, onDismiss = { dialog = null }) { vm.markDonated(r) }
         }
         DetailDialog.CLOSE -> CloseDialog(onDismiss = { dialog = null }, onClose = { status, reason -> dialog = null; vm.close(status, reason) })
         DetailDialog.REPORT -> ReportDialog(R.string.detail_report_title, onDismiss = { dialog = null }, onReport = { reason, note -> dialog = null; vm.report(reason, note) })
-        DetailDialog.BLOCK_REQUESTER -> ConfirmDialog(R.string.block_title, R.string.block_body, R.string.action_block, onDismiss = { dialog = null }) {
+        DetailDialog.BLOCK_REQUESTER -> ConfirmDialog(R.string.block_title, R.string.block_body, R.string.action_block, onDismiss = { dialog = null }, destructive = true) {
             vm.blockRequester()
         }
         DetailDialog.REPORT_PERSON -> dialogDonorUid?.let { uid ->
@@ -360,7 +373,7 @@ private fun RequestDetailScreen(
         DetailDialog.BLOCK_DONOR -> dialogResponse?.let { r ->
             // An open offer is declined too, so they no longer see my number.
             val open = r.status == ResponseStatus.OFFERED || r.status == ResponseStatus.CONFIRMED
-            ConfirmDialog(R.string.block_title, if (open) R.string.block_body_offer else R.string.block_body, R.string.action_block, onDismiss = { dialog = null }) {
+            ConfirmDialog(R.string.block_title, if (open) R.string.block_body_offer else R.string.block_body, R.string.action_block, onDismiss = { dialog = null }, destructive = true) {
                 vm.blockDonor(r)
             }
         }
@@ -545,7 +558,7 @@ private fun Summary(r: BloodRequest, state: RequestDetailUiState, onOpenMaps: ()
                 Text(
                     buildAnnotatedString {
                         when {
-                            r.status != RequestStatus.OPEN -> append(dateTimeText(r.neededBy))
+                            r.status != RequestStatus.OPEN -> append(stringResource(R.string.request_was_needed_by, dateTimeText(r.neededBy))) // Low 11
                             r.urgency == Urgency.PLANNED -> append(stringResource(R.string.request_needed_on, dateTimeText(r.neededBy)))
                             else -> {
                                 withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
@@ -904,12 +917,30 @@ private fun OfferCard(
 // ---- Dialogs ----
 
 @Composable
-private fun ConfirmDialog(title: Int, body: Int, confirm: Int, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+private fun ConfirmDialog(
+    title: Int,
+    body: Int,
+    confirm: Int,
+    onDismiss: () -> Unit,
+    titleArg: String? = null,
+    /** Low 7: an action that can't be undone (withdraw, decline, block) is a filled error button, unlike Cancel. */
+    destructive: Boolean = false,
+    onConfirm: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(title)) },
+        title = { Text(if (titleArg != null) stringResource(title, titleArg) else stringResource(title)) },
         text = { DialogText(stringResource(body)) },
-        confirmButton = { TextButton(onClick = { onDismiss(); onConfirm() }) { Text(stringResource(confirm)) } },
+        confirmButton = {
+            if (destructive) {
+                Button(
+                    onClick = { onDismiss(); onConfirm() },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
+                ) { Text(stringResource(confirm)) }
+            } else {
+                TextButton(onClick = { onDismiss(); onConfirm() }) { Text(stringResource(confirm)) }
+            }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
@@ -927,6 +958,7 @@ private fun CloseDialog(onDismiss: () -> Unit, onClose: (RequestStatus, String?)
                 Text(stringResource(R.string.detail_close_body), style = MaterialTheme.typography.bodyMedium)
                 RadioRow(stringResource(R.string.detail_close_found), choice == RequestStatus.FULFILLED) { choice = RequestStatus.FULFILLED }
                 RadioRow(stringResource(R.string.detail_close_not_needed), choice == RequestStatus.CANCELLED) { choice = RequestStatus.CANCELLED }
+                if (choice == null) ChooseHint()
                 LLTextField(
                     value = reason,
                     onValueChange = { reason = it.take(Validators.CLOSED_REASON_MAX) },

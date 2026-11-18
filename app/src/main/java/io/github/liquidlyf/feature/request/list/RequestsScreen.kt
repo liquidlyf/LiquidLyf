@@ -135,8 +135,8 @@ internal fun RequestsScreen(
                             }
                             RequestsTab.MINE -> requestItems(state, state.mine, onOpenRequest) {
                                 EmptyState(
+                                    // Low 14: no second Request blood; the pinned one is right below.
                                     LLIcons.Requests, stringResource(R.string.requests_mine_empty_title), stringResource(R.string.requests_mine_empty_body),
-                                    actionLabel = stringResource(R.string.action_request_blood), onAction = onCreateRequest,
                                 )
                             }
                             RequestsTab.OFFERS -> offerItems(state, onOpenRequest) {

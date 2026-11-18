@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.ChooseHint
 import io.github.liquidlyf.core.designsystem.components.DialogBody
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.labelRes
@@ -44,6 +45,7 @@ fun ReportDialog(@StringRes title: Int, onDismiss: () -> Unit, onReport: (Report
                 ReportReason.entries.forEach { reason ->
                     ReasonRow(stringResource(reason.labelRes), choice == reason) { choice = reason }
                 }
+                if (choice == null) ChooseHint()
                 LLTextField(
                     value = note,
                     onValueChange = { note = it.take(Validators.REPORT_NOTE_MAX) },

@@ -73,6 +73,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
 import io.github.liquidlyf.core.designsystem.LLIcons
+import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.designsystem.components.CapFontScale
 import io.github.liquidlyf.core.designsystem.components.LLSnackbar
@@ -321,6 +322,8 @@ private fun TabLabel(text: String) {
             // Never below 11 sp (D's re-audit: 9 sp on a narrow phone); a longer word ends in "…".
             autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp),
             overflow = TextOverflow.Ellipsis,
+            // Low 26: a little room each side, so a long word shrinks a step instead of touching the edge.
+            modifier = Modifier.padding(horizontal = Spacing.xxs),
         )
     }
 }
@@ -510,6 +513,7 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                 onOpenSafetyTips = dropUnlessResumed { navController.navigate(SafetyTips) { launchSingleTop = true } },
                 onBecomeDonor = dropUnlessResumed { navController.navigate(BecomeDonor) { launchSingleTop = true } },
                 onAskDonors = dropUnlessResumed { navController.navigateToTab(TopLevelDestination.DONORS) },
+                onSeeNearby = dropUnlessResumed { navController.navigateToTab(TopLevelDestination.REQUESTS) },
             )
         }
         composable<BecomeDonor> { BecomeDonorRoute(onDone = { navController.popBackStack() }) }

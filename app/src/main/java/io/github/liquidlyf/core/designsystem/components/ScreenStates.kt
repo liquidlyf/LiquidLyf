@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -132,6 +133,7 @@ fun EmptyState(
     modifier: Modifier = Modifier,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
+    filledAction: Boolean = false,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -165,7 +167,8 @@ fun EmptyState(
         )
         if (actionLabel != null && onAction != null) {
             Spacer(Modifier.height(Spacing.lg))
-            FilledTonalButton(onClick = onAction) { ButtonLabel(actionLabel) }
+            // Low 5: filled where it's the only way forward (suspended, couldn't load your profile).
+            if (filledAction) Button(onClick = onAction) { ButtonLabel(actionLabel) } else FilledTonalButton(onClick = onAction) { ButtonLabel(actionLabel) }
         }
     }
 }
@@ -178,6 +181,7 @@ fun ErrorState(
     title: String = stringResource(R.string.state_error_title),
     body: String = stringResource(R.string.error_unknown),
     @DrawableRes icon: Int = LLIcons.Error,
+    filledAction: Boolean = false,
 ) {
     EmptyState(
         icon = icon,
@@ -186,6 +190,7 @@ fun ErrorState(
         actionLabel = stringResource(R.string.action_retry),
         onAction = onRetry,
         modifier = modifier,
+        filledAction = filledAction,
     )
 }
 

@@ -68,14 +68,19 @@ fun dateTimeText(instant: Instant): String {
         // A34 item 7 = b: "১৮ নভেম্বর, ২০২৬, বিকেল ৩:২২", a part-of-day word instead of AM/PM.
         return DateFormat.getDateInstance(DateFormat.MEDIUM, locale).format(Date.from(instant)) + ", " + banglaTime(instant, locale)
     }
-    return DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale).format(Date.from(instant))
+    return keepAmPm(DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale).format(Date.from(instant)))
 }
+
+/** "3:22 AM" never breaks before AM (D's part 2, Low 18: "AM" alone on a line at 200%). */
+private fun keepAmPm(text: String): String = text.replace(AM_PM_SPACE, "\u00A0")
+
+private val AM_PM_SPACE = Regex("""\s(?=[AaPp]\.?\s?[Mm]\.?)""")
 
 /** "বিকেল ৩:২২": the part of the day, then the 12-hour time in Bangla digits (ICU's own for "bn"). */
 private fun banglaTime(instant: Instant, locale: java.util.Locale): String {
     val zone = ZoneId.systemDefault()
     val time = SimpleDateFormat("h:mm", locale).apply { timeZone = TimeZone.getTimeZone(zone.id) }.format(Date.from(instant))
-    return banglaDayPart(instant.atZone(zone).hour) + " " + time
+    return banglaDayPart(instant.atZone(zone).hour) + "\u00A0" + time
 }
 
 /**
@@ -101,7 +106,7 @@ fun timeOrDateTimeText(instant: Instant, now: Instant): String {
     if (instant.atZone(zone).toLocalDate() != now.atZone(zone).toLocalDate()) return dateTimeText(instant)
     val locale = LocalConfiguration.current.locales[0]
     if (locale.language == BANGLA) return banglaTime(instant, locale)
-    return DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(Date.from(instant))
+    return keepAmPm(DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(Date.from(instant)))
 }
 
 /** A date in the phone's time zone and the app's language, e.g. "14 Nov 2026". */

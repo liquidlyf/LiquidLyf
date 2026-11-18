@@ -182,10 +182,12 @@
     <string name="settings_safety">Safety</string>
     <string name="settings_list_me">List me as a donor</string>
     <string name="settings_list_me_needs_group">Add your blood group in Edit profile first.</string>
-    <string name="setup_no_group_later">You can\'t be listed without your blood group. Add it now, or later in Edit profile.</string>
+    <string name="settings_add_group_why">Needed to be listed as a donor</string>
+    <string name="setup_no_group_later">You can\'t be listed without your blood group. Choose it now, or add it in Edit profile once you know it.</string>
     <string name="list_me_title">List me as a donor?</string>
     <string name="signing_out">Signing out…</string>
     <string name="action_forgot_password">Forgot password?</string>
+    <string name="reset_link_sent_to">We sent a link to %1$s to set a new password.</string>
     <string name="action_create_account">Create account</string>
     <string name="action_creating_account">Creating account…</string>
     <string name="sign_in_no_account">New to LiquidLyf?</string>
@@ -249,6 +251,8 @@
     <string name="gender_other">Other</string>
     <string name="label_birth_year">Year of birth</string>
     <string name="error_birth_year">You must be 18 or older. Enter the year you were born, for example 1995.</string>
+    <string name="error_birth_year_required">Enter the year you were born, for example 1995.</string>
+    <string name="error_birth_year_check">Check the year you were born: it looks too early.</string>
     <string name="setup_weight_question">Do you weigh at least 45 kg?</string>
     <string name="answer_yes">Yes</string>
     <string name="answer_no">No</string>
@@ -268,7 +272,7 @@
         <item quantity="one">%1$d district in %2$s division</item>
         <item quantity="other">%1$d districts in %2$s division</item>
     </plurals>
-    <string name="error_location_required">Choose your division, district and upazila.</string>
+    <string name="error_location_required">Choose your division, district, and upazila or city corporation.</string>
     <string name="label_phone">Mobile number</string>
     <string name="phone_hint">Shared only with a requester when you offer to donate.</string>
     <string name="error_phone_invalid">Enter a Bangladeshi mobile number, for example 01XXXXXXXXX.</string>
@@ -313,6 +317,7 @@
     <string name="label_new_email">New email</string>
     <string name="change_email_sent">We sent a link to %1$s. Your email changes when you open it.</string>
     <string name="confirm_blood_group_title">Change your blood group?</string>
+    <string name="confirm_blood_group_from_to">From %1$s to %2$s.</string>
     <string name="confirm_blood_group_body">This changes which requests you see and who can ask you to donate. Make sure it matches a test result.</string>
     <string name="action_change">Change</string>
     <string name="delete_account_body">This permanently deletes your profile, your donor card, your donation history and your messages. Your requests and offers stay for the people involved, but show \"Deleted user\" and no phone number. You can\'t undo this.</string>

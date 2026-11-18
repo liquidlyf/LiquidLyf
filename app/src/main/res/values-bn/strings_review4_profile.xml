@@ -102,7 +102,7 @@
     </plurals>
     <string name="donors_active_week">এই সপ্তাহে সক্রিয়</string>
     <string name="donors_empty_title">কোনো রক্তদাতা পাওয়া যায়নি</string>
-    <string name="donors_empty_body">একটি অনুরোধ পোস্ট করুন: রক্তদাতা পাওয়া গেলেই আমরা তাঁদের অ্যালার্ট পাঠাব।</string>
+    <string name="donors_empty_body">পুরো জেলায় খুঁজে দেখুন, অথবা \"শুধু যাঁরা এখন রক্ত দিতে পারবেন\" বন্ধ করুন। অথবা অনুরোধ পোস্ট করুন: রক্তদাতারা প্রস্তুত হলে আমরা তাঁদের অ্যালার্ট পাঠাব।</string>
     <string name="action_show_more">আরও দেখুন</string>
     <string name="donors_ask_title">%1$s-কে রক্ত দিতে অনুরোধ করুন</string>
     <string name="donors_ask_body">তিনি একটি নোটিফিকেশন পাবেন এবং আপনার অনুরোধে সাড়া দিতে পারবেন। এখন কোনো ফোন নম্বর শেয়ার হবে না: তিনি সাড়া দিলে তবেই আপনার নম্বর দেখতে পাবেন।</string>

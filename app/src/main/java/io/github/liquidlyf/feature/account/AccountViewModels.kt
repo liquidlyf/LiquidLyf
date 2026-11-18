@@ -13,6 +13,7 @@ import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
+import io.github.liquidlyf.core.designsystem.birthYearErrorRes
 import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodGroup
@@ -39,6 +40,8 @@ data class ChangePasswordUiState(
     @StringRes val formError: Int? = null,
     val saving: Boolean = false,
     val done: Boolean = false,
+    /** Low 25: where "Forgot your password?" sent the reset link. */
+    val resetSentTo: String? = null,
 )
 
 /** Re-authenticate with the current password, then set the new one. Hidden for Google-only accounts. */
@@ -50,6 +53,19 @@ class ChangePasswordViewModel @Inject constructor(private val auth: AuthReposito
     fun onCurrentChange(v: String) = state.update { it.copy(current = v, currentError = null, formError = null) }
 
     fun onNewChange(v: String) = state.update { it.copy(new = v, newError = null, formError = null) }
+
+    /** Low 25: forgot the current password: the reset link to this account's email. */
+    fun sendReset() {
+        val email = auth.authState.value?.email ?: return
+        if (state.value.saving) return
+        state.update { it.copy(saving = true, formError = null) }
+        viewModelScope.launch {
+            val result = auth.sendPasswordReset(email)
+            state.update {
+                if (result is AppResult.Failure) it.copy(saving = false, formError = result.error.messageRes) else it.copy(saving = false, resetSentTo = email)
+            }
+        }
+    }
 
     fun save() {
         val s = state.value
@@ -213,6 +229,8 @@ class DeletingAccountViewModel @Inject constructor(
 // ---- Edit profile (3.10) ----
 
 data class EditProfileUiState(
+    /** The group before this edit, for "From B+ to A+" (D's part 2, Low 15). */
+    val previousBloodGroup: BloodGroup? = null,
     /** Counts failed taps on Save: the screen brings the first error into view (FLOW-04). */
     val errorAttempt: Int = 0,
     val fullName: String = "",
@@ -286,7 +304,7 @@ class EditProfileViewModel @Inject constructor(
         val errors = s.copy(
             nameError = if (Validators.isValidName(s.fullName)) null else R.string.error_name_invalid,
             // D1: gender and birth year are donor questions; a requester's profile has neither.
-            birthYearError = if (!s.isDonor || (year != null && Validators.isValidBirthYear(year, clock.now()))) null else R.string.error_birth_year,
+            birthYearError = if (!s.isDonor) null else birthYearErrorRes(s.birthYear, clock.now()),
             phoneError = if (phone != null) null else R.string.error_phone_invalid,
             locationError = area == null || s.geo?.isValid(area) != true,
         )
@@ -296,7 +314,7 @@ class EditProfileViewModel @Inject constructor(
         }
         // Changing a known group asks first; adding one for the first time (P1) doesn't.
         if (before.bloodGroup != null && s.bloodGroup != before.bloodGroup && !s.confirmBloodGroup) {
-            state.update { it.copy(confirmBloodGroup = true) }
+            state.update { it.copy(confirmBloodGroup = true, previousBloodGroup = before.bloodGroup) }
             return
         }
         val draft = ProfileDraft(

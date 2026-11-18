@@ -230,7 +230,14 @@ internal fun HomeScreen(
                         // Not a donor yet: the card above says what to do; there's nothing to answer.
                         group == null -> Unit
                         else -> {
-                            item(key = "header") { SectionHeader(stringResource(R.string.home_urgent_near_you)) }
+                            // Low 13: someone who can't donate now isn't told these are requests they can help with.
+                            val canDonate = state.eligibility?.eligibleNow != false
+                            item(key = "header") { SectionHeader(stringResource(if (canDonate) R.string.home_urgent_near_you else R.string.home_requests_near_you)) }
+                            if (!canDonate) {
+                                item(key = "share-while-resting") {
+                                    Text(stringResource(R.string.home_share_while_resting), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
                             when {
                                 list == null && state.feedError != null -> item(key = "error") {
                                     ErrorState(state.feedError, onRetry = onRetryFeed, title = stringResource(R.string.home_load_error))

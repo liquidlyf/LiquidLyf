@@ -34,7 +34,7 @@
     </plurals>
     <string name="donors_active_week">Active this week</string>
     <string name="donors_empty_title">No donors found</string>
-    <string name="donors_empty_body">Post a request: we\'ll alert donors as they become available.</string>
+    <string name="donors_empty_body">Try the whole district, or turn off "Eligible now only". Or post a request: we\'ll alert donors as they become available.</string>
     <string name="action_show_more">Show more</string>
 
     <!-- Ask to donate -->

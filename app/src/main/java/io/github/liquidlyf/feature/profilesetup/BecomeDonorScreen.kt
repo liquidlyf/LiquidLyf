@@ -41,6 +41,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.birthYearErrorRes
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
 import io.github.liquidlyf.core.designsystem.components.ChoiceRow
 import io.github.liquidlyf.core.designsystem.components.DialogText
@@ -62,6 +63,7 @@ import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.feature.auth.FormError
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
@@ -194,7 +196,8 @@ private fun DetailsStep(state: BecomeDonorUiState, anchors: ErrorAnchors<SetupFi
         value = d.birthYear,
         onValueChange = { v -> onEdit { copy(birthYear = v.filter(Char::isDigit).take(4)) } },
         label = stringResource(R.string.label_birth_year),
-        errorText = if (SetupField.BIRTH_YEAR in state.errors) stringResource(R.string.error_birth_year) else null,
+        // Low 16: empty, too early and under 18 each say what's wrong.
+        errorText = if (SetupField.BIRTH_YEAR in state.errors) birthYearErrorRes(d.birthYear, Instant.now())?.let { stringResource(it) } else null,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
         fieldModifier = Modifier.errorAnchor(anchors, SetupField.BIRTH_YEAR, textField = true),
     )
