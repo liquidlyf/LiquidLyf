@@ -17,11 +17,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -70,8 +68,10 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.SystemBarScrims
-import io.github.liquidlyf.core.designsystem.components.LLSnackbar
+import io.github.liquidlyf.core.designsystem.components.AppSnackbarHost
+import io.github.liquidlyf.core.designsystem.components.LocalSnackbarClearance
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.SnackbarClearance
 import io.github.liquidlyf.core.designsystem.components.SuccessVisuals
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.domain.BadgeCalculator
@@ -309,7 +309,10 @@ class ScreenGalleryTest {
         ) {
             LiquidLyfTheme(darkTheme = v.dark) {
                 key(shot, v) {
-                    CompositionLocalProvider(LocalSnackbarHostState provides remember { SnackbarHostState() }) {
+                    CompositionLocalProvider(
+                        LocalSnackbarHostState provides remember { SnackbarHostState() },
+                        LocalSnackbarClearance provides remember { SnackbarClearance() },
+                    ) {
                         val tab = shot.tab
                         if (tab == null) {
                             shot.content()
@@ -865,7 +868,7 @@ class ScreenGalleryTest {
             LaunchedEffect(Unit) { host.showSnackbar(SuccessVisuals(message, SnackbarDuration.Indefinite)) }
             Box(Modifier.fillMaxSize()) {
                 content()
-                SnackbarHost(host, Modifier.align(Alignment.BottomCenter).navigationBarsPadding()) { LLSnackbar(it) }
+                AppSnackbarHost(host, Modifier.align(Alignment.BottomCenter)) // VT-16: above the screen's own bars
             }
         }
 

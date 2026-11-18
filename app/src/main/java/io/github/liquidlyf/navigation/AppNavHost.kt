@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -34,7 +35,6 @@ import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
@@ -45,6 +45,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -75,13 +76,16 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.AppSnackbarHost
 import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.designsystem.components.CapFontScale
-import io.github.liquidlyf.core.designsystem.components.LLSnackbar
+import io.github.liquidlyf.core.designsystem.components.LocalSnackbarClearance
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.MAX_LABEL_SCALE
+import io.github.liquidlyf.core.designsystem.components.SnackbarClearance
 import io.github.liquidlyf.core.designsystem.components.SuccessMessages
 import io.github.liquidlyf.core.designsystem.components.SuccessVisuals
+import io.github.liquidlyf.core.designsystem.components.keepsSnackbarsAbove
 import io.github.liquidlyf.core.designsystem.windowWidth
 import io.github.liquidlyf.core.firebase.CrashReports
 import io.github.liquidlyf.core.util.AppError
@@ -208,48 +212,52 @@ fun AppNavHost(
             if (result == SnackbarResult.ActionPerformed) s.onAction?.invoke()
         }
     }
-    CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
-        Scaffold(
-            modifier = modifier,
-            bottomBar = {
-                if (currentTab != null && !useRail) AppNavigationBar(currentTab, onSelect = selectTab)
-            },
-            snackbarHost = { SnackbarHost(snackbarHostState) { data -> LLSnackbar(data) } },
-            // Each screen handles its own insets; this Scaffold only reserves the bottom bar.
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        ) { padding ->
-            Row(
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .consumeWindowInsets(padding),
-            ) {
-                val railTab = currentTab?.takeIf { useRail }
-                val showRail = railTab != null
-                if (railTab != null) AppNavigationRail(railTab, onSelect = selectTab)
-                NavHost(
-                    navController = navController,
-                    startDestination = startZone.route(),
-                    enterTransition = { if (isTabSwitch()) fadeThroughIn() else sharedAxisIn(forward = true) },
-                    exitTransition = { if (isTabSwitch()) fadeThroughOut() else sharedAxisOut(forward = true) },
-                    popEnterTransition = { if (isTabSwitch()) fadeThroughIn() else sharedAxisIn(forward = false) },
-                    popExitTransition = { if (isTabSwitch()) fadeThroughOut() else sharedAxisOut(forward = false) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .then(
-                            if (showRail) {
-                                Modifier.consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start))
-                            } else {
-                                Modifier
-                            },
-                        ),
+    // VT-16: the host sits outside the Scaffold, above whichever bar is highest (SnackbarClearance).
+    val snackbarClearance = remember { SnackbarClearance() }
+    CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState, LocalSnackbarClearance provides snackbarClearance) {
+        Box(modifier) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                bottomBar = {
+                    if (currentTab != null && !useRail) AppNavigationBar(currentTab, onSelect = selectTab)
+                },
+                // Each screen handles its own insets; this Scaffold only reserves the bottom bar.
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            ) { padding ->
+                Row(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .consumeWindowInsets(padding),
                 ) {
-                    onboarding(navController, onOnboardingFinished)
-                    authGraph(navController)
-                    sessionScreens(navController, session, onRetrySession, onSignOut)
-                    mainGraph(navController, session, onSignOut)
+                    val railTab = currentTab?.takeIf { useRail }
+                    val showRail = railTab != null
+                    if (railTab != null) AppNavigationRail(railTab, onSelect = selectTab)
+                    NavHost(
+                        navController = navController,
+                        startDestination = startZone.route(),
+                        enterTransition = { if (isTabSwitch()) fadeThroughIn() else sharedAxisIn(forward = true) },
+                        exitTransition = { if (isTabSwitch()) fadeThroughOut() else sharedAxisOut(forward = true) },
+                        popEnterTransition = { if (isTabSwitch()) fadeThroughIn() else sharedAxisIn(forward = false) },
+                        popExitTransition = { if (isTabSwitch()) fadeThroughOut() else sharedAxisOut(forward = false) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .then(
+                                if (showRail) {
+                                    Modifier.consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start))
+                                } else {
+                                    Modifier
+                                },
+                            ),
+                    ) {
+                        onboarding(navController, onOnboardingFinished)
+                        authGraph(navController)
+                        sessionScreens(navController, session, onRetrySession, onSignOut)
+                        mainGraph(navController, session, onSignOut)
+                    }
                 }
             }
+            AppSnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter))
         }
     }
 }
@@ -288,7 +296,7 @@ private fun sharedAxisOut(forward: Boolean): ExitTransition =
 /** Internal for the README and website screenshots (StoreScreenshotsTest), which draw it around a tab. */
 @Composable
 internal fun AppNavigationBar(currentTab: TopLevelDestination, onSelect: (TopLevelDestination) -> Unit) {
-    NavigationBar {
+    NavigationBar(Modifier.keepsSnackbarsAbove()) {
         TopLevelDestination.entries.forEach { tab ->
             val selected = tab == currentTab
             NavigationBarItem(

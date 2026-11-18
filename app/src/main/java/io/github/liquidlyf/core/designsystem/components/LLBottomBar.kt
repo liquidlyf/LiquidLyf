@@ -52,7 +52,7 @@ fun LLBottomBar(
     @DrawableRes secondaryIcon: Int? = null,
 ) {
     val stacked = LocalDensity.current.fontScale >= LARGE_FONT_SCALE
-    Surface(color = LiquidLyfTheme.extendedColors.card, modifier = modifier) {
+    Surface(color = LiquidLyfTheme.extendedColors.card, modifier = modifier.keepsSnackbarsAbove()) {
         Column {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Box(

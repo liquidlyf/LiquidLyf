@@ -26,6 +26,6 @@ fun LLExtendedFab(text: String, @DrawableRes icon: Int, onClick: () -> Unit, mod
         text = { Text(text) },
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
-        modifier = modifier.semantics { contentDescription = text },
+        modifier = modifier.keepsSnackbarsAbove().semantics { contentDescription = text },
     )
 }

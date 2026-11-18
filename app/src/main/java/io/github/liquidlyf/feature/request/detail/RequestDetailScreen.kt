@@ -105,6 +105,7 @@ import io.github.liquidlyf.core.designsystem.components.SheetDragHandle
 import io.github.liquidlyf.core.designsystem.components.StatusPill
 import io.github.liquidlyf.core.designsystem.components.UnitDrops
 import io.github.liquidlyf.core.designsystem.components.isLargeText
+import io.github.liquidlyf.core.designsystem.components.keepsSnackbarsAbove
 import io.github.liquidlyf.core.designsystem.components.showAppMessage
 import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
@@ -450,7 +451,7 @@ private fun DetailBar(
 /** A donor who can't offer: the reason, then Share (they can still help find a donor). */
 @Composable
 private fun CantOfferBar(reason: String, onShare: () -> Unit) {
-    Surface(color = LiquidLyfTheme.extendedColors.card) {
+    Surface(color = LiquidLyfTheme.extendedColors.card, modifier = Modifier.keepsSnackbarsAbove()) {
         Column {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Column(
@@ -477,7 +478,7 @@ private fun CantOfferBar(reason: String, onShare: () -> Unit) {
  */
 @Composable
 private fun RequesterBar(onShare: () -> Unit) {
-    Surface(color = LiquidLyfTheme.extendedColors.card) {
+    Surface(color = LiquidLyfTheme.extendedColors.card, modifier = Modifier.keepsSnackbarsAbove()) {
         Column {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Box(
