@@ -20,11 +20,16 @@ Design: `project-plan` doc 07 §5 + §9 and doc 10 §4. Where this folder and th
 
 ## Run it
 
-You need **Node 22.12+** and **Java 21**. Android Studio's bundled JBR works:
+You need **Node 22.12+** and **Java 21**. Android Studio's bundled JBR works. **Setting `JAVA_HOME` alone isn't enough:** firebase-tools runs the first `java` on `PATH`, so put the JBR's `bin` first (`java -version` must say 21):
 
 ```bash
 export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"   # Git Bash on Windows
-export PATH="$JAVA_HOME/bin:$PATH"                               # if an older java is first on PATH
+export PATH="$JAVA_HOME/bin:$PATH"
+```
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"   # PowerShell
+$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
 ```
 
 ```bash

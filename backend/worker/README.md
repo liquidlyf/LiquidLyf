@@ -111,7 +111,7 @@ Public fields only, because anyone can subscribe to a topic. The app renders the
 - **Within the free plan's limits.** Every run stays under 50 subrequests. The sweep makes at most 40 FCM sends and cap counts together, and the rest wait for the next run.
 
 ## Run it
-You need Node 22.12+. For the end-to-end tests, also Java 21 (`JAVA_HOME` = Android Studio's `jbr`).
+You need Node 22.12+. For the end-to-end tests, also Java 21: point `JAVA_HOME` at Android Studio's `jbr` **and** put its `bin` first on `PATH`. firebase-tools runs the first `java` on `PATH` (see [firebase/README.md](../../firebase/README.md#run-it)).
 
 ```bash
 npm ci
