@@ -51,7 +51,16 @@ adb reverse tcp:9099 tcp:9099                   # Auth
 
 The Firebase emulators need **Java 21**. If `java -version` shows an older version, point `JAVA_HOME`
 at Android Studio's bundled Java (for example `C:\Program Files\Android\Android Studio\jbr` on Windows,
-or `/Applications/Android Studio.app/Contents/jbr/Contents/Home` on macOS) before step 1.
+or `/Applications/Android Studio.app/Contents/jbr/Contents/Home` on macOS) **and put its `bin` folder
+first on `PATH`**, in the terminal you use for step 1. `JAVA_HOME` alone isn't enough, because
+firebase-tools starts the emulators with the first `java` on `PATH`:
+
+```
+export PATH="$JAVA_HOME/bin:$PATH"              # Git Bash, macOS, Linux
+$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"      # PowerShell
+```
+
+Then check that `java -version` says 21. More detail: [firebase/README.md](firebase/README.md#run-it).
 
 **Then:**
 - Sign up in the app with any email. The emulator prints the verification link in its terminal.
