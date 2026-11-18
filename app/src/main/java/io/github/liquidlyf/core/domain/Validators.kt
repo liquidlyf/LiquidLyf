@@ -89,12 +89,26 @@ object Validators {
      * "Mst." or "মোঃ" are skipped, or half the cards would read "Md. K.".
      */
     fun displayName(fullName: String): String {
-        val words = normalizeName(fullName).split(' ').filter { it.isNotEmpty() }
+        // VT-18: a note in brackets isn't part of the name ("Demo Rahim (brother)" made "Demo (.").
+        val cleaned = normalizeName(fullName.replace(BRACKETED, " ")).ifEmpty { normalizeName(fullName) }
+        val words = cleaned.split(' ').filter { it.isNotEmpty() }
         val withoutPrefixes = words.dropWhile(::isNamePrefix).ifEmpty { words.takeLast(1) }
-        val short = shortName(withoutPrefixes)
+        val short = shortName(withoutPrefixes.map(::trimPunctuation).filter { it.isNotEmpty() })
         // "Md. X" would leave just "X"; the rules need at least 2 chars.
-        return if (short.length >= NAME_MIN) short else shortName(words)
+        return if (short.length >= NAME_MIN) short else shortName(words.map(::trimPunctuation).filter { it.isNotEmpty() })
     }
+
+    /** "(brother)", "[ICU]", or an unclosed "(brother". */
+    private val BRACKETED = Regex("""\([^)]*\)?|\[[^\]]*]?""")
+
+    private val PUNCTUATION_TYPES = setOf(
+        Character.CONNECTOR_PUNCTUATION, Character.DASH_PUNCTUATION, Character.START_PUNCTUATION,
+        Character.END_PUNCTUATION, Character.INITIAL_QUOTE_PUNCTUATION, Character.FINAL_QUOTE_PUNCTUATION,
+        Character.OTHER_PUNCTUATION, Character.MATH_SYMBOL, Character.OTHER_SYMBOL,
+    ).map { it.toInt() }.toSet()
+
+    /** "Rahim," → "Rahim". An abbreviation keeps its dot ("Md."); Bangla vowel signs are marks, so they stay. */
+    private fun trimPunctuation(word: String): String = word.trim { it != '.' && Character.getType(it) in PUNCTUATION_TYPES }
 
     private fun shortName(words: List<String>): String {
         if (words.isEmpty()) return ""

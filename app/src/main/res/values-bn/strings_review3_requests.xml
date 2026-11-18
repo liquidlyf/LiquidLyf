@@ -227,6 +227,7 @@
     <string name="detail_donated_thanks">ধন্যবাদ! এই রক্তদান আপনার রক্তদানের ইতিহাসে আছে।</string>
     <string name="detail_declined_info">যিনি অনুরোধ করেছেন, তিনি অন্য রক্তদাতা পেয়ে গেছেন। সাড়া দেওয়ার জন্য ধন্যবাদ।</string>
     <string name="detail_withdraw">আমার সাড়া ফিরিয়ে নিন</string>
+    <string name="detail_withdraw_cant_go">যেতে পারছেন না? আমার সাড়া ফিরিয়ে নিন</string>
     <string name="detail_withdraw_title">সাড়া ফিরিয়ে নেবেন?</string>
     <string name="detail_withdraw_body">যিনি অনুরোধ করেছেন, তিনি আর আপনার ওপর ভরসা করবেন না। এই অনুরোধে আপনি আর সাড়া দিতে পারবেন না।</string>
     <string name="detail_block_closed">এই অনুরোধটি বন্ধ।</string>
@@ -245,11 +246,12 @@
     <string name="detail_no_offers_unsent">এখনো কেউ সাড়া দেননি। অনুরোধ পোস্ট হলে কাছাকাছি যাঁদের গ্রুপ মেলে, সেই রক্তদাতাদের অ্যালার্ট পাঠানো হবে।</string>
     <string name="detail_no_offers">এই অনুরোধে কেউ সাড়া দেননি।</string>
     <string name="detail_call_donor">%1$s-কে কল করুন</string>
-    <string name="detail_confirm">নিশ্চিত করুন</string>
+    <string name="detail_confirm">আসছেন, নিশ্চিত করুন</string>
     <string name="detail_decline">নাকচ করুন</string>
     <string name="detail_decline_title_named">%1$s-এর সাড়া নাকচ করবেন?</string>
     <string name="detail_decline_body">রক্তদাতাকে জানানো হবে যে এই অনুরোধে আপনার তাঁকে দরকার নেই।</string>
     <string name="detail_mark_donated">রক্তদান রেকর্ড করুন</string>
+    <string name="detail_mark_donated_hint">রক্ত দেওয়া হয়ে গেলে \"%1$s\" চাপুন।</string>
     <string name="detail_donated_title">এই রক্তদাতা কি রক্ত দিয়েছেন?</string>
     <string name="detail_donated_body">এটি ১ ব্যাগ পাওয়া হিসেবে গোনা হবে, আর তাঁর রক্তদানের ইতিহাসে যাচাই করা রক্তদান হিসেবে যোগ হবে।</string>
     <string name="detail_close_request">অনুরোধ বন্ধ করুন</string>

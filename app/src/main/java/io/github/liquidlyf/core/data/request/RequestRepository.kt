@@ -95,6 +95,9 @@ interface RequestRepository {
     /** The private contact: only the requester and donors who offered can read it. */
     suspend fun contact(requestId: String): AppResult<RequestContact?>
 
+    /** VT-24: the requester changes who donors call (the rules' validContact; no request write). */
+    suspend fun editContact(requestId: String, contactName: String, contactPhone: String): AppResult<Unit>
+
     companion object {
         const val PAGE_SIZE = 20L
 
@@ -233,6 +236,15 @@ class FirestoreRequestRepository @Inject constructor(
 
     override suspend fun contact(requestId: String): AppResult<RequestContact?> = appResultOf {
         db.contactRef(requestId).get().await().data?.let(ContactDoc::fromMap)
+    }
+
+    override suspend fun editContact(requestId: String, contactName: String, contactPhone: String): AppResult<Unit> {
+        if (!Validators.isValidName(contactName) || !Validators.isBdPhone(contactPhone)) return AppResult.Failure(AppError.InvalidInput)
+        return appResultOf {
+            db.contactRef(requestId).update(
+                mapOf(ContactDoc.CONTACT_NAME to Validators.normalizeName(contactName), ContactDoc.CONTACT_PHONE to contactPhone),
+            ).await()
+        }
     }
 
     private fun isValid(d: RequestDraft): Boolean =

@@ -113,6 +113,15 @@ class ValidatorsTest {
     }
 
     @Test
+    fun `a short name leaves out a note in brackets and stray punctuation (VT-18)`() {
+        assertEquals("Demo R.", Validators.displayName("Demo Rahim (brother)"))
+        assertEquals("Rahim", Validators.displayName("Rahim (brother"))
+        assertEquals("Karim H.", Validators.displayName("Karim Hossain,"))
+        assertEquals("রহিমা খ.", Validators.displayName("রহিমা খাতুন (মা)"))
+        assertEquals("Karim H.", Validators.displayName("Md. Karim Hossain"))
+    }
+
+    @Test
     fun `a mobile number in a note is found however it's written (VT-10)`() {
         listOf(
             "Call Rafiq 01712345678",

@@ -166,6 +166,7 @@
     <string name="detail_donated_thanks">Thank you! This donation is in your donation history.</string>
     <string name="detail_declined_info">The requester has found other donors. Thank you for offering.</string>
     <string name="detail_withdraw">Withdraw my offer</string>
+    <string name="detail_withdraw_cant_go">Can\'t go? Withdraw my offer</string>
     <string name="detail_withdraw_title">Withdraw your offer?</string>
     <string name="detail_withdraw_body">The requester will no longer count on you. You can\'t offer again on this request.</string>
     <string name="detail_check_title">Before you offer</string>
@@ -196,11 +197,12 @@
     <string name="detail_no_offers_unsent">No offers yet. Matching donors nearby will be alerted once your request is posted.</string>
     <string name="detail_no_offers">No one offered on this request.</string>
     <string name="detail_call_donor">Call %1$s</string>
-    <string name="detail_confirm">Confirm</string>
+    <string name="detail_confirm">Confirm they\'re coming</string>
     <string name="detail_decline">Decline</string>
     <string name="detail_decline_title_named">Decline %1$s\'s offer?</string>
     <string name="detail_decline_body">The donor will be told you don\'t need them for this request.</string>
     <string name="detail_mark_donated">Mark donated</string>
+    <string name="detail_mark_donated_hint">When they\'ve given blood, tap %1$s.</string>
     <string name="detail_donated_title">Did this donor give blood?</string>
     <string name="detail_donated_body">It counts as a unit received, and it\'s added to their donation history as verified.</string>
     <string name="detail_close_request">Close request</string>

@@ -149,6 +149,11 @@ class FakeRequestRepository(private val now: Instant = TestData.NOW) : RequestRe
         contactGate?.await()
         return result { AppResult.Success(contacts[requestId]) }
     }
+
+    override suspend fun editContact(requestId: String, contactName: String, contactPhone: String) = result {
+        contacts[requestId]?.let { contacts[requestId] = it.copy(contactName = contactName, contactPhone = contactPhone) }
+        AppResult.Success(Unit)
+    }
 }
 
 /**

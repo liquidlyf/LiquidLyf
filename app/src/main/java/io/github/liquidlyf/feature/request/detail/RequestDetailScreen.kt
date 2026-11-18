@@ -66,7 +66,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -319,7 +321,8 @@ private fun RequestDetailScreen(
                         ViewerRole.DONOR -> {
                             val status = state.myStatus
                             if (status != null) {
-                                YourOfferSection(state, status, request, online)
+                                val canWithdraw = StatusTransitions.donorCanSet(status, ResponseStatus.WITHDRAWN)
+                                YourOfferSection(state, status, request, online, onWithdraw = if (canWithdraw) ({ dialog = DetailDialog.WITHDRAW }) else null)
                             } else {
                                 // Why not is in the bar now; a closed request says it here.
                                 state.offerBlock?.takeIf { it == OfferBlock.Closed }?.let {
@@ -331,13 +334,6 @@ private fun RequestDetailScreen(
                                 }
                             }
                             DetailsSection(request, state)
-                            if (status != null && StatusTransitions.donorCanSet(status, ResponseStatus.WITHDRAWN)) {
-                                TextButton(
-                                    onClick = { dialog = DetailDialog.WITHDRAW },
-                                    enabled = !state.working,
-                                    modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
-                                ) { Text(stringResource(R.string.detail_withdraw)) }
-                            }
                             PostedBy(request)
                             SafetyBanner(onOpenSafetyTips)
                         }
@@ -379,7 +375,7 @@ private fun RequestDetailScreen(
             }
         }
         DetailDialog.EDIT -> request?.let { r ->
-            EditDialog(r, onDismiss = { dialog = null }, onSave = { notes, units, neededBy -> dialog = null; vm.edit(notes, units, neededBy) })
+            EditDialog(r, state.contact, onDismiss = { dialog = null }, onSave = { notes, units, neededBy, contact -> dialog = null; vm.edit(notes, units, neededBy, contact) })
         }
         null -> Unit
     }
@@ -678,10 +674,13 @@ private fun SafetyBanner(onOpenSafetyTips: () -> Unit) {
 
 // ---- Donor ----
 
-/** "Your offer" (FLOW-07, D9): the status, the message, and who can see it now. The contact is in the private card. */
+/**
+ * "Your offer" (FLOW-07, D9): the status, the message, who can see it now, and "Can't go? Withdraw
+ * my offer" right there (VT-06: below the details, no tester found it). The contact is in the private card.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun YourOfferSection(state: RequestDetailUiState, status: ResponseStatus, r: BloodRequest, online: Boolean) {
+private fun YourOfferSection(state: RequestDetailUiState, status: ResponseStatus, r: BloodRequest, online: Boolean, onWithdraw: (() -> Unit)?) {
     SectionHeader(stringResource(R.string.detail_your_offer))
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
         StatusPill(status)
@@ -699,6 +698,11 @@ private fun YourOfferSection(state: RequestDetailUiState, status: ResponseStatus
         else -> null
     }
     line?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    onWithdraw?.let {
+        TextButton(onClick = it, enabled = !state.working, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+            ButtonLabel(stringResource(R.string.detail_withdraw_cant_go))
+        }
+    }
 }
 
 /** The check before offering (FORM-03), fully open and scrollable so the offer button is reachable with large text or in landscape. */
@@ -783,6 +787,11 @@ private fun OffersSection(
             Icon(painterResource(LLIcons.Donors), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
             Spacer(Modifier.size(ButtonDefaults.IconSpacing))
             ButtonLabel(stringResource(R.string.detail_ask_donors))
+        }
+        // VT-19: it's on top of the alerts, not instead of them.
+        val alerted = maxOf(r.fanoutTier, (state.alertStatus as? AlertStatus.Sent)?.tier ?: 0) >= 1
+        if (alerted) {
+            Text(stringResource(R.string.detail_ask_donors_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -900,6 +909,15 @@ private fun OfferCard(
                 ResponseStatus.DONATED in next -> R.string.detail_mark_donated to { onDonated(response) }
                 else -> null
             }
+            // VT-09: after "Confirm they're coming", Mark donated takes its place; this says when to tap it.
+            if (ResponseStatus.DONATED in next && response.status == ResponseStatus.CONFIRMED) {
+                Text(
+                    stringResource(R.string.detail_mark_donated_hint, stringResource(R.string.detail_mark_donated)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(end = Spacing.xs),
+                )
+            }
             if (phone != null || step != null) {
                 FlowRow(
                     Modifier.padding(end = Spacing.xs),
@@ -987,10 +1005,17 @@ private fun CloseDialog(onDismiss: () -> Unit, onClose: (RequestStatus, String?)
 
 
 @Composable
-private fun EditDialog(r: BloodRequest, onDismiss: () -> Unit, onSave: (String?, Int?, Instant?) -> Unit) {
+private fun EditDialog(r: BloodRequest, contact: RequestContact?, onDismiss: () -> Unit, onSave: (String?, Int?, Instant?, ContactEdit?) -> Unit) {
     var notes by rememberSaveable { mutableStateOf(r.notes.orEmpty()) }
     var units by rememberSaveable { mutableIntStateOf(r.unitsNeeded) }
     var neededByMillis by rememberSaveable { mutableStateOf<Long?>(null) }
+    // VT-24: who donors call can change too (a relative takes over at the hospital).
+    var contactName by rememberSaveable { mutableStateOf(contact?.contactName.orEmpty()) }
+    var contactPhone by rememberSaveable { mutableStateOf(contact?.contactPhone?.removePrefix("+88").orEmpty()) }
+    var tried by rememberSaveable { mutableStateOf(false) }
+    val nameOk = contact == null || Validators.isValidName(contactName)
+    val phone = Validators.normalizePhone(contactPhone)
+    val phoneOk = contact == null || phone != null
     val minUnits = maxOf(Validators.UNITS_MIN, r.unitsFulfilled + 1)
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1004,16 +1029,47 @@ private fun EditDialog(r: BloodRequest, onDismiss: () -> Unit, onSave: (String?,
                     value = notes,
                     onValueChange = { notes = it.take(Validators.NOTES_MAX) },
                     label = stringResource(R.string.create_notes),
+                    supportingText = stringResource(R.string.create_notes_public_counter, notes.length, Validators.NOTES_MAX), // VT-10
                     singleLine = false,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrectEnabled = false),
                 )
+                if (contact != null) {
+                    LLTextField(
+                        value = contactName,
+                        onValueChange = { contactName = it.take(Validators.NAME_MAX) },
+                        label = stringResource(R.string.create_contact_name),
+                        errorText = if (tried && !nameOk) stringResource(R.string.error_contact_name_invalid) else null,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, autoCorrectEnabled = false, imeAction = ImeAction.Next),
+                    )
+                    LLTextField(
+                        value = contactPhone,
+                        onValueChange = { contactPhone = it.take(20) },
+                        label = stringResource(R.string.create_contact_phone),
+                        supportingText = stringResource(R.string.create_private_hint),
+                        errorText = if (tried && !phoneOk) stringResource(R.string.error_phone_invalid) else null,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Done),
+                    )
+                }
             }
         },
         confirmButton = {
             TextButton(onClick = {
+                if (!nameOk || !phoneOk) {
+                    tried = true
+                    return@TextButton
+                }
+                val newContact = if (contact != null && phone != null &&
+                    (Validators.normalizeName(contactName) != contact.contactName || phone != contact.contactPhone)
+                ) {
+                    ContactEdit(contactName, phone)
+                } else {
+                    null
+                }
                 onSave(
                     notes.takeIf { it.trim() != r.notes.orEmpty() },
                     units.takeIf { it != r.unitsNeeded },
                     neededByMillis?.let(Instant::ofEpochMilli),
+                    newContact,
                 )
             }) { Text(stringResource(R.string.action_save)) }
         },

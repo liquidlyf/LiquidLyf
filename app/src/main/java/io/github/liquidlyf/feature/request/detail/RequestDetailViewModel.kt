@@ -24,6 +24,7 @@ import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.domain.StatusTransitions
+import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.firebase.DocState
 import io.github.liquidlyf.core.firebase.endOnListenError
 import io.github.liquidlyf.core.model.BloodRequest
@@ -450,8 +451,19 @@ class RequestDetailViewModel @Inject constructor(
         }
     }
 
-    fun edit(notes: String?, unitsNeeded: Int?, neededBy: Instant?) = act(R.string.detail_saved) { r, _ ->
-        requests.edit(r, notes, unitsNeeded, neededBy)
+    /** Null leaves a value as it is. [contact]: a new name and E.164 number for donors to call (VT-24). */
+    fun edit(notes: String?, unitsNeeded: Int?, neededBy: Instant?, contact: ContactEdit? = null) = act(R.string.detail_saved) { r, _ ->
+        val request = if (notes != null || unitsNeeded != null || neededBy != null || contact == null) {
+            requests.edit(r, notes, unitsNeeded, neededBy)
+        } else {
+            AppResult.Success(Unit)
+        }
+        if (request !is AppResult.Success || contact == null) return@act request
+        requests.editContact(r.id, contact.name, contact.phone).also { result ->
+            if (result is AppResult.Success) {
+                state.update { s -> s.copy(contact = s.contact?.copy(contactName = Validators.normalizeName(contact.name), contactPhone = contact.phone)) }
+            }
+        }
     }
 
     /** Runs one action at a time; the result is a snackbar message. */
@@ -479,3 +491,6 @@ class RequestDetailViewModel @Inject constructor(
         }
     }
 }
+
+/** A new contact for a request: the name and an E.164 number (VT-24). */
+data class ContactEdit(val name: String, val phone: String)

@@ -868,7 +868,7 @@ class ScreenGalleryTest {
             Shot("details-donor-offered", prepare = { loaded(); waitForText("Karim Hossain") }, content = detail(donor, offer = ResponseStatus.OFFERED)),
             Shot("details-donor-confirmed", prepare = { loaded(); waitForText("Karim Hossain") }, content = detail(donor, offer = ResponseStatus.CONFIRMED)),
             Shot("details-donor-donated", prepare = loaded, content = detail(donor, offer = ResponseStatus.DONATED)),
-            Shot("details-donor-withdraw-dialog", overlay = true, prepare = { loaded(); waitForText("Karim Hossain"); tap(R.string.detail_withdraw) },
+            Shot("details-donor-withdraw-dialog", overlay = true, prepare = { loaded(); waitForText("Karim Hossain"); tap(R.string.detail_withdraw_cant_go) },
                 content = detail(donor, offer = ResponseStatus.OFFERED)),
             Shot("details-donor-menu", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more) }, content = detail(donor)),
             Shot("details-donor-report", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more); tap(R.string.detail_report) }, content = detail(donor)),
