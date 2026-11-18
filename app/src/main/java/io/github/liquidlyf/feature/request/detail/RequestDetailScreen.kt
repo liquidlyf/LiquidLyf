@@ -90,6 +90,7 @@ import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.MAX_ACTION_WIDTH
 import io.github.liquidlyf.core.designsystem.components.NoticeTone
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.RequestStatePill
@@ -185,12 +186,36 @@ private fun RequestDetailScreen(
                     ?: stringResource(R.string.title_request_detail),
                 onBack = onBack,
                 actions = {
-                    if (shareText != null) {
+                    // P2-6 (D13 = a): the requester's open request has Share in its bar, and Edit and
+                    // Close request here in ⋮, so the bar stays one row in Bangla and at large text.
+                    val requesterOpen = request != null && state.role == ViewerRole.REQUESTER && request.status == RequestStatus.OPEN
+                    if (shareText != null && !requesterOpen) {
                         IconButton(onClick = { launcher.shareText(shareText) }) {
                             Icon(painterResource(LLIcons.Share), contentDescription = stringResource(R.string.action_share))
                         }
                     }
-                    // The requester's actions are in the bar (FLOW-02, FLOW-05); a donor's extras stay here.
+                    if (requesterOpen) {
+                        Box {
+                            IconButton(onClick = { menuOpen = true }) {
+                                Icon(painterResource(LLIcons.MoreVert), contentDescription = stringResource(R.string.action_more))
+                            }
+                            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.action_edit)) },
+                                    leadingIcon = { Icon(painterResource(LLIcons.Edit), contentDescription = null) },
+                                    enabled = !state.working,
+                                    onClick = { menuOpen = false; dialog = DetailDialog.EDIT },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.detail_close_request)) },
+                                    leadingIcon = { Icon(painterResource(LLIcons.Cancel), contentDescription = null) },
+                                    enabled = !state.working,
+                                    onClick = { menuOpen = false; dialog = DetailDialog.CLOSE },
+                                )
+                            }
+                        }
+                    }
+                    // A donor's extras stay here too.
                     if (request != null && state.role == ViewerRole.DONOR) {
                         Box {
                             IconButton(onClick = { menuOpen = true }) {
@@ -224,8 +249,6 @@ private fun RequestDetailScreen(
                     r = request,
                     state = state,
                     onShare = { shareText?.let(launcher::shareText) },
-                    onEdit = { dialog = DetailDialog.EDIT },
-                    onClose = { dialog = DetailDialog.CLOSE },
                     // D1: someone who isn't a donor yet answers the donor questions first.
                     onOffer = { if (state.offerBlock == OfferBlock.NotADonor) onBecomeDonor() else checking = true },
                     onCall = launcher::dial,
@@ -357,21 +380,19 @@ private fun rememberCopy(): (RequestContact) -> Unit {
 
 /**
  * The main action, pinned so it never scrolls away (FLOW-02): "I can donate" for a donor, then
- * "Call <name>" with Copy once they offered; Share, Edit and Close request for the requester.
+ * "Call <name>" with Copy number once they offered; Share for the requester (Edit and Close request are in ⋮).
  */
 @Composable
 private fun DetailBar(
     r: BloodRequest,
     state: RequestDetailUiState,
     onShare: () -> Unit,
-    onEdit: () -> Unit,
-    onClose: () -> Unit,
     onOffer: () -> Unit,
     onCall: (String) -> Unit,
     onCopy: (RequestContact) -> Unit,
 ) {
     when (state.role) {
-        ViewerRole.REQUESTER -> if (r.status == RequestStatus.OPEN) RequesterBar(onShare, onEdit, onClose, enabled = !state.working)
+        ViewerRole.REQUESTER -> if (r.status == RequestStatus.OPEN) RequesterBar(onShare)
         ViewerRole.DONOR -> {
             val contact = state.contact
             val block = state.offerBlock
@@ -428,35 +449,28 @@ private fun CantOfferBar(reason: String, onShare: () -> Unit) {
 }
 
 /**
- * Share, Edit and Close request side by side, centred. Each keeps its words on one line, so when
- * they don't fit (Bangla, large text) a button moves to the next line instead of squeezing them.
+ * The requester's bar: Share alone, full width, always one row (P2-6, D13 = a: with Edit and Close
+ * request beside it, it took 2 rows in Bangla and 3 at 200%). Edit and Close request are in ⋮ up top.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RequesterBar(onShare: () -> Unit, onEdit: () -> Unit, onClose: () -> Unit, enabled: Boolean) {
+private fun RequesterBar(onShare: () -> Unit) {
     Surface(color = LiquidLyfTheme.extendedColors.card) {
         Column {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            FlowRow(
+            Box(
                 Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
                     .padding(horizontal = screenGutter(), vertical = Spacing.sm),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.xs, Alignment.CenterHorizontally),
-                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+                contentAlignment = Alignment.Center,
             ) {
-                val button = Modifier.heightIn(min = Spacing.minTouchTarget)
-                val padding = ButtonDefaults.TextButtonContentPadding
-                FilledTonalButton(onClick = onShare, modifier = button, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
+                FilledTonalButton(
+                    onClick = onShare,
+                    modifier = Modifier.widthIn(max = MAX_ACTION_WIDTH).fillMaxWidth().heightIn(min = Spacing.minTouchTarget),
+                ) {
                     Icon(painterResource(LLIcons.Share), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text(stringResource(R.string.action_share), maxLines = 1, softWrap = false)
-                }
-                OutlinedButton(onClick = onEdit, enabled = enabled, modifier = button, contentPadding = padding) {
-                    Text(stringResource(R.string.action_edit), maxLines = 1, softWrap = false)
-                }
-                OutlinedButton(onClick = onClose, enabled = enabled, modifier = button, contentPadding = padding) {
-                    Text(stringResource(R.string.detail_close_request), maxLines = 1, softWrap = false)
+                    Text(stringResource(R.string.action_share))
                 }
             }
         }

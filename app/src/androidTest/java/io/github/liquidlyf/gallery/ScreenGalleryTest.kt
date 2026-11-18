@@ -837,8 +837,10 @@ class ScreenGalleryTest {
             // STATE-03 from the request itself (D's re-audit): alerted district-wide, and held back by the daily limit.
             Shot("details-requester-alerted-district", prepare = loaded, content = detail(requester, detailRequest.copy(fanoutTier = 3))),
             Shot("details-requester-held-back", prepare = loaded, content = detail(requester, unalerted.copy(nextTierAt = BloodRequest.ALERT_NEVER_DUE))),
-            Shot("details-requester-edit", overlay = true, prepare = { loaded(); tap(R.string.action_edit) }, content = detail(requester)),
-            Shot("details-requester-close", overlay = true, prepare = { loaded(); tap(R.string.detail_close_request) }, content = detail(requester)),
+            // P2-6 (D13 = a): Edit and Close request in the top bar's ⋮.
+            Shot("details-requester-menu", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more) }, content = detail(requester)),
+            Shot("details-requester-edit", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more); tap(R.string.action_edit) }, content = detail(requester)),
+            Shot("details-requester-close", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more); tap(R.string.detail_close_request) }, content = detail(requester)),
             // FLOW-07: Decline is in the offer's ⋮ menu, away from Confirm.
             Shot("details-requester-offer-menu", overlay = true, prepare = { loaded(); waitForText("Nusrat"); tapDescribedStart(R.string.detail_more_about) },
                 content = detail(requester, offer = ResponseStatus.OFFERED)),
