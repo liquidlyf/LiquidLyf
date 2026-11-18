@@ -632,7 +632,12 @@ private fun DetailsSection(r: BloodRequest, state: RequestDetailUiState) {
                 val isMe = requester && c.contactPhone == state.myPhone
                 IconLine(LLIcons.Profile, stringResource(if (isMe) R.string.detail_contact_you else R.string.detail_contact_line, c.contactName))
                 // L10N-01: "+88 01700-000000" (Bangla digits on Bangla screens); Call and Copy use the full number.
-                IconLine(LLIcons.Call, PhoneDisplay.format(c.contactPhone, banglaDigits = currentAppLocale() == AppLocale.BN))
+                // TalkBack reads it digit by digit (Low 2).
+                IconLine(
+                    LLIcons.Call,
+                    PhoneDisplay.format(c.contactPhone, banglaDigits = currentAppLocale() == AppLocale.BN),
+                    spoken = PhoneDisplay.spoken(c.contactPhone),
+                )
                 c.patientName?.let { IconLine(LLIcons.Favorite, stringResource(R.string.detail_patient, it)) }
                 c.wardOrBed?.let { IconLine(LLIcons.Hospital, stringResource(R.string.detail_ward, it)) }
             }

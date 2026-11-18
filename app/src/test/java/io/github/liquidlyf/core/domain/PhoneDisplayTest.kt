@@ -17,6 +17,13 @@ class PhoneDisplayTest {
     }
 
     @Test
+    fun `TalkBack gets every digit on its own, in the groups people see`() {
+        assertEquals("+8 8, 0 1 8 1 2, 3 4 5 6 7 8", PhoneDisplay.spoken("+8801812345678"))
+        assertEquals("+4 4 7 7 0 0 9 0 0 1 2 3", PhoneDisplay.spoken("+447700900123"))
+        assertEquals("0 1 7 0 0 0 0 0 0 0 0", PhoneDisplay.spoken("01700000000"))
+    }
+
+    @Test
     fun `anything that isn't a stored Bangladeshi mobile number is shown as it is`() {
         assertEquals("+447700900123", PhoneDisplay.format("+447700900123"))
         assertEquals("01700000000", PhoneDisplay.format("01700000000"))

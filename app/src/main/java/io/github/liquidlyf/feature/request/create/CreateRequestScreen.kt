@@ -91,6 +91,7 @@ import io.github.liquidlyf.core.designsystem.components.StepContent
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.isLargeText
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
+import io.github.liquidlyf.core.designsystem.components.spokenAs
 import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
@@ -480,18 +481,21 @@ private fun ContactStep(state: CreateRequestUiState, anchors: ErrorAnchors<Reque
     // PERF-01, N2: "Me" fills in the profile's name and number, so most people type nothing here.
     Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         // The name and the number on their own lines, so "+88 01700-000000" never breaks.
-        val phone = state.myPhone?.let { PhoneDisplay.format(it, banglaDigits = currentAppLocale() == AppLocale.BN) }
+        // TalkBack reads the number digit by digit (Low 2).
+        val phone = state.myPhone?.let {
+            ChoiceLine(PhoneDisplay.format(it, banglaDigits = currentAppLocale() == AppLocale.BN), spoken = PhoneDisplay.spoken(it))
+        }
         ContactChoice(
             icon = LLIcons.Profile,
             title = stringResource(R.string.create_contact_me),
-            lines = listOfNotNull(state.myName, phone, stringResource(R.string.create_contact_from_profile)),
+            lines = listOfNotNull(state.myName?.let { ChoiceLine(it) }, phone, ChoiceLine(stringResource(R.string.create_contact_from_profile))),
             selected = f.contactIsMe,
             onClick = { onEdit { copy(contactIsMe = true) } },
         )
         ContactChoice(
             icon = LLIcons.Group,
             title = stringResource(R.string.create_contact_else),
-            lines = listOf(stringResource(R.string.create_contact_else_hint)),
+            lines = listOf(ChoiceLine(stringResource(R.string.create_contact_else_hint))),
             selected = !f.contactIsMe,
             onClick = { onEdit { copy(contactIsMe = false) } },
         )
@@ -569,8 +573,11 @@ private fun ContactStep(state: CreateRequestUiState, anchors: ErrorAnchors<Reque
  * One answer to "How can donors reach you?" as a card: an icon, its words and a radio. The chosen
  * one has a red outline and icon (PERF-01, N2). The whole card is one radio for TalkBack.
  */
+/** One line under a contact choice; [spoken] is what TalkBack says instead, e.g. a phone number. */
+private data class ChoiceLine(val text: String, val spoken: String? = null)
+
 @Composable
-private fun ContactChoice(@DrawableRes icon: Int, title: String, lines: List<String>, selected: Boolean, onClick: () -> Unit) {
+private fun ContactChoice(@DrawableRes icon: Int, title: String, lines: List<ChoiceLine>, selected: Boolean, onClick: () -> Unit) {
     val primary = MaterialTheme.colorScheme.primary
     Row(
         Modifier
@@ -589,7 +596,14 @@ private fun ContactChoice(@DrawableRes icon: Int, title: String, lines: List<Str
         Icon(painterResource(icon), contentDescription = null, tint = if (selected) primary else MaterialTheme.colorScheme.onSurfaceVariant)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
-            lines.forEach { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            lines.forEach { line ->
+                Text(
+                    line.text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = if (line.spoken != null) Modifier.spokenAs(line.spoken) else Modifier,
+                )
+            }
         }
         RadioButton(selected = selected, onClick = null)
     }

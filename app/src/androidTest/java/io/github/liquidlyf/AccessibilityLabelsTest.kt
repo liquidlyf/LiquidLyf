@@ -17,12 +17,14 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -47,6 +49,7 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.domain.EligibilityCalculator
+import io.github.liquidlyf.core.domain.PhoneDisplay
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.DonorResponse
@@ -629,6 +632,9 @@ class AccessibilityLabelsTest {
         compose.waitUntil(5_000) { vm.uiState.value.contact != null }
         compose.waitForIdle()
         assertControlsAreLabelledAndBigEnough("Request detail, donor who offered")
+        // D's Low 2: TalkBack gets the contact's number digit by digit; the screen still shows "+88 01812-345678".
+        compose.onNodeWithText("+8 8, 0 1 8 1 2, 3 4 5 6 7 8", useUnmergedTree = true).assertExists()
+        compose.onAllNodesWithText(PhoneDisplay.format("+8801812345678"), useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test

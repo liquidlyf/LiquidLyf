@@ -132,11 +132,11 @@ fun neededByText(neededBy: Instant, now: Instant, long: Boolean = false): String
  * "Dhaka South City Corporation, Dhaka" takes three lines, and the offer sheet's safety line more.
  */
 @Composable
-fun IconLine(@DrawableRes icon: Int, text: String, modifier: Modifier = Modifier) {
+fun IconLine(@DrawableRes icon: Int, text: String, modifier: Modifier = Modifier, spoken: String? = null) {
     val style = MaterialTheme.typography.bodyMedium
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         FirstLineIcon(icon, style)
-        Text(text, style = style)
+        Text(text, style = style, modifier = if (spoken != null) Modifier.spokenAs(spoken) else Modifier)
     }
 }
 
