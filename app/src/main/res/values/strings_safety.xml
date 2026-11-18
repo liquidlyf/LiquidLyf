@@ -11,7 +11,7 @@
     <string name="safety_tip_company_title">Bring someone with you</string>
     <string name="safety_tip_company_body">If you can, go with a friend or family member, and tell someone where you\'re going.</string>
     <string name="safety_tip_screening_title">The hospital checks you</string>
-    <string name="safety_tip_screening_body">The blood bank screens every donor and every unit. Follow their advice, even if it means you can\'t donate today.</string>
+    <string name="safety_tip_screening_body">The blood bank screens every donor and every bag of blood. Follow their advice, even if it means you can\'t donate today.</string>
     <string name="safety_tip_report_title">Report anything wrong</string>
     <string name="safety_tip_report_body">Fake requests, money, abuse or spam: use Report on the request or the person. You can also block them.</string>
     <string name="safety_tip_emergency_title">In an emergency, call 999</string>

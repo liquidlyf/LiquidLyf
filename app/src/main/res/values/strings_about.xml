@@ -43,7 +43,7 @@
     <string name="matching_who_title">Who gets an alert</string>
     <string name="matching_who_body">Donors who are listed, ready to donate and able to donate now: 18 to 60 years old, with at least 4 months since their last donation, and a blood group the patient can receive.</string>
     <string name="matching_nearest_title">Nearest first</string>
-    <string name="matching_nearest_body">Alerts start in the hospital\'s upazila. If not enough donors offer, they widen step by step: other suitable blood groups nearby (if the requester accepts them), then the whole district, then the neighbouring districts. Rh-negative requests start with the district, then the whole division. When the offers cover the units needed, the next step waits.</string>
+    <string name="matching_nearest_body">Alerts start in the hospital\'s upazila. If not enough donors offer, they widen step by step: other suitable blood groups nearby (if the requester accepts them), then the whole district, then the neighbouring districts. Rh-negative requests start with the district, then the whole division. When the offers cover the bags needed, the next step waits.</string>
     <string name="matching_limits_title">No more than needed</string>
     <string name="matching_limits_body">You get at most two alerts for the same request: when it\'s posted, and once more if it\'s still needed. Each person can send alerts for only a few requests a day.</string>
     <string name="matching_find_title">Find donors</string>

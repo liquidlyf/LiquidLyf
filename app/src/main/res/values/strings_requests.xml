@@ -53,8 +53,8 @@
 
     <!-- Request card -->
     <plurals name="request_units">
-        <item quantity="one">%1$d unit · %2$s</item>
-        <item quantity="other">%1$d units · %2$s</item>
+        <item quantity="one">%1$d bag · %2$s</item>
+        <item quantity="other">%1$d bags · %2$s</item>
     </plurals>
     <plurals name="request_offers_count">
         <item quantity="one">%d offer</item>
@@ -82,13 +82,13 @@
     <string name="create_patient_group">The patient\'s blood group</string>
     <string name="create_error_group">Choose the patient\'s blood group.</string>
     <string name="create_component">What\'s needed</string>
-    <string name="create_units">Units (bags)</string>
+    <string name="create_units">Bags</string>
     <plurals name="create_units_spoken">
-        <item quantity="one">%1$d unit</item>
-        <item quantity="other">%1$d units</item>
+        <item quantity="one">%1$d bag</item>
+        <item quantity="other">%1$d bags</item>
     </plurals>
-    <string name="create_units_less">Fewer units</string>
-    <string name="create_units_more">More units</string>
+    <string name="create_units_less">Fewer bags</string>
+    <string name="create_units_more">More bags</string>
     <string name="create_condition">Reason (optional)</string>
     <string name="create_accept_compatible">Compatible groups are OK</string>
     <string name="create_accept_compatible_info">Only if the doctor agrees. More donors will be alerted.</string>
@@ -140,8 +140,8 @@
     <string name="detail_missing_body">It may have been removed, or it wasn\'t posted.</string>
     <string name="detail_waiting_network">Waiting for network. Your request is saved on this phone and will be posted when you\'re back online.</string>
     <plurals name="detail_units_progress">
-        <item quantity="one">%1$d of %2$d unit received</item>
-        <item quantity="other">%1$d of %2$d units received</item>
+        <item quantity="one">%1$d of %2$d bag received</item>
+        <item quantity="other">%1$d of %2$d bags received</item>
     </plurals>
     <string name="detail_posted_by">Posted %1$s by %2$s</string>
     <string name="detail_posted_by_unsent">By %1$s · not posted yet</string>
@@ -204,7 +204,7 @@
     <string name="detail_mark_donated">Mark donated</string>
     <string name="detail_mark_donated_hint">When they\'ve given blood, tap %1$s.</string>
     <string name="detail_donated_title">Did this donor give blood?</string>
-    <string name="detail_donated_body">It counts as a unit received, and it\'s added to their donation history as verified.</string>
+    <string name="detail_donated_body">It counts as a bag received, and it\'s added to their donation history as verified.</string>
     <string name="detail_close_request">Close request</string>
     <string name="detail_close_title">Close this request</string>
     <string name="detail_close_body">Donors who offered will be told, and the request leaves the list.</string>
@@ -235,8 +235,8 @@
     <string name="detail_closed">Request closed</string>
     <string name="detail_saved">Request updated</string>
     <plurals name="request_units_plain">
-        <item quantity="one">%d unit</item>
-        <item quantity="other">%d units</item>
+        <item quantity="one">%d bag</item>
+        <item quantity="other">%d bags</item>
     </plurals>
     <!-- Home -->
     <string name="offline_banner">You\'re offline. Showing saved data.</string>
