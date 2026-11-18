@@ -11,7 +11,7 @@
     <string name="profile_not_listed">তালিকায় নেই</string>
     <string name="profile_eligibility_title">আপনার পরের রক্তদান</string>
     <string name="profile_next_eligible">%1$s থেকে</string>
-    <string name="profile_listed_on">"রক্তদাতা খুঁজুন"-এ আপনাকে দেখা যায়। আপনার নম্বর কখনো দেখানো হয় না।</string>
+    <string name="profile_listed_on">\"রক্তদাতা খুঁজুন\"-এ আপনাকে দেখা যায়। আপনার নম্বর কোনো তালিকায় থাকে না।</string>
     <string name="profile_listed_off">চালু করলে "রক্তদাতা খুঁজুন"-এ আপনাকে দেখা যাবে, আর অনুরোধের অ্যালার্ট পাবেন।</string>
     <string name="profile_alerts_again_on">%1$s থেকে আবার অ্যালার্ট পাবেন।</string>
     <!-- The number shows above the word; "দিন" is the same for every count. -->

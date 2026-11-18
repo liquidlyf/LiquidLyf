@@ -115,7 +115,6 @@
 
     <!-- Profile setup -->
     <string name="setup_step">ধাপ %1$d / %2$d</string>
-    <string name="setup_short_note">রক্ত দিতে সাড়া দেওয়ার পরেই শুধু রক্তদাতারা আপনার নম্বর দেখতে পাবেন।</string>
     <string name="setup_donor_later">রক্তদাতার প্রশ্নগুলো পরে আসবে, শুধু আপনি রক্ত দিতে চাইলে।</string>
     <string name="become_donor_details_title">রক্তদাতার কয়েকটি প্রশ্ন</string>
     <string name="become_donor_history_title">রক্তদান</string>

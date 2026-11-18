@@ -121,7 +121,6 @@ fun ProfileSetupScreen(
                     .padding(horizontal = screenGutter(), vertical = Spacing.md),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
-                Text(stringResource(R.string.setup_short_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 // D1: say why there's no blood group or age here. VT-15: up top, where it's read; at
                 // the end it peeked under Continue and no one read it.
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
