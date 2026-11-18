@@ -126,7 +126,7 @@ internal fun RequestsScreen(
                         verticalArrangement = Arrangement.spacedBy(Spacing.sm),
                     ) {
                         when (state.tab) {
-                            RequestsTab.NEARBY -> requestItems(state, state.nearby, onOpenRequest) {
+                            RequestsTab.NEARBY -> requestItems(state, state.nearby, onOpenRequest, markMine = true) {
                                 // STATE-02: a button too, not only the pull-down gesture.
                                 EmptyState(
                                     LLIcons.Favorite, stringResource(R.string.requests_nearby_empty_title), stringResource(R.string.requests_nearby_empty_body),
@@ -175,6 +175,8 @@ private fun LazyListScope.requestItems(
     state: RequestsUiState,
     list: PagedList<BloodRequest>,
     onOpenRequest: (String) -> Unit,
+    /** Nearby mixes everyone's requests: mine get a "Yours" tag (VT-22). */
+    markMine: Boolean = false,
     empty: @Composable () -> Unit,
 ) {
     if (list.loaded && list.items.isEmpty() && list.error == null) item(key = "empty") { empty() }
@@ -185,6 +187,7 @@ private fun LazyListScope.requestItems(
             placeText = state.geo?.placeLabel(r.district, r.upazila, currentAppLocale()) ?: r.district,
             now = now,
             onClick = { onOpenRequest(r.id) },
+            mine = markMine && r.requesterUid == state.myUid,
         )
     }
 }

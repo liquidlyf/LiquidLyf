@@ -78,6 +78,18 @@ fun LLTag(label: String, @DrawableRes icon: Int, modifier: Modifier = Modifier) 
 }
 
 /**
+ * A warning about the thing itself, not its state: a request whose note mentions money (D15 a,
+ * VT-03). Amber like the request page's notice, with small corners like a [LLTag].
+ */
+@Composable
+fun WarningTag(label: String, modifier: Modifier = Modifier) {
+    val colors = StatusTone.Urgent.colors()
+    Surface(shape = MaterialTheme.shapes.extraSmall, color = colors.container, contentColor = colors.content, modifier = modifier) {
+        PillContent(label, LLIcons.Warning, Modifier.padding(horizontal = Spacing.xs, vertical = Spacing.xxs))
+    }
+}
+
+/**
  * A request's state. Open is the normal state, so where the urgency shows (lists, the detail
  * page) an open request shows its [UrgencyBadge] instead (COLOR-01).
  */

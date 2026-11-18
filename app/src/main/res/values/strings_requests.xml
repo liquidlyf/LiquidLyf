@@ -63,6 +63,8 @@
     <string name="request_needed_by">Needed %1$s</string>
     <!-- COPY-04: a planned request, by its date ("Needed on 20 Nov 2026, 10:00 AM"). -->
     <string name="request_needed_on">Needed on %1$s</string>
+    <string name="request_tag_yours">Yours</string>
+    <string name="request_tag_money">Mentions money · never pay for blood</string>
     <string name="request_was_needed_by">Was needed by %1$s</string>
 
     <!-- Create request -->

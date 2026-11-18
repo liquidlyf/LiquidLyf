@@ -4,6 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,9 +37,9 @@ import io.github.liquidlyf.core.model.Urgency
 import java.time.Instant
 
 /**
- * A blood request in a list (doc 04 §3): group badge, units and component, urgency or status,
- * hospital, area, when it's needed, the condition and how many people offered. [footer] adds a
- * line, e.g. my offer's status in "My offers".
+ * A blood request in a list (doc 04 §3): group badge, units and component, urgency or status, what
+ * it's for, hospital, area, when it's needed and how many people offered. [footer] adds a line,
+ * e.g. my offer's status in "My offers". [mine]: a "Yours" tag, in lists that mix everyone's (VT-22).
  */
 @Composable
 fun RequestCard(
@@ -47,6 +48,7 @@ fun RequestCard(
     now: Instant,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    mine: Boolean = false,
     footer: (@Composable () -> Unit)? = null,
 ) {
     // 8.5: side by side when they fit; with large text or a long label, the pill wraps below.
@@ -73,23 +75,34 @@ fun RequestCard(
                     BloodGroupBadge(request.bloodGroup)
                     Column(Modifier.weight(1f)) { title() }
                 }
-                RequestCardDetails(request, placeText, now, footer)
+                RequestCardDetails(request, placeText, now, mine, footer)
             }
         } else {
             Row(Modifier.padding(Spacing.md), horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
                 BloodGroupBadge(request.bloodGroup)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                     title()
-                    RequestCardDetails(request, placeText, now, footer)
+                    RequestCardDetails(request, placeText, now, mine, footer)
                 }
             }
         }
     }
 }
 
-/** A request card's hospital, place, time, condition and offers, then its [footer]. */
+/** A request card's reason, tags, hospital, place, time and offers, then its [footer]. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RequestCardDetails(request: BloodRequest, placeText: String, now: Instant, footer: (@Composable () -> Unit)?) {
+private fun RequestCardDetails(request: BloodRequest, placeText: String, now: Instant, mine: Boolean, footer: (@Composable () -> Unit)?) {
+    // VT-03: what the blood is for, right under the title in readable text. As a small grey last
+    // line it was missed (and gone at 130%), and two B+ cards at one hospital looked alike.
+    request.condition?.let { Text(stringResource(it.labelRes), style = MaterialTheme.typography.titleSmall) }
+    if (mine || request.flagged) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+            if (mine) LLTag(stringResource(R.string.request_tag_yours), LLIcons.Profile) // VT-22
+            // D15 a: a request whose note mentions money stays listed, with this warning (VT-03).
+            if (request.flagged) WarningTag(stringResource(R.string.request_tag_money))
+        }
+    }
     IconLine(LLIcons.Hospital, request.hospitalName)
     IconLine(LLIcons.Location, placeText)
     // A closed request needs nothing any more: its date, not "Needed in 5 h".
@@ -102,15 +115,9 @@ private fun RequestCardDetails(request: BloodRequest, placeText: String, now: In
             else -> neededByText(request.neededBy, now)
         },
     )
-    val extras = listOfNotNull(
-        request.condition?.let { stringResource(it.labelRes) },
-        request.liveOffers.takeIf { it > 0 }?.let {
-            pluralStringResource(R.plurals.request_offers_count, it, it)
-        },
-    )
-    if (extras.isNotEmpty()) {
+    request.liveOffers.takeIf { it > 0 }?.let {
         Text(
-            extras.joinToString(" · "),
+            pluralStringResource(R.plurals.request_offers_count, it, it),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

@@ -80,6 +80,8 @@
     </plurals>
     <string name="request_needed_by">%1$s দরকার</string>
     <string name="request_needed_on">দরকার: %1$s</string>
+    <string name="request_tag_yours">আপনার</string>
+    <string name="request_tag_money">টাকার কথা আছে · রক্তের জন্য কখনো টাকা দেবেন না</string>
     <string name="request_was_needed_by">%1$s-এর মধ্যে দরকার ছিল</string>
     <string name="offline_banner">আপনি অফলাইনে আছেন। সেভ করা তথ্য দেখানো হচ্ছে।</string>
     <string name="offline_banner_form">ইন্টারনেট সংযোগ নেই। সংযোগ ফিরলে আপনার অনুরোধ পোস্ট হবে।</string>

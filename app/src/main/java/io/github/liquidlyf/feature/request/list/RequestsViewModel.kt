@@ -48,6 +48,8 @@ data class RequestsUiState(
     val mine: PagedList<BloodRequest> = PagedList(),
     val offers: PagedList<OfferItem> = PagedList(),
     val geo: BdGeo? = null,
+    /** Marks my own requests in Nearby (VT-22). */
+    val myUid: String? = null,
 ) {
     fun list(tab: RequestsTab): PagedList<*> = when (tab) {
         RequestsTab.NEARBY -> nearby
@@ -72,7 +74,10 @@ class RequestsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val state = MutableStateFlow(
-        RequestsUiState(tab = savedState.get<String>(TAB_KEY)?.let { t -> RequestsTab.entries.firstOrNull { it.name == t } } ?: RequestsTab.NEARBY),
+        RequestsUiState(
+            tab = savedState.get<String>(TAB_KEY)?.let { t -> RequestsTab.entries.firstOrNull { it.name == t } } ?: RequestsTab.NEARBY,
+            myUid = (session.state.value as? SessionState.Ready)?.profile?.uid,
+        ),
     )
     val uiState: StateFlow<RequestsUiState> = state.asStateFlow()
     val online: StateFlow<Boolean> = network.isOnline.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)

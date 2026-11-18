@@ -494,6 +494,11 @@ class ScreenGalleryTest {
             requesterDisplayName = "Tanvir R.", urgency = Urgency.PLANNED, component = BloodComponent.PLATELETS, unitsNeeded = 3,
             unitsFulfilled = 1, hospitalName = "Holy Family Red Crescent Medical College Hospital", createdAt = now.minus(Duration.ofHours(3)),
         ),
+        // D15 a, VT-03: a note that mentions money is listed with the amber tag.
+        TestData.request(id = "r4", requesterUid = "requester-4", group = BloodGroup.B_POS, neededBy = now.plus(Duration.ofHours(20))).copy(
+            requesterDisplayName = "Newcomer D.", urgency = Urgency.URGENT, flagged = true, notes = "Will pay 2000 taka by bKash for each bag.",
+            createdAt = now.minus(Duration.ofMinutes(25)),
+        ),
     )
 
     private val myRequests: List<BloodRequest> = listOf(
@@ -661,9 +666,10 @@ class ScreenGalleryTest {
     @Test
     fun requests() {
         val list = { tab: RequestsTab, nearby: PagedList<BloodRequest>, mine: PagedList<BloodRequest>, offers: PagedList<OfferItem>, online: Boolean ->
-            @Composable { RequestsScreen(RequestsUiState(tab = tab, nearby = nearby, mine = mine, offers = offers, geo = geo), online, {}, {}, {}, {}, {}) }
+            @Composable { RequestsScreen(RequestsUiState(tab = tab, nearby = nearby, mine = mine, offers = offers, geo = geo, myUid = me.uid), online, {}, {}, {}, {}, {}) }
         }
-        val nearby = PagedList(feed, loaded = true, endReached = true)
+        // VT-22: my own open request is in Nearby too, tagged "Yours".
+        val nearby = PagedList(listOf(myRequests[0]) + feed, loaded = true, endReached = true)
         val mine = PagedList(myRequests, loaded = true, endReached = true)
         val offers = PagedList(myOffers, loaded = true, endReached = true)
         val noRequests = PagedList<BloodRequest>(loaded = true, endReached = true)
