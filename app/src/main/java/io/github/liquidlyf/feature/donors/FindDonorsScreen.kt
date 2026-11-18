@@ -51,6 +51,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -75,6 +76,7 @@ import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.SheetDragHandle
 import io.github.liquidlyf.core.designsystem.components.StatusPill
 import io.github.liquidlyf.core.designsystem.components.bloodGroupsPerRow
+import io.github.liquidlyf.core.designsystem.components.isLargeText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
 import io.github.liquidlyf.core.designsystem.labelRes
@@ -226,7 +228,9 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
                                 Text(pluralStringResource(R.plurals.donors_count, n, n), style = MaterialTheme.typography.titleSmall)
                             }
                         }
-                        items(results, key = { it.uid }) { card -> DonorRow(card, state.geo, locale, now, onClick = { actions.onOpenDonor(card) }) }
+                        items(results, key = { it.uid }) { card ->
+                            DonorRow(card, state.geo, locale, now, searchedUpazila = state.applied?.upazila, onClick = { actions.onOpenDonor(card) })
+                        }
                         if (!state.endReached) {
                             item {
                                 TextButton(
@@ -314,10 +318,21 @@ private fun FiltersSummary(state: FindDonorsUiState, locale: AppLocale, onChange
     }
 }
 
+/**
+ * One donor, compact (UI-06: rows were about 148 dp, so 3 fitted): the badge, the name, "Eligible
+ * now · 3 donations" and the tags, with "Ask" at the end, so it's clear what a tap does. The area
+ * shows only when it isn't the one searched. The whole row is one tap and one TalkBack stop.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Instant, onClick: () -> Unit) {
-    val place = geo?.placeLabel(card.area.district, card.area.upazila, locale) ?: card.area.district
+private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Instant, searchedUpazila: String?, onClick: () -> Unit) {
+    // The district is the search's own, so only the upazila or city corporation, and only when the
+    // search was the whole district.
+    val place = if (searchedUpazila != null && card.area.upazila == searchedUpazila) {
+        null
+    } else {
+        geo?.area(card.area.upazila)?.name?.localized(locale) ?: geo?.placeLabel(card.area.district, card.area.upazila, locale)
+    }
     val eligibleText = if (!now.isBefore(card.eligibleFrom)) {
         stringResource(R.string.donors_eligible_now)
     } else {
@@ -325,19 +340,19 @@ private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Insta
         pluralStringResource(R.plurals.donors_eligible_in, days, days)
     }
     val activeThisWeek = card.lastActiveAt?.let { Duration.between(it, now) <= Duration.ofDays(7) } == true
-    // Clipped, so the ripple keeps the card's round corners.
-    LLCard(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable(onClickLabel = stringResource(R.string.action_ask_to_donate), onClick = onClick)) {
-        Row(Modifier.padding(Spacing.md), verticalAlignment = Alignment.CenterVertically) {
-            BloodGroupBadge(card.bloodGroup, size = 48.dp)
-            Column(Modifier.padding(start = Spacing.md).weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+    val large = isLargeText()
+    Column {
+        val details = @Composable { modifier: Modifier ->
+            Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                 Text(card.displayName, style = MaterialTheme.typography.titleMedium)
-                Text(place, style = MaterialTheme.typography.bodyMedium)
                 Text(
                     listOf(eligibleText, pluralStringResource(R.plurals.donors_donations, card.donationCount, card.donationCount)).joinToString(" · "),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                place?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 if (card.phoneVerified || activeThisWeek) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                         if (card.phoneVerified) {
                             StatusPill(stringResource(R.string.profile_phone_verified), LLIcons.Verified, StatusTone.Success)
                         }
@@ -347,6 +362,29 @@ private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Insta
                 }
             }
         }
+        // Says what a tap does; the row itself is the one TalkBack stop.
+        val ask = @Composable { TextButton(onClick = onClick, modifier = Modifier.clearAndSetSemantics { }) { Text(stringResource(R.string.donors_ask)) } }
+        val row = Modifier
+            .fillMaxWidth()
+            .clickable(onClickLabel = stringResource(R.string.action_ask_to_donate), onClick = onClick)
+            .padding(vertical = Spacing.sm)
+        if (large) {
+            // With large text "Ask" goes under the details, so it can't squeeze the name letter by letter.
+            Column(row) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    BloodGroupBadge(card.bloodGroup, size = 40.dp)
+                    details(Modifier.weight(1f))
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { ask() }
+            }
+        } else {
+            Row(row, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                BloodGroupBadge(card.bloodGroup, size = 40.dp)
+                details(Modifier.weight(1f))
+                ask()
+            }
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 

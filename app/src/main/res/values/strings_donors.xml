@@ -44,6 +44,7 @@
     <string name="donors_ask_no_requests">You have no open request. Post one first, then you can ask donors directly.</string>
     <string name="donors_ask_none_compatible">None of your open requests can take %1$s blood.</string>
     <string name="action_ask_to_donate">Ask to donate</string>
+    <string name="donors_ask">Ask</string>
     <string name="action_asking">Asking…</string>
     <string name="donors_asked_label">Asked</string>
     <string name="donors_asked">Asked. %1$s will get a notification.</string>
