@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -785,6 +786,21 @@ class ScreenGalleryTest {
             RequestDetailRoute(onBack = {}, viewModel = vm)
         }
 
+    /**
+     * MOTION-01: [content] with the "it worked" snackbar held on top, where the app's own host shows it
+     * (the bottom of the window, above the navigation bar; on a request page it covers the bar for a few seconds).
+     */
+    private fun withSuccess(@StringRes text: Int, content: @Composable () -> Unit) =
+        @Composable {
+            val host = remember { SnackbarHostState() }
+            val message = stringResource(text)
+            LaunchedEffect(Unit) { host.showSnackbar(SuccessVisuals(message, SnackbarDuration.Indefinite)) }
+            Box(Modifier.fillMaxSize()) {
+                content()
+                SnackbarHost(host, Modifier.align(Alignment.BottomCenter).navigationBarsPadding()) { LLSnackbar(it) }
+            }
+        }
+
     @Test
     fun requestDetails() {
         val loaded: Steps.() -> Unit = { waitForText(hospital) }
@@ -815,6 +831,9 @@ class ScreenGalleryTest {
             // PERF-01: the page opens right after posting and shows the alert's progress.
             Shot("details-requester-alerting", prepare = loaded, content = detail(requester, unalerted.copy(createdAt = now), alert = AlertStatus.Sending)),
             Shot("details-requester-alerted", prepare = loaded, content = detail(requester, unalerted, alert = AlertStatus.Sent(1))),
+            // MOTION-01: "Request posted" with its check, on the page the new request opens on.
+            Shot("success-snackbar-posted", prepare = loaded,
+                content = withSuccess(R.string.success_request_posted, detail(requester, unalerted.copy(createdAt = now), alert = AlertStatus.Sending))),
             // STATE-03 from the request itself (D's re-audit): alerted district-wide, and held back by the daily limit.
             Shot("details-requester-alerted-district", prepare = loaded, content = detail(requester, detailRequest.copy(fanoutTier = 3))),
             Shot("details-requester-held-back", prepare = loaded, content = detail(requester, unalerted.copy(nextTierAt = BloodRequest.ALERT_NEVER_DUE))),
@@ -950,13 +969,8 @@ class ScreenGalleryTest {
             Shot("settings-list-me-dialog", overlay = true, prepare = { tap(R.string.settings_list_me) }, content = screen(state.copy(listed = false, available = false))),
             // N5: the check after tapping Sign out in the corner, and the resting line under Ready to donate.
             Shot("settings-sign-out-dialog", overlay = true, prepare = { tap(R.string.action_sign_out) }, content = screen(state)),
-            // MOTION-01: the "it worked" snackbar, with its check (held on screen for the picture).
-            Shot("success-snackbar") {
-                val host = remember { SnackbarHostState() }
-                val text = stringResource(R.string.success_request_posted)
-                LaunchedEffect(Unit) { host.showSnackbar(SuccessVisuals(text, SnackbarDuration.Indefinite)) }
-                Box(Modifier.fillMaxSize()) { SnackbarHost(host, Modifier.align(Alignment.BottomCenter)) { LLSnackbar(it) } }
-            },
+            // MOTION-01: the "it worked" snackbar after "List me" (held on screen for the picture).
+            Shot("success-snackbar-listed", content = withSuccess(R.string.success_listed, screen(state))),
             Shot("settings-resting", content = screen(state.copy(alertsAgainOn = now.plus(Duration.ofDays(80))))),
             Shot("notification-settings") { NotificationPrefsScreen(NotificationPrefsUiState(loaded = true), systemEnabled = true, onChange = {}, onOpenSystemSettings = {}, onBack = {}) },
             Shot("notification-settings-phone-off") {

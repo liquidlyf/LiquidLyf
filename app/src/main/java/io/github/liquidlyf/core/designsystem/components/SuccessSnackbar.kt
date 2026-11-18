@@ -7,6 +7,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +68,8 @@ fun LLSnackbar(data: SnackbarData) {
     }
     val pop = remember { Animatable(0.4f) }
     LaunchedEffect(data) { pop.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) }
-    Snackbar {
+    // The same 12 dp margin Material's Snackbar(data) gives the plain ones, so both float alike.
+    Snackbar(Modifier.padding(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Icon(
                 painterResource(LLIcons.CheckCircle),
