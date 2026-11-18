@@ -5,14 +5,19 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +33,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -48,14 +54,7 @@ fun SuspendedScreen(onSignOut: () -> Unit) {
     val links = rememberSafeIntentLauncher()
     val subject = stringResource(R.string.suspended_mail_subject)
     Surface(Modifier.fillMaxSize()) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(horizontal = screenGutter()),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        CentredScrollColumn {
             EmptyState(
                 icon = LLIcons.Block,
                 title = stringResource(R.string.suspended_title),
@@ -94,14 +93,7 @@ fun SigningOutDialog() {
 @Composable
 fun SessionProblemScreen(error: AppError, onRetry: () -> Unit, onSignOut: () -> Unit) {
     Surface(Modifier.fillMaxSize()) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(horizontal = screenGutter()),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        CentredScrollColumn {
             ErrorState(
                 onRetry = onRetry,
                 title = stringResource(R.string.session_problem_title),
@@ -110,6 +102,26 @@ fun SessionProblemScreen(error: AppError, onRetry: () -> Unit, onSignOut: () -> 
             )
             TextButton(onClick = onSignOut) { Text(stringResource(R.string.action_sign_out)) }
         }
+    }
+}
+
+/**
+ * A full-screen message, centred, that scrolls when it doesn't fit: in Bangla at 200% text the suspended
+ * screen's Sign out was pushed below the screen with no way to reach it (D's re-audit, part 2).
+ */
+@Composable
+private fun CentredScrollColumn(vertical: Dp = 0.dp, content: @Composable ColumnScope.() -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = maxHeight)
+                .padding(horizontal = screenGutter(), vertical = vertical),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            content = content,
+        )
     }
 }
 
@@ -124,14 +136,7 @@ fun needsNotificationPermission(granted: Boolean): Boolean = Build.VERSION.SDK_I
 fun NotificationPermissionScreen(onDone: () -> Unit) {
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onDone() }
     Surface(Modifier.fillMaxSize()) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(horizontal = screenGutter(), vertical = Spacing.lg),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        CentredScrollColumn(vertical = Spacing.lg) {
             Icon(
                 painterResource(LLIcons.Notifications),
                 contentDescription = null,
