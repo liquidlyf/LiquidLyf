@@ -1,6 +1,7 @@
 package io.github.liquidlyf.feature.request.detail
 
 import android.content.ClipData
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -49,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipEntry
@@ -768,6 +772,7 @@ private fun blockText(block: OfferBlock): String = when (block) {
 // ---- Requester ----
 
 /** FLOW-11: the offers right after the summary, the reason the requester opens the page. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun OffersSection(
     state: RequestDetailUiState,
@@ -782,8 +787,24 @@ private fun OffersSection(
     val r = state.request ?: return
     SectionHeader(stringResource(R.string.detail_offers))
     if (state.responses.isEmpty()) AlertLine(r, state)
+    // VT-26: the first offer waiting for the requester (Confirm, or Mark donated) comes fully into
+    // view once; at 130% its buttons sat under the Share bar ("Karim's box looks cut off").
+    val waiting = state.responses.firstOrNull { StatusTransitions.requesterNext(it.status).any { s -> s == ResponseStatus.CONFIRMED || s == ResponseStatus.DONATED } }
+    val waitingView = remember { BringIntoViewRequester() }
+    var shownWaiting by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(waiting?.donorUid) {
+        val uid = waiting?.donorUid ?: return@LaunchedEffect
+        if (shownWaiting != uid) {
+            shownWaiting = uid
+            withFrameNanos { }
+            runCatching { waitingView.bringIntoView() }
+        }
+    }
     state.responses.forEach { response ->
-        OfferCard(response, enabled = !state.working, onCall, onConfirm, onDecline, onDonated, onReportPerson, onBlockPerson)
+        OfferCard(
+            response, enabled = !state.working, onCall, onConfirm, onDecline, onDonated, onReportPerson, onBlockPerson,
+            modifier = if (response.donorUid == waiting?.donorUid) Modifier.bringIntoViewRequester(waitingView) else Modifier,
+        )
     }
     // FLOW-06 part 1: don't only wait for offers; ask listed donors near the hospital directly.
     if (r.status == RequestStatus.OPEN) {
@@ -868,11 +889,12 @@ private fun OfferCard(
     onDonated: (DonorResponse) -> Unit,
     onReportPerson: (DonorResponse) -> Unit,
     onBlockPerson: (DonorResponse) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val next = StatusTransitions.requesterNext(response.status)
     var menuOpen by remember { mutableStateOf(false) }
     val name = shownName(response.donorDisplayName)
-    LLCard(Modifier.fillMaxWidth()) {
+    LLCard(modifier.fillMaxWidth()) {
         Column(Modifier.padding(start = Spacing.md, top = Spacing.sm, end = Spacing.xs, bottom = Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 BloodGroupBadge(response.donorBloodGroup, modifier = Modifier.padding(top = Spacing.xxs), size = 40.dp)

@@ -11,11 +11,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -79,6 +81,22 @@ fun <K : Any> keyboardDoneShows(anchors: ErrorAnchors<K>, next: K): KeyboardActi
 }
 
 private const val KEYBOARD_GONE_MS = 1_000L
+
+/**
+ * VT-26: when [answer] changes (not when the screen opens), brings [next] into view, so the next
+ * question isn't left half under the pinned bar (at 130% "Not now" showed only half a circle).
+ */
+@Composable
+fun <K : Any> ShowNextOnAnswer(anchors: ErrorAnchors<K>, answer: Any?, next: K) {
+    var last by remember { mutableStateOf(answer) }
+    LaunchedEffect(answer) {
+        if (answer != last) {
+            last = answer
+            withFrameNanos { } // the new content is laid out first
+            anchors.show(next)
+        }
+    }
+}
 
 @Composable
 fun <K : Any> rememberErrorAnchors(): ErrorAnchors<K> = remember { ErrorAnchors() }

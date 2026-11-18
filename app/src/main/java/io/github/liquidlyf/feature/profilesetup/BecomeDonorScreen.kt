@@ -56,6 +56,7 @@ import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.NumberPromise
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
+import io.github.liquidlyf.core.designsystem.components.ShowNextOnAnswer
 import io.github.liquidlyf.core.designsystem.components.StepContent
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.isLargeText
@@ -281,6 +282,10 @@ private fun HistoryStep(state: BecomeDonorUiState, anchors: ErrorAnchors<SetupFi
     // VT-21: donors are found by area; say which one, and where it comes from.
     val place = d.district?.let { district -> state.geo?.placeLabel(district, d.upazila, currentAppLocale()) }
     place?.let { IconLine(LLIcons.Location, stringResource(R.string.become_donor_area, it)) }
+    // VT-26: answering the last donation, then "Yes, list me", brings the List me question (and the
+    // switch it adds) fully into view.
+    ShowNextOnAnswer(anchors, d.neverDonated to d.lastDonationEpochDay, SetupField.CONSENT)
+    ShowNextOnAnswer(anchors, d.listed, SetupField.CONSENT)
     Column(Modifier.errorAnchor(anchors, SetupField.CONSENT), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         Text(stringResource(R.string.setup_consent_question, stringResource(knownGroup.labelRes)), style = MaterialTheme.typography.titleMedium)
         NumberPromise() // VT-14: the same words as everywhere
@@ -292,13 +297,13 @@ private fun HistoryStep(state: BecomeDonorUiState, anchors: ErrorAnchors<SetupFi
             isError = SetupField.CONSENT in state.errors,
         )
         FieldError(SetupField.CONSENT in state.errors, stringResource(R.string.error_consent_choice))
-    }
-    if (d.listed == true) {
-        LLSwitchRow(
-            title = stringResource(R.string.setup_available),
-            checked = d.available,
-            onCheckedChange = { v -> onEdit { copy(available = v) } },
-        )
+        if (d.listed == true) {
+            LLSwitchRow(
+                title = stringResource(R.string.setup_available),
+                checked = d.available,
+                onCheckedChange = { v -> onEdit { copy(available = v) } },
+            )
+        }
     }
 }
 

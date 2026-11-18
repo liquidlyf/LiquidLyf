@@ -70,6 +70,7 @@ import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.DropdownField
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
+import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
@@ -186,7 +187,22 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
     var filtersOpen by rememberSaveable { mutableStateOf(true) }
     // FLOW-06 part 1: a search from a request page shows its results, with the filters folded.
     LaunchedEffect(state.handedSearches) { if (state.handedSearches > 0) filtersOpen = false }
-    Scaffold(topBar = { LLTopBar(title = stringResource(R.string.nav_donors)) }) { padding ->
+    // VT-26: with large text the filters are taller than the screen and Search was below the fold
+    // ("where is the button to search?"): it's pinned while they're open, like Request blood's bar.
+    val searchPinned = isLargeText() && state.enabled == true && (filtersOpen || state.applied == null)
+    Scaffold(
+        topBar = { LLTopBar(title = stringResource(R.string.nav_donors)) },
+        bottomBar = {
+            if (searchPinned) {
+                LLBottomBar(
+                    primaryText = stringResource(R.string.action_search),
+                    onPrimary = { filtersOpen = false; actions.onSearch() },
+                    primaryEnabled = state.filters.ready && !state.searching,
+                    loading = state.searching,
+                )
+            }
+        },
+    ) { padding ->
         when (state.enabled) {
             null -> {
                 LoadingState(Modifier.padding(padding).padding(horizontal = screenGutter(), vertical = Spacing.md))
@@ -215,7 +231,7 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
                 if (state.hasOpenRequest == false) item(key = "post-first") { PostFirstCard(actions.onCreateRequest) }
                 item {
                     if (filtersOpen || state.applied == null) {
-                        FiltersCard(state, locale, actions, onSearch = { filtersOpen = false; actions.onSearch() })
+                        FiltersCard(state, locale, actions, onSearch = { filtersOpen = false; actions.onSearch() }, showSearch = !searchPinned)
                     } else {
                         FiltersSummary(state, locale, onChange = { filtersOpen = true })
                     }
@@ -274,7 +290,7 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FiltersCard(state: FindDonorsUiState, locale: AppLocale, actions: FindDonorsActions, onSearch: () -> Unit) {
+private fun FiltersCard(state: FindDonorsUiState, locale: AppLocale, actions: FindDonorsActions, onSearch: () -> Unit, showSearch: Boolean) {
     val f = state.filters
     val geo = state.geo
     LLCard(Modifier.fillMaxWidth()) {
@@ -320,13 +336,15 @@ private fun FiltersCard(state: FindDonorsUiState, locale: AppLocale, actions: Fi
             if (f.groups.isEmpty()) {
                 Text(stringResource(R.string.donors_pick_group), style = MaterialTheme.typography.bodySmall)
             }
-            LLPrimaryButton(
-                text = stringResource(R.string.action_search),
-                onClick = onSearch,
-                enabled = f.ready && !state.searching,
-                loading = state.searching,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            if (showSearch) {
+                LLPrimaryButton(
+                    text = stringResource(R.string.action_search),
+                    onClick = onSearch,
+                    enabled = f.ready && !state.searching,
+                    loading = state.searching,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }
