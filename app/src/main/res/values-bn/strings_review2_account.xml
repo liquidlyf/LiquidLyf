@@ -66,7 +66,7 @@
     <string name="action_sign_in">সাইন ইন</string>
     <string name="action_signing_in">সাইন ইন হচ্ছে…</string>
     <string name="action_forgot_password">পাসওয়ার্ড ভুলে গেছেন?</string>
-    <string name="reset_link_sent_to">নতুন পাসওয়ার্ড দিতে %1$s ঠিকানায় একটি লিংক পাঠানো হয়েছে।</string>
+    <string name="reset_link_sent_to">আমরা %1$s ঠিকানায় একটি লিংক পাঠিয়েছি। লিংকটি খুলে নতুন পাসওয়ার্ড দিন।</string>
     <string name="action_create_account">অ্যাকাউন্ট খুলুন</string>
     <string name="action_creating_account">অ্যাকাউন্ট খোলা হচ্ছে…</string>
     <string name="sign_in_no_account">LiquidLyf-এ নতুন?</string>
@@ -184,7 +184,7 @@
     <string name="settings_account">অ্যাকাউন্ট</string>
     <string name="settings_list_me">রক্তদাতা হিসেবে তালিকায় নাম দিন</string>
     <string name="settings_list_me_needs_group">আগে \"প্রোফাইল এডিট করুন\" থেকে আপনার রক্তের গ্রুপ যোগ করুন।</string>
-    <string name="settings_add_group_why">রক্তদাতা হিসেবে তালিকায় নাম দিতে লাগবে</string>
+    <string name="settings_add_group_why">রক্তদাতা হিসেবে তালিকায় নাম দিতে এটি লাগবে</string>
     <string name="setup_no_group_later">রক্তের গ্রুপ ছাড়া রক্তদাতা হিসেবে তালিকায় নাম দেওয়া যায় না। গ্রুপটি এখনই বেছে নিন, অথবা জানার পর \"প্রোফাইল এডিট করুন\" থেকে যোগ করুন।</string>
     <string name="list_me_title">রক্তদাতা হিসেবে তালিকায় নাম দেবেন?</string>
 
@@ -192,7 +192,7 @@
     <string name="title_edit_profile">প্রোফাইল এডিট করুন</string>
     <string name="profile_saved">প্রোফাইল সেভ হয়েছে।</string>
     <string name="confirm_blood_group_title">রক্তের গ্রুপ বদলাবেন?</string>
-    <string name="confirm_blood_group_from_to">%1$s থেকে %2$s।</string>
+    <string name="confirm_blood_group_from_to">%1$s থেকে %2$s হবে।</string>
     <string name="confirm_blood_group_body">এতে আপনি কোন অনুরোধ দেখবেন এবং কে আপনাকে রক্ত দিতে অনুরোধ করতে পারবেন, তা বদলে যাবে। রক্তের গ্রুপ পরীক্ষার ফলের সঙ্গে এটি মেলে কি না, নিশ্চিত হয়ে নিন।</string>
     <string name="title_change_password">পাসওয়ার্ড বদলান</string>
     <string name="label_current_password">বর্তমান পাসওয়ার্ড</string>
