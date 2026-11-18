@@ -15,13 +15,14 @@ import io.github.liquidlyf.core.designsystem.Spacing
  * VT-14: what happens to a donor's phone number, in the same words everywhere ("About you",
  * Become a donor's List me step, the offer sheet), in readable text with a lock. As small grey
  * lines worded two ways, one tester thought donors' numbers are public and another found
- * "never shown" and "goes to the requester" contradictory.
+ * "never shown" and "goes to the requester" contradictory. "About you", which requesters see too,
+ * passes its own wording that also covers a request's contact (A41 line 18).
  */
 @Composable
-fun NumberPromise(modifier: Modifier = Modifier) {
+fun NumberPromise(modifier: Modifier = Modifier, text: String = stringResource(R.string.number_promise)) {
     val style = MaterialTheme.typography.bodyMedium
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         FirstLineIcon(LLIcons.Lock, style, tint = MaterialTheme.colorScheme.onSurface)
-        Text(stringResource(R.string.number_promise), style = style)
+        Text(text, style = style)
     }
 }

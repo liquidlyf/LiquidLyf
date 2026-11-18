@@ -80,7 +80,7 @@
     </plurals>
     <string name="request_needed_by">%1$s দরকার</string>
     <string name="request_needed_on">দরকার: %1$s</string>
-    <string name="request_tag_yours">আপনার</string>
+    <string name="request_tag_yours">আপনার অনুরোধ</string>
     <string name="request_tag_money">টাকার কথা আছে · রক্তের জন্য কখনো টাকা দেবেন না</string>
     <string name="request_was_needed_by">%1$s-এর মধ্যে দরকার ছিল</string>
     <string name="offline_banner">আপনি অফলাইনে আছেন। সেভ করা তথ্য দেখানো হচ্ছে।</string>
@@ -170,10 +170,10 @@
     <string name="create_urgency_planned_help">নির্দিষ্ট দিনের জন্য, যেমন আগে থেকে ঠিক করা অপারেশন বা থ্যালাসেমিয়া রোগীর রক্ত নেওয়া।</string>
     <string name="create_urgency_critical_time">৬ ঘণ্টার মধ্যে</string>
     <string name="create_urgency_urgent_time">২৪ ঘণ্টার মধ্যে</string>
-    <string name="create_urgency_planned_time">যে দিন বেছে নেবেন</string>
+    <string name="create_urgency_planned_time">আপনার বেছে নেওয়া দিনে</string>
     <plurals name="needed_within_hours">
-        <item quantity="one">%1$d ঘণ্টার মধ্যে দরকার (%2$s-এর মধ্যে)</item>
-        <item quantity="other">%1$d ঘণ্টার মধ্যে দরকার (%2$s-এর মধ্যে)</item>
+        <item quantity="one">%1$d ঘণ্টার মধ্যে দরকার (%2$s-এর আগে)</item>
+        <item quantity="other">%1$d ঘণ্টার মধ্যে দরকার (%2$s-এর আগে)</item>
     </plurals>
     <string name="create_error_urgency">কত তাড়াতাড়ি রক্ত দরকার, বেছে নিন।</string>
     <string name="create_pick_time">তারিখ ও সময় বেছে নিন</string>
@@ -246,7 +246,7 @@
     <string name="detail_no_offers_unsent">এখনো কেউ সাড়া দেননি। অনুরোধ পোস্ট হলে কাছাকাছি যাঁদের গ্রুপ মেলে, সেই রক্তদাতাদের অ্যালার্ট পাঠানো হবে।</string>
     <string name="detail_no_offers">এই অনুরোধে কেউ সাড়া দেননি।</string>
     <string name="detail_call_donor">%1$s-কে কল করুন</string>
-    <string name="detail_confirm">আসছেন, নিশ্চিত করুন</string>
+    <string name="detail_confirm">আসছেন বলে নিশ্চিত করুন</string>
     <string name="detail_decline">নাকচ করুন</string>
     <string name="detail_decline_title_named">%1$s-এর সাড়া নাকচ করবেন?</string>
     <string name="detail_decline_body">রক্তদাতাকে জানানো হবে যে এই অনুরোধে আপনার তাঁকে দরকার নেই।</string>

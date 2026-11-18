@@ -146,7 +146,8 @@ fun ProfileSetupScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Done),
                     fieldModifier = Modifier.errorAnchor(anchors, SetupField.PHONE, textField = true),
                 )
-                NumberPromise() // VT-14
+                // VT-14, A41 line 18: for everyone here, so it covers a request's contact too.
+                NumberPromise(text = stringResource(R.string.number_promise_everyone))
                 Column(Modifier.errorAnchor(anchors, SetupField.LOCATION), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     Text(
                         stringResource(R.string.setup_location_title),

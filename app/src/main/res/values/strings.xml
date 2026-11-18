@@ -284,6 +284,7 @@
     <string name="error_last_donation_required">Choose Never, or pick the date.</string>
     <string name="setup_consent_question">List me as a donor, so people nearby who need %1$s blood can find me and alert me</string>
     <string name="number_promise">Your number is never on any list. It goes only to the person whose request you offer on.</string>
+    <string name="number_promise_everyone">Your number is never on any list. It\'s shared only on a request: with donors who offer on yours, or with the person whose request you offer on.</string>
     <string name="become_donor_area">Your area: %1$s (from your profile)</string>
     <string name="consent_yes">Yes, list me</string>
     <string name="consent_not_now">Not now</string>

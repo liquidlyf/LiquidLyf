@@ -70,7 +70,7 @@
     <string name="action_create_account">অ্যাকাউন্ট খুলুন</string>
     <string name="action_creating_account">অ্যাকাউন্ট খোলা হচ্ছে…</string>
     <string name="sign_in_no_account">LiquidLyf-এ নতুন?</string>
-    <string name="sign_in_new_create_account">LiquidLyf-এ নতুন? অ্যাকাউন্ট তৈরি করুন</string>
+    <string name="sign_in_new_create_account">LiquidLyf-এ নতুন? অ্যাকাউন্ট খুলুন</string>
     <string name="sign_up_have_account">আগে থেকেই অ্যাকাউন্ট আছে?</string>
     <string name="error_email_required">আপনার ইমেইল দিন।</string>
     <string name="error_password_required">আপনার পাসওয়ার্ড দিন।</string>
@@ -165,6 +165,7 @@
     <string name="error_last_donation_required">\"কখনো না\" বেছে নিন, অথবা তারিখ দিন।</string>
     <string name="setup_consent_question">রক্তদাতা হিসেবে তালিকায় আমার নাম দিন, যাতে কাছাকাছি যাঁদের %1$s রক্ত দরকার, তাঁরা আমাকে খুঁজে পান এবং অ্যালার্ট পাঠাতে পারেন</string>
     <string name="number_promise">আপনার নম্বর কোনো তালিকায় থাকে না। আপনি যাঁর অনুরোধে সাড়া দেবেন, শুধু তিনিই নম্বরটি পাবেন।</string>
+    <string name="number_promise_everyone">আপনার নম্বর কোনো তালিকায় থাকে না। এটি শুধু অনুরোধের সময় শেয়ার হয়: আপনার অনুরোধে সাড়া দেওয়া রক্তদাতাদের সঙ্গে, অথবা আপনি যাঁর অনুরোধে সাড়া দেবেন তাঁর সঙ্গে।</string>
     <string name="become_donor_area">আপনার এলাকা: %1$s (আপনার প্রোফাইল থেকে)</string>
     <string name="consent_yes">হ্যাঁ, তালিকায় নাম দিন</string>
     <string name="consent_not_now">এখন না</string>
