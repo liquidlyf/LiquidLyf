@@ -14,6 +14,7 @@ Design: `project-plan` doc 07 §5 + §9 and doc 10 §4. Where this folder and th
 | `rules-tests/` | vitest + `@firebase/rules-unit-testing`, run on the Firestore emulator |
 | `seed/seed.mjs` | Synthetic demo data (source of truth) |
 | `seed/emulator-data/` | The committed emulator snapshot, generated from `seed.mjs` |
+| `seed/usertest.mjs` | Test-day helpers for the user test, emulators only (see [User test](#user-test-test-day)) |
 | `seed/hospitals.csv`, `seed/hospitals.mjs` | The real hospital list (ODbL) and the script that writes `seed/hospitals.json` for the app and the website. See [seed/README.md](seed/README.md#the-real-hospital-list-hospitalscsv) |
 | `../backend/shared/blood-compatibility.json` | Compatibility test vectors, shared with the Worker and the Android app |
 
@@ -23,6 +24,7 @@ You need **Node 22.12+** and **Java 21**. Android Studio's bundled JBR works:
 
 ```bash
 export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"   # Git Bash on Windows
+export PATH="$JAVA_HOME/bin:$PATH"                               # if an older java is first on PATH
 ```
 
 ```bash
@@ -49,6 +51,20 @@ For the `demo` app on a USB phone: `adb reverse tcp:8085 tcp:8085` and `adb reve
 ### Demo accounts
 
 See [seed/README.md](seed/README.md). Every password is `password123`.
+
+### User test (test day)
+
+Two helpers for the 5-person user test (`seed/usertest.mjs`). Run them in a second terminal while `npm run emulators` runs:
+
+```bash
+npm run usertest:offer                     # Demo Karim (B+) offers on the newest open request a tester posted
+npm run usertest:verify p1@example.test    # marks that tester's email as verified
+```
+
+- **Testers are `p1@example.test` … `p5@example.test`.** `usertest:offer` finds their newest open request. Karim then offers on it ("আমি এক ঘণ্টার মধ্যে আসতে পারব।"), signed in as Karim, with the same three writes as the app and through the rules. The request page shows it within seconds. It prints which request it used, or why it can't, for example: no tester yet, no open request, Karim already offered, or the request doesn't accept B+.
+- **`usertest:verify`** replaces Ctrl+clicking the link in the emulator window. Then the tester taps "I've verified".
+- **Emulators only.** Both helpers refuse to run unless they reach an emulator on this PC (127.0.0.1 or localhost) for `demo-liquidlyf`. Pointing them at a real project or host fails. They use no login and no key. `rules-tests/usertest.test.js` checks this.
+- **Run `npm run seed` between testers.** Each new tester then starts from clean data, with no offer from Karim.
 
 ## The write contract (for the app)
 
