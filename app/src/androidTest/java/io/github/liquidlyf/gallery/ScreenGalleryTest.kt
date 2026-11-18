@@ -50,6 +50,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
@@ -462,6 +463,14 @@ class ScreenGalleryTest {
         fun waitForStart(@StringRes id: Int) = waitForText(str(id).substringBefore("%").trim().ifEmpty { str(id).substringAfterLast("$").drop(1).trim() })
 
         fun sheetWith(@StringRes id: Int): SemanticsMatcher = hasAnyDescendant(hasText(str(id), substring = true))
+
+        /** VT-13: focus the screen's last text field, then press the keyboard's Done. */
+        fun doneOnLastField() {
+            compose.onAllNodes(hasSetTextAction()).onLast().performSemanticsAction(SemanticsActions.OnClick)
+            Thread.sleep(KEYBOARD_MS)
+            compose.onAllNodes(hasSetTextAction()).onLast().performImeAction()
+            Thread.sleep(KEYBOARD_MS)
+        }
     }
 
     // ---- made-up people and requests (no real names or numbers) ----
@@ -562,7 +571,7 @@ class ScreenGalleryTest {
             }
         }
         val donorStep = { step: Int, d: SetupDraft, errors: Set<SetupField> ->
-            @Composable { BecomeDonorScreen(BecomeDonorUiState(d.copy(step = step), errors = errors), {}, {}, {}) }
+            @Composable { BecomeDonorScreen(BecomeDonorUiState(d.copy(step = step), geo = geo, errors = errors), {}, {}, {}) }
         }
         val empty = SetupDraft(uid = "me")
         gallery(
@@ -591,6 +600,10 @@ class ScreenGalleryTest {
                 SignUpScreen(SignUpUiState(name = "Nusrat Jahan", email = "nusrat@example.test", password = "secret12", consent = true, emailError = AppError.EmailInUse.messageRes),
                     {}, {}, {}, {}, {}, {}, onContinueWithGoogle = {})
             },
+            // VT-13: Done on the password closes the keyboard and shows the 18+ box.
+            Shot("sign-up-password-done", prepare = { doneOnLastField() }) {
+                SignUpScreen(SignUpUiState(name = "Nusrat Jahan", email = "nusrat@example.test", password = "secret12"), {}, {}, {}, {}, {}, {}, onContinueWithGoogle = {})
+            },
             Shot("verify-email-wait") { VerifyEmailScreen(VerifyEmailUiState(email = "nusrat@example.test", sender = SENDER, resendIn = 42), {}, {}, {}) },
             Shot("verify-email-can-resend") { VerifyEmailScreen(VerifyEmailUiState(email = "nusrat@example.test", sender = SENDER, resendIn = 0), {}, {}, {}) },
             Shot("forgot-password-empty") { ForgotPasswordScreen(ForgotPasswordUiState(sender = SENDER), {}, {}, {}) },
@@ -606,6 +619,8 @@ class ScreenGalleryTest {
             Shot("become-donor-2-empty", content = donorStep(1, empty, emptySet())),
             Shot("become-donor-2-errors", content = donorStep(1, empty, SetupField.entries.toSet())),
             Shot("become-donor-2-filled", content = donorStep(1, draft, emptySet())),
+            // VT-13: Done on the year of birth shows the weight question.
+            Shot("become-donor-2-year-done", prepare = { doneOnLastField() }, content = donorStep(1, draft.copy(weightOk = null), emptySet())),
             Shot("become-donor-3-empty", content = donorStep(2, empty.copy(bloodGroup = "B_POS"), emptySet())),
             Shot("become-donor-3-errors", content = donorStep(2, empty.copy(bloodGroup = "B_POS"), SetupField.entries.toSet())),
             Shot("become-donor-3-filled", content = donorStep(2, draft.copy(listed = true), emptySet())),

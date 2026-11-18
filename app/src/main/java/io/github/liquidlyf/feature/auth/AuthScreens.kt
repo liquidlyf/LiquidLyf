@@ -83,6 +83,7 @@ import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.StackedLogo
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
+import io.github.liquidlyf.core.designsystem.components.keyboardDoneShows
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.AppLocale
@@ -166,7 +167,8 @@ internal fun FormError(@StringRes error: Int?) {
 
 @Composable
 fun SignInRoute(
-    onCreateAccount: () -> Unit,
+    /** With the email typed so far, for Create account (VT-11). */
+    onCreateAccount: (email: String) -> Unit,
     onForgotPassword: () -> Unit,
     viewModel: SignInViewModel = hiltViewModel(),
     language: LanguageViewModel = hiltViewModel(),
@@ -183,7 +185,7 @@ fun SignInRoute(
     }
     val onGoogle = rememberContinueWithGoogle(viewModel::onGoogleStarted, viewModel::onGoogleResult)
     SignInScreen(
-        state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, onCreateAccount, onForgotPassword, onGoogle,
+        state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, { onCreateAccount(state.email.trim()) }, onForgotPassword, onGoogle,
         onLanguageChange = language::set,
     )
 }
@@ -280,6 +282,11 @@ fun SignInScreen(
             keyboardActions = KeyboardActions(onDone = { onSignIn() }),
         )
         FormError(state.formError) // P2-13: right under the fields it's about
+        // VT-11: a new user who typed into Sign in gets "Wrong email or password", which can't say
+        // "no account" (Firebase hides that on purpose): offer Create account right there.
+        if (state.formError == R.string.error_invalid_credentials) {
+            EdgeTextButton(stringResource(R.string.sign_in_new_create_account), dropUnlessResumed(block = onCreateAccount), enabled = !state.loading)
+        }
         EdgeTextButton(stringResource(R.string.action_forgot_password), dropUnlessResumed(block = onForgotPassword), enabled = !state.loading)
         // A flow row: with large text the button goes under the question instead of being squeezed.
         FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
@@ -300,10 +307,15 @@ private enum class SignUpField { NAME, EMAIL, PASSWORD, CONSENT }
 fun SignUpRoute(
     onBack: () -> Unit,
     onSignInWithEmail: (String) -> Unit = { onBack() },
+    /** The email typed on Sign in (VT-11: P2 had to type it again). */
+    prefillEmail: String = "",
     viewModel: SignUpViewModel = hiltViewModel(),
     language: LanguageViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        if (prefillEmail.isNotBlank() && state.email.isEmpty()) viewModel.onEmailChange(prefillEmail)
+    }
     SignUpScreen(
         state = state,
         onNameChange = viewModel::onNameChange,
@@ -392,6 +404,7 @@ fun SignUpScreen(
             isPassword = true,
             contentType = ContentType.NewPassword,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+            keyboardActions = keyboardDoneShows(anchors, SignUpField.CONSENT), // VT-13: then the 18+ box
             fieldModifier = Modifier.errorAnchor(anchors, SignUpField.PASSWORD, textField = true),
         )
         Row(
@@ -456,14 +469,14 @@ fun VerifyEmailScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        // VT-12: opening the email is the next step, so it's the main button; coming back checks by
+        // itself (FLOW-09). "I've verified" stays as the second way.
         LLPrimaryButton(
-            text = stringResource(R.string.action_i_have_verified),
-            onClick = onCheckVerified,
-            loading = state.checking,
-            loadingText = stringResource(R.string.action_checking),
+            text = stringResource(R.string.action_open_email_app),
+            onClick = { intents.openEmailApp() },
         )
-        OutlinedButton(onClick = { intents.openEmailApp() }, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.action_open_email_app))
+        OutlinedButton(onClick = onCheckVerified, enabled = !state.checking, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
+            ButtonLabel(stringResource(if (state.checking) R.string.action_checking else R.string.action_i_have_verified))
         }
         TextButton(onClick = onResend, enabled = state.resendIn == 0, modifier = Modifier.fillMaxWidth()) {
             Text(

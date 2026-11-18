@@ -28,6 +28,7 @@ object LLIcons {
     val Refresh = R.drawable.ic_refresh
     val Check = R.drawable.ic_check
     val Visibility = R.drawable.ic_visibility
+    val Lock = R.drawable.ic_lock
     val VisibilityOff = R.drawable.ic_visibility_off
     val Palette = R.drawable.ic_palette
     val Language = R.drawable.ic_language

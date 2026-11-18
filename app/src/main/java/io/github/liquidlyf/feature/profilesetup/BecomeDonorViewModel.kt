@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.geo.BdGeo
+import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
@@ -35,6 +37,8 @@ import javax.inject.Inject
 
 data class BecomeDonorUiState(
     val draft: SetupDraft,
+    /** For "Your area: …" on the List me step (VT-21). */
+    val geo: BdGeo? = null,
     val errors: Set<SetupField> = emptySet(),
     /** Counts failed Next taps: each one brings the first error into view (FLOW-04). */
     val errorAttempt: Int = 0,
@@ -68,6 +72,7 @@ class BecomeDonorViewModel @Inject constructor(
     private val session: SessionManager,
     private val profiles: ProfileRepository,
     private val clock: Clock,
+    geoRepository: GeoRepository,
 ) : ViewModel() {
 
     private val profile: UserProfile? = (session.state.value as? SessionState.Ready)?.profile
@@ -77,6 +82,13 @@ class BecomeDonorViewModel @Inject constructor(
 
     private val events = Channel<BecomeDonorEvent>(Channel.BUFFERED)
     val eventFlow: Flow<BecomeDonorEvent> = events.receiveAsFlow()
+
+    init {
+        viewModelScope.launch {
+            val geo = geoRepository.geo()
+            state.update { it.copy(geo = geo) }
+        }
+    }
 
     /** Any answer: clears the errors, and is kept for rotation and process death. */
     fun edit(change: SetupDraft.() -> SetupDraft) {

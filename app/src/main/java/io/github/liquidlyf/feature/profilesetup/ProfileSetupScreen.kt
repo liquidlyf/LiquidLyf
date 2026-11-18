@@ -51,6 +51,7 @@ import io.github.liquidlyf.core.designsystem.components.FormLoadingState
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
+import io.github.liquidlyf.core.designsystem.components.NumberPromise
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
@@ -120,6 +121,12 @@ fun ProfileSetupScreen(
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
                 Text(stringResource(R.string.setup_short_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // D1: say why there's no blood group or age here. VT-15: up top, where it's read; at
+                // the end it peeked under Continue and no one read it.
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    Icon(painterResource(LLIcons.Info), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                    Text(stringResource(R.string.setup_donor_later), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 LLTextField(
                     value = d.fullName,
                     onValueChange = { v -> onEdit { copy(fullName = v) } },
@@ -138,6 +145,7 @@ fun ProfileSetupScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Done),
                     fieldModifier = Modifier.errorAnchor(anchors, SetupField.PHONE, textField = true),
                 )
+                NumberPromise() // VT-14
                 Column(Modifier.errorAnchor(anchors, SetupField.LOCATION), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                     Text(
                         stringResource(R.string.setup_location_title),
@@ -157,11 +165,6 @@ fun ProfileSetupScreen(
                         isError = SetupField.LOCATION in state.errors,
                     )
                     FieldError(SetupField.LOCATION in state.errors, stringResource(R.string.error_location_required))
-                }
-                // D1: say why there's no blood group or age here.
-                Row(Modifier.padding(top = Spacing.xs), horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    Icon(painterResource(LLIcons.Info), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-                    Text(stringResource(R.string.setup_donor_later), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 if (state.needsTerms) TermsBlock(d.termsAccepted, SetupField.TERMS in state.errors, anchors, onEdit)
                 FormError(state.formError)

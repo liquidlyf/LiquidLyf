@@ -69,6 +69,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
+import androidx.navigation.toRoute
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
@@ -382,15 +383,16 @@ private fun NavGraphBuilder.authGraph(navController: NavController) {
         composable<SignIn> { entry ->
             val prefill by entry.savedStateHandle.getStateFlow<String?>(PREFILL_EMAIL, null).collectAsStateWithLifecycle()
             SignInRoute(
-                onCreateAccount = { navController.navigate(SignUp) { launchSingleTop = true } },
+                onCreateAccount = { email -> navController.navigate(SignUp(email)) { launchSingleTop = true } },
                 onForgotPassword = { navController.navigate(ForgotPassword) { launchSingleTop = true } },
                 prefillEmail = prefill,
                 onPrefillUsed = { entry.savedStateHandle[PREFILL_EMAIL] = null },
             )
         }
         // Back to the existing sign-in screen, never a second copy on top (BUG-031).
-        composable<SignUp> {
+        composable<SignUp> { entry ->
             SignUpRoute(
+                prefillEmail = entry.toRoute<SignUp>().email,
                 onBack = { navController.popBackStack<SignIn>(inclusive = false) },
                 // FORM-04: "already has an account": Sign in, with this email filled in.
                 onSignInWithEmail = { email ->

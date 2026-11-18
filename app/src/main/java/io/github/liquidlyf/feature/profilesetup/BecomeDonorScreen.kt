@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.birthYearErrorRes
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
@@ -48,15 +49,19 @@ import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.EdgeTextButton
 import io.github.liquidlyf.core.designsystem.components.ErrorAnchors
 import io.github.liquidlyf.core.designsystem.components.FieldError
+import io.github.liquidlyf.core.designsystem.components.IconLine
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
+import io.github.liquidlyf.core.designsystem.components.NumberPromise
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.StepContent
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.isLargeText
+import io.github.liquidlyf.core.designsystem.components.keyboardDoneShows
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
+import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.localDateText
 import io.github.liquidlyf.core.designsystem.screenGutter
@@ -199,6 +204,7 @@ private fun DetailsStep(state: BecomeDonorUiState, anchors: ErrorAnchors<SetupFi
         // Low 16: empty, too early and under 18 each say what's wrong.
         errorText = if (SetupField.BIRTH_YEAR in state.errors) birthYearErrorRes(d.birthYear, Instant.now())?.let { stringResource(it) } else null,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+        keyboardActions = keyboardDoneShows(anchors, SetupField.WEIGHT), // VT-13: then the weight question
         fieldModifier = Modifier.errorAnchor(anchors, SetupField.BIRTH_YEAR, textField = true),
     )
     Column(Modifier.errorAnchor(anchors, SetupField.WEIGHT), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
@@ -272,9 +278,12 @@ private fun HistoryStep(state: BecomeDonorUiState, anchors: ErrorAnchors<SetupFi
         }
         return
     }
+    // VT-21: donors are found by area; say which one, and where it comes from.
+    val place = d.district?.let { district -> state.geo?.placeLabel(district, d.upazila, currentAppLocale()) }
+    place?.let { IconLine(LLIcons.Location, stringResource(R.string.become_donor_area, it)) }
     Column(Modifier.errorAnchor(anchors, SetupField.CONSENT), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         Text(stringResource(R.string.setup_consent_question, stringResource(knownGroup.labelRes)), style = MaterialTheme.typography.titleMedium)
-        Text(stringResource(R.string.setup_consent_info), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        NumberPromise() // VT-14: the same words as everywhere
         // No answer is pre-selected: being listed is an explicit choice (PDPA 2026).
         ChoiceRow(
             options = listOf("yes" to stringResource(R.string.consent_yes), "no" to stringResource(R.string.consent_not_now)),

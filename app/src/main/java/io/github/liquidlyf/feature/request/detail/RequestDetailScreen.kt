@@ -97,6 +97,7 @@ import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.MAX_ACTION_WIDTH
 import io.github.liquidlyf.core.designsystem.components.NoticeTone
+import io.github.liquidlyf.core.designsystem.components.NumberPromise
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.RequestStatePill
 import io.github.liquidlyf.core.designsystem.components.SectionHeader
@@ -731,11 +732,13 @@ private fun OfferSheet(onDismiss: () -> Unit, onOffer: (String) -> Unit) {
                 onValueChange = { message = it.take(Validators.OFFER_MESSAGE_MAX) },
                 label = stringResource(R.string.detail_offer_message),
                 singleLine = false,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                // VT-17: Banglish stays as typed ("aj" became "AJ").
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrectEnabled = false),
             )
             // 8.3: the donor's part of the medical disclaimer.
             IconLine(LLIcons.Hospital, stringResource(R.string.detail_offer_disclaimer))
             Text(stringResource(R.string.detail_offer_consent), style = MaterialTheme.typography.bodyMedium)
+            NumberPromise() // VT-14
             LLPrimaryButton(
                 text = stringResource(R.string.detail_offer_confirm),
                 onClick = { onOffer(message) },

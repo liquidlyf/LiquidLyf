@@ -191,6 +191,7 @@
     <string name="action_create_account">Create account</string>
     <string name="action_creating_account">Creating account…</string>
     <string name="sign_in_no_account">New to LiquidLyf?</string>
+    <string name="sign_in_new_create_account">New to LiquidLyf? Create an account</string>
     <string name="sign_up_have_account">Already have an account?</string>
     <string name="error_email_required">Enter your email.</string>
     <string name="error_password_required">Enter your password.</string>
@@ -282,9 +283,10 @@
     <string name="last_donation_on">On %1$s</string>
     <string name="error_last_donation_required">Choose Never, or pick the date.</string>
     <string name="setup_consent_question">List me as a donor, so people nearby who need %1$s blood can find me and alert me</string>
+    <string name="number_promise">Your number is never on any list. It goes only to the person whose request you offer on.</string>
+    <string name="become_donor_area">Your area: %1$s (from your profile)</string>
     <string name="consent_yes">Yes, list me</string>
     <string name="consent_not_now">Not now</string>
-    <string name="setup_consent_info">Your phone number is never listed. It\'s shared with a requester only when you offer to donate.</string>
     <string name="error_consent_choice">Please choose: list me, or not now.</string>
     <string name="setup_available">Ready to donate now</string>
     <string name="settings_account">Account</string>

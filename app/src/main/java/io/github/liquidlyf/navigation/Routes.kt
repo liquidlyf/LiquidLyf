@@ -28,7 +28,8 @@ import kotlinx.serialization.Serializable
 // First run and sign-in (Phase 3)
 @Serializable data object Onboarding
 @Serializable data object SignIn
-@Serializable data object SignUp
+/** [email]: what was typed on Sign in, so it needn't be typed again (VT-11). */
+@Serializable data class SignUp(val email: String = "")
 @Serializable data object VerifyEmail
 @Serializable data object ForgotPassword
 @Serializable data object PhoneVerify

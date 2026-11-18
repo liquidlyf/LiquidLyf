@@ -1,6 +1,9 @@
 package io.github.liquidlyf.feature.profilesetup
 
 import androidx.lifecycle.SavedStateHandle
+import io.github.liquidlyf.core.data.geo.BdGeo
+import io.github.liquidlyf.core.data.geo.BdGeoParser
+import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.Gender
@@ -9,6 +12,7 @@ import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.testing.FakeProfileRepository
 import io.github.liquidlyf.testing.FakeSessionManager
 import io.github.liquidlyf.testing.TestData
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -49,7 +53,10 @@ class BecomeDonorViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun vm() = BecomeDonorViewModel(saved, session, profiles, Clock { TestData.NOW })
+    private val geo = BdGeoParser.parse(File("src/main/assets/bd-geo.json").readText())
+    private fun vm() = BecomeDonorViewModel(saved, session, profiles, Clock { TestData.NOW }, object : GeoRepository {
+        override suspend fun geo(): BdGeo = geo
+    })
 
     private fun TestScope.events(vm: BecomeDonorViewModel): List<BecomeDonorEvent> =
         mutableListOf<BecomeDonorEvent>().also { list -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { list += it } } }
