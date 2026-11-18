@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,13 +40,16 @@ import io.github.liquidlyf.core.designsystem.components.CapFontScale
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LARGE_FONT_SCALE
+import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLCard
+import io.github.liquidlyf.core.designsystem.components.LLExtendedFab
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.MAX_LABEL_SCALE
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.RequestCard
 import io.github.liquidlyf.core.designsystem.components.StatusPill
+import io.github.liquidlyf.core.designsystem.components.isLargeText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
@@ -100,7 +105,17 @@ internal fun RequestsScreen(
     onOpenRequest: (String) -> Unit,
     onCreateRequest: () -> Unit,
 ) {
-    Scaffold(topBar = { LLTopBar(title = stringResource(R.string.nav_requests)) }) { padding ->
+    // NAV-03: the same Request blood as on Home; with large text a full-width bar, not floating over a card (UI-08).
+    val actionAsBar = isLargeText()
+    Scaffold(
+        topBar = { LLTopBar(title = stringResource(R.string.nav_requests)) },
+        floatingActionButton = {
+            if (!actionAsBar) LLExtendedFab(text = stringResource(R.string.action_request_blood), icon = LLIcons.Add, onClick = onCreateRequest)
+        },
+        bottomBar = {
+            if (actionAsBar) LLBottomBar(stringResource(R.string.action_request_blood), onCreateRequest, primaryIcon = LLIcons.Add)
+        },
+    ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
             OfflineBanner(online)
             RequestsTabs(state.tab, onSelectTab, Modifier.widthIn(max = 640.dp).fillMaxWidth())
@@ -134,6 +149,8 @@ internal fun RequestsScreen(
                             }
                         }
                         listFooter(list, onRefresh, onLoadMore)
+                        // Room for the floating button, so it never covers the last card.
+                        if (!actionAsBar) item(key = "fab-space") { Spacer(Modifier.height(88.dp)) }
                     }
                 }
             }
