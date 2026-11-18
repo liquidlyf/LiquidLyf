@@ -52,6 +52,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.StatusTone
+import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
@@ -124,7 +125,7 @@ fun ProfileRoute(onEditProfile: () -> Unit, onOpenSettings: () -> Unit, onBecome
                 val from = after?.let { dateText(it) }.orEmpty()
                 // An old donation's rest period may be over already: then nothing pauses.
                 val past = after != null && !after.isAfter(Instant.now())
-                Text(stringResource(if (past) R.string.add_donation_update_body_past else R.string.add_donation_update_body, from))
+                DialogText(stringResource(if (past) R.string.add_donation_update_body_past else R.string.add_donation_update_body, from))
             },
             confirmButton = { TextButton(onClick = { viewModel.answerEligibility(update = true) }) { Text(stringResource(R.string.add_donation_update_yes)) } },
             dismissButton = { TextButton(onClick = { viewModel.answerEligibility(update = false) }) { Text(stringResource(R.string.add_donation_update_no)) } },
@@ -252,7 +253,7 @@ internal fun ProfileScreen(
         AlertDialog(
             onDismissRequest = { toRemove = null },
             title = { Text(stringResource(R.string.profile_remove_title)) },
-            text = { Text(stringResource(R.string.profile_remove_body)) },
+            text = { DialogText(stringResource(R.string.profile_remove_body)) },
             confirmButton = {
                 TextButton(onClick = { toRemove = null; onRemoveDonation(d) }) { Text(stringResource(R.string.action_remove)) }
             },

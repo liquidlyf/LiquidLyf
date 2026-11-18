@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -122,7 +124,7 @@ internal fun BlockedPeopleScreen(state: BlockedPeopleUiState, onUnblock: (String
                 icon = LLIcons.Block,
                 title = stringResource(R.string.blocked_empty_title),
                 body = stringResource(R.string.blocked_empty_body),
-                modifier = Modifier.padding(padding),
+                modifier = Modifier.padding(padding).verticalScroll(rememberScrollState()),
             )
             else -> Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
                 LazyColumn(Modifier.widthIn(max = 640.dp).fillMaxWidth(), contentPadding = PaddingValues(vertical = Spacing.sm)) {

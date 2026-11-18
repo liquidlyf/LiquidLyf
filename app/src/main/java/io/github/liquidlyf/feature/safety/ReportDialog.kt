@@ -1,16 +1,12 @@
 package io.github.liquidlyf.feature.safety
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -26,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.DialogBody
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.domain.Validators
@@ -43,7 +40,7 @@ fun ReportDialog(@StringRes title: Int, onDismiss: () -> Unit, onReport: (Report
         onDismissRequest = onDismiss,
         title = { Text(stringResource(title)) },
         text = {
-            Column(Modifier.selectableGroup().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+            DialogBody(Modifier.selectableGroup(), spacing = Spacing.xxs) {
                 ReportReason.entries.forEach { reason ->
                     ReasonRow(stringResource(reason.labelRes), choice == reason) { choice = reason }
                 }

@@ -23,6 +23,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -67,6 +68,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.ErrorAnchors
 import io.github.liquidlyf.core.designsystem.components.FormLoadingState
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
@@ -122,9 +124,10 @@ fun CreateRequestRoute(
         androidx.compose.material3.AlertDialog(
             onDismissRequest = viewModel::changeNote,
             title = { Text(stringResource(R.string.money_warning_title)) },
-            text = { Text(stringResource(R.string.money_warning_body)) },
-            confirmButton = { TextButton(onClick = viewModel::postAnyway) { Text(stringResource(R.string.action_post_anyway)) } },
-            dismissButton = { TextButton(onClick = viewModel::changeNote) { Text(stringResource(R.string.action_change_note)) } },
+            text = { DialogText(stringResource(R.string.money_warning_body)) },
+            // P2-11: on the dialog meant to stop blood selling, the safe choice is the filled default.
+            confirmButton = { Button(onClick = viewModel::changeNote) { Text(stringResource(R.string.action_change_note)) } },
+            dismissButton = { TextButton(onClick = viewModel::postAnyway) { Text(stringResource(R.string.action_post_anyway)) } },
         )
     }
     BackHandler(enabled = state.step > 0 && !state.posting) { viewModel.back() }
@@ -483,7 +486,7 @@ private fun ContactStep(state: CreateRequestUiState, anchors: ErrorAnchors<Reque
             value = f.contactName,
             onValueChange = { v -> onEdit { copy(contactName = v.take(Validators.NAME_MAX)) } },
             label = stringResource(R.string.create_contact_name),
-            errorText = if (RequestField.CONTACT_NAME in state.errors) stringResource(R.string.error_name_invalid) else null,
+            errorText = if (RequestField.CONTACT_NAME in state.errors) stringResource(R.string.error_contact_name_invalid) else null, // P2-12: not "your" name
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
             fieldModifier = Modifier.errorAnchor(anchors, RequestField.CONTACT_NAME, textField = true),
         )

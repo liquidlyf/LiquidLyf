@@ -187,7 +187,7 @@
     <string name="action_share">শেয়ার করুন</string>
     <string name="action_more">আরও অপশন</string>
     <string name="action_call">কল করুন</string>
-    <string name="action_copy">কপি করুন</string>
+    <string name="action_copy_number">নম্বর কপি করুন</string>
     <string name="detail_missing_title">এই অনুরোধটি পাওয়া যাচ্ছে না</string>
     <string name="detail_missing_body">হয়তো সরিয়ে ফেলা হয়েছে, অথবা পোস্ট হয়নি।</string>
     <string name="detail_waiting_network">নেটওয়ার্কের অপেক্ষায়। আপনার অনুরোধ এই ফোনে সেভ করা আছে, আবার অনলাইনে এলে পোস্ট হবে।</string>

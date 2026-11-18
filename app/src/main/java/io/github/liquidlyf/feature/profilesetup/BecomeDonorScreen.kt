@@ -42,6 +42,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
 import io.github.liquidlyf.core.designsystem.components.ChoiceRow
+import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.EdgeTextButton
 import io.github.liquidlyf.core.designsystem.components.ErrorAnchors
 import io.github.liquidlyf.core.designsystem.components.FieldError
@@ -165,7 +166,7 @@ private fun BloodGroupStep(
             },
             dismissButton = { TextButton(onClick = { showHelp = false }) { Text(stringResource(R.string.action_cancel)) } },
             title = { Text(stringResource(R.string.setup_blood_unknown)) },
-            text = { Text(stringResource(R.string.setup_blood_unknown_body)) },
+            text = { DialogText(stringResource(R.string.setup_blood_unknown_body)) },
         )
     }
 }

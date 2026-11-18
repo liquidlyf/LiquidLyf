@@ -127,7 +127,7 @@
     <string name="action_share">Share</string>
     <string name="action_more">More options</string>
     <string name="action_call">Call</string>
-    <string name="action_copy">Copy</string>
+    <string name="action_copy_number">Copy number</string>
     <string name="detail_missing_title">This request isn\'t available</string>
     <string name="detail_missing_body">It may have been removed, or it wasn\'t posted.</string>
     <string name="detail_waiting_network">Waiting for network. Your request is saved on this phone and will be posted when you\'re back online.</string>

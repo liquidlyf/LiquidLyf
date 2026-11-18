@@ -1,7 +1,5 @@
 package io.github.liquidlyf.feature.settings
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -9,7 +7,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import io.github.liquidlyf.R
-import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.DialogBody
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.model.BloodGroup
 
@@ -23,7 +21,7 @@ fun ListMeDialog(bloodGroup: BloodGroup, onConfirm: () -> Unit, onDismiss: () ->
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.list_me_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            DialogBody {
                 Text(stringResource(R.string.setup_consent_question, stringResource(bloodGroup.labelRes)))
                 Text(stringResource(R.string.setup_consent_info), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

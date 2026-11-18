@@ -37,6 +37,7 @@ import io.github.liquidlyf.core.data.account.DeletionStep
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
 import io.github.liquidlyf.core.designsystem.components.ChoiceRow
+import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.FieldError
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
@@ -281,7 +282,7 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
         AlertDialog(
             onDismissRequest = { viewModel.onBloodGroupConfirmed(false) },
             title = { Text(stringResource(R.string.confirm_blood_group_title)) },
-            text = { Text(stringResource(R.string.confirm_blood_group_body)) },
+            text = { DialogText(stringResource(R.string.confirm_blood_group_body)) },
             confirmButton = { TextButton(onClick = { viewModel.onBloodGroupConfirmed(true) }) { Text(stringResource(R.string.action_change)) } },
             dismissButton = { TextButton(onClick = { viewModel.onBloodGroupConfirmed(false) }) { Text(stringResource(R.string.action_cancel)) } },
         )

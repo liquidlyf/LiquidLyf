@@ -59,6 +59,7 @@ import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.data.settings.ThemeMode
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.DialogBody
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
@@ -351,7 +352,7 @@ private fun SignOutDialog(email: String?, onConfirm: () -> Unit, onDismiss: () -
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.sign_out_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            DialogBody {
                 Text(stringResource(R.string.sign_out_body))
                 email?.let { Text(stringResource(R.string.sign_out_account, it), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }

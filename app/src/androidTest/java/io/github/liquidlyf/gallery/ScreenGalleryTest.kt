@@ -861,7 +861,8 @@ class ScreenGalleryTest {
         val ready = FindDonorsUiState(enabled = true, filters = filters, geo = geo, me = me)
         val tab = TopLevelDestination.DONORS
         val myOpen = myRequests[0]
-        val other = myRequests[0].copy(id = "m4", bloodGroup = BloodGroup.B_NEG, acceptCompatible = true, acceptedGroups = listOf(BloodGroup.B_NEG, BloodGroup.B_POS),
+        // A second request the B+ donor can really give to (D's part 2, Low 29: it was B−, which a B+ donor can't).
+        val other = myRequests[0].copy(id = "m4", bloodGroup = BloodGroup.AB_POS, acceptCompatible = true, acceptedGroups = BloodGroup.entries.toList(),
             hospitalName = "Shaheed Suhrawardy Medical College Hospital")
         val incompatible = myRequests[0].copy(id = "m5", bloodGroup = BloodGroup.A_NEG, acceptedGroups = listOf(BloodGroup.A_NEG))
         gallery(

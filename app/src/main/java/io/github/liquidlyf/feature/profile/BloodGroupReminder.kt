@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 
 /**
@@ -52,7 +53,7 @@ fun BloodGroupReminder(onAdd: () -> Unit, modifier: Modifier = Modifier) {
             onDismissRequest = { showHelp = false },
             confirmButton = { TextButton(onClick = { showHelp = false }) { Text(stringResource(R.string.action_ok)) } },
             title = { Text(stringResource(R.string.setup_blood_unknown)) },
-            text = { Text(stringResource(R.string.setup_blood_unknown_body)) },
+            text = { DialogText(stringResource(R.string.setup_blood_unknown_body)) },
         )
     }
 }

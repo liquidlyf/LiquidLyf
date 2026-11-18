@@ -42,8 +42,9 @@ fun StatusPill(label: String, @DrawableRes icon: Int, tone: StatusTone, modifier
 }
 
 /**
- * A pill's icon and one line of text. The text grows with the phone's font size up to 1.5x
- * (A11Y-03: at 200% Bangla pills wrapped into 2-line blobs).
+ * A pill's icon and its text. The text grows with the phone's font size up to 1.5x (A11Y-03: at 200%
+ * Bangla pills wrapped into 2-line blobs), and a long one takes a second line rather than losing words
+ * (P2-3: "not listed" lost its "not").
  */
 @Composable
 private fun PillContent(label: String, @DrawableRes icon: Int, modifier: Modifier) {
@@ -54,7 +55,7 @@ private fun PillContent(label: String, @DrawableRes icon: Int, modifier: Modifie
             modifier = modifier,
         ) {
             Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(16.dp))
-            Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }

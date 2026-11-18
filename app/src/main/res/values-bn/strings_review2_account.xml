@@ -67,6 +67,7 @@
     <string name="error_email_required">আপনার ইমেইল দিন।</string>
     <string name="error_password_required">আপনার পাসওয়ার্ড দিন।</string>
     <string name="error_name_invalid">আপনার নাম দিন (২ থেকে ৬০ অক্ষর)।</string>
+    <string name="error_contact_name_invalid">যাঁর সঙ্গে যোগাযোগ করতে হবে, তাঁর নাম দিন (২ থেকে ৬০ অক্ষর)।</string>
     <string name="error_password_short">অন্তত ৮ অক্ষর দিন।</string>
     <string name="password_hint">অন্তত ৮ অক্ষর। লম্বা পাসওয়ার্ড বেশি নিরাপদ।</string>
     <string name="sign_up_consent">আমার বয়স ১৮ বা তার বেশি, এবং আমি শর্তাবলি ও গোপনীয়তা নীতিতে সম্মত</string>

@@ -186,6 +186,7 @@
     <string name="error_email_required">Enter your email.</string>
     <string name="error_password_required">Enter your password.</string>
     <string name="error_name_invalid">Enter your name (2 to 60 characters).</string>
+    <string name="error_contact_name_invalid">Enter the contact person\'s name (2 to 60 characters).</string>
     <string name="error_password_short">Use at least 8 characters.</string>
     <string name="password_hint">At least 8 characters. A longer password is stronger.</string>
     <string name="sign_up_consent">I am 18 or older, and I agree to the Terms and the Privacy Policy</string>

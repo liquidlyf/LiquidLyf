@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Badge
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -98,13 +100,13 @@ internal fun InboxScreen(
                 onRetry = onLoadMore,
                 title = stringResource(R.string.inbox_load_error),
                 body = stringResource(state.error ?: R.string.error_unknown),
-                modifier = Modifier.padding(padding),
+                modifier = Modifier.padding(padding).verticalScroll(rememberScrollState()),
             )
             entries.isNullOrEmpty() && state.error == null -> EmptyState(
                 icon = LLIcons.Notifications,
                 title = stringResource(R.string.inbox_empty_title),
                 body = stringResource(R.string.inbox_empty_body),
-                modifier = Modifier.padding(padding),
+                modifier = Modifier.padding(padding).verticalScroll(rememberScrollState()),
             )
             else -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
                 LazyColumn(

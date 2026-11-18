@@ -77,6 +77,8 @@ import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
+import io.github.liquidlyf.core.designsystem.components.DialogBody
+import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.IconLine
@@ -235,7 +237,7 @@ private fun RequestDetailScreen(
         when {
             state.loading -> LoadingState(Modifier.padding(padding).padding(horizontal = screenGutter(), vertical = Spacing.md))
             // STATE-05: couldn't load is not "removed": the shared error state with Retry.
-            state.loadError != null -> ErrorState(state.loadError, onRetry = vm::retry, title = stringResource(R.string.detail_load_error), modifier = Modifier.padding(padding))
+            state.loadError != null -> ErrorState(state.loadError, onRetry = vm::retry, title = stringResource(R.string.detail_load_error), modifier = Modifier.padding(padding).verticalScroll(rememberScrollState()))
             // STATE-02: surely gone, with a way out.
             request == null -> EmptyState(
                 icon = LLIcons.Inbox,
@@ -243,7 +245,7 @@ private fun RequestDetailScreen(
                 body = stringResource(R.string.detail_missing_body),
                 actionLabel = stringResource(R.string.action_back),
                 onAction = onBack,
-                modifier = Modifier.padding(padding),
+                modifier = Modifier.padding(padding).verticalScroll(rememberScrollState()),
             )
             else -> Column(Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
                 OfflineBanner(online)
@@ -387,10 +389,11 @@ private fun DetailBar(
                     primaryIcon = LLIcons.VolunteerActivism,
                 )
                 contact != null -> LLBottomBar(
-                    primaryText = stringResource(R.string.detail_call_donor, contact.contactName),
+                    // P2-7: the short name, as everywhere else on the page; "Copy number" says what it copies.
+                    primaryText = stringResource(R.string.detail_call_donor, Validators.displayName(contact.contactName)),
                     onPrimary = { onCall(contact.contactPhone) },
                     primaryIcon = LLIcons.Call,
-                    secondaryText = stringResource(R.string.action_copy),
+                    secondaryText = stringResource(R.string.action_copy_number),
                     onSecondary = { onCopy(contact) },
                     secondaryIcon = LLIcons.Copy,
                 )
@@ -868,7 +871,7 @@ private fun ConfirmDialog(title: Int, body: Int, confirm: Int, onDismiss: () -> 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(title)) },
-        text = { Text(stringResource(body)) },
+        text = { DialogText(stringResource(body)) },
         confirmButton = { TextButton(onClick = { onDismiss(); onConfirm() }) { Text(stringResource(confirm)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
@@ -883,7 +886,7 @@ private fun CloseDialog(onDismiss: () -> Unit, onClose: (RequestStatus, String?)
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.detail_close_title)) },
         text = {
-            Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            DialogBody(Modifier.selectableGroup(), spacing = Spacing.xs) {
                 Text(stringResource(R.string.detail_close_body), style = MaterialTheme.typography.bodyMedium)
                 RadioRow(stringResource(R.string.detail_close_found), choice == RequestStatus.FULFILLED) { choice = RequestStatus.FULFILLED }
                 RadioRow(stringResource(R.string.detail_close_not_needed), choice == RequestStatus.CANCELLED) { choice = RequestStatus.CANCELLED }
@@ -912,7 +915,7 @@ private fun EditDialog(r: BloodRequest, onDismiss: () -> Unit, onSave: (String?,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.detail_edit)) },
         text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            DialogBody {
                 UnitsStepper(units, onChange = { units = it }, min = minUnits)
                 Text(stringResource(R.string.detail_edit_needed_by), style = MaterialTheme.typography.labelLarge)
                 PlannedAtPicker(neededByMillis ?: r.neededBy.toEpochMilli(), showError = false) { neededByMillis = it }

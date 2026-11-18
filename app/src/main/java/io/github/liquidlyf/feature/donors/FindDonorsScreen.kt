@@ -63,6 +63,7 @@ import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.StatusTone
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.BloodGroupChip
+import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.DropdownField
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
@@ -146,7 +147,7 @@ fun FindDonorsRoute(onCreateRequest: () -> Unit, viewModel: FindDonorsViewModel 
             AlertDialog(
                 onDismissRequest = { blocking = false },
                 title = { Text(stringResource(R.string.block_title)) },
-                text = { Text(stringResource(R.string.block_body)) },
+                text = { DialogText(stringResource(R.string.block_body)) },
                 confirmButton = { TextButton(onClick = { blocking = false; viewModel.blockDonor() }) { Text(stringResource(R.string.action_block)) } },
                 dismissButton = { TextButton(onClick = { blocking = false }) { Text(stringResource(R.string.action_cancel)) } },
             )
@@ -186,7 +187,7 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
                     body = stringResource(R.string.donors_paused_body),
                     actionLabel = stringResource(R.string.action_request_blood),
                     onAction = actions.onCreateRequest,
-                    modifier = Modifier.padding(padding),
+                    modifier = Modifier.padding(padding).verticalScroll(rememberScrollState()), // P2-2: scrolls when it doesn't fit
                 )
                 return@Scaffold
             }

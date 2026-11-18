@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
@@ -39,16 +42,22 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -117,16 +126,35 @@ internal fun AuthLayout(
     }
 }
 
-/** An error that belongs to the whole form, read out by TalkBack as an error. */
+/**
+ * An error that belongs to the whole form. TalkBack reads it as an error the moment it appears (a live
+ * region), and it scrolls itself into view once each time it appears, not again after a rotation (P2-13,
+ * FLOW-04: after a failed Sign in at 200% text it was below the fold, and TalkBack heard nothing).
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun FormError(@StringRes error: Int?) {
     if (error != null) {
         val text = stringResource(error)
+        val view = remember { BringIntoViewRequester() }
+        var shown by rememberSaveable { mutableStateOf<Int?>(null) }
+        LaunchedEffect(error) {
+            if (shown != error) {
+                shown = error
+                withFrameNanos { } // laid out first
+                runCatching { view.bringIntoView() }
+            }
+        }
         Text(
             text,
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.semantics { error(text) },
+            modifier = Modifier
+                .bringIntoViewRequester(view)
+                .semantics {
+                    error(text)
+                    liveRegion = LiveRegionMode.Polite
+                },
         )
     }
 }
@@ -248,8 +276,8 @@ fun SignInScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { onSignIn() }),
         )
+        FormError(state.formError) // P2-13: right under the fields it's about
         EdgeTextButton(stringResource(R.string.action_forgot_password), dropUnlessResumed(block = onForgotPassword), enabled = !state.loading)
-        FormError(state.formError)
         // A flow row: with large text the button goes under the question instead of being squeezed.
         FlowRow(itemVerticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.sign_in_no_account), style = MaterialTheme.typography.bodyMedium)
