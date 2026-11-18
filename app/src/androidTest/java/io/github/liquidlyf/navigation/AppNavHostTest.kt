@@ -1,6 +1,7 @@
 package io.github.liquidlyf.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.material3.Text
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
@@ -14,7 +15,13 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -122,8 +129,8 @@ class AppNavHostTest {
         assertOnScreen(R.string.title_verify_email)
 
         setSession(SessionState.NeedsProfile(TestData.user()))
-        assertOnScreen(R.string.title_profile_setup)
-        assertOnScreen(R.string.setup_step, 1, 4)
+        // D1: the short setup, one screen ("About you"), not 4 steps.
+        assertOnScreen(R.string.setup_about_title)
 
         // API 30 has no notification permission: setup goes straight to the app.
         setSession(ready)
@@ -133,8 +140,10 @@ class AppNavHostTest {
         tab(R.string.nav_profile).performClick()
         compose.onNode(hasClickAction() and hasContentDescription(str(R.string.action_open_settings))).performClick()
         compose.waitForIdle()
-        // Phase 8 put Privacy, Safety and About above it: scroll down to it first.
-        compose.onNode(hasText(str(R.string.action_sign_out)) and hasClickAction()).performScrollTo().performClick()
+        // N5: Sign out is in the top bar, with a Yes / No check.
+        compose.onNode(hasText(str(R.string.action_sign_out)) and hasClickAction()).performClick()
+        compose.waitForIdle()
+        compose.onNode(hasText(str(R.string.answer_yes)) and hasClickAction()).performClick()
         compose.waitForIdle()
         assertEquals(1, signOuts)
         setSession(SessionState.SignedOut)
@@ -222,16 +231,18 @@ class AppNavHostTest {
     @Test
     fun fullScreenDestinationOpensAboveTheTabsAndBackReturns() {
         launch(GateZone.MAIN, ready)
-        assertOnScreen(R.string.home_urgent_near_you)
         // Home's button opens Create request, above the tabs. Found by its spoken label, so this
         // also checks TalkBack can read it (Material's extended FAB alone announced just "Button").
-        compose.onNode(hasContentDescription(str(R.string.action_request_blood)) and hasClickAction()).performClick()
+        // (Home's feed needs the emulators; its button doesn't, so the test doesn't either.)
+        val requestBlood = hasContentDescription(str(R.string.action_request_blood)) and hasClickAction()
+        compose.waitUntil(5_000) { compose.onAllNodes(requestBlood).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(requestBlood).performClick()
         compose.waitForIdle()
         assertOnScreen(R.string.create_patient_title)
         compose.onAllNodes(isSelectable() and hasText(str(R.string.nav_requests))).assertCountEquals(0)
 
         pressBack()
-        assertOnScreen(R.string.home_urgent_near_you)
+        compose.waitUntil(5_000) { compose.onAllNodes(requestBlood).fetchSemanticsNodes().isNotEmpty() }
         tab(R.string.nav_home).assertIsSelected()
     }
 
@@ -243,6 +254,40 @@ class AppNavHostTest {
         setSession(ready)
         assertOnScreen(R.string.nav_home)
         assertTrue(compose.onAllNodesWithText(str(R.string.suspended_title)).fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun theHomeTabAlwaysOpensHomeWhileOtherTabsKeepTheirPages() {
+        // VT-05, with the app's own tab switch on a graph shaped like the app's.
+        lateinit var nav: NavHostController
+        compose.setContent {
+            nav = rememberNavController()
+            NavHost(nav, startDestination = MainGraph) {
+                navigation<MainGraph>(startDestination = HomeGraph) {
+                    navigation<HomeGraph>(startDestination = Home) { composable<Home> { Text("home") } }
+                    navigation<RequestsGraph>(startDestination = Requests) { composable<Requests> { Text("requests") } }
+                    navigation<DonorsGraph>(startDestination = Donors) { composable<Donors> { Text("donors") } }
+                    composable<RequestDetail> { Text("request") }
+                }
+            }
+        }
+        compose.waitForIdle()
+        compose.runOnUiThread {
+            // Posted from Home: its page opens above Home; "Ask donors near this hospital" goes to Donors.
+            nav.navigate(RequestDetail(id = "r1"))
+            nav.navigateToTab(TopLevelDestination.DONORS)
+            nav.navigateToTab(TopLevelDestination.REQUESTS)
+            nav.navigate(RequestDetail(id = "r2"))
+            nav.navigateToTab(TopLevelDestination.HOME)
+        }
+        compose.waitForIdle()
+        assertTrue("Home, not the old request page", nav.currentDestination!!.hasRoute(Home::class))
+
+        // Requests still comes back with the page that was open in it.
+        compose.runOnUiThread { nav.navigateToTab(TopLevelDestination.REQUESTS) }
+        compose.waitForIdle()
+        assertTrue(nav.currentDestination!!.hasRoute(RequestDetail::class))
+        assertEquals("r2", nav.currentBackStackEntry!!.toRoute<RequestDetail>().id)
     }
 
     @Test

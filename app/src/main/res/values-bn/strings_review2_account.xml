@@ -11,7 +11,6 @@
     <string name="title_verify_email">আপনার ইমেইল যাচাই করুন</string>
     <string name="title_forgot_password">পাসওয়ার্ড রিসেট করুন</string>
     <string name="title_phone_verify">আপনার ফোন নম্বর যাচাই করুন</string>
-    <string name="title_profile_setup">প্রোফাইল তৈরি করুন</string>
     <string name="action_open_notifications">নোটিফিকেশন খুলুন</string>
     <string name="action_open_settings">সেটিংস খুলুন</string>
     <string name="action_show_password">পাসওয়ার্ড দেখান</string>

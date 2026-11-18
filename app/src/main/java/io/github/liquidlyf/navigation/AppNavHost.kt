@@ -350,12 +350,16 @@ private fun AppNavigationRail(currentTab: TopLevelDestination, onSelect: (TopLev
 private fun NavDestination.isInTab(tab: TopLevelDestination): Boolean =
     hierarchy.any { it.hasRoute(tab.graph::class) }
 
-/** Switches tab, saving the old tab's back stack and restoring the new one's. */
+/**
+ * Switches tab, saving the old tab's back stack and restoring the new one's. Home is the exception
+ * (VT-05): it always opens Home itself. A request page, Request blood or Become a donor left open
+ * in it isn't restored (5 of 5 testers tapped Home and got the old request page back).
+ */
 internal fun NavController.navigateToTab(tab: TopLevelDestination) {
     navigate(tab.graph) {
         popUpTo<Home> { saveState = true }
         launchSingleTop = true
-        restoreState = true
+        restoreState = tab != TopLevelDestination.HOME
     }
 }
 
