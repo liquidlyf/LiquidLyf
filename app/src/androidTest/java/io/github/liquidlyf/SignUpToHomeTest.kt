@@ -169,7 +169,7 @@ class SignUpToHomeTest {
         tap(R.string.action_i_have_verified)
 
         // The short setup (D1): the name from sign-up, the number and the area, nothing else.
-        waitFor(str(R.string.setup_short_note))
+        waitFor(str(R.string.setup_donor_later))
         type(R.string.label_phone, "01712345678")
         pick(R.string.label_division, "Dhaka")
         pick(R.string.label_district, "Dhaka")
