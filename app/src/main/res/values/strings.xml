@@ -203,7 +203,7 @@
     <string name="error_consent_required">Please confirm you are 18 or older and agree to the Terms.</string>
     <string name="action_read_terms">Read the Terms</string>
     <string name="action_read_privacy">Read the Privacy Policy</string>
-    <string name="verify_email_body">We sent a link to %1$s. Open it, then come back and tap \"I\'ve verified\".</string>
+    <string name="verify_email_body">We sent a link to %1$s. Open it and tap \"COMPLETE VERIFICATION\", then come back here: the app checks by itself.</string>
     <string name="action_open_email_app">Open email app</string>
     <string name="action_resend_email">Resend email</string>
     <string name="action_resend_in">Resend in %1$d s</string>

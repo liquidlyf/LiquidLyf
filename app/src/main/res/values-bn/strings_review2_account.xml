@@ -82,7 +82,7 @@
     <string name="error_consent_required">আপনার বয়স ১৮ বা তার বেশি এবং আপনি শর্তাবলিতে সম্মত, তা নিশ্চিত করুন।</string>
     <string name="action_read_terms">শর্তাবলি পড়ুন</string>
     <string name="action_read_privacy">গোপনীয়তা নীতি পড়ুন</string>
-    <string name="verify_email_body">আমরা %1$s ঠিকানায় একটি লিংক পাঠিয়েছি। লিংকটি খুলুন, তারপর ফিরে এসে \"যাচাই করেছি\" চাপুন।</string>
+    <string name="verify_email_body">আমরা %1$s ঠিকানায় একটি লিংক পাঠিয়েছি। লিংকটি খুলে \"COMPLETE VERIFICATION\" চাপুন, তারপর এখানে ফিরে আসুন: অ্যাপ নিজেই দেখে নেবে।</string>
     <string name="action_open_email_app">ইমেইল অ্যাপ খুলুন</string>
     <string name="action_resend_email">আবার ইমেইল পাঠান</string>
     <string name="action_resend_in">%1$d সেকেন্ড পর আবার পাঠান</string>
