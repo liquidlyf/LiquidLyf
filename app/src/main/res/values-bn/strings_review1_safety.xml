@@ -98,6 +98,8 @@
     <string name="money_warning_body">রক্ত কখনো কেনাবেচা করা যাবে না। যে অনুরোধে টাকার কথা থাকে (বিকাশ, নগদ, টাকা, পেমেন্ট…), সেটি আমাদের টিমের যাচাইয়ের জন্য চিহ্নিত হয়, আর রক্তদাতারা তাতে একটি সতর্কবার্তা দেখেন। নোটটি বদলান, অথবা যেমন আছে তেমনই পোস্ট করুন।</string>
     <string name="action_change_note">নোট বদলান</string>
     <string name="action_post_anyway">তবুও পোস্ট করুন</string>
+    <string name="phone_note_title">নোটে ফোন নম্বর?</string>
+    <string name="phone_note_body">অনুরোধটি যিনিই খুলবেন, তিনিই নোট দেখতে পাবেন। নম্বরটি বরং \"অন্য কেউ\" অংশে দিন।</string>
     <string name="detail_flagged_caution">এই অনুরোধে টাকার কথা আছে। রক্তের জন্য কখনো টাকা দেবেন না, নেবেনও না। কেউ টাকা চাইলে অনুরোধটি রিপোর্ট করুন।</string>
 
     <!-- Safety tips (7.6) -->

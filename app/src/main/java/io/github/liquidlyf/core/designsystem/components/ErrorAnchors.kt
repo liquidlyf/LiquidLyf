@@ -1,19 +1,29 @@
 package io.github.liquidlyf.core.designsystem.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Where each field of a form is, so a failed "Next" can show the first error (FLOW-04: with an
@@ -41,7 +51,34 @@ class ErrorAnchors<K : Any> internal constructor() {
         runCatching { views[first]?.bringIntoView() }
         focus[first]?.let { runCatching { it.requestFocus() } }
     }
+
+    /** Scrolls [key]'s field into view, without focusing it; nothing if it isn't on screen. */
+    suspend fun show(key: K) {
+        runCatching { views[key]?.bringIntoView() }
+    }
 }
+
+/**
+ * VT-13: the keyboard's Done on the last text field before a box or a choice closes the keyboard,
+ * then brings [next] into view once the keyboard has gone. Typing left the 18+ box, "How soon?" and
+ * the confirm box hidden under the keyboard.
+ */
+@Composable
+fun <K : Any> keyboardDoneShows(anchors: ErrorAnchors<K>, next: K): KeyboardActions {
+    val focus = LocalFocusManager.current
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val ime = WindowInsets.ime
+    return KeyboardActions(onDone = {
+        focus.clearFocus()
+        scope.launch {
+            withTimeoutOrNull(KEYBOARD_GONE_MS) { snapshotFlow { ime.getBottom(density) }.first { it == 0 } }
+            anchors.show(next)
+        }
+    })
+}
+
+private const val KEYBOARD_GONE_MS = 1_000L
 
 @Composable
 fun <K : Any> rememberErrorAnchors(): ErrorAnchors<K> = remember { ErrorAnchors() }

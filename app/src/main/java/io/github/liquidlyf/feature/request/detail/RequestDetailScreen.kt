@@ -107,6 +107,7 @@ import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
 import io.github.liquidlyf.core.designsystem.labelRes
+import io.github.liquidlyf.core.designsystem.neededWithinText
 import io.github.liquidlyf.core.designsystem.relativeTimeText
 import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
@@ -561,11 +562,17 @@ private fun Summary(r: BloodRequest, state: RequestDetailUiState, onOpenMaps: ()
                             r.status != RequestStatus.OPEN -> append(stringResource(R.string.request_was_needed_by, dateTimeText(r.neededBy))) // Low 11
                             r.urgency == Urgency.PLANNED -> append(stringResource(R.string.request_needed_on, dateTimeText(r.neededBy)))
                             else -> {
-                                withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
-                                    append(stringResource(R.string.detail_needed_by_time, timeOrDateTimeText(r.neededBy, now)))
+                                // VT-04: "Needed within 6 hours (by 12:18 AM)"; a date read as "not today".
+                                val within = neededWithinText(r.neededBy, now)
+                                if (within != null) {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Medium)) { append(within) }
+                                } else {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.Medium)) {
+                                        append(stringResource(R.string.detail_needed_by_time, timeOrDateTimeText(r.neededBy, now)))
+                                    }
+                                    append(" · ")
+                                    append(relativeTimeText(r.neededBy, now, long = true))
                                 }
-                                append(" · ")
-                                append(relativeTimeText(r.neededBy, now, long = true))
                             }
                         }
                     },

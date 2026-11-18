@@ -113,6 +113,22 @@ class ValidatorsTest {
     }
 
     @Test
+    fun `a mobile number in a note is found however it's written (VT-10)`() {
+        listOf(
+            "Call Rafiq 01712345678",
+            "Rafiq: 01712-345678",
+            "+88 01712 345 678 please",
+            "8801712345678",
+            "রফিক ০১৭১২৩৪৫৬৭৮",
+            "রফিক +৮৮ ০১৭১২-৩৪৫৬৭৮",
+        ).forEach { assertTrue(it, Validators.hasPhoneNumber(it)) }
+        listOf(
+            null, "", "Need 2 bags by 4 pm", "Ward 5, bed 12", "Operation on 20/11/2026",
+            "Patient ID 1234567890123", "0171234567", "02-9665566",
+        ).forEach { assertFalse(it.toString(), Validators.hasPhoneNumber(it)) }
+    }
+
+    @Test
     fun `birth year gives a profile age of 18 to 100`() {
         assertFalse(Validators.isValidBirthYear(2009, now))
         assertTrue(Validators.isValidBirthYear(2008, now))

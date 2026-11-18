@@ -61,4 +61,24 @@ class FormErrorScrollTest {
         compose.waitForIdle()
         compose.onNodeWithText(message).assertIsDisplayed()
     }
+
+    @Test
+    fun each_step_opens_at_its_top() {
+        // VT-01: step 2's error scrolled the form down; step 3 then opened there, with "Me / Someone
+        // else" above the screen (P1 posted her own number instead of Rafiq's).
+        var state by mutableStateOf(CreateRequestUiState(RequestForm(step = 1), loaded = true, geo = geo, errors = setOf(RequestField.URGENCY)))
+        compose.setContent {
+            LiquidLyfTheme(darkTheme = false) {
+                CreateRequestScreen(state, online = true, {}, {}, {}, {}, { _, _ -> }, {}, {}, {})
+            }
+        }
+        state = state.copy(errorAttempt = 1)
+        compose.waitForIdle()
+        compose.onNodeWithText(context.getString(R.string.create_where_title)).assertIsNotDisplayed()
+
+        state = state.copy(form = RequestForm(step = 2), errors = emptySet())
+        compose.waitForIdle()
+        compose.onNodeWithText(context.getString(R.string.create_contact_title)).assertIsDisplayed()
+        compose.onNodeWithText(context.getString(R.string.create_contact_me)).assertIsDisplayed()
+    }
 }

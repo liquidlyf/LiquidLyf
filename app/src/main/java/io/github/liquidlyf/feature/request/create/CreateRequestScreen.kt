@@ -3,6 +3,7 @@ package io.github.liquidlyf.feature.request.create
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,11 +12,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -46,14 +51,17 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -79,23 +87,26 @@ import io.github.liquidlyf.core.designsystem.components.LLFilterChip
 import io.github.liquidlyf.core.designsystem.components.LLStepper
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.BloodGroupPicker
-import io.github.liquidlyf.core.designsystem.components.ChoiceRow
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.FieldError
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
+import io.github.liquidlyf.core.designsystem.components.SegmentedChoices
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.StepContent
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.isLargeText
+import io.github.liquidlyf.core.designsystem.components.keyboardDoneShows
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.components.spokenAs
 import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
 import io.github.liquidlyf.core.designsystem.labelRes
+import io.github.liquidlyf.core.designsystem.neededWithinText
+import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.domain.BloodCompatibility
 import io.github.liquidlyf.core.domain.PhoneDisplay
@@ -111,6 +122,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun CreateRequestRoute(
@@ -132,6 +145,16 @@ fun CreateRequestRoute(
             // P2-11: on the dialog meant to stop blood selling, the safe choice is the filled default.
             confirmButton = { Button(onClick = viewModel::changeNote) { Text(stringResource(R.string.action_change_note)) } },
             dismissButton = { TextButton(onClick = viewModel::postAnyway) { Text(stringResource(R.string.action_post_anyway)) } },
+        )
+    }
+    if (state.phoneWarning) {
+        AlertDialog(
+            onDismissRequest = viewModel::changeNote,
+            title = { Text(stringResource(R.string.phone_note_title)) },
+            text = { DialogText(stringResource(R.string.phone_note_body)) },
+            // Like P2-11: the safe choice is the filled default.
+            confirmButton = { Button(onClick = viewModel::changeNote) { Text(stringResource(R.string.action_change_note)) } },
+            dismissButton = { TextButton(onClick = viewModel::postPhoneAnyway) { Text(stringResource(R.string.action_post_anyway)) } },
         )
     }
     BackHandler(enabled = state.step > 0 && !state.posting) { viewModel.back() }
@@ -207,11 +230,21 @@ internal fun CreateRequestScreen(
                 // P2-16: with large text the banner scrolls away with the form instead of staying pinned.
                 val largeText = isLargeText()
                 if (!largeText) OfflineBanner(online, text = stringResource(R.string.offline_banner_form))
+                // VT-01: each step opens at its top, forward or back. One scroll served all 3 steps, so
+                // step 3 opened where step 2 was left and hid "Me / Someone else" (P1 posted her own number).
+                val scroll = rememberScrollState()
+                var shownStep by rememberSaveable { mutableIntStateOf(state.step) }
+                LaunchedEffect(state.step) {
+                    if (state.step != shownStep) {
+                        shownStep = state.step
+                        scroll.scrollTo(0)
+                    }
+                }
                 Column(
                     Modifier
                         .widthIn(max = 560.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scroll)
                         .padding(horizontal = screenGutter(), vertical = Spacing.md),
                     verticalArrangement = Arrangement.spacedBy(Spacing.md),
                 ) {
@@ -310,6 +343,7 @@ internal fun UnitsStepper(units: Int, onChange: (Int) -> Unit, min: Int = Valida
 
 // ---- Step 2: where and when ----
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WhereWhenStep(
     state: CreateRequestUiState,
@@ -342,30 +376,47 @@ private fun WhereWhenStep(
 
     // FORM-02: the district's hospitals show as soon as the field has focus, before any typing.
     var hospitalFocused by remember { mutableStateOf(false) }
-    LLTextField(
-        value = f.hospitalName,
-        onValueChange = onHospitalTyped,
-        label = stringResource(R.string.create_hospital),
-        supportingText = stringResource(R.string.create_hospital_hint),
-        errorText = if (RequestField.HOSPITAL in state.errors) stringResource(R.string.create_error_hospital) else null,
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
-        fieldModifier = Modifier
-            .errorAnchor(anchors, RequestField.HOSPITAL, textField = true)
-            .onFocusChanged { hospitalFocused = it.isFocused },
-    )
-    if (state.hospitals.isNotEmpty() && (hospitalFocused || f.hospitalName.isNotBlank())) {
-        LLCard {
-            state.hospitals.forEachIndexed { i, h ->
-                if (i > 0) HorizontalDivider()
-                val name = h.name.localized(locale)
-                // FORM-02: in Bangla the area from bd-geo, in Bangla; the list's address is English.
-                val area = state.geo?.placeLabel(h.district, h.upazila, locale)
-                val where = if (locale == AppLocale.BN) area else h.address ?: area
-                ListItem(
-                    headlineContent = { Text(name) },
-                    supportingContent = where?.let { { Text(it) } },
-                    modifier = Modifier.clickable(role = Role.Button, onClick = { onHospitalPicked(h, name) }),
-                )
+    val showHospitals = state.hospitals.isNotEmpty() && (hospitalFocused || f.hospitalName.isNotBlank())
+    // VT-02: the field and its list come into view together, above the keyboard. Only the field did,
+    // and the list stayed under the keyboard (5 of 5 missed it). Again whenever the list or the
+    // keyboard changes; with a long list the field goes to the top.
+    val hospitalArea = remember { BringIntoViewRequester() }
+    if (hospitalFocused && showHospitals) {
+        val ime = WindowInsets.ime
+        val density = LocalDensity.current
+        LaunchedEffect(state.hospitals) {
+            snapshotFlow { ime.getBottom(density) }.collectLatest {
+                delay(HOSPITALS_SETTLE_MS)
+                runCatching { hospitalArea.bringIntoView() }
+            }
+        }
+    }
+    Column(Modifier.bringIntoViewRequester(hospitalArea), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
+        LLTextField(
+            value = f.hospitalName,
+            onValueChange = onHospitalTyped,
+            label = stringResource(R.string.create_hospital),
+            supportingText = stringResource(R.string.create_hospital_hint),
+            errorText = if (RequestField.HOSPITAL in state.errors) stringResource(R.string.create_error_hospital) else null,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+            fieldModifier = Modifier
+                .errorAnchor(anchors, RequestField.HOSPITAL, textField = true)
+                .onFocusChanged { hospitalFocused = it.isFocused },
+        )
+        if (showHospitals) {
+            LLCard {
+                state.hospitals.forEachIndexed { i, h ->
+                    if (i > 0) HorizontalDivider()
+                    val name = h.name.localized(locale)
+                    // FORM-02: in Bangla the area from bd-geo, in Bangla; the list's address is English.
+                    val area = state.geo?.placeLabel(h.district, h.upazila, locale)
+                    val where = if (locale == AppLocale.BN) area else h.address ?: area
+                    ListItem(
+                        headlineContent = { Text(name) },
+                        supportingContent = where?.let { { Text(it) } },
+                        modifier = Modifier.clickable(role = Role.Button, onClick = { onHospitalPicked(h, name) }),
+                    )
+                }
             }
         }
     }
@@ -375,25 +426,29 @@ private fun WhereWhenStep(
         label = stringResource(R.string.create_ward),
         supportingText = stringResource(R.string.create_private_hint),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = keyboardDoneShows(anchors, RequestField.URGENCY), // VT-13
     )
 
     // The anchor covers the label, the row and its error line: bringing a field into view scrolls
     // only as far as its anchor, so the error must be inside it (FLOW-04).
     Column(Modifier.errorAnchor(anchors, RequestField.URGENCY), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
         Text(stringResource(R.string.create_urgency), style = MaterialTheme.typography.labelLarge)
-        ChoiceRow(
-            options = Urgency.entries.map { it.code to stringResource(it.labelRes) },
-            selected = f.urgency,
-            onSelect = { code -> onEdit { copy(urgency = code) } },
+        // VT-04: each choice shows its time before it's picked ("Urgent" turned out to mean tomorrow).
+        SegmentedChoices(
+            options = Urgency.entries,
+            selected = Urgency.fromCode(f.urgency),
+            onSelect = { u -> onEdit { copy(urgency = u.code) } },
             isError = RequestField.URGENCY in state.errors,
-        )
+            sublabel = { u -> stringResource(u.timeRes) },
+        ) { u -> stringResource(u.labelRes) }
+        // Once chosen: the deadline itself, "Needed within 6 hours (by 12:18 AM)".
+        val now by rememberNow()
         val urgencyHelp = when (Urgency.fromCode(f.urgency)) {
-            Urgency.CRITICAL -> R.string.create_urgency_critical_help
-            Urgency.URGENT -> R.string.create_urgency_urgent_help
-            Urgency.PLANNED -> R.string.create_urgency_planned_help
+            Urgency.PLANNED -> stringResource(R.string.create_urgency_planned_help)
             null -> null
+            else -> CreateRequestViewModel.neededBy(f, now)?.let { neededWithinText(it, now) }
         }
-        urgencyHelp?.let { Text(stringResource(it), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        urgencyHelp?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         FieldError(RequestField.URGENCY in state.errors, stringResource(R.string.create_error_urgency))
     }
     if (f.urgency == Urgency.PLANNED.code) {
@@ -471,6 +526,17 @@ internal fun PlannedAtPicker(plannedAtMillis: Long?, showError: Boolean, modifie
 
 private const val PLANNED_MAX_DAYS = 29L
 
+/** VT-02: lets the keyboard finish opening before the hospital list is scrolled into view. */
+private const val HOSPITALS_SETTLE_MS = 120L
+
+/** VT-04: what each choice means in time, on the choice itself. */
+private val Urgency.timeRes: Int
+    get() = when (this) {
+        Urgency.CRITICAL -> R.string.create_urgency_critical_time
+        Urgency.URGENT -> R.string.create_urgency_urgent_time
+        Urgency.PLANNED -> R.string.create_urgency_planned_time
+    }
+
 // ---- Step 3: contact and review ----
 
 @Composable
@@ -506,7 +572,8 @@ private fun ContactStep(state: CreateRequestUiState, anchors: ErrorAnchors<Reque
             onValueChange = { v -> onEdit { copy(contactName = v.take(Validators.NAME_MAX)) } },
             label = stringResource(R.string.create_contact_name),
             errorText = if (RequestField.CONTACT_NAME in state.errors) stringResource(R.string.error_contact_name_invalid) else null, // P2-12: not "your" name
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+            // VT-17: autocorrect turned Banglish into English ("aj" → "AJ").
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, autoCorrectEnabled = false, imeAction = ImeAction.Next),
             fieldModifier = Modifier.errorAnchor(anchors, RequestField.CONTACT_NAME, textField = true),
         )
         LLTextField(
@@ -526,15 +593,17 @@ private fun ContactStep(state: CreateRequestUiState, anchors: ErrorAnchors<Reque
         onValueChange = { v -> onEdit { copy(patientName = v.take(Validators.PATIENT_NAME_MAX)) } },
         label = stringResource(R.string.create_patient_name),
         supportingText = stringResource(R.string.create_private_hint),
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, autoCorrectEnabled = false, imeAction = ImeAction.Next),
     )
     LLTextField(
         value = f.notes,
         onValueChange = { v -> onEdit { copy(notes = v.take(Validators.NOTES_MAX)) } },
         label = stringResource(R.string.create_notes),
-        supportingText = stringResource(R.string.create_notes_counter, f.notes.length, Validators.NOTES_MAX),
+        // VT-10: notes are public; say so where they're typed.
+        supportingText = stringResource(R.string.create_notes_public_counter, f.notes.length, Validators.NOTES_MAX),
         singleLine = false,
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, autoCorrectEnabled = false, imeAction = ImeAction.Done),
+        keyboardActions = keyboardDoneShows(anchors, RequestField.GENUINE), // VT-13: then the confirm box
     )
     if (Validators.hasMoneyWords(f.notes)) {
         Text(stringResource(R.string.create_money_warning), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
@@ -569,13 +638,13 @@ private fun ContactStep(state: CreateRequestUiState, anchors: ErrorAnchors<Reque
     }
 }
 
+/** One line under a contact choice; [spoken] is what TalkBack says instead, e.g. a phone number. */
+private data class ChoiceLine(val text: String, val spoken: String? = null)
+
 /**
  * One answer to "How can donors reach you?" as a card: an icon, its words and a radio. The chosen
  * one has a red outline and icon (PERF-01, N2). The whole card is one radio for TalkBack.
  */
-/** One line under a contact choice; [spoken] is what TalkBack says instead, e.g. a phone number. */
-private data class ChoiceLine(val text: String, val spoken: String? = null)
-
 @Composable
 private fun ContactChoice(@DrawableRes icon: Int, title: String, lines: List<ChoiceLine>, selected: Boolean, onClick: () -> Unit) {
     val primary = MaterialTheme.colorScheme.primary
@@ -617,14 +686,26 @@ private fun ReviewCard(state: CreateRequestUiState) {
     val group = BloodGroup.fromCode(f.bloodGroup)?.let { stringResource(it.labelRes) }.orEmpty()
     val component = BloodComponent.fromCode(f.component)?.let { stringResource(it.labelRes) }.orEmpty()
     val place = f.district?.let { state.geo?.placeLabel(it, f.upazila, locale) }.orEmpty()
-    val urgency = Urgency.fromCode(f.urgency)?.let { stringResource(it.labelRes) }.orEmpty()
+    val urgency = Urgency.fromCode(f.urgency)
+    val now by rememberNow()
+    // VT-04: the deadline, not just "Critical"; VT-23: who donors will call.
+    val deadline = when (urgency) {
+        null -> null
+        Urgency.PLANNED -> f.plannedAtMillis?.let { stringResource(R.string.request_needed_on, dateTimeText(Instant.ofEpochMilli(it))) }
+        else -> CreateRequestViewModel.neededBy(f, now)?.let { neededWithinText(it, now) }
+    }
+    val contactName = if (f.contactIsMe) state.myName else f.contactName.trim().ifEmpty { null }
+    val contactPhone = (if (f.contactIsMe) state.myPhone else Validators.normalizePhone(f.contactPhone))
     LLCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
             Text(stringResource(R.string.create_review), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             Text("$group · ${unitsText(f.units, component)}")
             Text(f.hospitalName.trim())
             Text(place)
-            Text(urgency)
+            urgency?.let { Text(stringResource(it.labelRes)) }
+            deadline?.let { Text(it) }
+            contactName?.let { Text(stringResource(R.string.detail_contact_line, it)) }
+            contactPhone?.let { Text(PhoneDisplay.format(it, banglaDigits = locale == AppLocale.BN), modifier = Modifier.spokenAs(PhoneDisplay.spoken(it))) }
         }
     }
 }

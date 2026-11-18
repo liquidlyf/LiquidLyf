@@ -121,6 +121,9 @@ data class CreateRequestUiState(
     /** 7.8: the notes mention money; waiting for "Post anyway" or "Change note". */
     val moneyWarning: Boolean = false,
     val moneyAcknowledged: Boolean = false,
+    /** VT-10: the notes hold a phone number, which everyone would see; waiting for an answer. */
+    val phoneWarning: Boolean = false,
+    val phoneAcknowledged: Boolean = false,
     @param:StringRes val formError: Int? = null,
     /** "Me": the profile's name and number, shown so nothing needs typing. */
     val myName: String? = null,
@@ -236,6 +239,11 @@ class CreateRequestViewModel @Inject constructor(
             edit { copy(step = step + 1) }
             return
         }
+        // VT-10: notes are public; a phone number belongs under "Someone else".
+        if (Validators.hasPhoneNumber(s.form.notes) && !s.phoneAcknowledged) {
+            state.update { it.copy(phoneWarning = true) }
+            return
+        }
         // 7.8: a note that mentions money is posted flagged (the rules insist); say so first.
         if (Validators.hasMoneyWords(s.form.notes) && !s.moneyAcknowledged) {
             state.update { it.copy(moneyWarning = true) }
@@ -250,8 +258,14 @@ class CreateRequestViewModel @Inject constructor(
         next()
     }
 
-    /** From the money warning: back to the note. */
-    fun changeNote() = state.update { it.copy(moneyWarning = false) }
+    /** From the money or phone warning: back to the note. */
+    fun changeNote() = state.update { it.copy(moneyWarning = false, phoneWarning = false) }
+
+    /** From the phone warning: post with the number in the note. */
+    fun postPhoneAnyway() {
+        state.update { it.copy(phoneWarning = false, phoneAcknowledged = true) }
+        next()
+    }
 
     /** Back inside the steps; false on the first step (the screen then closes). */
     fun back(): Boolean {

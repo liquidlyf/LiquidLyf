@@ -99,9 +99,14 @@
     <string name="create_ward">Ward or bed (optional)</string>
     <string name="create_private_hint">Private: only you and donors who offer can see it.</string>
     <string name="create_urgency">How soon?</string>
-    <string name="create_urgency_critical_help">Needed within 6 hours.</string>
-    <string name="create_urgency_urgent_help">Needed within 24 hours.</string>
     <string name="create_urgency_planned_help">For a set day, such as a planned operation or a thalassemia transfusion.</string>
+    <string name="create_urgency_critical_time">within 6 hours</string>
+    <string name="create_urgency_urgent_time">within 24 hours</string>
+    <string name="create_urgency_planned_time">on a day you pick</string>
+    <plurals name="needed_within_hours">
+        <item quantity="one">Needed within %1$d hour (by %2$s)</item>
+        <item quantity="other">Needed within %1$d hours (by %2$s)</item>
+    </plurals>
     <string name="create_error_urgency">Choose how soon blood is needed.</string>
     <string name="create_pick_time">Pick the date and time</string>
     <string name="create_error_planned">Pick a time between 15 minutes and 30 days from now.</string>
@@ -117,7 +122,7 @@
     <string name="create_contact_phone">Contact mobile number</string>
     <string name="create_patient_name">Patient\'s name (optional)</string>
     <string name="create_notes">Notes for donors (optional)</string>
-    <string name="create_notes_counter">%1$d / %2$d</string>
+    <string name="create_notes_public_counter">Everyone who opens the request sees this.\n%1$d / %2$d</string>
     <string name="create_money_warning">Blood must never be bought or sold. Requests that mention money are checked by our team.</string>
     <string name="create_review">Check your request</string>
     <string name="create_disclaimer">Blood must be donated only at a licensed hospital or blood centre. Never pay for blood.</string>

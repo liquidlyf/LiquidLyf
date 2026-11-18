@@ -90,10 +90,12 @@ fun <T> SegmentedChoices(
     isError: Boolean = false,
     /** What TalkBack reads when the short [label] alone isn't clear ("Phone" → "Same as phone", N5). */
     spokenLabel: @Composable (T) -> String? = { null },
+    /** A smaller second line under the label, e.g. "within 6 hours" (VT-04). */
+    sublabel: @Composable (T) -> String? = { null },
     label: @Composable (T) -> String,
 ) {
     if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) {
-        RadioChoices(options, selected, onSelect, modifier, isError, spokenLabel, label)
+        RadioChoices(options, selected, onSelect, modifier, isError, spokenLabel, sublabel, label)
         return
     }
     BoxWithConstraints(modifier.fillMaxWidth()) {
@@ -113,7 +115,17 @@ fun <T> SegmentedChoices(
                     shape = SegmentedButtonDefaults.itemShape(index, options.size),
                     colors = chosenSegmentColors(isError),
                     modifier = Modifier.fillMaxHeight(),
-                ) { Text(label(option), textAlign = TextAlign.Center, modifier = Modifier.spoken(spokenLabel(option))) }
+                ) {
+                    val sub = sublabel(option)
+                    if (sub == null) {
+                        Text(label(option), textAlign = TextAlign.Center, modifier = Modifier.spoken(spokenLabel(option)))
+                    } else {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(label(option), textAlign = TextAlign.Center, modifier = Modifier.spoken(spokenLabel(option)))
+                            Text(sub, textAlign = TextAlign.Center, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
             }
         }
     }
@@ -130,6 +142,7 @@ private fun <T> RadioChoices(
     modifier: Modifier,
     isError: Boolean,
     spokenLabel: @Composable (T) -> String?,
+    sublabel: @Composable (T) -> String?,
     label: @Composable (T) -> String,
 ) {
     Column(modifier.fillMaxWidth().selectableGroup()) {
@@ -147,7 +160,10 @@ private fun <T> RadioChoices(
                     onClick = null,
                     colors = if (isError) RadioButtonDefaults.colors(unselectedColor = MaterialTheme.colorScheme.error) else RadioButtonDefaults.colors(),
                 )
-                Text(label(option), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f).spoken(spokenLabel(option)))
+                Column(Modifier.weight(1f)) {
+                    Text(label(option), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.spoken(spokenLabel(option)))
+                    sublabel(option)?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                }
             }
         }
     }

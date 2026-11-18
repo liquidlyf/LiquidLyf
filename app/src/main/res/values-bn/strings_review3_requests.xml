@@ -165,9 +165,14 @@
     <string name="create_ward">ওয়ার্ড বা বেড (ঐচ্ছিক)</string>
     <string name="create_private_hint">গোপন: শুধু আপনি আর যে রক্তদাতারা সাড়া দেবেন, তাঁরাই এটি দেখতে পাবেন।</string>
     <string name="create_urgency">কত তাড়াতাড়ি?</string>
-    <string name="create_urgency_critical_help">৬ ঘণ্টার মধ্যে দরকার।</string>
-    <string name="create_urgency_urgent_help">২৪ ঘণ্টার মধ্যে দরকার।</string>
     <string name="create_urgency_planned_help">নির্দিষ্ট দিনের জন্য, যেমন আগে থেকে ঠিক করা অপারেশন বা থ্যালাসেমিয়া রোগীর রক্ত নেওয়া।</string>
+    <string name="create_urgency_critical_time">৬ ঘণ্টার মধ্যে</string>
+    <string name="create_urgency_urgent_time">২৪ ঘণ্টার মধ্যে</string>
+    <string name="create_urgency_planned_time">যে দিন বেছে নেবেন</string>
+    <plurals name="needed_within_hours">
+        <item quantity="one">%1$d ঘণ্টার মধ্যে দরকার (%2$s-এর মধ্যে)</item>
+        <item quantity="other">%1$d ঘণ্টার মধ্যে দরকার (%2$s-এর মধ্যে)</item>
+    </plurals>
     <string name="create_error_urgency">কত তাড়াতাড়ি রক্ত দরকার, বেছে নিন।</string>
     <string name="create_pick_time">তারিখ ও সময় বেছে নিন</string>
     <string name="create_error_planned">১৫ মিনিট পর থেকে ৩০ দিনের মধ্যে একটি সময় বেছে নিন।</string>
@@ -183,7 +188,7 @@
     <string name="create_contact_phone">যোগাযোগের মোবাইল নম্বর</string>
     <string name="create_patient_name">রোগীর নাম (ঐচ্ছিক)</string>
     <string name="create_notes">রক্তদাতাদের জন্য নোট (ঐচ্ছিক)</string>
-    <string name="create_notes_counter">%1$d / %2$d</string>
+    <string name="create_notes_public_counter">অনুরোধটি যিনিই খুলবেন, তিনিই এটি দেখতে পাবেন।\n%1$d / %2$d</string>
     <string name="create_review">আপনার অনুরোধ মিলিয়ে দেখুন</string>
 
     <!-- The request screen -->

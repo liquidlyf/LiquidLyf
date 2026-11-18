@@ -104,9 +104,28 @@ private const val BANGLA = "bn"
 fun timeOrDateTimeText(instant: Instant, now: Instant): String {
     val zone = java.time.ZoneId.systemDefault()
     if (instant.atZone(zone).toLocalDate() != now.atZone(zone).toLocalDate()) return dateTimeText(instant)
+    return timeOfDayText(instant)
+}
+
+/** Only the time of day: "12:18 AM", "রাত ১২:১৮". */
+@Composable
+fun timeOfDayText(instant: Instant): String {
     val locale = LocalConfiguration.current.locales[0]
     if (locale.language == BANGLA) return banglaTime(instant, locale)
     return keepAmPm(DateFormat.getTimeInstance(DateFormat.SHORT, locale).format(Date.from(instant)))
+}
+
+/**
+ * VT-04: a deadline less than a day away as people read it, "Needed within 6 hours (by 12:18 AM)":
+ * the hours left, then only the time of day. A date ("19 Nov, 12:18 AM") read as "not today"
+ * (P1, P2). Null when it's further away or already past.
+ */
+@Composable
+fun neededWithinText(neededBy: Instant, now: Instant): String? {
+    val minutes = java.time.Duration.between(now, neededBy).toMinutes()
+    if (minutes <= 0 || minutes > 24 * 60) return null
+    val hours = ((minutes + 59) / 60).toInt()
+    return pluralStringResource(R.plurals.needed_within_hours, hours, hours, timeOfDayText(neededBy))
 }
 
 /** A date in the phone's time zone and the app's language, e.g. "14 Nov 2026". */

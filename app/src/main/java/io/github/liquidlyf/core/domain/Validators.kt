@@ -123,6 +123,20 @@ object Validators {
     fun hasMoneyWords(text: String?): Boolean =
         text != null && MONEY_WORDS.containsMatchIn(text.lowercase(Locale.ROOT))
 
+    /**
+     * VT-10: the text holds a Bangladeshi mobile number (01 and 9 more digits, with or without +88,
+     * with spaces, dashes or Bangla digits). Notes are public, so the form asks first.
+     */
+    fun hasPhoneNumber(text: String?): Boolean {
+        if (text == null) return false
+        val ascii = text.map { c -> if (c in '০'..'৯') '0' + (c - '০') else c }.joinToString("")
+        return NUMBER_RUN.findAll(ascii).any { run -> BD_MOBILE_IN_TEXT.containsMatchIn(run.value.filter(Char::isDigit)) }
+    }
+
+    /** A run of digits that may hold spaces, dashes, dots or brackets between them. */
+    private val NUMBER_RUN = Regex("""[+\d][\d\s\-.()]{8,}\d""")
+    private val BD_MOBILE_IN_TEXT = Regex("""01[3-9]\d{8}""")
+
     /** Profile age 18–100 from the birth year, in UTC like `request.time.year()` in the rules. */
     fun isValidBirthYear(birthYear: Int, now: Instant): Boolean =
         EligibilityCalculator.ageIn(birthYear, now) in MIN_PROFILE_AGE..MAX_PROFILE_AGE

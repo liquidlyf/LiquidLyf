@@ -46,9 +46,11 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.Density
@@ -719,6 +721,51 @@ class ScreenGalleryTest {
             Shot("request-blood-loading", animated = true, content = form(CreateRequestUiState(RequestForm()), true)),
             Shot("request-blood-limit", content = form(at(RequestForm()).copy(limit = OpenRequestLimit(max = 3, newAccount = false)), true)),
             Shot("request-blood-limit-new-account", content = form(at(RequestForm()).copy(limit = OpenRequestLimit(max = 1, newAccount = true)), true)),
+            // VT-02: typing a hospital, the list shows above the keyboard (the field near the top).
+            Shot(
+                "request-blood-2-hospital-typing",
+                prepare = { tapOn(hasSetTextAction() and hasText("Dhaka medical", substring = true)); Thread.sleep(KEYBOARD_MS) },
+                content = form(at(filled.copy(step = 1, hospitalName = "Dhaka medical", wardOrBed = "", urgency = null)).copy(hospitals = hospitals.take(1)), true),
+            ),
+            // VT-13: Done on Ward or bed closes the keyboard and shows "How soon?".
+            Shot(
+                "request-blood-2-ward-done",
+                prepare = {
+                    val ward = hasSetTextAction() and hasText("Ward 5", substring = true)
+                    tapOn(ward)
+                    Thread.sleep(KEYBOARD_MS)
+                    compose.onNode(ward).performImeAction()
+                    Thread.sleep(KEYBOARD_MS)
+                },
+                content = form(at(filled.copy(step = 1, urgency = null)), true),
+            ),
+            // VT-13: the note's keyboard has Done (not a new line), and Done shows the confirm box.
+            Shot(
+                "request-blood-3-notes-typing",
+                prepare = { tapOn(hasSetTextAction() and hasText("Please call", substring = true)); Thread.sleep(KEYBOARD_MS) },
+                content = form(at(filled.copy(step = 2, genuine = false)), true),
+            ),
+            Shot(
+                "request-blood-3-notes-done",
+                prepare = {
+                    val notes = hasSetTextAction() and hasText("Please call", substring = true)
+                    tapOn(notes)
+                    Thread.sleep(KEYBOARD_MS)
+                    compose.onNode(notes).performImeAction()
+                    Thread.sleep(KEYBOARD_MS)
+                },
+                content = form(at(filled.copy(step = 2, genuine = false)), true),
+            ),
+            // VT-10: a phone number in the public note asks first.
+            Shot("request-blood-phone-warning", overlay = true, prepare = { waitFor(R.string.phone_note_title) }) {
+                val vm = remember { createRequestViewModel() }
+                LaunchedEffect(vm) {
+                    vm.uiState.first { it.loaded }
+                    vm.edit { filled.copy(step = 2, notes = "Rafiq is with the patient: 01711-234567") }
+                    vm.next()
+                }
+                CreateRequestRoute(onClose = {}, onPosted = { _, _ -> }, onOpenMyRequests = {}, viewModel = vm)
+            },
             Shot("request-blood-money-warning", overlay = true, prepare = { waitFor(R.string.money_warning_title) }) {
                 val vm = remember { createRequestViewModel() }
                 LaunchedEffect(vm) {
@@ -1095,6 +1142,9 @@ class ScreenGalleryTest {
     private companion object {
         const val MAX_PAGES = 12
         const val SETTLE_MS = 250L
+
+        /** The keyboard opening or closing, and what scrolls after it. */
+        const val KEYBOARD_MS = 1_500L
         const val OVERLAY_SETTLE_MS = 600L
         const val SENDER = "noreply@liquidlyf-app.firebaseapp.com"
     }
