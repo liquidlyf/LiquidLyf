@@ -310,6 +310,8 @@ class CreateRequestViewModel @Inject constructor(
 
     private suspend fun posted(requestId: String, notice: PostNotice?) {
         savedState.remove<String>(FORM_KEY)
+        // MOTION-01: it worked. Offline, the page's own notice says it's waiting instead.
+        if (notice == null) AppSnackbars.show(AppSnackbar(R.string.success_request_posted))
         events.send(CreateRequestEvent.Posted(requestId, notice))
     }
 

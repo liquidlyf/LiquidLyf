@@ -16,8 +16,11 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -26,11 +29,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -61,7 +66,9 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.SystemBarScrims
+import io.github.liquidlyf.core.designsystem.components.LLSnackbar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.SuccessVisuals
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.domain.BadgeCalculator
 import io.github.liquidlyf.core.domain.EligibilityCalculator
@@ -943,6 +950,13 @@ class ScreenGalleryTest {
             Shot("settings-list-me-dialog", overlay = true, prepare = { tap(R.string.settings_list_me) }, content = screen(state.copy(listed = false, available = false))),
             // N5: the check after tapping Sign out in the corner, and the resting line under Ready to donate.
             Shot("settings-sign-out-dialog", overlay = true, prepare = { tap(R.string.action_sign_out) }, content = screen(state)),
+            // MOTION-01: the "it worked" snackbar, with its check (held on screen for the picture).
+            Shot("success-snackbar") {
+                val host = remember { SnackbarHostState() }
+                val text = stringResource(R.string.success_request_posted)
+                LaunchedEffect(Unit) { host.showSnackbar(SuccessVisuals(text, SnackbarDuration.Indefinite)) }
+                Box(Modifier.fillMaxSize()) { SnackbarHost(host, Modifier.align(Alignment.BottomCenter)) { LLSnackbar(it) } }
+            },
             Shot("settings-resting", content = screen(state.copy(alertsAgainOn = now.plus(Duration.ofDays(80))))),
             Shot("notification-settings") { NotificationPrefsScreen(NotificationPrefsUiState(loaded = true), systemEnabled = true, onChange = {}, onOpenSystemSettings = {}, onBack = {}) },
             Shot("notification-settings-phone-off") {

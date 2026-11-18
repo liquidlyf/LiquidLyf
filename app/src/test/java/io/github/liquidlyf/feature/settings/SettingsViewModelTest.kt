@@ -114,6 +114,21 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `listing as a donor says it worked (MOTION-01), unlisting doesn't`() = runTest(dispatcher) {
+        val vm = vm()
+        val events = mutableListOf<SettingsEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { events += it } }
+        advanceUntilIdle()
+        vm.setListed(false)
+        advanceUntilIdle()
+        refreshFromRepository()
+        advanceUntilIdle()
+        vm.setListed(true)
+        advanceUntilIdle()
+        assertEquals(listOf(SettingsEvent.Message(R.string.success_listed)), events)
+    }
+
+    @Test
     fun `before the profile is read the switches stay hidden`() = runTest(dispatcher) {
         session.state.value = SessionState.Loading
         val vm = vm()

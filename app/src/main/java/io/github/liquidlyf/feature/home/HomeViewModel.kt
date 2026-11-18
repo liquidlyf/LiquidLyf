@@ -277,7 +277,10 @@ class HomeViewModel @Inject constructor(
         val p = (session.state.value as? SessionState.Ready)?.profile ?: return
         viewModelScope.launch {
             when (val result = profiles.setListed(p, true)) {
-                is AppResult.Success -> session.refresh()
+                is AppResult.Success -> {
+                    session.refresh()
+                    events.send(HomeEvent.Message(R.string.success_listed)) // MOTION-01: it worked
+                }
                 is AppResult.Failure -> events.send(HomeEvent.Message(result.error.messageRes))
             }
         }

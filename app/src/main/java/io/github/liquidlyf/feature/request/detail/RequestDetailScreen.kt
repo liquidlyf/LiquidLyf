@@ -96,6 +96,7 @@ import io.github.liquidlyf.core.designsystem.components.SheetDragHandle
 import io.github.liquidlyf.core.designsystem.components.StatusPill
 import io.github.liquidlyf.core.designsystem.components.UnitDrops
 import io.github.liquidlyf.core.designsystem.components.isLargeText
+import io.github.liquidlyf.core.designsystem.components.showAppMessage
 import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateTimeText
@@ -140,7 +141,7 @@ fun RequestDetailRoute(
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { e ->
             when (e) {
-                is DetailEvent.Message -> launch { snackbar.showSnackbar(resources.getString(e.text)) }
+                is DetailEvent.Message -> launch { snackbar.showAppMessage(resources, e.text) }
                 DetailEvent.Left -> onBack()
             }
         }

@@ -50,6 +50,7 @@ import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
+import io.github.liquidlyf.core.designsystem.components.StepContent
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.labelRes
@@ -119,10 +120,12 @@ fun BecomeDonorScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 LinearProgressIndicator(progress = { (state.step + 1f) / BecomeDonorViewModel.STEPS }, modifier = Modifier.fillMaxWidth())
-                when (state.step) {
-                    0 -> BloodGroupStep(state, anchors, onEdit, onSkipBloodGroup)
-                    1 -> DetailsStep(state, anchors, onEdit)
-                    else -> HistoryStep(state, anchors, onEdit)
+                StepContent(state.step) { step ->
+                    when (step) {
+                        0 -> BloodGroupStep(state, anchors, onEdit, onSkipBloodGroup)
+                        1 -> DetailsStep(state, anchors, onEdit)
+                        else -> HistoryStep(state, anchors, onEdit)
+                    }
                 }
                 FormError(state.formError)
             }

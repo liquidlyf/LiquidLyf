@@ -106,18 +106,21 @@ class SettingsViewModel @Inject constructor(
     }
 
     /** On: after the consent dialog. Off: withdraws consent; the public card goes and area alerts stop. */
-    fun setListed(listed: Boolean) = save { p -> profiles.setListed(p, listed) }
+    fun setListed(listed: Boolean) = save(done = if (listed) io.github.liquidlyf.R.string.success_listed else null) { p -> profiles.setListed(p, listed) }
 
     fun setAvailable(available: Boolean) = save { p -> profiles.setAvailable(p, available) }
 
-    private fun save(write: suspend (UserProfile) -> AppResult<Unit>) {
+    private fun save(@StringRes done: Int? = null, write: suspend (UserProfile) -> AppResult<Unit>) {
         val p = (session.state.value as? SessionState.Ready)?.profile ?: return
         if (saving.value) return
         saving.value = true
         viewModelScope.launch {
             when (val result = write(p)) {
                 // The session re-reads the profile; the alert topics follow it (PushTopicManager).
-                is AppResult.Success -> session.refresh()
+                is AppResult.Success -> {
+                    session.refresh()
+                    done?.let { events.send(SettingsEvent.Message(it)) }
+                }
                 is AppResult.Failure -> events.send(SettingsEvent.Message(result.error.messageRes))
             }
             saving.value = false

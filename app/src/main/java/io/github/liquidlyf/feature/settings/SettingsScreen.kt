@@ -64,6 +64,7 @@ import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.SegmentedChoices
 import io.github.liquidlyf.core.designsystem.components.isLargeText
+import io.github.liquidlyf.core.designsystem.components.showAppMessage
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateText
 import io.github.liquidlyf.core.designsystem.screenGutter
@@ -98,7 +99,7 @@ fun SettingsScreen(
     val launcher = rememberSafeIntentLauncher()
     val locale = currentAppLocale()
     LaunchedEffect(viewModel) {
-        viewModel.eventFlow.collect { e -> if (e is SettingsEvent.Message) launch { snackbar.showSnackbar(resources.getString(e.text)) } }
+        viewModel.eventFlow.collect { e -> if (e is SettingsEvent.Message) launch { snackbar.showAppMessage(resources, e.text) } }
     }
     SettingsContent(
         uiState = uiState,

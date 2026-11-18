@@ -83,6 +83,7 @@ import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LoadingState
 import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
+import io.github.liquidlyf.core.designsystem.components.StepContent
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.components.unitsText
@@ -208,10 +209,13 @@ internal fun CreateRequestScreen(
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    when (state.step) {
-                        0 -> PatientStep(state, anchors, onEdit)
-                        1 -> WhereWhenStep(state, anchors, onEdit, onDivision, onDistrict, onHospitalTyped, onHospitalPicked)
-                        else -> ContactStep(state, anchors, onEdit)
+                    // MOTION-01: the steps slide sideways, forward or back.
+                    StepContent(state.step) { step ->
+                        when (step) {
+                            0 -> PatientStep(state, anchors, onEdit)
+                            1 -> WhereWhenStep(state, anchors, onEdit, onDivision, onDistrict, onHospitalTyped, onHospitalPicked)
+                            else -> ContactStep(state, anchors, onEdit)
+                        }
                     }
                     state.formError?.let {
                         Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)

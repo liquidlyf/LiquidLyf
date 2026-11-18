@@ -3,6 +3,15 @@ package io.github.liquidlyf.navigation
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -47,6 +56,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -65,8 +75,11 @@ import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.designsystem.components.CapFontScale
+import io.github.liquidlyf.core.designsystem.components.LLSnackbar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.MAX_LABEL_SCALE
+import io.github.liquidlyf.core.designsystem.components.SuccessMessages
+import io.github.liquidlyf.core.designsystem.components.SuccessVisuals
 import io.github.liquidlyf.core.designsystem.windowWidth
 import io.github.liquidlyf.core.firebase.CrashReports
 import io.github.liquidlyf.core.util.AppError
@@ -180,11 +193,15 @@ fun AppNavHost(
         AppSnackbars.current.collect { entry ->
             val s = entry?.snackbar ?: return@collect
             // Cancelled by a rotation mid-show: not done, so the new screen shows it again.
-            val result = snackbarHostState.showSnackbar(
-                message = resources.getString(s.message),
-                actionLabel = s.actionLabel?.let(resources::getString),
-                duration = SnackbarDuration.Long,
-            )
+            val result = if (s.actionLabel == null && s.message in SuccessMessages.ids) {
+                snackbarHostState.showSnackbar(SuccessVisuals(resources.getString(s.message)))
+            } else {
+                snackbarHostState.showSnackbar(
+                    message = resources.getString(s.message),
+                    actionLabel = s.actionLabel?.let(resources::getString),
+                    duration = SnackbarDuration.Long,
+                )
+            }
             AppSnackbars.done(entry)
             if (result == SnackbarResult.ActionPerformed) s.onAction?.invoke()
         }
@@ -195,7 +212,7 @@ fun AppNavHost(
             bottomBar = {
                 if (currentTab != null && !useRail) AppNavigationBar(currentTab, onSelect = selectTab)
             },
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost = { SnackbarHost(snackbarHostState) { data -> LLSnackbar(data) } },
             // Each screen handles its own insets; this Scaffold only reserves the bottom bar.
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
         ) { padding ->
@@ -211,6 +228,10 @@ fun AppNavHost(
                 NavHost(
                     navController = navController,
                     startDestination = startZone.route(),
+                    enterTransition = { if (isTabSwitch()) fadeThroughIn() else sharedAxisIn(forward = true) },
+                    exitTransition = { if (isTabSwitch()) fadeThroughOut() else sharedAxisOut(forward = true) },
+                    popEnterTransition = { if (isTabSwitch()) fadeThroughIn() else sharedAxisIn(forward = false) },
+                    popExitTransition = { if (isTabSwitch()) fadeThroughOut() else sharedAxisOut(forward = false) },
                     modifier = Modifier
                         .weight(1f)
                         .then(
@@ -230,6 +251,37 @@ fun AppNavHost(
         }
     }
 }
+
+// ---- MOTION-01: M3 transitions. With "Remove animations" on, Compose runs them at no length. ----
+
+private val TAB_GRAPHS = listOf(HomeGraph::class, RequestsGraph::class, DonorsGraph::class, ProfileGraph::class)
+
+/** The tab graph a destination sits in, or null (sign-in, a request on top of the tabs…). */
+private fun NavBackStackEntry.tabGraph(): Int? =
+    destination.hierarchy.firstNotNullOfOrNull { d -> TAB_GRAPHS.indexOfFirst { d.hasRoute(it) }.takeIf { it >= 0 } }
+
+/** Between two tabs' own screens: a fade-through, not a slide (tabs aren't "forward"). */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch(): Boolean {
+    val from = initialState.tabGraph()
+    val to = targetState.tabGraph()
+    return from != null && to != null && from != to
+}
+
+private const val FADE_THROUGH_OUT_MS = 90
+private const val FADE_THROUGH_IN_MS = 210
+private const val SHARED_AXIS_MS = 250
+
+private fun fadeThroughIn(): EnterTransition =
+    fadeIn(tween(FADE_THROUGH_IN_MS, delayMillis = FADE_THROUGH_OUT_MS)) + scaleIn(tween(FADE_THROUGH_IN_MS, delayMillis = FADE_THROUGH_OUT_MS), initialScale = 0.92f)
+
+private fun fadeThroughOut(): ExitTransition = fadeOut(tween(FADE_THROUGH_OUT_MS))
+
+/** M3 shared axis X: a short slide (30 dp's worth) with a cross-fade, forward or back. */
+private fun sharedAxisIn(forward: Boolean): EnterTransition =
+    slideInHorizontally(tween(SHARED_AXIS_MS)) { w -> (if (forward) 1 else -1) * w / 10 } + fadeIn(tween(SHARED_AXIS_MS))
+
+private fun sharedAxisOut(forward: Boolean): ExitTransition =
+    slideOutHorizontally(tween(SHARED_AXIS_MS)) { w -> (if (forward) -1 else 1) * w / 10 } + fadeOut(tween(SHARED_AXIS_MS / 2))
 
 /** Internal for the README and website screenshots (StoreScreenshotsTest), which draw it around a tab. */
 @Composable

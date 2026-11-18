@@ -56,6 +56,7 @@ import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTag
+import io.github.liquidlyf.core.designsystem.components.showAppMessage
 import io.github.liquidlyf.core.designsystem.numberText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.EligibilityRing
@@ -88,7 +89,7 @@ fun ProfileRoute(onEditProfile: () -> Unit, onOpenSettings: () -> Unit, onBecome
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collect { e ->
             when (e) {
-                is ProfileEvent.Message -> launch { snackbar.showSnackbar(resources.getString(e.text)) }
+                is ProfileEvent.Message -> launch { snackbar.showAppMessage(resources, e.text) }
                 ProfileEvent.DonationSaved -> showAddSheet = false
             }
         }

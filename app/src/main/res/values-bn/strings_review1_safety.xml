@@ -62,6 +62,8 @@
     <string name="detail_offer_consent">আপনার নাম, রক্তের গ্রুপ ও মোবাইল নম্বর যিনি অনুরোধ করেছেন তাঁর সঙ্গে শেয়ার করা হবে।</string>
     <string name="detail_offer_confirm">নম্বর শেয়ার করে সাড়া দিন</string>
     <string name="detail_offer_sent">আপনার সাড়া জানানো হয়েছে। যিনি অনুরোধ করেছেন, তিনি এখন আপনাকে কল করতে পারবেন।</string>
+    <string name="success_request_posted">অনুরোধ পোস্ট হয়েছে। কাছাকাছি রক্তদাতাদের অ্যালার্ট পাঠানো হচ্ছে।</string>
+    <string name="success_listed">আপনি এখন রক্তদাতার তালিকায় আছেন।</string>
 
     <!-- Report and block (Phase 7) -->
     <string name="action_cancel">বাতিল</string>

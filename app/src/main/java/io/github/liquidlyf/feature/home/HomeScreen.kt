@@ -77,6 +77,7 @@ import io.github.liquidlyf.core.designsystem.components.UnitDrops
 import io.github.liquidlyf.core.designsystem.components.eligibilityText
 import io.github.liquidlyf.core.designsystem.components.isLargeText
 import io.github.liquidlyf.core.designsystem.components.neededByText
+import io.github.liquidlyf.core.designsystem.components.showAppMessage
 import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.dateText
@@ -113,7 +114,7 @@ fun HomeRoute(
     val snackbar = LocalSnackbarHostState.current
     val resources = LocalResources.current
     LaunchedEffect(viewModel) {
-        viewModel.eventFlow.collect { e -> if (e is HomeEvent.Message) launch { snackbar.showSnackbar(resources.getString(e.text)) } }
+        viewModel.eventFlow.collect { e -> if (e is HomeEvent.Message) launch { snackbar.showAppMessage(resources, e.text) } }
     }
     // Back on Home after posting a request: it shows as "Your request" (FLOW-03).
     LifecycleResumeEffect(viewModel) {
