@@ -249,8 +249,12 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
                                 Text(pluralStringResource(R.plurals.donors_count, n, n), style = MaterialTheme.typography.titleSmall)
                             }
                         }
+                        val asked = state.asked.mapTo(mutableSetOf()) { it.substringAfter(':') }
                         items(results, key = { it.uid }) { card ->
-                            DonorRow(card, state.geo, locale, now, searchedUpazila = state.applied?.upazila, onClick = { actions.onOpenDonor(card) })
+                            DonorRow(
+                                card, state.geo, locale, now, searchedUpazila = state.applied?.upazila,
+                                asked = card.uid in asked, onClick = { actions.onOpenDonor(card) },
+                            )
                         }
                         if (!state.endReached) {
                             item {
@@ -346,7 +350,7 @@ private fun FiltersSummary(state: FindDonorsUiState, locale: AppLocale, onChange
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Instant, searchedUpazila: String?, onClick: () -> Unit) {
+private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Instant, searchedUpazila: String?, asked: Boolean, onClick: () -> Unit) {
     // The district is the search's own, so only the upazila or city corporation, and only when the
     // search was the whole district.
     val place = if (searchedUpazila != null && card.area.upazila == searchedUpazila) {
@@ -367,7 +371,12 @@ private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Insta
             Column(modifier, verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                 Text(card.displayName, style = MaterialTheme.typography.titleMedium)
                 // Low 3: with large text the count gets its own line (a line began "· ২ বার রক্তদান").
-                val count = pluralStringResource(R.plurals.donors_donations, card.donationCount, card.donationCount)
+                // VT-20: no donations yet reads "New donor", not "0 donations".
+                val count = if (card.donationCount == 0) {
+                    stringResource(R.string.donors_new_donor)
+                } else {
+                    pluralStringResource(R.plurals.donors_donations, card.donationCount, card.donationCount)
+                }
                 Text(
                     if (large) eligibleText + "\n" + count else "$eligibleText · $count",
                     style = MaterialTheme.typography.bodyMedium,
@@ -385,8 +394,22 @@ private fun DonorRow(card: DonorCard, geo: BdGeo?, locale: AppLocale, now: Insta
                 }
             }
         }
-        // Says what a tap does; the row itself is the one TalkBack stop.
-        val ask = @Composable { TextButton(onClick = onClick, modifier = Modifier.clearAndSetSemantics { }) { Text(stringResource(R.string.donors_ask)) } }
+        // Says what a tap does; the row itself is the one TalkBack stop. VT-07: once asked, "Asked ✓"
+        // (read with the row), so it doesn't look like the ask didn't go (5 of 5 saw "Ask" still).
+        val ask = @Composable {
+            if (asked) {
+                Row(
+                    Modifier.heightIn(min = Spacing.minTouchTarget).padding(horizontal = Spacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xxs),
+                ) {
+                    Icon(painterResource(LLIcons.CheckCircle), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                    Text(stringResource(R.string.donors_asked_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                }
+            } else {
+                TextButton(onClick = onClick, modifier = Modifier.clearAndSetSemantics { }) { Text(stringResource(R.string.donors_ask)) }
+            }
+        }
         val row = Modifier
             .fillMaxWidth()
             .clickable(onClickLabel = stringResource(R.string.action_ask_to_donate), onClick = onClick)

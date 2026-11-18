@@ -108,7 +108,7 @@
     <string name="donors_empty_body_post">একটি অনুরোধ পোস্ট করুন: রক্তদাতা পাওয়া গেলেই আমরা তাঁদের অ্যালার্ট পাঠাব।</string>
     <string name="action_show_more">আরও দেখুন</string>
     <string name="donors_ask_title">%1$s-কে রক্ত দিতে অনুরোধ করুন</string>
-    <string name="donors_ask_body">তিনি একটি নোটিফিকেশন পাবেন এবং আপনার অনুরোধে সাড়া দিতে পারবেন। এখন কোনো ফোন নম্বর শেয়ার হবে না: তিনি সাড়া দিলে তবেই আপনার নম্বর দেখতে পাবেন।</string>
+    <string name="donors_ask_body">তিনি একটি নোটিফিকেশন পাবেন এবং আপনার অনুরোধে সাড়া দিতে পারবেন। এখন কোনো ফোন নম্বর শেয়ার হবে না। শুধু সাড়া দেওয়া রক্তদাতারাই অনুরোধের যোগাযোগ নম্বর দেখতে পান।</string>
     <string name="donors_ask_pick">কোন অনুরোধের জন্য?</string>
     <string name="donors_ask_no_requests">আপনার কোনো চলমান অনুরোধ নেই। আগে একটি পোস্ট করুন, তারপর সরাসরি রক্তদাতাদের অনুরোধ করতে পারবেন।</string>
     <string name="donors_ask_none_compatible">আপনার কোনো চলমান অনুরোধেই %1$s গ্রুপের রক্ত চলবে না।</string>
@@ -116,10 +116,11 @@
     <string name="donors_ask">অনুরোধ করুন</string>
     <string name="action_asking">অনুরোধ পাঠানো হচ্ছে…</string>
     <string name="donors_asked_label">অনুরোধ করা হয়েছে</string>
+    <string name="donors_new_donor">নতুন রক্তদাতা</string>
     <string name="donors_asked">অনুরোধ পাঠানো হয়েছে। %1$s একটি নোটিফিকেশন পাবেন।</string>
     <string name="donors_ask_already">এই অনুরোধের জন্য আপনি এই রক্তদাতাকে আগেই অনুরোধ করেছেন।</string>
     <string name="donors_ask_request_full">এই অনুরোধের জন্য ১০ জনকে অনুরোধ করার সীমা পূর্ণ হয়েছে।</string>
-    <string name="donors_ask_no_alert">আপনার অনুরোধ তাঁর নোটিফিকেশনে আছে, কিন্তু অ্যালার্ট পাঠানো যায়নি।</string>
+    <string name="donors_ask_no_alert">অনুরোধ পাঠানো হয়েছে। %1$s তাঁর LiquidLyf নোটিফিকেশনে এটি দেখবেন।</string>
     <string name="detail_more_about">%1$s সম্পর্কে আরও</string>
 
     <!-- About and licences -->

@@ -274,7 +274,8 @@ class FindDonorsViewModel @Inject constructor(
                         when {
                             pushed is AppResult.Success -> FindDonorsEvent.Message(R.string.donors_asked, donor.displayName)
                             (pushed as AppResult.Failure).error == AppError.DailyAskLimit -> FindDonorsEvent.Message(R.string.error_daily_ask_limit)
-                            else -> FindDonorsEvent.Message(R.string.donors_ask_no_alert)
+                            // VT-07: it worked (it's in their notifications); no failure words.
+                            else -> FindDonorsEvent.Message(R.string.donors_ask_no_alert, donor.displayName)
                         },
                     )
                 }
