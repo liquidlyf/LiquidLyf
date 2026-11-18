@@ -2,6 +2,7 @@ package io.github.liquidlyf
 
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.util.Log
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -12,6 +13,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -93,6 +95,8 @@ import io.github.liquidlyf.feature.request.list.RequestsTab
 import io.github.liquidlyf.feature.request.list.RequestsUiState
 import io.github.liquidlyf.feature.settings.NotificationPrefsScreen
 import io.github.liquidlyf.feature.settings.NotificationPrefsUiState
+import io.github.liquidlyf.navigation.AppNavigationBar
+import io.github.liquidlyf.navigation.TopLevelDestination
 import io.github.liquidlyf.testing.FakeNetworkMonitor
 import io.github.liquidlyf.testing.FakeOfferRepository
 import io.github.liquidlyf.testing.FakeProfileRepository
@@ -105,6 +109,7 @@ import io.github.liquidlyf.testing.TestData
 import io.github.liquidlyf.testing.request
 import java.util.Locale
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -649,4 +654,40 @@ class AccessibilityLabelsTest {
     }
 
     private fun str(id: Int) = context.getString(id)
+
+    /**
+     * VT-27: what TalkBack gets for each bottom tab, read from Android's own accessibility nodes (V's UI
+     * dump showed no labels): the tab's name (its label is a child, read with it), the "Tab" role and
+     * its place, "1 of 4".
+     */
+    @Test
+    fun bottomTabsGiveTalkBackTheirNameRoleAndPlace() {
+        show { AppNavigationBar(TopLevelDestination.HOME, onSelect = {}) }
+        compose.waitForIdle()
+        TopLevelDestination.entries.forEach { tab ->
+            compose.onNode(hasText(str(tab.labelRes)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)).assertExists()
+        }
+        // As the gallery's trees: the interactive windows (the content may not be the "active" one).
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        automation.serviceInfo = automation.serviceInfo.apply { flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS }
+        runCatching { automation.waitForIdle(200, 2_000) }
+        val roots = automation.windows.mapNotNull { it.root }.filter { it.packageName == context.packageName }
+        val tabs = mutableListOf<AccessibilityNodeInfo>()
+        fun walk(n: AccessibilityNodeInfo) {
+            if (n.extras.getCharSequence("AccessibilityNodeInfo.roleDescription")?.toString() == context.getString(androidx.compose.ui.R.string.tab)) tabs += n
+            for (i in 0 until n.childCount) n.getChild(i)?.let(::walk)
+        }
+        roots.forEach(::walk)
+        assertEquals("4 tabs", TopLevelDestination.entries.size, tabs.size)
+        tabs.sortedBy { it.collectionItemInfo?.columnIndex ?: -1 }.forEachIndexed { i, node ->
+            assertEquals("tab ${i + 1}: its place", i, node.collectionItemInfo?.columnIndex)
+            val words = buildList {
+                node.text?.let { add(it.toString()) }
+                node.contentDescription?.let { add(it.toString()) }
+                for (c in 0 until node.childCount) node.getChild(c)?.text?.let { add(it.toString()) }
+            }
+            assertTrue("tab ${i + 1} is read as ${TopLevelDestination.entries[i].name}: $words", str(TopLevelDestination.entries[i].labelRes) in words)
+        }
+        assertEquals(TopLevelDestination.entries.size, tabs.first().parent?.collectionInfo?.columnCount)
+    }
 }

@@ -51,6 +51,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CollectionInfo
+import androidx.compose.ui.semantics.CollectionItemInfo
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.collectionInfo
+import androidx.compose.ui.semantics.collectionItemInfo
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -296,10 +308,12 @@ private fun sharedAxisOut(forward: Boolean): ExitTransition =
 /** Internal for the README and website screenshots (StoreScreenshotsTest), which draw it around a tab. */
 @Composable
 internal fun AppNavigationBar(currentTab: TopLevelDestination, onSelect: (TopLevelDestination) -> Unit) {
-    NavigationBar(Modifier.keepsSnackbarsAbove()) {
-        TopLevelDestination.entries.forEach { tab ->
+    val tabs = TopLevelDestination.entries
+    NavigationBar(Modifier.keepsSnackbarsAbove().semantics { collectionInfo = CollectionInfo(rowCount = 1, columnCount = tabs.size) }) {
+        tabs.forEachIndexed { index, tab ->
             val selected = tab == currentTab
             NavigationBarItem(
+                modifier = Modifier.tabSemantics(stringResource(tab.labelRes), selected, CollectionItemInfo(0, 1, index, 1)) { onSelect(tab) },
                 selected = selected,
                 onClick = { onSelect(tab) },
                 icon = { Icon(painterResource(if (selected) tab.selectedIcon else tab.icon), contentDescription = null) },
@@ -339,10 +353,12 @@ private fun TabLabel(text: String) {
 
 @Composable
 private fun AppNavigationRail(currentTab: TopLevelDestination, onSelect: (TopLevelDestination) -> Unit) {
-    NavigationRail {
-        TopLevelDestination.entries.forEach { tab ->
+    val tabs = TopLevelDestination.entries
+    NavigationRail(Modifier.semantics { collectionInfo = CollectionInfo(rowCount = tabs.size, columnCount = 1) }) {
+        tabs.forEachIndexed { index, tab ->
             val selected = tab == currentTab
             NavigationRailItem(
+                modifier = Modifier.tabSemantics(stringResource(tab.labelRes), selected, CollectionItemInfo(index, 1, 0, 1)) { onSelect(tab) },
                 selected = selected,
                 onClick = { onSelect(tab) },
                 icon = { Icon(painterResource(if (selected) tab.selectedIcon else tab.icon), contentDescription = null) },
@@ -355,6 +371,21 @@ private fun AppNavigationRail(currentTab: TopLevelDestination, onSelect: (TopLev
         }
     }
 }
+
+/**
+ * VT-27: one TalkBack stop per tab that says "Home, Tab, Selected, 1 of 4". Material's item puts
+ * the modifier on an outer box and the tab's own semantics on an inner one, so the place never
+ * reached the node TalkBack focuses; here the outer box is that node, with the name, role, state,
+ * the tap and the place. Touches still go to Material's item.
+ */
+private fun Modifier.tabSemantics(label: String, selected: Boolean, place: CollectionItemInfo, onSelect: () -> Unit): Modifier =
+    clearAndSetSemantics {
+        role = Role.Tab
+        this.selected = selected
+        text = AnnotatedString(label)
+        collectionItemInfo = place
+        onClick { onSelect(); true }
+    }
 
 private fun NavDestination.isInTab(tab: TopLevelDestination): Boolean =
     hierarchy.any { it.hasRoute(tab.graph::class) }
