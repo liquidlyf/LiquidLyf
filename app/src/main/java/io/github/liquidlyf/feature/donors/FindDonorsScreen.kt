@@ -63,6 +63,7 @@ import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.StatusTone
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.BloodGroupChip
+import io.github.liquidlyf.core.designsystem.components.ButtonLabel
 import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.DropdownField
 import io.github.liquidlyf.core.designsystem.components.EmptyState
@@ -174,6 +175,8 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
     val locale = currentAppLocale()
     // Open until the first search; then a one-line summary with "Change filters".
     var filtersOpen by rememberSaveable { mutableStateOf(true) }
+    // FLOW-06 part 1: a search from a request page shows its results, with the filters folded.
+    LaunchedEffect(state.handedSearches) { if (state.handedSearches > 0) filtersOpen = false }
     Scaffold(topBar = { LLTopBar(title = stringResource(R.string.nav_donors)) }) { padding ->
         when (state.enabled) {
             null -> {
@@ -212,7 +215,7 @@ internal fun FindDonorsScreen(state: FindDonorsUiState, actions: FindDonorsActio
                 when {
                     state.applied == null -> Unit
                     state.searching -> item { LoadingState(count = 3) }
-                    state.error != null && results == null -> item { ErrorState(state.error, onRetry = actions.onSearch) }
+                    state.error != null && results == null -> item { ErrorState(state.error, onRetry = actions.onSearch, title = stringResource(R.string.donors_load_error)) }
                     results.isNullOrEmpty() -> item {
                         EmptyState(
                             icon = LLIcons.Donors,
@@ -479,7 +482,7 @@ private fun PostFirstCard(onCreateRequest: () -> Unit) {
             FilledTonalButton(onClick = onCreateRequest, modifier = Modifier.padding(top = Spacing.xs).heightIn(min = Spacing.minTouchTarget)) {
                 Icon(painterResource(LLIcons.Add), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Text(stringResource(R.string.action_request_blood))
+                ButtonLabel(stringResource(R.string.action_request_blood))
             }
         }
     }

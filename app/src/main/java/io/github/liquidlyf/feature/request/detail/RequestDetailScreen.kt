@@ -77,10 +77,12 @@ import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
+import io.github.liquidlyf.core.designsystem.components.ButtonLabel
 import io.github.liquidlyf.core.designsystem.components.DialogBody
 import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
+import io.github.liquidlyf.core.designsystem.components.FirstLineIcon
 import io.github.liquidlyf.core.designsystem.components.IconLine
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLCard
@@ -122,6 +124,7 @@ import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.Urgency
 import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
+import io.github.liquidlyf.feature.donors.DonorSearchHandoff
 import io.github.liquidlyf.feature.request.create.PlannedAtPicker
 import io.github.liquidlyf.feature.request.create.PostNotice
 import io.github.liquidlyf.feature.request.create.UnitsStepper
@@ -135,6 +138,8 @@ fun RequestDetailRoute(
     onBack: () -> Unit,
     onOpenSafetyTips: () -> Unit = {},
     onBecomeDonor: () -> Unit = {},
+    /** FLOW-06 part 1: to Find donors, which runs the search handed over. */
+    onAskDonors: () -> Unit = {},
     viewModel: RequestDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -149,7 +154,7 @@ fun RequestDetailRoute(
             }
         }
     }
-    RequestDetailScreen(state, online, viewModel, onBack, onOpenSafetyTips, onBecomeDonor)
+    RequestDetailScreen(state, online, viewModel, onBack, onOpenSafetyTips, onBecomeDonor, onAskDonors)
 }
 
 /**
@@ -166,6 +171,7 @@ private fun RequestDetailScreen(
     onBack: () -> Unit,
     onOpenSafetyTips: () -> Unit,
     onBecomeDonor: () -> Unit,
+    onAskDonors: () -> Unit,
 ) {
     val request = state.request
     var menuOpen by rememberSaveable { mutableStateOf(false) }
@@ -178,6 +184,11 @@ private fun RequestDetailScreen(
     val launcher = rememberSafeIntentLauncher()
     val copy = rememberCopy()
     val shareText = request?.let { shareText(it, state) }
+    // FLOW-06 part 1, P2-8: hand this request's groups and area to Find donors, then go there.
+    val askDonors = {
+        request?.let(DonorSearchHandoff::hand)
+        onAskDonors()
+    }
     Scaffold(
         topBar = {
             LLTopBar(
@@ -295,6 +306,7 @@ private fun RequestDetailScreen(
                                 onDonated = { r -> dialog = DetailDialog.DONATED; dialogDonorUid = r.donorUid },
                                 onReportPerson = { r -> dialog = DetailDialog.REPORT_PERSON; dialogDonorUid = r.donorUid },
                                 onBlockPerson = { r -> dialog = DetailDialog.BLOCK_DONOR; dialogDonorUid = r.donorUid },
+                                onAskDonors = askDonors,
                             )
                             DetailsSection(request, state)
                             PostedBy(request)
@@ -441,7 +453,7 @@ private fun CantOfferBar(reason: String, onShare: () -> Unit) {
                 FilledTonalButton(onClick = onShare, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.minTouchTarget)) {
                     Icon(painterResource(LLIcons.Share), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text(stringResource(R.string.detail_share_instead))
+                    ButtonLabel(stringResource(R.string.detail_share_instead))
                 }
             }
         }
@@ -470,7 +482,7 @@ private fun RequesterBar(onShare: () -> Unit) {
                 ) {
                     Icon(painterResource(LLIcons.Share), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                    Text(stringResource(R.string.action_share))
+                    ButtonLabel(stringResource(R.string.action_share))
                 }
             }
         }
@@ -487,7 +499,14 @@ private fun Banners(state: RequestDetailUiState) {
     // STATE-03: from the request itself too, so it's still true after a restart or opened later.
     val heldBack = state.role == ViewerRole.REQUESTER && state.request?.let { it.status == RequestStatus.OPEN && it.alertHeldBack } == true
     if (heldBack || state.notice == PostNotice.DAILY_ALERT_LIMIT || state.alertStatus == AlertStatus.DailyLimit) {
-        LLNoticeCard(stringResource(R.string.error_daily_alert_limit), LLIcons.Warning, tone = NoticeTone.Warning)
+        // P2-8: a way forward, not just "donors weren't notified": Share is in the bar, and "Ask donors
+        // near this hospital" right under Offers.
+        val open = state.role == ViewerRole.REQUESTER && state.request?.status == RequestStatus.OPEN
+        LLNoticeCard(
+            stringResource(R.string.error_daily_alert_limit) + if (open) " " + stringResource(R.string.detail_limit_way_forward) else "",
+            LLIcons.Warning,
+            tone = NoticeTone.Warning,
+        )
     }
     // 7.8: the notes mention money (the request is flagged for review).
     if (state.request?.flagged == true) {
@@ -565,16 +584,11 @@ private fun Summary(r: BloodRequest, state: RequestDetailUiState, onOpenMaps: ()
     }
 }
 
-/** A small icon at the top of its text, for lines that may wrap. */
+/** A small icon on the first line of its text, for lines that may wrap (Low 21). */
 @Composable
 private fun SummaryLine(icon: Int, content: @Composable () -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-        Icon(
-            painterResource(icon),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 2.dp).size(16.dp),
-        )
+        FirstLineIcon(icon, MaterialTheme.typography.bodyMedium)
         content()
     }
 }
@@ -730,12 +744,21 @@ private fun OffersSection(
     onDonated: (DonorResponse) -> Unit,
     onReportPerson: (DonorResponse) -> Unit,
     onBlockPerson: (DonorResponse) -> Unit,
+    onAskDonors: () -> Unit,
 ) {
     val r = state.request ?: return
     SectionHeader(stringResource(R.string.detail_offers))
     if (state.responses.isEmpty()) AlertLine(r, state)
     state.responses.forEach { response ->
         OfferCard(response, enabled = !state.working, onCall, onConfirm, onDecline, onDonated, onReportPerson, onBlockPerson)
+    }
+    // FLOW-06 part 1: don't only wait for offers; ask listed donors near the hospital directly.
+    if (r.status == RequestStatus.OPEN) {
+        OutlinedButton(onClick = onAskDonors, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+            Icon(painterResource(LLIcons.Donors), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+            ButtonLabel(stringResource(R.string.detail_ask_donors))
+        }
     }
 }
 

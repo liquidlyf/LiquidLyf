@@ -110,6 +110,28 @@ class FindDonorsViewModelTest {
     }
 
     @Test
+    fun `a search handed over from a request page runs at once, in the request's area, and only once`() = runTest(dispatcher) {
+        val request = TestData.request(id = "r9", requesterUid = "me", group = BloodGroup.B_POS).copy(
+            acceptedGroups = listOf(BloodGroup.B_POS, BloodGroup.O_POS),
+            division = jashore.division, district = jashore.district, upazila = jashore.upazila,
+        )
+        DonorSearchHandoff.hand(request)
+        val vm = vm()
+        advanceUntilIdle()
+        val s = vm.uiState.value
+        assertEquals(setOf(BloodGroup.B_POS, BloodGroup.O_POS), s.filters.groups)
+        assertEquals("the request's area, not mine", jashore.district, s.filters.district)
+        assertEquals(jashore.upazila, donors.searches.last().upazila)
+        assertEquals(listOf("d3"), s.results?.map { it.uid })
+        assertEquals(1, s.handedSearches)
+
+        vm.onResume()
+        vm.onResume()
+        advanceUntilIdle()
+        assertEquals("taken once", 1, donors.searches.size)
+    }
+
+    @Test
     fun `an upazila narrows the district, and groups are combined`() = runTest(dispatcher) {
         val vm = vm()
         advanceUntilIdle()

@@ -133,6 +133,8 @@ data class SignUpUiState(
     @StringRes val consentError: Int? = null,
     @StringRes val formError: Int? = null,
     val loading: Boolean = false,
+    /** Counts failed taps on Create account: the screen brings the first error into view (FLOW-04). */
+    val errorAttempt: Int = 0,
 )
 
 @HiltViewModel
@@ -158,7 +160,7 @@ class SignUpViewModel @Inject constructor(private val auth: AuthRepository) : Vi
             consentError = if (s.consent) null else R.string.error_consent_required,
         )
         if (listOf(errors.nameError, errors.emailError, errors.passwordError, errors.consentError).any { it != null }) {
-            state.value = errors
+            state.value = errors.copy(errorAttempt = s.errorAttempt + 1)
             return
         }
         state.update { it.copy(loading = true, formError = null) }

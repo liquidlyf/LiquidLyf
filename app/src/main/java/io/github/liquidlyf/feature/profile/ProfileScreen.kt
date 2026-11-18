@@ -57,6 +57,7 @@ import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTag
+import io.github.liquidlyf.core.designsystem.components.isLargeText
 import io.github.liquidlyf.core.designsystem.components.showAppMessage
 import io.github.liquidlyf.core.designsystem.numberText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
@@ -231,9 +232,13 @@ internal fun ProfileScreen(
                         }
                     }
                 }
-                item { ImpactCard(state) }
-                item { SectionHeader(stringResource(R.string.profile_badges_title)) }
-                item { BadgesRow(state.badges) }
+                // P2-10: the numbers and badges come from the history, so only once it's loaded
+                // ("0 donations" while it failed told the person their record was empty).
+                if (donations != null) {
+                    item { ImpactCard(state) }
+                    item { SectionHeader(stringResource(R.string.profile_badges_title)) }
+                    item { BadgesRow(state.badges) }
+                }
                 // "Share LiquidLyf" moved to Settings → About (N5, OK'd 18 Nov 02:11).
             }
         }
@@ -267,23 +272,43 @@ internal fun ProfileScreen(
 private fun HeaderCard(state: ProfileUiState, onEditProfile: () -> Unit) {
     val p = state.profile ?: return
     val locale = currentAppLocale()
-    LLCard(Modifier.fillMaxWidth()) {
-        Row(Modifier.padding(start = Spacing.md, top = Spacing.md, bottom = Spacing.md, end = Spacing.xs), verticalAlignment = Alignment.Top) {
-            p.bloodGroup?.let { BloodGroupBadge(it, size = 64.dp, hero = true) }
-            Column(Modifier.padding(start = if (p.bloodGroup != null) Spacing.md else 0.dp).weight(1f)) {
-                Text(p.fullName, style = MaterialTheme.typography.titleLarge)
-                state.geo?.let { Text(it.placeLabel(p.area.district, p.area.upazila, locale), style = MaterialTheme.typography.bodyMedium) }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                    VerifiedTag(R.string.profile_email_verified)
-                    if (p.phoneVerified) VerifiedTag(R.string.profile_phone_verified)
-                    if (!p.showInDonorSearch) {
-                        StatusPill(stringResource(R.string.profile_not_listed), LLIcons.VisibilityOff, StatusTone.Neutral)
-                    }
-                }
+    val name = @Composable { Text(p.fullName, style = MaterialTheme.typography.titleLarge) }
+    val details = @Composable {
+        state.geo?.let { Text(it.placeLabel(p.area.district, p.area.upazila, locale), style = MaterialTheme.typography.bodyMedium) }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+            VerifiedTag(R.string.profile_email_verified)
+            if (p.phoneVerified) VerifiedTag(R.string.profile_phone_verified)
+            if (!p.showInDonorSearch) {
+                StatusPill(stringResource(R.string.profile_not_listed), LLIcons.VisibilityOff, StatusTone.Neutral)
             }
-            // UI-07: a pencil on your profile opens Edit profile (48 dp; TalkBack: "Edit profile").
-            IconButton(onClick = onEditProfile) {
-                Icon(painterResource(LLIcons.Edit), contentDescription = stringResource(R.string.title_edit_profile))
+        }
+    }
+    // UI-07: a pencil on your profile opens Edit profile (48 dp; TalkBack: "Edit profile").
+    val edit = @Composable {
+        IconButton(onClick = onEditProfile) {
+            Icon(painterResource(LLIcons.Edit), contentDescription = stringResource(R.string.title_edit_profile))
+        }
+    }
+    LLCard(Modifier.fillMaxWidth()) {
+        if (isLargeText()) {
+            // P2-4: with large text the badge shares only the first row; the area and tags use the
+            // full width (beside it, the area broke as "Corporation / , Dhaka").
+            Column(Modifier.padding(start = Spacing.md, top = Spacing.md, bottom = Spacing.md, end = Spacing.xs)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    p.bloodGroup?.let { BloodGroupBadge(it, size = 64.dp, hero = true) }
+                    Column(Modifier.padding(start = if (p.bloodGroup != null) Spacing.md else 0.dp).weight(1f)) { name() }
+                    edit()
+                }
+                Column(Modifier.padding(top = Spacing.xs, end = Spacing.sm)) { details() }
+            }
+        } else {
+            Row(Modifier.padding(start = Spacing.md, top = Spacing.md, bottom = Spacing.md, end = Spacing.xs), verticalAlignment = Alignment.Top) {
+                p.bloodGroup?.let { BloodGroupBadge(it, size = 64.dp, hero = true) }
+                Column(Modifier.padding(start = if (p.bloodGroup != null) Spacing.md else 0.dp).weight(1f)) {
+                    name()
+                    details()
+                }
+                edit()
             }
         }
     }

@@ -23,7 +23,8 @@ import io.github.liquidlyf.core.designsystem.Spacing
 /**
  * "You're offline. Showing saved data." (doc 04 §6), or [text] (a form says what happens to what
  * the person sends). TalkBack announces it when it appears. A calm grey bar (STATE-06: the old
- * inverse colours were a glaring light band in dark theme).
+ * inverse colours were a glaring light band in dark theme). Its text grows only up to 1.5x, as labels
+ * do, so with large text a pinned banner doesn't take a fifth of the screen (P2-16).
  */
 @Composable
 fun OfflineBanner(online: Boolean, modifier: Modifier = Modifier, text: String = stringResource(R.string.offline_banner)) {
@@ -35,7 +36,9 @@ fun OfflineBanner(online: Boolean, modifier: Modifier = Modifier, text: String =
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(painterResource(LLIcons.WifiOff), contentDescription = null)
-            Text(text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            CapFontScale(MAX_LABEL_SCALE) {
+                Text(text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            }
         }
     }
 }

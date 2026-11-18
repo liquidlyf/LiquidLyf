@@ -43,6 +43,9 @@ import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
+import io.github.liquidlyf.core.designsystem.components.errorAnchor
+import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.Gender
@@ -165,7 +168,9 @@ fun DeletingAccountRoute(viewModel: DeletingAccountViewModel = hiltViewModel()) 
                     modifier = Modifier.widthIn(max = 480.dp),
                 )
             } else {
-                FormError(state.error)
+                // P2-14: while the password is needed, one calm line (the red "sign in again" said the
+                // opposite); a wrong password still shows its error.
+                if (!(state.needsPassword && state.error == R.string.error_recent_login_required)) FormError(state.error)
                 if (state.needsPassword) {
                     Text(stringResource(R.string.deleting_sign_in_again), textAlign = TextAlign.Center)
                     LLTextField(
@@ -177,6 +182,9 @@ fun DeletingAccountRoute(viewModel: DeletingAccountViewModel = hiltViewModel()) 
                         modifier = Modifier.widthIn(max = 480.dp),
                     )
                     LLPrimaryButton(text = stringResource(R.string.action_continue), onClick = viewModel::run, modifier = Modifier.widthIn(max = 480.dp))
+                    // P2-14: a way out. Signing out leads to Sign in, where "Forgot password?" resets it;
+                    // after signing in again the deletion carries on.
+                    TextButton(onClick = viewModel::signOutToSignInAgain) { Text(stringResource(R.string.action_forgot_password)) }
                 } else {
                     LLPrimaryButton(text = stringResource(R.string.action_retry), onClick = viewModel::run, modifier = Modifier.widthIn(max = 480.dp))
                     TextButton(onClick = viewModel::signOutToSignInAgain) { Text(stringResource(R.string.action_sign_out)) }
@@ -195,6 +203,9 @@ private val DeletionStep.labelRes: Int
     }
 
 // ---- Edit profile ----
+
+/** Edit profile's fields in screen order, for FLOW-04. */
+private enum class EditField { NAME, PHONE, BIRTH_YEAR, LOCATION }
 
 @Composable
 fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltViewModel()) {
@@ -217,6 +228,15 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
     }
     var changingEmail by rememberSaveable { mutableStateOf(false) }
     var newEmail by rememberSaveable { mutableStateOf("") }
+    // FLOW-04: a failed Save brings the first error into view.
+    val anchors = rememberErrorAnchors<EditField>()
+    val errors = buildSet {
+        if (state.nameError != null) add(EditField.NAME)
+        if (state.phoneError != null) add(EditField.PHONE)
+        if (state.birthYearError != null) add(EditField.BIRTH_YEAR)
+        if (state.locationError) add(EditField.LOCATION)
+    }
+    ShowFirstErrorOnAttempt(anchors, state.errorAttempt, errors, EditField.entries)
 
     // UI-05: Save is pinned at the bottom, as on profile setup (it was at the end of a long form).
     AuthLayout(
@@ -232,6 +252,7 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
             label = stringResource(R.string.label_full_name),
             errorText = state.nameError?.let { stringResource(it) },
             contentType = ContentType.PersonFullName,
+            fieldModifier = Modifier.errorAnchor(anchors, EditField.NAME, textField = true),
         )
         Text(stringResource(R.string.label_email_readonly, state.email), style = MaterialTheme.typography.bodyMedium)
         TextButton(onClick = { changingEmail = true }) { Text(stringResource(R.string.action_change_email)) }
@@ -243,6 +264,7 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
             errorText = state.phoneError?.let { stringResource(it) },
             contentType = ContentType.PhoneNumber,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            fieldModifier = Modifier.errorAnchor(anchors, EditField.PHONE, textField = true),
         )
         // D1: gender and birth year are donor questions; someone who isn't a donor yet answers
         // them in "Become a donor", not here.
@@ -259,22 +281,25 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
                 label = stringResource(R.string.label_birth_year),
                 errorText = state.birthYearError?.let { stringResource(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                fieldModifier = Modifier.errorAnchor(anchors, EditField.BIRTH_YEAR, textField = true),
             )
         }
         BloodGroupPicker(selected = state.bloodGroup, onSelect = { g -> viewModel.edit { copy(bloodGroup = g) } })
-        state.geo?.let { geo ->
-            AreaPickers(
-                geo = geo,
-                locale = locale,
-                division = state.division,
-                district = state.district,
-                upazila = state.upazila,
-                onDivision = viewModel::onDivision,
-                onDistrict = viewModel::onDistrict,
-                onUpazila = { code -> viewModel.edit { copy(upazila = code) } },
-            )
+        Column(Modifier.errorAnchor(anchors, EditField.LOCATION)) {
+            state.geo?.let { geo ->
+                AreaPickers(
+                    geo = geo,
+                    locale = locale,
+                    division = state.division,
+                    district = state.district,
+                    upazila = state.upazila,
+                    onDivision = viewModel::onDivision,
+                    onDistrict = viewModel::onDistrict,
+                    onUpazila = { code -> viewModel.edit { copy(upazila = code) } },
+                )
+            }
+            FieldError(state.locationError, stringResource(R.string.error_location_required))
         }
-        FieldError(state.locationError, stringResource(R.string.error_location_required))
         FormError(state.formError)
     }
 

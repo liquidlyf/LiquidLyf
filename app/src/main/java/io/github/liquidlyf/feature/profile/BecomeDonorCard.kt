@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.ButtonLabel
 import io.github.liquidlyf.core.designsystem.components.LLCard
 
 /**
@@ -41,7 +42,7 @@ fun BecomeDonorCard(onBecomeDonor: () -> Unit, modifier: Modifier = Modifier) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                 Text(stringResource(R.string.home_become_donor_title), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(R.string.home_become_donor_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                FilledTonalButton(onClick = onBecomeDonor, modifier = Modifier.padding(top = Spacing.xs)) { Text(stringResource(R.string.action_become_donor)) }
+                FilledTonalButton(onClick = onBecomeDonor, modifier = Modifier.padding(top = Spacing.xs)) { ButtonLabel(stringResource(R.string.action_become_donor)) }
             }
         }
     }

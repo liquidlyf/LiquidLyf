@@ -270,9 +270,9 @@ class FakeWorkerClient : WorkerClient {
 class FakeHospitalRepository(private val all: List<Hospital> = emptyList()) : HospitalRepository {
     val queries = mutableListOf<String>()
 
-    override suspend fun search(district: String, query: String, limit: Int): List<Hospital> {
+    override suspend fun search(district: String, query: String, limit: Int, near: String?): List<Hospital> {
         queries += query
-        return HospitalSearch.search(all, district, query, limit)
+        return HospitalSearch.search(all, district, query, limit, near)
     }
 }
 

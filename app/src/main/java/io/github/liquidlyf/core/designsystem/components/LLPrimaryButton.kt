@@ -55,14 +55,14 @@ fun LLPrimaryButton(
                     strokeWidth = 2.dp,
                 )
                 Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                Text(loadingText ?: text)
+                ButtonLabel(loadingText ?: text)
             }
             icon != null -> {
                 Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                 Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                Text(text)
+                ButtonLabel(text)
             }
-            else -> Text(text)
+            else -> ButtonLabel(text)
         }
     }
 }

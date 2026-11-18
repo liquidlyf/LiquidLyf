@@ -80,6 +80,8 @@ data class FindDonorsUiState(
     val asked: Set<String> = emptySet(),
     /** Null until known: false shows "To ask a donor, post a request first" up front (FLOW-06). */
     val hasOpenRequest: Boolean? = null,
+    /** Counts searches started from a request page (FLOW-06 part 1): the screen folds its filters. */
+    val handedSearches: Int = 0,
 )
 
 sealed interface FindDonorsEvent {
@@ -112,7 +114,11 @@ class FindDonorsViewModel @Inject constructor(
     private var lastRaw: DonorCard? = null
     private var searchJob: Job? = null
 
+    /** A search handed over from a request page: its area stays, not mine. */
+    private var handed = false
+
     init {
+        takeHandoff()
         viewModelScope.launch {
             val enabled = flags.donorSearchEnabled()
             state.update { it.copy(enabled = enabled) }
@@ -127,7 +133,7 @@ class FindDonorsViewModel @Inject constructor(
                 val me = (s as? SessionState.Ready)?.profile ?: return@collect
                 state.update {
                     // Start in my own area; keep what the user changed since.
-                    val f = if (it.me == null) it.filters.copy(division = me.area.division, district = me.area.district) else it.filters
+                    val f = if (it.me == null && !handed) it.filters.copy(division = me.area.division, district = me.area.district) else it.filters
                     it.copy(me = me, filters = f)
                 }
             }
@@ -312,6 +318,15 @@ class FindDonorsViewModel @Inject constructor(
      */
     fun onResume() {
         if (resumedOnce) checkOpenRequest() else resumedOnce = true
+        takeHandoff()
+    }
+
+    /** FLOW-06 part 1: "Ask donors near this hospital" handed a search over; run it now. */
+    private fun takeHandoff() {
+        val f = DonorSearchHandoff.take() ?: return
+        handed = true
+        state.update { it.copy(filters = f, handedSearches = it.handedSearches + 1) }
+        search()
     }
 
     /** FLOW-06: one read of my own counters (userStats), like the request form's limit check. */

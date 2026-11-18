@@ -80,7 +80,10 @@ import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.StackedLogo
+import io.github.liquidlyf.core.designsystem.components.errorAnchor
+import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.designsystem.currentAppLocale
@@ -290,6 +293,9 @@ fun SignInScreen(
 
 // ---- Sign up ----
 
+/** Sign up's fields in screen order, for FLOW-04. */
+private enum class SignUpField { NAME, EMAIL, PASSWORD, CONSENT }
+
 @Composable
 fun SignUpRoute(
     onBack: () -> Unit,
@@ -328,6 +334,15 @@ fun SignUpScreen(
 ) {
     val links = rememberSafeIntentLauncher()
     val locale = currentAppLocale()
+    // FLOW-04: a failed Create account brings the first error into view.
+    val anchors = rememberErrorAnchors<SignUpField>()
+    val errors = buildSet {
+        if (state.nameError != null) add(SignUpField.NAME)
+        if (state.emailError != null) add(SignUpField.EMAIL)
+        if (state.passwordError != null) add(SignUpField.PASSWORD)
+        if (state.consentError != null) add(SignUpField.CONSENT)
+    }
+    ShowFirstErrorOnAttempt(anchors, state.errorAttempt, errors, SignUpField.entries)
     AuthLayout(
         title = stringResource(R.string.title_sign_up),
         onBack = onBack,
@@ -350,6 +365,7 @@ fun SignUpScreen(
             errorText = state.nameError?.let { stringResource(it) },
             enabled = !state.loading,
             contentType = ContentType.PersonFullName,
+            fieldModifier = Modifier.errorAnchor(anchors, SignUpField.NAME, textField = true),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         )
         LLTextField(
@@ -360,6 +376,7 @@ fun SignUpScreen(
             enabled = !state.loading,
             contentType = ContentType.EmailAddress,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+            fieldModifier = Modifier.errorAnchor(anchors, SignUpField.EMAIL, textField = true),
         )
         // FORM-04: the error says "Sign in instead", so offer it right there, with the email filled in.
         if (state.emailError == R.string.error_email_in_use) {
@@ -377,10 +394,12 @@ fun SignUpScreen(
             isPassword = true,
             contentType = ContentType.NewPassword,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+            fieldModifier = Modifier.errorAnchor(anchors, SignUpField.PASSWORD, textField = true),
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
+                .errorAnchor(anchors, SignUpField.CONSENT)
                 .fillMaxWidth()
                 .toggleable(value = state.consent, enabled = !state.loading, role = Role.Checkbox, onValueChange = onConsentChange),
         ) {

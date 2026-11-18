@@ -20,6 +20,10 @@
     <string name="home_load_error">কাছাকাছি অনুরোধগুলো লোড করা যায়নি</string>
     <string name="detail_load_error">অনুরোধটি লোড করা যায়নি</string>
     <string name="inbox_load_error">আপনার নোটিফিকেশন লোড করা যায়নি</string>
+    <string name="requests_mine_load_error">আপনার অনুরোধগুলো লোড করা যায়নি</string>
+    <string name="requests_offers_load_error">আপনার সাড়াগুলো লোড করা যায়নি</string>
+    <string name="donors_load_error">রক্তদাতা খোঁজা যায়নি</string>
+    <string name="moderation_load_error">রিপোর্টগুলো লোড করা যায়নি</string>
     <string name="action_ok">ঠিক আছে</string>
     <string name="action_save">সেভ করুন</string>
     <string name="action_saving">সেভ হচ্ছে…</string>
@@ -38,6 +42,8 @@
     <string name="error_rate_limited">খুব বেশিবার চেষ্টা করা হয়েছে। একটু অপেক্ষা করে আবার চেষ্টা করুন।</string>
     <string name="error_daily_ask_limit">আপনার আজকের ৩০টি সরাসরি অনুরোধের সীমা পূর্ণ হয়ে গেছে। এই রক্তদাতা তাঁর নোটিফিকেশনে আপনার অনুরোধটি দেখবেন, কিন্তু অ্যালার্ট পাবেন না।</string>
     <string name="error_daily_alert_limit">অ্যালার্টসহ অনুরোধ পোস্ট করার আজকের সীমা পূর্ণ হয়ে গেছে। আপনার অনুরোধ পোস্ট হয়েছে, কিন্তু রক্তদাতাদের জানানো হয়নি।</string>
+    <string name="detail_limit_way_forward">শেয়ার করুন, অথবা সরাসরি রক্তদাতাদের অনুরোধ করুন।</string>
+    <string name="detail_ask_donors">এই হাসপাতালের কাছের রক্তদাতাদের অনুরোধ করুন</string>
     <string name="error_unknown">কোনো একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।</string>
     <string name="error_invalid_credentials">ইমেইল বা পাসওয়ার্ড ভুল।</string>
     <string name="error_email_in_use">এই ইমেইল দিয়ে আগে থেকেই একটি অ্যাকাউন্ট আছে। নতুন অ্যাকাউন্ট না খুলে সাইন ইন করুন।</string>
@@ -175,6 +181,7 @@
     <string name="settings_account">অ্যাকাউন্ট</string>
     <string name="settings_list_me">রক্তদাতা হিসেবে তালিকায় নাম দিন</string>
     <string name="settings_list_me_needs_group">আগে \"প্রোফাইল এডিট করুন\" থেকে আপনার রক্তের গ্রুপ যোগ করুন।</string>
+    <string name="setup_no_group_later">রক্তের গ্রুপ ছাড়া তালিকায় নাম দেওয়া যায় না। এখনই যোগ করুন, অথবা পরে \"প্রোফাইল এডিট করুন\" থেকে।</string>
     <string name="list_me_title">রক্তদাতা হিসেবে তালিকায় নাম দেবেন?</string>
 
     <!-- Edit profile, passwords, email -->

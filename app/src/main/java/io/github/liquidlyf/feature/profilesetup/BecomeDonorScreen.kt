@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -53,6 +54,7 @@ import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.StepContent
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
+import io.github.liquidlyf.core.designsystem.components.isLargeText
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.localDateText
@@ -98,7 +100,8 @@ fun BecomeDonorScreen(
                 onPrimary = onNext,
                 loading = state.saving,
                 loadingText = stringResource(R.string.action_saving),
-                secondaryText = if (state.step > 0) stringResource(R.string.action_back) else null,
+                // P2-16: with large text the top bar's arrow is Back (no second full-width button).
+                secondaryText = if (state.step > 0 && !isLargeText()) stringResource(R.string.action_back) else null,
                 onSecondary = onBack,
             )
         },
@@ -259,8 +262,11 @@ private fun HistoryStep(state: BecomeDonorUiState, anchors: ErrorAnchors<SetupFi
 
     val knownGroup = BloodGroup.fromCode(d.bloodGroup)
     if (knownGroup == null) {
-        // No group yet (P1): nothing to list; Edit profile takes it later.
-        Text(stringResource(R.string.settings_list_me_needs_group), style = MaterialTheme.typography.bodyMedium)
+        // No group yet (P1): nothing to list. P2-15: say so, with the way back to the blood group step.
+        Text(stringResource(R.string.setup_no_group_later), style = MaterialTheme.typography.bodyMedium)
+        TextButton(onClick = { onEdit { copy(step = 0, bloodGroupUnknown = false) } }, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+            Text(stringResource(R.string.action_add_blood_group))
+        }
         return
     }
     Column(Modifier.errorAnchor(anchors, SetupField.CONSENT), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {

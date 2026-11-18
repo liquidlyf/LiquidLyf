@@ -1,5 +1,6 @@
 package io.github.liquidlyf.feature.request.list
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -27,9 +28,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,7 +40,6 @@ import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.CapFontScale
 import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.ErrorState
-import io.github.liquidlyf.core.designsystem.components.LARGE_FONT_SCALE
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLExtendedFab
@@ -67,30 +67,28 @@ fun RequestsRoute(
 }
 
 /**
- * Nearby / My requests / My offers as Material tabs (A11Y-02). They share the width when the text
- * is normal; with large text they scroll sideways, their text grows up to 1.5x, and the last tab
- * always shows partly, so it's clear there's more (at 200% the old segmented row hid "My offers"
- * off the screen in Bangla). A long label wraps between words, never inside one.
+ * Nearby / My requests / My offers as Material tabs (A11Y-02), three equal ones at every text size.
+ * Their text grows up to 1.5x and a long label takes a second line between words (P2-5: at 200% the
+ * sideways-scrolling row showed cut words, "earby", "আমার স"). The tab grows to fit 2 lines.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RequestsTabs(selected: RequestsTab, onSelect: (RequestsTab) -> Unit, modifier: Modifier = Modifier) {
-    val index = RequestsTab.entries.indexOf(selected)
-    val tabs = @Composable {
+    PrimaryTabRow(selectedTabIndex = RequestsTab.entries.indexOf(selected), modifier = modifier) {
         RequestsTab.entries.forEach { tab ->
-            Tab(
-                selected = tab == selected,
-                onClick = { onSelect(tab) },
-                text = { CapFontScale(MAX_LABEL_SCALE) { Text(stringResource(tab.labelRes), textAlign = TextAlign.Center) } },
-            )
+            Tab(selected = tab == selected, onClick = { onSelect(tab) }, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
+                CapFontScale(MAX_LABEL_SCALE) {
+                    Text(
+                        stringResource(tab.labelRes),
+                        style = MaterialTheme.typography.titleSmall,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = Spacing.xs, vertical = Spacing.sm),
+                    )
+                }
+            }
         }
-    }
-    if (LocalDensity.current.fontScale >= LARGE_FONT_SCALE) {
-        // No edge padding: the first tab's own padding lines its text up with the cards, and the
-        // last tab starts inside the screen.
-        PrimaryScrollableTabRow(selectedTabIndex = index, modifier = modifier, edgePadding = 0.dp, tabs = tabs)
-    } else {
-        PrimaryTabRow(selectedTabIndex = index, modifier = modifier, tabs = tabs)
     }
 }
 
@@ -148,7 +146,7 @@ internal fun RequestsScreen(
                                 )
                             }
                         }
-                        listFooter(list, onRefresh, onLoadMore)
+                        listFooter(list, state.tab.loadErrorRes, onRefresh, onLoadMore)
                         // Room for the floating button, so it never covers the last card.
                         if (!actionAsBar) item(key = "fab-space") { Spacer(Modifier.height(88.dp)) }
                     }
@@ -157,6 +155,14 @@ internal fun RequestsScreen(
         }
     }
 }
+
+/** COPY-04: what didn't load, per tab. */
+private val RequestsTab.loadErrorRes: Int
+    get() = when (this) {
+        RequestsTab.NEARBY -> R.string.home_load_error
+        RequestsTab.MINE -> R.string.requests_mine_load_error
+        RequestsTab.OFFERS -> R.string.requests_offers_load_error
+    }
 
 private val RequestsTab.labelRes: Int
     get() = when (this) {
@@ -221,10 +227,10 @@ private fun LazyListScope.offerItems(state: RequestsUiState, onOpenRequest: (Str
 }
 
 /** First load, errors and the next page, which loads when this footer scrolls into view. */
-private fun LazyListScope.listFooter(list: PagedList<*>, onRetry: () -> Unit, onLoadMore: () -> Unit) {
+private fun LazyListScope.listFooter(list: PagedList<*>, @StringRes title: Int, onRetry: () -> Unit, onLoadMore: () -> Unit) {
     when {
         list.error != null && list.items.isEmpty() -> item(key = "error") {
-            ErrorState(onRetry = onRetry, body = stringResource(list.error))
+            ErrorState(onRetry = onRetry, title = stringResource(title), body = stringResource(list.error))
         }
         !list.loaded || (list.loading && !list.refreshing) -> item(key = "loading") { LoadingState(count = if (list.loaded) 1 else 3) }
         !list.endReached -> item(key = "more") { LaunchedEffect(list.items.size) { onLoadMore() } }

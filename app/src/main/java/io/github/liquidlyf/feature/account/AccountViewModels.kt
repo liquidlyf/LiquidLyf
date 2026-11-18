@@ -213,6 +213,8 @@ class DeletingAccountViewModel @Inject constructor(
 // ---- Edit profile (3.10) ----
 
 data class EditProfileUiState(
+    /** Counts failed taps on Save: the screen brings the first error into view (FLOW-04). */
+    val errorAttempt: Int = 0,
     val fullName: String = "",
     val gender: Gender? = null,
     val birthYear: String = "",
@@ -289,7 +291,7 @@ class EditProfileViewModel @Inject constructor(
             locationError = area == null || s.geo?.isValid(area) != true,
         )
         if (errors.nameError != null || errors.birthYearError != null || errors.phoneError != null || errors.locationError) {
-            state.value = errors
+            state.value = errors.copy(errorAttempt = s.errorAttempt + 1)
             return
         }
         // Changing a known group asks first; adding one for the first time (P1) doesn't.

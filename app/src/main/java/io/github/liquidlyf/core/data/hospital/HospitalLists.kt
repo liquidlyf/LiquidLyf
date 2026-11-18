@@ -70,8 +70,8 @@ class HospitalLists(
     private val refreshing = Mutex()
     private var current: HospitalList? = null
 
-    override suspend fun search(district: String, query: String, limit: Int): List<Hospital> =
-        HospitalSearch.search(list().hospitals, district, query, limit)
+    override suspend fun search(district: String, query: String, limit: Int, near: String?): List<Hospital> =
+        HospitalSearch.search(list().hospitals, district, query, limit, near)
 
     suspend fun list(): HospitalList = mutex.withLock {
         current ?: withContext(Dispatchers.IO) { load() }.also { current = it }

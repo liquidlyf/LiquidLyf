@@ -876,6 +876,8 @@ class ScreenGalleryTest {
             Shot("find-donors-off", tab, content = screen(FindDonorsUiState(enabled = false))),
             Shot("find-donors-searching", tab, animated = true, content = screen(ready.copy(applied = filters, searching = true))),
             Shot("find-donors-results", tab, content = screen(ready.copy(applied = filters, results = donorCards, total = donorCards.size.toLong(), endReached = true))),
+            // FLOW-06 part 1: opened from "Ask donors near this hospital": searched, filters folded.
+            Shot("find-donors-from-request", tab, content = screen(ready.copy(applied = filters, results = donorCards, total = donorCards.size.toLong(), endReached = true, handedSearches = 1))),
             Shot("find-donors-no-results", tab, content = screen(ready.copy(applied = filters, results = emptyList(), total = 0, endReached = true))),
             Shot("find-donors-error", tab, content = screen(ready.copy(applied = filters, error = AppError.Network))),
             Shot("find-donors-ask", tab, overlay = true, prepare = { waitForText("Rahim U."); waitFor(R.string.action_ask_to_donate) }, content = askSheet(listOf(myOpen))),

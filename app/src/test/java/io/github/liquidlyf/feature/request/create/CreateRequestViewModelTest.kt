@@ -357,7 +357,8 @@ class CreateRequestViewModelTest {
         vm.onHospitalTyped("Dh")
         vm.onHospitalTyped("Dhaka")
         advanceUntilIdle()
-        assertEquals(listOf("Dhaka"), hospitals.queries)
+        assertEquals("one search after typing stops", "Dhaka", hospitals.queries.last())
+        assertTrue("not D or Dh", listOf("D", "Dh").none { it in hospitals.queries })
         assertEquals(listOf(dmch), vm.uiState.value.hospitals)
 
         vm.onHospitalPicked(dmch, "Dhaka Medical College Hospital")

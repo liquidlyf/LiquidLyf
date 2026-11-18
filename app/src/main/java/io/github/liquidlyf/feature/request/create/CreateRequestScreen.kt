@@ -47,11 +47,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -87,6 +89,7 @@ import io.github.liquidlyf.core.designsystem.components.OfflineBanner
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.StepContent
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
+import io.github.liquidlyf.core.designsystem.components.isLargeText
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.components.unitsText
 import io.github.liquidlyf.core.designsystem.currentAppLocale
@@ -174,7 +177,9 @@ internal fun CreateRequestScreen(
                     onPrimary = onNext,
                     loading = state.posting,
                     loadingText = stringResource(R.string.action_posting),
-                    secondaryText = if (state.step > 0) stringResource(R.string.action_back) else null,
+                    // P2-16: with large text the top bar's arrow is Back; a second full-width button
+                    // would leave little room for the form.
+                    secondaryText = if (state.step > 0 && !isLargeText()) stringResource(R.string.action_back) else null,
                     onSecondary = onBack,
                 )
             }
@@ -198,7 +203,9 @@ internal fun CreateRequestScreen(
                 // FLOW-04: after a failed Next or Post, the first error comes into view.
                 val anchors = rememberErrorAnchors<RequestField>()
                 ShowFirstErrorOnAttempt(anchors, state.errorAttempt, state.errors, RequestField.entries)
-                OfflineBanner(online, text = stringResource(R.string.offline_banner_form))
+                // P2-16: with large text the banner scrolls away with the form instead of staying pinned.
+                val largeText = isLargeText()
+                if (!largeText) OfflineBanner(online, text = stringResource(R.string.offline_banner_form))
                 Column(
                     Modifier
                         .widthIn(max = 560.dp)
@@ -207,6 +214,7 @@ internal fun CreateRequestScreen(
                         .padding(horizontal = screenGutter(), vertical = Spacing.md),
                     verticalArrangement = Arrangement.spacedBy(Spacing.md),
                 ) {
+                    if (largeText) OfflineBanner(online, text = stringResource(R.string.offline_banner_form), modifier = Modifier.clip(MaterialTheme.shapes.medium))
                     Text(
                         stringResource(R.string.create_step, state.step + 1, CreateRequestViewModel.STEPS),
                         style = MaterialTheme.typography.labelLarge,
@@ -331,6 +339,8 @@ private fun WhereWhenStep(
         FieldError(RequestField.LOCATION in state.errors, stringResource(R.string.error_location_required))
     }
 
+    // FORM-02: the district's hospitals show as soon as the field has focus, before any typing.
+    var hospitalFocused by remember { mutableStateOf(false) }
     LLTextField(
         value = f.hospitalName,
         onValueChange = onHospitalTyped,
@@ -338,16 +348,21 @@ private fun WhereWhenStep(
         supportingText = stringResource(R.string.create_hospital_hint),
         errorText = if (RequestField.HOSPITAL in state.errors) stringResource(R.string.create_error_hospital) else null,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
-        fieldModifier = Modifier.errorAnchor(anchors, RequestField.HOSPITAL, textField = true),
+        fieldModifier = Modifier
+            .errorAnchor(anchors, RequestField.HOSPITAL, textField = true)
+            .onFocusChanged { hospitalFocused = it.isFocused },
     )
-    if (state.hospitals.isNotEmpty()) {
+    if (state.hospitals.isNotEmpty() && (hospitalFocused || f.hospitalName.isNotBlank())) {
         LLCard {
             state.hospitals.forEachIndexed { i, h ->
                 if (i > 0) HorizontalDivider()
                 val name = h.name.localized(locale)
+                // FORM-02: in Bangla the area from bd-geo, in Bangla; the list's address is English.
+                val area = state.geo?.placeLabel(h.district, h.upazila, locale)
+                val where = if (locale == AppLocale.BN) area else h.address ?: area
                 ListItem(
                     headlineContent = { Text(name) },
-                    supportingContent = h.address?.let { { Text(it) } },
+                    supportingContent = where?.let { { Text(it) } },
                     modifier = Modifier.clickable(role = Role.Button, onClick = { onHospitalPicked(h, name) }),
                 )
             }

@@ -188,16 +188,20 @@ class CreateRequestViewModel @Inject constructor(
             if (limit != null) state.update { it.copy(limit = limit) }
         }
         // Hospital suggestions 300 ms after typing stops; a newer query cancels the older search.
+        // FORM-02: nothing typed yet lists the district's (shown when the field has focus), and the
+        // chosen upazila's come first.
         viewModelScope.launch {
-            state.map { Triple(it.form.district, it.form.hospitalName, it.form.hospitalId) }
+            state.map { HospitalQuery(it.form.district, it.form.upazila, it.form.hospitalName, it.form.hospitalId) }
                 .distinctUntilChanged()
                 .debounce(SEARCH_DEBOUNCE_MS)
-                .flatMapLatest { (district, query, pickedId) ->
-                    flow { emit(if (district == null || pickedId != null || query.isBlank()) emptyList() else hospitals.search(district, query)) }
+                .flatMapLatest { q ->
+                    flow { emit(if (q.district == null || q.pickedId != null) emptyList() else hospitals.search(q.district, q.text, near = q.upazila)) }
                 }
                 .collect { found -> state.update { it.copy(hospitals = found) } }
         }
     }
+
+    private data class HospitalQuery(val district: String?, val upazila: String?, val text: String, val pickedId: String?)
 
     /** Any answer: clears the errors, and is kept for rotation and process death. */
     fun edit(change: RequestForm.() -> RequestForm) {

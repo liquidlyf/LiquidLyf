@@ -509,6 +509,7 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                 onBack = { navController.popBackStack() },
                 onOpenSafetyTips = dropUnlessResumed { navController.navigate(SafetyTips) { launchSingleTop = true } },
                 onBecomeDonor = dropUnlessResumed { navController.navigate(BecomeDonor) { launchSingleTop = true } },
+                onAskDonors = dropUnlessResumed { navController.navigateToTab(TopLevelDestination.DONORS) },
             )
         }
         composable<BecomeDonor> { BecomeDonorRoute(onDone = { navController.popBackStack() }) }

@@ -165,7 +165,7 @@ fun EmptyState(
         )
         if (actionLabel != null && onAction != null) {
             Spacer(Modifier.height(Spacing.lg))
-            FilledTonalButton(onClick = onAction) { Text(actionLabel) }
+            FilledTonalButton(onClick = onAction) { ButtonLabel(actionLabel) }
         }
     }
 }

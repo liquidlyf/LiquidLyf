@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -22,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,14 +35,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
@@ -149,13 +153,25 @@ private fun InboxRow(entry: InboxEntry, isNew: Boolean, state: InboxUiState, onC
     LLCard(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable(onClick = onClick).semantics { if (isNew) stateDescription = newLabel }) {
     ListItem(
         leadingContent = { Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+        // Low 23: the unread dot at the end of the title's first line, in the same place on every card.
         headlineContent = {
-            Text(title, fontWeight = if (isNew) FontWeight.SemiBold else null, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            val style = LocalTextStyle.current
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                Text(title, fontWeight = if (isNew) FontWeight.SemiBold else null, modifier = Modifier.weight(1f))
+                if (isNew) {
+                    val line = with(LocalDensity.current) { (if (style.lineHeight.isSpecified) style.lineHeight else style.fontSize * 1.4f).toDp() }
+                    Box(Modifier.height(line), contentAlignment = Alignment.Center) { Badge() }
+                }
+            }
         },
+        // P2-9: the whole body, then the time on its own line (at 200% the time, added at the end of
+        // a 3-line body, was the first thing cut).
         supportingContent = {
-            Text(listOf(detail, time).filter { it.isNotBlank() }.joinToString(" · "), maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Column {
+                if (detail.isNotBlank()) Text(detail)
+                Text(time, style = MaterialTheme.typography.bodySmall)
+            }
         },
-        trailingContent = if (isNew) ({ Badge() }) else null,
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
     )

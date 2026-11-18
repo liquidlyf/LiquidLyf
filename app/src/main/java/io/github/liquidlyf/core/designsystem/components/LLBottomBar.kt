@@ -85,7 +85,7 @@ fun LLBottomBar(
                                 Icon(painterResource(it), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                                 Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                             }
-                            Text(secondaryText)
+                            ButtonLabel(secondaryText)
                         }
                     }
                 }

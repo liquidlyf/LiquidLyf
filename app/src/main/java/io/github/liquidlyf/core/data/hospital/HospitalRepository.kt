@@ -33,8 +33,11 @@ data class HospitalList(val version: Int, val hospitals: List<Hospital>) {
 
 /** What the request form searches. [HospitalLists] is the real one; tests use a fake. */
 interface HospitalRepository {
-    /** Up to [limit] hospitals in [district] whose name contains [query], best matches first. */
-    suspend fun search(district: String, query: String, limit: Int = 8): List<Hospital>
+    /**
+     * Up to [limit] hospitals in [district] whose name contains [query], best matches first, those in
+     * upazila [near] before the rest. A blank [query] lists the district's (the list opens on focus).
+     */
+    suspend fun search(district: String, query: String, limit: Int = 8, near: String? = null): List<Hospital>
 }
 
 /** Pure parsing and matching, unit-tested. */
@@ -100,21 +103,23 @@ object HospitalSearch {
 
     fun parseOrNull(text: String): HospitalList? = runCatching { parse(text) }.getOrNull()
 
-    /** Names starting with the query come before names that only contain it; blank finds nothing. */
-    fun search(all: List<Hospital>, district: String, query: String, limit: Int): List<Hospital> {
+    /**
+     * Names starting with the query come before names that only contain it; within each, hospitals in
+     * upazila [near] come first (FORM-02: nearest first). A blank query lists the whole district.
+     */
+    fun search(all: List<Hospital>, district: String, query: String, limit: Int, near: String? = null): List<Hospital> {
         val q = fold(query.trim())
-        if (q.isEmpty()) return emptyList()
         return all.asSequence()
             .filter { it.district == district }
             .mapNotNull { h ->
                 val names = listOfNotNull(h.name.en, h.name.bn).map(::fold)
                 when {
-                    names.any { it.startsWith(q) } -> 0 to h
+                    q.isEmpty() || names.any { it.startsWith(q) } -> 0 to h
                     names.any { q in it } -> 1 to h
                     else -> null
                 }
             }
-            .sortedWith(compareBy({ it.first }, { it.second.name.en }))
+            .sortedWith(compareBy({ it.first }, { if (near != null && it.second.upazila == near) 0 else 1 }, { it.second.name.en }))
             .take(limit)
             .map { it.second }
             .toList()

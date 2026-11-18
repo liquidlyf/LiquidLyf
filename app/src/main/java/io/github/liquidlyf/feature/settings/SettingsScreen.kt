@@ -184,6 +184,11 @@ internal fun SettingsContent(
                 // D1: not a donor yet, so no switches: the way in instead.
                 GroupHeader(stringResource(R.string.settings_donor_status))
                 SettingsRow(LLIcons.Favorite, stringResource(R.string.action_become_donor), stringResource(R.string.home_become_donor_body), onBecomeDonor)
+            } else if (uiState.listed == false && uiState.bloodGroup == null) {
+                // P2-15: no blood group yet, so nothing to list: a readable line that opens Edit profile
+                // (it was a grey switch that couldn't be tapped).
+                GroupHeader(stringResource(R.string.settings_donor_status))
+                SettingsRow(LLIcons.Donors, stringResource(R.string.action_add_blood_group), stringResource(R.string.settings_list_me_needs_group), onEditProfile)
             } else if (uiState.listed != null) {
                 GroupHeader(stringResource(R.string.settings_donor_status))
                 SwitchRow(
