@@ -93,6 +93,35 @@ class ValidatorsTest {
     }
 
     @Test
+    fun `display name skips the full spellings of Mohammad and Mosammat, and Most (D22)`() {
+        // The maintainer's examples, and D's.
+        assertEquals("Rafiqul I.", Validators.displayName("Mohammad Rafiqul Islam"))
+        assertEquals("Rafiqul", Validators.displayName("Mohammad Rafiqul"))
+        assertEquals("Mohammad", Validators.displayName("Mohammad")) // alone, it stays whole
+        assertEquals("Ali", Validators.displayName("Mohammad Ali"))
+        assertEquals("Rahima K.", Validators.displayName("Most Rahima Khatun"))
+        assertEquals("Karim", Validators.displayName("Md Mohammad Karim"))
+        assertEquals("Rokeya B.", Validators.displayName("Most Rokeya Begum"))
+        assertEquals("Ali", Validators.displayName("Md. Mohammad Ali"))
+        // Too short after skipping: back to the whole name, as before.
+        assertEquals("Mohammad A.", Validators.displayName("Mohammad A"))
+        // Every spelling, in any letter case, with or without a dot.
+        listOf("Mohammad", "Mohammed", "Muhammad", "Muhammed", "Mohamed", "Mohamad", "Mosammat", "Most").forEach { prefix ->
+            listOf(prefix, prefix.uppercase(), prefix.lowercase(), "$prefix.").forEach { word ->
+                assertEquals(word, "Rafiqul I.", Validators.displayName("$word Rafiqul Islam"))
+            }
+        }
+        listOf("মোহাম্মদ", "মোহাম্মাদ", "মুহাম্মদ", "মোসাম্মৎ").forEach { word ->
+            assertEquals(word, "রোকেয়া ব.", Validators.displayName("$word রোকেয়া বেগম"))
+        }
+        // "ো" typed as two code points (ে + া) is the same word.
+        assertEquals("রোকেয়া ব.", Validators.displayName("ম\u09C7\u09BEহাম্মদ রোকেয়া বেগম"))
+        // Names that only start like these stay.
+        assertEquals("Mostafa K.", Validators.displayName("Mostafa Kamal"))
+        assertEquals("Mohammadullah K.", Validators.displayName("Mohammadullah Khan"))
+    }
+
+    @Test
     fun `display name stays within 40 chars`() {
         val long = Validators.displayName("${"a".repeat(50)} Karim")
         assertEquals(Validators.DISPLAY_NAME_MAX, long.length)

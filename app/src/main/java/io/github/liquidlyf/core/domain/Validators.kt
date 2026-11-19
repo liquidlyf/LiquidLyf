@@ -1,5 +1,6 @@
 package io.github.liquidlyf.core.domain
 
+import java.text.Normalizer
 import java.time.Duration
 import java.time.Instant
 import java.util.Locale
@@ -86,7 +87,9 @@ object Validators {
     /**
      * The public name: first name and last initial ("Rahim K."), never the full name
      * (doc 07 §2). At most [DISPLAY_NAME_MAX] chars. Leading abbreviations such as "Md.",
-     * "Mst." or "মোঃ" are skipped, or half the cards would read "Md. K.".
+     * "Mst." or "মোঃ" are skipped, or half the cards would read "Md. K."; so are the full
+     * spellings of Mohammad and Mosammat, and "Most" (D22): "Mohammad Rafiqul Islam" is
+     * "Rafiqul I.", not "Mohammad I.". A name that is only such words stays as it is.
      */
     fun displayName(fullName: String): String {
         // VT-18: a note in brackets isn't part of the name ("Demo Rahim (brother)" made "Demo (.").
@@ -120,11 +123,18 @@ object Validators {
         return first.take(DISPLAY_NAME_MAX - suffix.length) + suffix
     }
 
-    private val NAME_PREFIXES = setOf("md", "mst", "mohd", "dr")
+    /** Compared lowercased; B's seed (seed.mjs) skips the same words. */
+    private val NAME_PREFIXES = setOf(
+        "md", "mst", "mohd", "dr",
+        // D22 (the maintainer, 19 Nov 2026): the full spellings, and "Most" without a dot.
+        "mohammad", "mohammed", "muhammad", "muhammed", "mohamed", "mohamad", "মোহাম্মদ", "মোহাম্মাদ", "মুহাম্মদ",
+        "mosammat", "মোসাম্মৎ", "most",
+    ).map { Normalizer.normalize(it, Normalizer.Form.NFC) }.toSet()
 
-    /** "Md.", "MD", "Dr.", "মোঃ", "মো." and any other word ending in '.' or 'ঃ'. */
+    /** "Md.", "MD", "Dr.", "মোঃ", "মো.", "Mohammad", "Most" and any other word ending in '.' or 'ঃ'. */
     private fun isNamePrefix(word: String): Boolean =
-        word.endsWith('.') || word.endsWith('ঃ') || word.lowercase(Locale.ROOT) in NAME_PREFIXES
+        word.endsWith('.') || word.endsWith('ঃ') ||
+            Normalizer.normalize(word, Normalizer.Form.NFC).lowercase(Locale.ROOT) in NAME_PREFIXES
 
     fun isValidHospitalName(name: String): Boolean = name.trim().length in HOSPITAL_NAME_MIN..HOSPITAL_NAME_MAX
 
