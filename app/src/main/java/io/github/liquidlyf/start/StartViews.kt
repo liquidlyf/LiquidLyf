@@ -29,7 +29,13 @@ import kotlin.math.roundToInt
  * (app/scripts/generate_launcher_icons.py) and [show] takes the nearest. Not used with "Remove
  * animations", which shows still words instead ([animationsOff]).
  */
-class StartViews(private val activity: Activity, private val clock: StartClock, phoneDark: Boolean) {
+class StartViews(
+    private val activity: Activity,
+    private val clock: StartClock,
+    phoneDark: Boolean,
+    /** Still loading: once the start data is read, the first screen is coming, so TalkBack needn't hear "Loading…". */
+    private val loading: () -> Boolean = { true },
+) {
 
     /** Showing: [StartLogo] doesn't draw the drop then (this one does). */
     var active: Boolean by mutableStateOf(false)
@@ -79,9 +85,10 @@ class StartViews(private val activity: Activity, private val clock: StartClock, 
         (drop.drawable as Animatable).start()
         (line.drawable as Animatable).start()
         active = true
-        // TalkBack hears "Loading…" once, when the line appears (if the app isn't ready by then).
+        // TalkBack hears "Loading…" once, when the line appears, if the app is still loading then. (A
+        // delay that ends while the first screen is built runs after it, as that screen appears.)
         line.postDelayed({
-            if (!active) return@postDelayed
+            if (!active || !loading()) return@postDelayed
             line.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
             line.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
             line.contentDescription = activity.getString(R.string.state_loading)

@@ -148,6 +148,19 @@ class StartLogoTest {
         compose.onNode(hasText(loading) and isPoliteLiveRegion).assertIsDisplayed()
     }
 
+    @Test
+    fun onceTheStartDataIsReadTheLineDoesntShowOrSpeak() {
+        val clock = StartClock(SystemClock.uptimeMillis() - SINCE_TAP_MS)
+        val arts = StartLogoArts(context.resources, clock)
+        compose.setContent {
+            LiquidLyfTheme { StartLogo(handoff, clock, arts, landing = { null }, reduced = false, loading = { false }) }
+        }
+        compose.waitForIdle()
+        Thread.sleep(300)
+        compose.waitForIdle()
+        assertEquals(0, compose.onAllNodes(hasContentDescription(str(R.string.state_loading))).fetchSemanticsNodes().size)
+    }
+
     /** Still loading 2 s after the tap: the line (or the words) shows at once. */
     private fun showLoading(reduced: Boolean) {
         val clock = StartClock(SystemClock.uptimeMillis() - SINCE_TAP_MS)

@@ -110,6 +110,8 @@ fun StartLogo(
     reduced: Boolean = LocalContext.current.let { context -> remember { animationsOff(context) } },
     /** The drop and the line on the render thread (MainActivity's), or null to draw them here. */
     views: StartViews? = null,
+    /** Still loading: the line (and TalkBack's "Loading…") only shows then, never as the first screen appears. */
+    loading: () -> Boolean = { true },
     onComposed: () -> Unit = {},
 ) {
     val colors = MaterialTheme.colorScheme
@@ -147,7 +149,7 @@ fun StartLogo(
     // The thin line (with Remove animations, the words): from 1.5 s, or the first frame if later.
     if (views == null) LaunchedEffect(Unit) {
         delay((StartClock.LINE_MS - clock.now()).coerceAtLeast(0))
-        if (exit != null) return@LaunchedEffect
+        if (exit != null || !loading()) return@LaunchedEffect
         clock.log("line")
         hintShown = true
         if (reduced) hint.snapTo(1f) else hint.animateTo(1f, tween(HINT_IN_MS, easing = LinearEasing))

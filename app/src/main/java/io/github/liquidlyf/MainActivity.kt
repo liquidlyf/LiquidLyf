@@ -138,12 +138,15 @@ class MainActivity : AppCompatActivity() {
                         landing = { landing.value },
                         reduced = reduced,
                         views = views,
+                        loading = { viewModel.uiState.value is MainUiState.Loading },
                         onComposed = { copyComposed = true },
                     )
                 }
             }
         }
-        if (start != null && !reduced && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) views = StartViews(this, start, phoneDark())
+        if (start != null && !reduced && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            views = StartViews(this, start, phoneDark()) { viewModel.uiState.value is MainUiState.Loading }
+        }
     }
 
     /** The app's theme setting once it's read, else the phone's, as the still picture. */

@@ -75,6 +75,22 @@ class StartViewsTest {
         assertTrue("The line stood still while the main thread was busy: $bars", bars.distinct().size >= 3)
     }
 
+    @Test
+    fun onceTheStartDataIsReadTalkBackDoesntHearLoading() {
+        val activity = compose.activity
+        lateinit var views: StartViews
+        // The line's time comes while the first screen is built, after the data was read.
+        val clock = StartClock(SystemClock.uptimeMillis() - 1_600)
+        compose.runOnUiThread { views = StartViews(activity, clock, phoneDark = false, loading = { false }) }
+        compose.waitForIdle()
+        compose.runOnUiThread { views.show(dark = false) }
+        Thread.sleep(300)
+        compose.runOnUiThread {
+            assertEquals(null, views.loadingLine.contentDescription)
+            views.remove()
+        }
+    }
+
     private fun Bitmap.isRed(x: Int, y: Int): Boolean {
         val c = getPixel(x, y)
         return Color.red(c) > 140 && Color.green(c) < 90 && Color.blue(c) < 90
