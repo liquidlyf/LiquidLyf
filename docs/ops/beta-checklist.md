@@ -1,7 +1,7 @@
 # Beta checklist
 
 The beta runs for 1–2 weeks before v1.0, with 15–20 real people in one or two districts. Testers get
-**pre-releases** (`v1.0.0-beta.1`, `v1.0.0-beta.2`, …) with the **same app ID and signing key** as
+**pre-releases** (`v1.0.0-beta1`, `v1.0.0-beta2`, …) with the **same app ID and signing key** as
 v1.0, so they update straight into v1.0 and keep their accounts.
 
 Copy this into a GitHub issue and tick it there ([how](README.md)).
@@ -11,8 +11,12 @@ Copy this into a GitHub issue and tick it there ([how](README.md)).
 - [ ] 👤 The release identity is done: the signing key, its fingerprints in Firebase, and the
       `production-android` environment ([launch checklist, step 1](launch-checklist.md#1-release-identity)).
       Never give testers a build signed with any other key.
-- [ ] A `v1.0.0-beta.N` tag makes a **draft** release with `LiquidLyf.apk`, `SHA256SUMS.txt`,
-      `update.json` and a build attestation, and CI's fingerprint check passes.
+- [ ] The release notes are committed **before the tag**, as `docs/release-notes/<tag>.md`, in English
+      and Bangla, with the Bangla meaning-checked and reviewed ([how](../release-notes/README.md)).
+- [ ] A `v1.0.0-betaN` tag (`v1.0.0-beta1`, with no dot before the number: the release workflow
+      refuses other forms) makes a **draft** release with `LiquidLyf.apk`, `SHA256SUMS.txt`,
+      `update.json` and a build attestation, and CI's fingerprint check passes. The draft shows the
+      notes file, not the "Release notes to come" placeholder.
 - [ ] A maintainer installs the draft's APK on a real phone, checks sign-in and notifications, then
       publishes it **as a pre-release**.
 - [ ] The beta districts' hospitals are in the app's built-in hospital list.
@@ -45,8 +49,9 @@ Copy this into a GitHub issue and tick it there ([how](README.md)).
   - the reports queue (Settings → Moderation);
   - crash reports;
   - the testers' group and the feedback form.
-- [ ] **Fix with a new pre-release** (`-beta.2`, …), with `versionCode` one higher each time.
-      Android can't install a lower version, so there is no rollback: fix forward.
+- [ ] **Fix with a new pre-release** (`-beta2`, …), each with its own notes file. The `versionCode`
+      comes from the tag, so each beta's is higher than the last. Android can't install a lower
+      version, so there is no rollback: fix forward.
 - [ ] **App Check:** switch it to **enforce** once its metrics show that almost all requests come
       from the real app.
 

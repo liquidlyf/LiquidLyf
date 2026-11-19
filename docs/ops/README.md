@@ -16,6 +16,7 @@ How to use them:
 - Secrets never go into the repo, an issue or a chat: the signing key and its passwords,
   service-account keys, `google-services.json`.
 
-Related: [the website](../website-drafts/README.md) (publishing, the `released` switch),
+Related: [the release notes](../release-notes/README.md) (one file per tag, English and Bangla),
+[the website](../website-drafts/README.md) (publishing, the `released` switch),
 [the admin scripts](../../backend/admin-scripts/README.md) (moderators, bans, deletion requests) and
 [the Worker](../../backend/worker/README.md) (crons, secrets, deployment).

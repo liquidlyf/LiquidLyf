@@ -87,8 +87,11 @@ Before the launch announcement.
 
 ## 5. Release day
 
+- [ ] `docs/release-notes/v1.0.0.md` is committed **before the tag**, in English and Bangla, with the
+      Bangla meaning-checked and reviewed ([how](../release-notes/README.md)).
 - [ ] The `v1.0.0` tag makes a draft release with `LiquidLyf.apk`, `SHA256SUMS.txt`, `update.json`
-      and a build attestation, and CI's fingerprint check passes.
+      and a build attestation, and CI's fingerprint check passes. The draft shows the notes file, not
+      the "Release notes to come" placeholder.
 - [ ] A maintainer installs the draft's APK on a real phone, both as a fresh install and as an update
       over the last beta. Sign-in, a request, an offer and the notifications all work.
 - [ ] Publish it as the **latest** release.
