@@ -77,6 +77,14 @@ class AlertPolicyTest {
     }
 
     @Test
+    fun `only the personal pushes the inbox lists light the bell (D20)`() {
+        assertEquals(
+            setOf(PersonalPush.NEW_OFFER, PersonalPush.OFFER_CONFIRMED, PersonalPush.OFFER_DECLINED, PersonalPush.DONATION_RECORDED, PersonalPush.ASKED_TO_DONATE),
+            PersonalPush.entries.filter { it.inInbox }.toSet(),
+        )
+    }
+
+    @Test
     fun `signed out nothing is shown, and personal pushes always are`() {
         assertTrue(decide(myUid = null) is Decision.Drop)
         val personal = PushMessage.Personal(PersonalPush.NEW_OFFER, "r1")

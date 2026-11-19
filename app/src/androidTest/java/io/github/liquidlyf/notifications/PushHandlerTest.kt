@@ -150,6 +150,22 @@ class PushHandlerTest {
     }
 
     @Test
+    fun aPushWithAnInboxItemLightsHomesBellAtOnceAndOneWithoutDoesNot() = runBlocking {
+        val (requesterSide, requesterRequests, _) = requester("push-bell")
+        val rid = requesterRequests.create(requesterSide.first, requestDraft()).ok()
+        donor("push-bell-d")
+
+        val before = clock.now().toEpochMilli()
+        handler.handle(mapOf("type" to "OFFER_CONFIRMED", "requestId" to rid))
+        val lit = store.lastPersonalAtMillis.first()
+        assertTrue("D20: the bell lights up as the push comes", lit != null && lit >= before)
+
+        delay(10)
+        handler.handle(mapOf("type" to "REQUEST_FULFILLED", "requestId" to rid)) // no inbox item
+        assertEquals(lit, store.lastPersonalAtMillis.first())
+    }
+
+    @Test
     fun newReportsShowOnlyOnAnAdminsPhoneAndTheTapOpensModeration() = runBlocking {
         val uid = donor("push-admin")
         val reports = mapOf("type" to "NEW_REPORTS", "count" to "2")

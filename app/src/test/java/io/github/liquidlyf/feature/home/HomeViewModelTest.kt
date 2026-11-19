@@ -264,6 +264,31 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `an offer's push lights the bell while Home is open, with no new read (D20)`() = runTest(dispatcher) {
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(inboxSeenAt = TestData.NOW))
+        val vm = vm()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.unreadInbox.collect {} }
+        advanceUntilIdle()
+        assertFalse(vm.unreadInbox.value)
+        val reads = inbox.reads
+
+        // The offer is already in the inbox; Home asked before it came.
+        inbox.items += InboxItem("offer", InboxType.NEW_OFFER, "donor", "r1", TestData.NOW.plusSeconds(30))
+        alerts.recordPersonal(TestData.NOW.plusSeconds(31).toEpochMilli())
+        advanceUntilIdle()
+        assertTrue(vm.unreadInbox.value)
+        assertEquals(reads, inbox.reads)
+
+        // A push from before my last visit doesn't count.
+        alerts.clear()
+        alerts.recordPersonal(TestData.NOW.minusSeconds(60).toEpochMilli())
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(inboxSeenAt = TestData.NOW.plusSeconds(120)))
+        inbox.items.clear()
+        advanceUntilIdle()
+        assertFalse(vm.unreadInbox.value)
+    }
+
+    @Test
     fun `a feed listener closed by Firestore shows an empty list instead of crashing`() = runTest(dispatcher) {
         requests.put(TestData.request(id = "r1"))
         val vm = vm()

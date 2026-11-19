@@ -218,7 +218,8 @@ class HomeViewModel @Inject constructor(
 
     /**
      * The bell's badge (phase-05 5.9): anything newer than my last visit to the inbox. One read
-     * each time `inboxSeenAt` changes, plus this phone's own alert list.
+     * each time `inboxSeenAt` changes, plus this phone's own alert list, plus (D20) the last
+     * personal push, so an offer lights it while Home is open, with no extra read.
      */
     val unreadInbox: StateFlow<Boolean> = profileFlow
         .map { p -> p?.let { it.uid to it.inboxSeenAt } }
@@ -229,8 +230,9 @@ class HomeViewModel @Inject constructor(
             } else {
                 val (uid, seenAt) = key
                 val remote = flow { emit((inbox.hasNewer(uid, seenAt) as? AppResult.Success)?.data == true) }
-                combine(remote, alerts.alerts) { newer, local ->
-                    newer || local.any { seenAt == null || it.receivedAtMillis > seenAt.toEpochMilli() }
+                val seen = seenAt?.toEpochMilli()
+                combine(remote, alerts.alerts, alerts.lastPersonalAtMillis) { newer, local, personal ->
+                    newer || local.any { seen == null || it.receivedAtMillis > seen } || (personal != null && (seen == null || personal > seen))
                 }
             }
         }

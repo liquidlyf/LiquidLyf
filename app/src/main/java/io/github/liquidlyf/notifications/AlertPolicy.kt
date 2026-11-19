@@ -1,6 +1,7 @@
 package io.github.liquidlyf.notifications
 
 import io.github.liquidlyf.core.model.BloodGroup
+import io.github.liquidlyf.core.model.InboxType
 import io.github.liquidlyf.core.model.Urgency
 
 /** The personal pushes the Worker sends to `usr_{uid}` (backend/worker/src/notify.ts). */
@@ -18,6 +19,9 @@ enum class PersonalPush(val code: String) {
 
     /** Sent because of something the requester did (all but a donor's NEW_OFFER). */
     val fromRequester: Boolean get() = this != NEW_OFFER
+
+    /** The inbox has an item of the same type (not "fulfilled" or "cancelled"): the bell can light up for it (D20). */
+    val inInbox: Boolean get() = InboxType.fromCode(code) != null
 
     companion object {
         fun fromCode(code: String?): PersonalPush? = entries.firstOrNull { it.code == code }

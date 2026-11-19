@@ -26,6 +26,7 @@ import javax.inject.Singleton
  *   per request; the second one says "Still needed". Each shown alert is kept for the inbox.
  * - Personal pushes (`usr_{uid}`): always shown; DONATION_RECORDED also records the verified
  *   donation, so the rest period starts even if the donor never opens the request (A15 gap).
+ *   One with an inbox item also lights Home's bell (D20).
  * Signed out: nothing is shown.
  */
 @Singleton
@@ -88,7 +89,11 @@ class PushHandler @Inject constructor(
                 }
                 val decision = AlertPolicy.decide(message, uid, false, requesterUid, blocked, 0)
                 // A donation is still my history: it's recorded below even when the note stays quiet.
-                if (decision is AlertPolicy.Decision.ShowPersonal) notifier.showPersonal(message.type, message.requestId)
+                if (decision is AlertPolicy.Decision.ShowPersonal) {
+                    notifier.showPersonal(message.type, message.requestId)
+                    // D20: Home's bell lights up now, not on the next visit; the inbox item is written.
+                    if (message.type.inInbox) store.recordPersonal(clock.now().toEpochMilli())
+                }
                 if (message.type == PersonalPush.DONATION_RECORDED) {
                     return scope.launch {
                         val written = donations.recordIfMissing(uid, message.requestId)

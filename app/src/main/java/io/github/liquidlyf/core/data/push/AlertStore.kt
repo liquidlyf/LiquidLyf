@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.liquidlyf.core.data.ProcessDataStores
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -44,6 +45,14 @@ interface AlertStore {
 
     suspend fun recordShown(alert: LocalAlert)
 
+    /**
+     * D20: when the newest shown personal push came that has an inbox item (an offer, a confirm…).
+     * Home's bell lights up from it at once, with no extra read. Null if none since sign-in.
+     */
+    val lastPersonalAtMillis: Flow<Long?>
+
+    suspend fun recordPersonal(receivedAtMillis: Long)
+
     /** Called when I post a request: its alerts are for others. */
     suspend fun rememberMyRequest(requestId: String)
 
@@ -63,6 +72,7 @@ private data class AlertState(
     /** requestId → alerts shown, oldest first. */
     val shown: Map<String, Int> = emptyMap(),
     val mine: List<String> = emptyList(),
+    val personalAtMillis: Long? = null,
 )
 
 /** One small JSON value in its own DataStore file. */
@@ -93,6 +103,12 @@ class DataStoreAlertStore @Inject constructor(
             // Re-insert at the end so the oldest requests drop off first.
             shown = (s.shown - alert.requestId + (alert.requestId to count)).entries.toList().takeLast(MAX_REQUESTS).associate { it.key to it.value },
         )
+    }
+
+    override val lastPersonalAtMillis: Flow<Long?> = dataStore.data.map { decode(it[STATE]).personalAtMillis }.distinctUntilChanged()
+
+    override suspend fun recordPersonal(receivedAtMillis: Long) = update { s ->
+        s.copy(personalAtMillis = maxOf(s.personalAtMillis ?: 0L, receivedAtMillis))
     }
 
     override suspend fun rememberMyRequest(requestId: String) = update { s ->

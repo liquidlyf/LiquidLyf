@@ -319,6 +319,13 @@ class FakeAlertStore : io.github.liquidlyf.core.data.push.AlertStore {
         state.value = listOf(alert) + state.value
     }
 
+    private val personal = MutableStateFlow<Long?>(null)
+    override val lastPersonalAtMillis: Flow<Long?> = personal
+
+    override suspend fun recordPersonal(receivedAtMillis: Long) {
+        personal.value = maxOf(personal.value ?: 0L, receivedAtMillis)
+    }
+
     override suspend fun rememberMyRequest(requestId: String) {
         mine += requestId
     }
@@ -330,6 +337,7 @@ class FakeAlertStore : io.github.liquidlyf.core.data.push.AlertStore {
         shown.clear()
         mine.clear()
         state.value = emptyList()
+        personal.value = null
     }
 }
 
