@@ -143,3 +143,40 @@ for name, svg in {"drawable/ic_splash_logo.xml": "logo-full.svg", "drawable-nigh
     (res / name).write_text(stacked_splash(svg), encoding="utf-8", newline="\n")
     print("wrote", name)
 
+
+# Legacy icons (Android 7.x, no adaptive icons): a circle of the background colour with the mark.
+def legacy(bg, shapes, fill_override=None):
+    s = R_FG / rmax
+    tx, ty = 54 - cx * s, 54 - (cy - OPTICAL_DY) * s
+    body = "".join(
+        f'        <path\n            android:fillColor="{fill_override or fill}"\n'
+        + ('            android:fillType="evenOdd"\n' if evenodd else '')
+        + f'            android:pathData="{d}" />\n' for fill, d, evenodd in shapes)
+    return (f'<?xml version="1.0" encoding="utf-8"?>\n{note}<!-- Launcher icon for Android 7.x (API 24-25), which has no adaptive icons. -->\n'
+            '<vector xmlns:android="http://schemas.android.com/apk/res/android"\n'
+            '    android:width="48dp"\n    android:height="48dp"\n'
+            '    android:viewportWidth="108"\n    android:viewportHeight="108">\n'
+            f'    <path\n        android:fillColor="{bg}"\n        android:pathData="M54,4.5a49.5,49.5 0,1 1,0 99a49.5,49.5 0,1 1,0 -99z" />\n'
+            f'    <group\n        android:scaleX="{s:.5f}"\n        android:scaleY="{s:.5f}"\n'
+            f'        android:translateX="{tx:.4f}"\n        android:translateY="{ty:.4f}">\n'
+            f'{body}    </group>\n</vector>\n')
+
+def adaptive(bg_color_res, fg):
+    return ('<?xml version="1.0" encoding="utf-8"?>\n' + note +
+            '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
+            f'    <background android:drawable="@color/{bg_color_res}" />\n'
+            f'    <foreground android:drawable="@drawable/{fg}" />\n'
+            '    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />\n'
+            '</adaptive-icon>\n')
+
+more = {
+    # White background, full-colour mark (15 Nov 2026).
+    res / "mipmap-anydpi-v26/ic_launcher.xml": adaptive("ic_launcher_white", "ic_launcher_foreground"),
+    res / "mipmap-anydpi-v26/ic_launcher_round.xml": adaptive("ic_launcher_white", "ic_launcher_foreground"),
+    res / "mipmap-anydpi/ic_launcher.xml": legacy("#FFFFFF", mark),
+    res / "mipmap-anydpi/ic_launcher_round.xml": legacy("#FFFFFF", mark),
+}
+for path, xml in more.items():
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(xml, encoding="utf-8", newline="\n")
+    print("wrote", path.relative_to(root))
