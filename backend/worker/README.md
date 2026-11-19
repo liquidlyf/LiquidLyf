@@ -95,13 +95,14 @@ Public fields only, because anyone can subscribe to a topic. The app renders the
 |---|---|---|
 | `*/5 * * * *` | **Escalation sweep** (`escalation.ts`, run by `sweep.ts`): up to 25 OPEN requests with `nextTierAt <= now`. If active offers (`OFFERED`/`CONFIRMED`) cover the units still needed, it waits an hour. Otherwise it sends the next tier. A request the app never dispatched gets tier 1, after the same daily-cap check as dispatch. When all tiers are sent, or the request has expired or is over the cap, it's parked in 2100. | 1 read per request (≥ 1), +1 per first alert (cap count), + 1 batch write |
 | `7 * * * *` | **Expiry** (`expiry.ts`): OPEN past `expiresAt` → `EXPIRED` + `userStats.openRequests −1`, in one commit. | 1 read + 1 commit per request |
-| `0 3 * * *` (09:00 Dhaka) | **Retention** (`retention.ts`, decision B6): see below. Old requests are walked from a cursor in KV. | small |
+| `0 3 * * *` (09:00 Dhaka) | **Retention** (`retention.ts`, decisions B6 and D23): see below. Old requests are walked from a cursor in KV. | small |
 | `2,7,12,…,57 * * * *` | **Report alert** (`reports.ts`, phase-07 7.3): counts the reports filed since the last alert. If there are any, it sends one push `{type: "NEW_REPORTS", count}` to the `admins` topic, which admin devices subscribe to. Its own run, 2 minutes after each sweep, so the sweep keeps its whole 50-subrequest budget. The cursor is in KV; the first run only sets it. | 1 read (COUNT), + 1 FCM send when there are new reports |
 
 **What the retention job removes:**
 - **90 days after a request closes:** `private/contact`, the donor phone and message in its responses, and the request's notes and closing reason. Short names stay.
 - **Inbox items:** after 60 days.
 - **Reports and the moderators' action log (`adminLog`):** after 1 year (doc 03 §5).
+- **Listings of donors who can't give blood (D23):** a listed donor over 60 (this year minus the birth year, in UTC, as the rules and the app count it, so on 1 January) or with weight না is unlisted: `showInDonorSearch` false and the donor card deleted, in one commit per page. `available` stays. At most 2 pages of 100 per query per run. The over-60 query uses the `users (showInDonorSearch, birthYear)` index.
 
 **The admin push carries only a count.** Anyone can subscribe to a topic, including `admins`, so it has no IDs, names or text. The admin's app then reads `reports`, which the rules allow only for the `admin` claim.
 

@@ -150,7 +150,7 @@ describe("retention clean-up (emulator)", () => {
     await putDoc("adminLog/new", { adminUid: "mod", action: "RESTORE_REQUEST", createdAt: new Date(Date.now() - 10 * DAY) });
 
     const out = await retention(env, NOW);
-    expect(out).toEqual({ requests: 1, responses: 1, inbox: 1, reports: 1, adminLog: 1 });
+    expect(out).toEqual({ requests: 1, responses: 1, inbox: 1, reports: 1, adminLog: 1, unlisted: 0 });
     expect(await getDoc("adminLog/old")).toBeNull();
     expect(await getDoc("adminLog/new")).not.toBeNull();
 
@@ -174,7 +174,35 @@ describe("retention clean-up (emulator)", () => {
 
     // A second run starts after the cursor and finds nothing more to do.
     expect(JSON.parse((await env.CACHE.get(CURSOR_KEY, "json")) ? JSON.stringify(await env.CACHE.get(CURSOR_KEY, "json")) : "null").name).toContain("requests/old");
-    expect(await retention(env, NOW)).toEqual({ requests: 0, responses: 0, inbox: 0, reports: 0, adminLog: 0 });
+    expect(await retention(env, NOW)).toEqual({ requests: 0, responses: 0, inbox: 0, reports: 0, adminLog: 0, unlisted: 0 });
+  });
+});
+
+describe("D23 unlist (emulator, in the retention run)", () => {
+  test("over 60 and weight না listings leave Find donors; 60, unlisted and requester profiles stay as they are", async () => {
+    const env = emulatorEnv();
+    const Y = NOW.getUTCFullYear();
+    const listed = (birthYear: number, weightOk = true) =>
+      ({ fullName: "Test", showInDonorSearch: true, available: true, birthYear, weightOk, updatedAt: new Date(Date.now() - DAY) });
+    await putDoc("users/old", listed(Y - 61));
+    await putDoc("users/sixty", listed(Y - 60));
+    await putDoc("users/light", listed(1995, false));
+    await putDoc("users/oldUnlisted", { ...listed(Y - 70), showInDonorSearch: false });
+    await putDoc("users/requester", { fullName: "Test", showInDonorSearch: false, available: false });
+    for (const uid of ["old", "sixty", "light"]) await putDoc(`donors/${uid}`, { displayName: "Test T.", available: true });
+
+    expect((await retention(env, NOW)).unlisted).toBe(2);
+    for (const uid of ["old", "light"]) {
+      const u = (await fields(`users/${uid}`))!;
+      expect(u.showInDonorSearch).toBe(false);
+      expect(u.available).toBe(true);                                    // left as it was
+      expect(u.updatedAt.getTime()).toBeGreaterThan(Date.now() - 60_000); // server time
+      expect(await getDoc(`donors/${uid}`)).toBeNull();
+    }
+    expect((await fields("users/sixty"))!.showInDonorSearch).toBe(true);
+    expect(await getDoc("donors/sixty")).not.toBeNull();
+    expect((await fields("users/oldUnlisted"))!.updatedAt.getTime()).toBeLessThan(Date.now() - 60_000); // untouched
+    expect((await retention(env, NOW)).unlisted).toBe(0);                // nothing left the next day
   });
 });
 

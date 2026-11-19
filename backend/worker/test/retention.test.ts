@@ -75,4 +75,54 @@ describe("retention", () => {
     expect(calls.batches.flat()).toEqual([{ delete: docName("users/u1/notifications/n1") }, { delete: docName("reports/a_r1") },
       { delete: docName("adminLog/l1") }]);
   });
+
+  describe("D23: donors who can't give blood leave Find donors", () => {
+    const user = (uid: string) => ({ name: docName(`users/${uid}`), fields: {}, updateTime: "x" });
+    const usersQuery = (q: any, field: string) =>
+      q.from[0].collectionId === "users" && JSON.stringify(q.where).includes(`"${field}"`);
+
+    test("over 60 (UTC year) and weight না: the profile update and the card delete go in one commit each", async () => {
+      const calls = await fakeGoogle({
+        query: (q) => usersQuery(q, "birthYear") ? [user("old1")] : usersQuery(q, "weightOk") ? [user("light1")] : [],
+      });
+      const out = await retention(await makeEnv(), NOW);
+      expect(out.unlisted).toBe(2);
+
+      const [age, weight] = calls.queries.filter((q) => q.from[0].collectionId === "users");
+      expect(age.where.compositeFilter.filters).toEqual([
+        { fieldFilter: { field: { fieldPath: "showInDonorSearch" }, op: "EQUAL", value: { booleanValue: true } } },
+        { fieldFilter: { field: { fieldPath: "birthYear" }, op: "LESS_THAN", value: { integerValue: "1966" } } }, // 2026 − 60
+      ]);
+      expect(weight.where.compositeFilter.filters[1]).toEqual(
+        { fieldFilter: { field: { fieldPath: "weightOk" }, op: "EQUAL", value: { booleanValue: false } } });
+
+      expect(calls.writes).toHaveLength(2);
+      for (const [i, uid] of ["old1", "light1"].entries()) {
+        expect(calls.writes[i]).toEqual([
+          {
+            update: { name: docName(`users/${uid}`), fields: { showInDonorSearch: { booleanValue: false } } },
+            updateMask: { fieldPaths: ["showInDonorSearch"] },
+            updateTransforms: [{ fieldPath: "updatedAt", setToServerValue: "REQUEST_TIME" }],
+            currentDocument: { exists: true }, // never creates a profile
+          },
+          { delete: docName(`donors/${uid}`) },
+        ]);
+      }
+      expect(JSON.stringify(calls.writes)).not.toContain("available"); // availability stays as it was
+    });
+
+    test("nobody to unlist: no commit; a full page is followed by at most one more per query", async () => {
+      let calls = await fakeGoogle();
+      expect((await retention(await makeEnv(), NOW)).unlisted).toBe(0);
+      expect(calls.writes).toHaveLength(0);
+
+      resetCaches();
+      vi.unstubAllGlobals();
+      const page = (p: string) => Array.from({ length: 100 }, (_, i) => user(`${p}${i}`));
+      calls = await fakeGoogle({ query: (q) => usersQuery(q, "birthYear") ? page("o") : usersQuery(q, "weightOk") ? page("w") : [] });
+      expect((await retention(await makeEnv(), NOW)).unlisted).toBe(400);
+      expect(calls.queries.filter((q) => q.from[0].collectionId === "users")).toHaveLength(4);
+      expect(calls.writes.map((w) => w.length)).toEqual([200, 200, 200, 200]);
+    });
+  });
 });
