@@ -101,7 +101,7 @@ fun LLBottomBar(
  * second under it, both full width.
  */
 @Composable
-private fun BarButtons(stackAlways: Boolean, secondary: @Composable () -> Unit, primary: @Composable () -> Unit) {
+internal fun BarButtons(stackAlways: Boolean, secondary: @Composable () -> Unit, primary: @Composable () -> Unit) {
     Layout(contents = listOf(secondary, primary), modifier = Modifier.widthIn(max = MAX_ACTION_WIDTH).fillMaxWidth()) { (seconds, primaries), constraints ->
         val width = constraints.maxWidth
         val second = seconds.firstOrNull()

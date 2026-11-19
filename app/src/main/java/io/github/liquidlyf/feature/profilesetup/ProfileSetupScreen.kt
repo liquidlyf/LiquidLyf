@@ -218,26 +218,28 @@ internal fun AreaPickers(
     onUpazila: (String) -> Unit,
     /** The area is needed and incomplete (FLOW-04): the empty pickers go red. */
     isError: Boolean = false,
+    /** False while the area is being saved (D27's sheet): all three are locked. */
+    enabled: Boolean = true,
 ) {
     // N3 / FORM-01: Division → District → Upazila or city corporation, each opening only after the
     // one above it and listing only the places inside it; labels above the boxes (a two-line label
     // can't run across the outline at 200%); a locked box says why.
     val divisions = geo.divisions.map { it.code to it.name.localized(locale) }.sortedBy { it.second }
     DropdownField(
-        stringResource(R.string.label_division), divisions, division, onDivision,
+        stringResource(R.string.label_division), divisions, division, onDivision, enabled = enabled,
         isError = isError && division == null, placeholder = stringResource(R.string.area_choose_division), labelAbove = true,
     )
     val divisionInfo = division?.let(geo::division)
     val districts = divisionInfo?.districts.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
     DropdownField(
-        stringResource(R.string.label_district), districts, district, onDistrict, enabled = division != null,
+        stringResource(R.string.label_district), districts, district, onDistrict, enabled = enabled && division != null,
         isError = isError && district == null, labelAbove = true,
         placeholder = stringResource(if (division == null) R.string.area_division_first else R.string.area_choose_district),
         menuTitle = divisionInfo?.let { pluralStringResource(R.plurals.area_districts_in, districts.size, districts.size, it.name.localized(locale)) },
     )
     val areas = district?.let(geo::district)?.areas.orEmpty().map { it.code to it.name.localized(locale) }.sortedBy { it.second }
     DropdownField(
-        stringResource(R.string.label_upazila), areas, upazila, onUpazila, enabled = district != null,
+        stringResource(R.string.label_upazila), areas, upazila, onUpazila, enabled = enabled && district != null,
         isError = isError && upazila == null, labelAbove = true,
         placeholder = stringResource(if (district == null) R.string.area_district_first else R.string.area_choose_upazila),
     )

@@ -248,6 +248,9 @@
     <string name="home_empty_title">No one near you needs %1$s right now</string>
     <string name="home_empty_body">We\'ll notify you when someone does.</string>
     <string name="home_change_area">Change area</string>
+    <!-- D27: the small "Change area" sheet on Home, and the message after its Save. -->
+    <string name="home_change_area_line">This changes the area in your profile. Home, alerts and Find donors go by this area.</string>
+    <string name="home_area_changed">Your area is now %1$s.</string>
     <string name="home_not_listed_title">You\'re not listed as a donor</string>
     <string name="home_not_listed_body">List yourself so people nearby who need your blood group can find you and alert you.</string>
     <string name="home_list_me">List me as a donor</string>

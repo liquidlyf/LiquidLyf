@@ -134,6 +134,7 @@ import io.github.liquidlyf.feature.donors.FindDonorsRoute
 import io.github.liquidlyf.feature.donors.FindDonorsScreen
 import io.github.liquidlyf.feature.donors.FindDonorsUiState
 import io.github.liquidlyf.feature.donors.FindDonorsViewModel
+import io.github.liquidlyf.feature.home.AreaSheetState
 import io.github.liquidlyf.feature.home.HomeScreen
 import io.github.liquidlyf.feature.home.HomeUiState
 import io.github.liquidlyf.feature.moderation.ModerationItem
@@ -463,6 +464,17 @@ class ScreenGalleryTest {
     private inner class Steps(v: Variant) {
         private val context = contextFor(v)
 
+        /** The variant's language, for names from the area list. */
+        val locale: AppLocale = if (v.language == "bn") AppLocale.BN else AppLocale.EN
+
+        /** Opens an area box (its label sits above it, so it's found by its description) and picks [item]. */
+        fun pick(@StringRes field: Int, item: String) {
+            tapOn((hasText(str(field)) or hasContentDescription(str(field), substring = true)) and hasClickAction())
+            waitForText(item)
+            compose.onAllNodes(hasText(item)).onLast().performSemanticsAction(SemanticsActions.OnClick)
+            compose.waitForIdle()
+        }
+
         fun str(@StringRes id: Int): String = context.getString(id)
 
         fun tap(@StringRes id: Int) = tapOn(hasText(str(id)) and hasClickAction())
@@ -720,6 +732,15 @@ class ScreenGalleryTest {
             }
         }
         val notListed = me.copy(showInDonorSearch = false)
+        // D27: the empty feed, with the "Change area" sheet as [sheet] says.
+        val homeArea = { sheet: AreaSheetState ->
+            @Composable {
+                HomeScreen(
+                    HomeUiState(me, eligibility(me), available = true, requests = emptyList(), geo = geo), true, {}, {}, {}, {}, {},
+                    unreadInbox = false, notificationsEnabled = true, areaSheet = sheet,
+                )
+            }
+        }
         val tab = TopLevelDestination.HOME
         // N6: my own open request, with one offer.
         val own = listOf(myRequests[0].copy(responders = mapOf("d1" to Responder("Rahim U.", BloodGroup.B_POS, ResponseStatus.OFFERED))))
@@ -734,6 +755,18 @@ class ScreenGalleryTest {
         val noGroup = me.copy(bloodGroup = null, showInDonorSearch = false)
         gallery(
             Shot("home-filled", tab, content = home(me, feed, true, false, true, true, emptyList())),
+            // D27: "Change area" on the empty state opens a sheet with only the area: open, an
+            // incomplete area after Save, saving, and a failed save.
+            Shot("home-change-area", tab, overlay = true, prepare = { waitFor(R.string.home_change_area_line) }, content = homeArea(AreaSheetState(open = true))),
+            Shot("home-change-area-incomplete", tab, overlay = true, prepare = {
+                waitFor(R.string.home_change_area_line)
+                pick(R.string.label_division, geo.divisions.first { d -> d.districts.any { it.code == "BD4041" } }.name.localized(locale))
+                tap(R.string.action_save)
+                waitFor(R.string.error_location_required)
+            }, content = homeArea(AreaSheetState(open = true))),
+            // A sheet is a window of its own, which a stopped clock doesn't draw: "Saving…" with a still spinner.
+            Shot("home-change-area-saving", tab, overlay = true, prepare = { waitFor(R.string.action_saving) }, content = homeArea(AreaSheetState(open = true, saving = true))),
+            Shot("home-change-area-error", tab, overlay = true, prepare = { waitFor(R.string.error_network) }, content = homeArea(AreaSheetState(open = true, error = R.string.error_network))),
             // D25: 0.12 s into the start logo's shrink into Home's top-bar logo.
             Shot("start-shrink-home", animated = true, advanceMs = 120) {
                 StartOver(sinceTapMs = 1_000, landing = StartScreen.HOME) {

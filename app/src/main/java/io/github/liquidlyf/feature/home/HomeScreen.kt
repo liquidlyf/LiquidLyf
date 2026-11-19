@@ -90,6 +90,7 @@ import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.model.AppLocale
+import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodRequest
 import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.Urgency
@@ -114,10 +115,21 @@ fun HomeRoute(
     val online by viewModel.online.collectAsStateWithLifecycle()
     val unreadInbox by viewModel.unreadInbox.collectAsStateWithLifecycle()
     val notYet by viewModel.notYet.collectAsStateWithLifecycle()
+    val areaSheet by viewModel.areaSheet.collectAsStateWithLifecycle()
     val snackbar = LocalSnackbarHostState.current
     val resources = LocalResources.current
+    val locale = currentAppLocale()
     LaunchedEffect(viewModel) {
-        viewModel.eventFlow.collect { e -> if (e is HomeEvent.Message) launch { snackbar.showAppMessage(resources, e.text) } }
+        viewModel.eventFlow.collect { e ->
+            when (e) {
+                is HomeEvent.Message -> launch { snackbar.showAppMessage(resources, e.text) }
+                // D27: names the new area, so you can see the right one was saved.
+                is HomeEvent.AreaChanged -> launch {
+                    val place = viewModel.uiState.value.geo?.placeLabel(e.area.district, e.area.upazila, locale) ?: e.area.district
+                    snackbar.showSnackbar(resources.getString(R.string.home_area_changed, place))
+                }
+            }
+        }
     }
     // Back on Home after posting a request: it shows as "Your request" (FLOW-03).
     LifecycleResumeEffect(viewModel) {
@@ -128,6 +140,8 @@ fun HomeRoute(
         state, online, viewModel::onAvailableToggled, onOpenRequest, onCreateRequest, onOpenNotifications, onEditProfile, unreadInbox,
         onListMe = viewModel::listMe, onRetryFeed = viewModel::retryFeed, onBecomeDonor = onBecomeDonor,
         askedLater = notYet, onMarkDonated = viewModel::markDonated, onNotYet = viewModel::notYet,
+        areaSheet = areaSheet, onChangeArea = viewModel::openAreaSheet, onSaveArea = viewModel::saveArea,
+        onCloseAreaSheet = viewModel::closeAreaSheet,
     )
 }
 
@@ -153,6 +167,11 @@ internal fun HomeScreen(
     askedLater: Set<String> = emptySet(),
     onMarkDonated: (requestId: String, donorUid: String) -> Unit = { _, _ -> },
     onNotYet: (String) -> Unit = {},
+    /** D27: the "Change area" sheet, from the empty state. */
+    areaSheet: AreaSheetState = AreaSheetState(),
+    onChangeArea: () -> Unit = {},
+    onSaveArea: (Area) -> Unit = {},
+    onCloseAreaSheet: () -> Unit = {},
 ) {
     val now by rememberNow()
     val launcher = rememberSafeIntentLauncher()
@@ -247,12 +266,16 @@ internal fun HomeScreen(
                                 }
                                 list == null -> item(key = "loading") { LoadingState(count = 2) }
                                 list.isEmpty() -> item(key = "empty") {
+                                    // D27: says where "near you" is, and changes it right here.
+                                    val place = state.geo?.placeLabel(p.area.district, p.area.upazila, locale)
                                     EmptyState(
                                         icon = LLIcons.Favorite,
                                         title = stringResource(R.string.home_empty_title, stringResource(group.labelRes)),
                                         body = stringResource(R.string.home_empty_body),
+                                        detail = place?.let { stringResource(R.string.become_donor_area, it) },
+                                        detailIcon = LLIcons.Location,
                                         actionLabel = stringResource(R.string.home_change_area),
-                                        onAction = onEditProfile,
+                                        onAction = onChangeArea,
                                     )
                                 }
                                 else -> items(list, key = { it.id }) { r ->
@@ -270,6 +293,13 @@ internal fun HomeScreen(
                 }
             }
         }
+    }
+
+    // D27: the area only, in a small sheet, instead of the whole Edit profile page.
+    val me = state.profile
+    val geo = state.geo
+    if (areaSheet.open && me != null && geo != null) {
+        ChangeAreaSheet(geo, locale, me.area, areaSheet, onSave = onSaveArea, onDismiss = onCloseAreaSheet)
     }
 }
 

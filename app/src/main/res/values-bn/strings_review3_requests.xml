@@ -91,6 +91,9 @@
     <string name="home_empty_title">এই মুহূর্তে কাছাকাছি কারও %1$s রক্ত দরকার নেই</string>
     <string name="home_empty_body">কারও দরকার হলে আমরা আপনাকে জানাব।</string>
     <string name="home_change_area">এলাকা বদলান</string>
+    <!-- D27: approved by the maintainer (20 Nov 2026, "D27 BN OK"). -->
+    <string name="home_change_area_line">এতে আপনার প্রোফাইলের এলাকা বদলে যাবে। হোম, অ্যালার্ট আর \"রক্তদাতা খুঁজুন\" এই এলাকা অনুযায়ী চলে।</string>
+    <string name="home_area_changed">আপনার এলাকা এখন %1$s।</string>
     <string name="home_not_listed_title">আপনি রক্তদাতা হিসেবে তালিকায় নেই</string>
     <string name="home_not_listed_body">তালিকায় নাম দিন, যাতে কাছাকাছি যাঁদের আপনার গ্রুপের রক্ত দরকার তাঁরা আপনাকে খুঁজে অ্যালার্ট পাঠাতে পারেন।</string>
     <string name="home_list_me">রক্তদাতা হিসেবে তালিকায় নাম দিন</string>

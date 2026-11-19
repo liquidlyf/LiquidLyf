@@ -124,7 +124,10 @@ private fun SkeletonCard(modifier: Modifier = Modifier) {
     }
 }
 
-/** Nothing to show: a 48dp icon, a title, one line of help and at most one action. */
+/**
+ * Nothing to show: a 48dp icon, a title, one line of help and at most one action. [detail] is one
+ * more line, with its own icon, just above the action (D27: Home says which area "near you" is).
+ */
 @Composable
 fun EmptyState(
     @DrawableRes icon: Int,
@@ -134,6 +137,8 @@ fun EmptyState(
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
     filledAction: Boolean = false,
+    detail: String? = null,
+    @DrawableRes detailIcon: Int? = null,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -165,6 +170,26 @@ fun EmptyState(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+        if (detail != null) {
+            Spacer(Modifier.height(Spacing.sm))
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+                detailIcon?.let {
+                    Icon(
+                        painterResource(it),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp).size(18.dp),
+                    )
+                }
+                Text(
+                    text = detail,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+            }
+        }
         if (actionLabel != null && onAction != null) {
             Spacer(Modifier.height(Spacing.lg))
             // Low 5: filled where it's the only way forward (suspended, couldn't load your profile).

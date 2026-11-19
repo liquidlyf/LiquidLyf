@@ -9,6 +9,7 @@ import io.github.liquidlyf.core.data.push.LocalAlert
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.IneligibleReason
+import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.InboxItem
 import io.github.liquidlyf.core.model.InboxType
@@ -31,6 +32,7 @@ import java.io.File
 import java.time.Duration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -347,5 +349,88 @@ class HomeViewModelTest {
         advanceUntilIdle()
         assertNull(vm.uiState.value.feedError)
         assertEquals(listOf("r1"), vm.uiState.value.requests?.map { it.id })
+    }
+
+    // ---- D27: "Change area" on the empty state, a small sheet with only the area ----
+
+    /** Jashore: a district other than mine, with one of its upazilas. */
+    private val jashore: Area
+        get() {
+            val division = geo.divisions.first { d -> d.districts.any { it.code == "BD4041" } }
+            return Area(division.code, "BD4041", division.districts.first { it.code == "BD4041" }.areas.first().code)
+        }
+
+    private fun TestScope.eventsOf(vm: HomeViewModel): MutableList<HomeEvent> {
+        val events = mutableListOf<HomeEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.toList(events) }
+        return events
+    }
+
+    @Test
+    fun `Change area saves only the area, refreshes the session, closes the sheet and names the new area (D27)`() = runTest(dispatcher) {
+        val vm = vm()
+        val events = eventsOf(vm)
+        advanceUntilIdle()
+        vm.openAreaSheet()
+        assertTrue(vm.areaSheet.value.open)
+        vm.saveArea(jashore)
+        advanceUntilIdle()
+        val saved = profiles.profiles.getValue("me")
+        assertEquals(jashore, saved.area)
+        // Everything else as it was: the same write as Edit profile, with only the area changed.
+        assertEquals(
+            listOf(me.fullName, me.phone, me.bloodGroup, me.gender, me.birthYear, me.weightOk, me.available, me.showInDonorSearch),
+            listOf(saved.fullName, saved.phone, saved.bloodGroup, saved.gender, saved.birthYear, saved.weightOk, saved.available, saved.showInDonorSearch),
+        )
+        assertEquals(1, session.refreshes) // topics and the Find donors listing follow
+        assertEquals(AreaSheetState(), vm.areaSheet.value)
+        assertEquals(listOf<HomeEvent>(HomeEvent.AreaChanged(jashore)), events)
+    }
+
+    @Test
+    fun `the same area just closes the sheet, with no write and no message (D27)`() = runTest(dispatcher) {
+        val vm = vm()
+        val events = eventsOf(vm)
+        advanceUntilIdle()
+        vm.openAreaSheet()
+        vm.saveArea(me.area)
+        advanceUntilIdle()
+        assertEquals(me, profiles.profiles.getValue("me"))
+        assertEquals(0, session.refreshes)
+        assertFalse(vm.areaSheet.value.open)
+        assertTrue(events.isEmpty())
+    }
+
+    @Test
+    fun `a failed save stays in the sheet with the area as chosen, or tells Home if it was closed (D27)`() = runTest(dispatcher) {
+        val vm = vm()
+        val events = eventsOf(vm)
+        advanceUntilIdle()
+        vm.openAreaSheet()
+        profiles.failNext = AppError.Network
+        vm.saveArea(jashore)
+        advanceUntilIdle()
+        assertEquals(AreaSheetState(open = true, saving = false, error = AppError.Network.messageRes), vm.areaSheet.value)
+        assertEquals(me.area, profiles.profiles.getValue("me").area)
+        assertTrue(events.isEmpty())
+
+        // Closed while it saves: the failure goes to Home's snackbar instead.
+        profiles.failNext = AppError.Network
+        vm.saveArea(jashore)
+        vm.closeAreaSheet()
+        advanceUntilIdle()
+        assertEquals(AreaSheetState(), vm.areaSheet.value)
+        assertEquals(listOf<HomeEvent>(HomeEvent.Message(AppError.Network.messageRes)), events)
+    }
+
+    @Test
+    fun `an area that isn't in the list isn't saved (D27)`() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.openAreaSheet()
+        vm.saveArea(jashore.copy(upazila = "BD404100000"))
+        advanceUntilIdle()
+        assertEquals(me.area, profiles.profiles.getValue("me").area)
+        assertTrue(vm.areaSheet.value.open)
     }
 }

@@ -19,7 +19,9 @@ import io.github.liquidlyf.core.domain.Eligibility
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.StatusTransitions
 import io.github.liquidlyf.core.firebase.endOnListenError
+import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodRequest
+import io.github.liquidlyf.core.model.ProfileDraft
 import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.model.Urgency
@@ -70,7 +72,20 @@ data class HomeUiState(
 
 sealed interface HomeEvent {
     data class Message(@param:StringRes val text: Int) : HomeEvent
+
+    /** D27: the sheet saved a new area: "Your area is now …", named in the app's language. */
+    data class AreaChanged(val area: Area) : HomeEvent
 }
+
+/**
+ * D27: "Change area" on Home's empty state opens a small sheet with only the area. [error] is a
+ * failed save, shown inside the sheet (a snackbar would sit under its scrim).
+ */
+data class AreaSheetState(
+    val open: Boolean = false,
+    val saving: Boolean = false,
+    @param:StringRes val error: Int? = null,
+)
 
 /**
  * Home (Phase 4.1): my availability and eligibility, and the open requests in my district that
@@ -271,6 +286,56 @@ class HomeViewModel @Inject constructor(
                 }
                 is AppResult.Failure -> {
                     pendingAvailable.value = null
+                    events.send(HomeEvent.Message(result.error.messageRes))
+                }
+            }
+        }
+    }
+
+    private val areaSheetState = MutableStateFlow(AreaSheetState())
+
+    /** D27: the "Change area" sheet. */
+    val areaSheet: StateFlow<AreaSheetState> = areaSheetState.asStateFlow()
+
+    fun openAreaSheet() = areaSheetState.update { AreaSheetState(open = true) }
+
+    /** Tapped outside, swiped down, Back or Cancel. A save already sent still finishes. */
+    fun closeAreaSheet() = areaSheetState.update { it.copy(open = false, error = null) }
+
+    /**
+     * D27: Save in the sheet, the same write as Edit profile with only the area changed; then the
+     * session re-reads the profile, so the alert topics and the Find donors listing follow, and the
+     * feed (keyed on the district) loads the new one. The same area: it just closes. An incomplete
+     * area never gets here (the sheet shows it red).
+     */
+    fun saveArea(area: Area) {
+        val before = (session.state.value as? SessionState.Ready)?.profile ?: return
+        if (areaSheetState.value.saving) return
+        if (area == before.area) {
+            closeAreaSheet()
+            return
+        }
+        if (geo.value?.isValid(area) != true) return
+        areaSheetState.update { it.copy(saving = true, error = null) }
+        viewModelScope.launch {
+            val draft = ProfileDraft(
+                fullName = before.fullName, phone = before.phone, bloodGroup = before.bloodGroup,
+                gender = before.gender, birthYear = before.birthYear, weightOk = before.weightOk, area = area,
+                available = before.available, lastDonationAt = before.lastDonationAt,
+                showInDonorSearch = before.showInDonorSearch, locale = before.locale, termsVersion = before.termsVersion,
+            )
+            when (val result = profiles.update(before, draft)) {
+                is AppResult.Success -> {
+                    session.refresh()
+                    areaSheetState.value = AreaSheetState()
+                    events.send(HomeEvent.AreaChanged(area))
+                }
+                // The sheet stays open with the area as chosen, so Save can be tapped again; if it
+                // was closed meanwhile, Home's snackbar says it.
+                is AppResult.Failure -> if (areaSheetState.value.open) {
+                    areaSheetState.update { it.copy(saving = false, error = result.error.messageRes) }
+                } else {
+                    areaSheetState.value = AreaSheetState()
                     events.send(HomeEvent.Message(result.error.messageRes))
                 }
             }
