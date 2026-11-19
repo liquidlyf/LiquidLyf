@@ -1,10 +1,12 @@
 package io.github.liquidlyf.feature.profilesetup
 
 import androidx.lifecycle.SavedStateHandle
+import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.session.SessionState
+import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.core.util.AppError
@@ -56,7 +58,7 @@ class BecomeDonorViewModelTest {
     private val geo = BdGeoParser.parse(File("src/main/assets/bd-geo.json").readText())
     private fun vm() = BecomeDonorViewModel(saved, session, profiles, Clock { TestData.NOW }, object : GeoRepository {
         override suspend fun geo(): BdGeo = geo
-    })
+    }, EligibilityCalculator())
 
     private fun TestScope.events(vm: BecomeDonorViewModel): List<BecomeDonorEvent> =
         mutableListOf<BecomeDonorEvent>().also { list -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { list += it } } }
@@ -156,5 +158,41 @@ class BecomeDonorViewModelTest {
         advanceUntilIdle()
         assertEquals(AppError.Network.messageRes, again.uiState.value.formError)
         assertFalse(again.uiState.value.saving)
+    }
+
+
+    @Test
+    fun `weight no - step 3 says why instead of list me, and Finish saves without listing (D23)`() = runTest(dispatcher) {
+        val vm = vm()
+        vm.edit { copy(bloodGroup = BloodGroup.O_NEG.code) }
+        vm.next()
+        vm.edit { copy(gender = Gender.FEMALE.code, birthYear = "1998", weightOk = false) }
+        assertEquals(IneligibleReason.LOW_WEIGHT, vm.uiState.value.listingBlock)
+        vm.next()
+        vm.edit { copy(neverDonated = true) }
+        vm.next() // no "list me" answer needed
+        advanceUntilIdle()
+        val p = profiles.profiles.getValue("me")
+        assertTrue(p.hasDonorDetails)
+        assertEquals(false, p.weightOk)
+        assertFalse(p.showInDonorSearch)
+        assertFalse(p.available)
+    }
+
+    @Test
+    fun `over 60 - step 3 says why, and even an earlier yes to list me doesn't list (D23)`() = runTest(dispatcher) {
+        val vm = vm()
+        vm.edit { copy(bloodGroup = BloodGroup.O_NEG.code) }
+        vm.next()
+        vm.edit { copy(gender = Gender.MALE.code, birthYear = "1960", weightOk = true) }
+        assertEquals(IneligibleReason.TOO_OLD, vm.uiState.value.listingBlock)
+        vm.next()
+        vm.edit { copy(neverDonated = true, listed = true) }
+        vm.next()
+        advanceUntilIdle()
+        assertFalse(profiles.profiles.getValue("me").showInDonorSearch)
+        // An age that can be listed brings the question back.
+        vm.edit { copy(birthYear = "1998") }
+        assertEquals(null, vm.uiState.value.listingBlock)
     }
 }

@@ -13,13 +13,14 @@ import io.github.liquidlyf.core.model.BloodGroup
 
 /**
  * Phase 8.1: being listed is consent (PDPA 2026), so turning it on asks with the same words as
- * profile setup. Used by Settings → Privacy and by Home's "List me".
+ * profile setup. Used by Settings → Privacy, by Home's "List me", and (D23) by Edit profile after the
+ * weight answer goes back to হ্যাঁ, with [title] "You can donate now".
  */
 @Composable
-fun ListMeDialog(bloodGroup: BloodGroup, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+fun ListMeDialog(bloodGroup: BloodGroup, onConfirm: () -> Unit, onDismiss: () -> Unit, title: String = stringResource(R.string.list_me_title)) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.list_me_title)) },
+        title = { Text(title) },
         text = {
             DialogBody {
                 Text(stringResource(R.string.setup_consent_question, stringResource(bloodGroup.labelRes)))

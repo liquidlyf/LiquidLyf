@@ -42,6 +42,8 @@ data class SettingsUiState(
     val available: Boolean = false,
     /** P1: without a blood group nobody can be listed (the rules insist). */
     val bloodGroup: BloodGroup? = null,
+    /** D23 a: weight না or age outside 18–60: "List me" can't be turned on, and says why. */
+    val listingBlock: IneligibleReason? = null,
     /** A privacy switch is being saved. */
     val saving: Boolean = false,
     /** While resting: when alerts start again, so "Ready to donate" says it (COPY-04). */
@@ -84,6 +86,7 @@ class SettingsViewModel @Inject constructor(
                 listed = profile?.showInDonorSearch,
                 available = profile?.available == true,
                 bloodGroup = profile?.bloodGroup,
+                listingBlock = profile?.let { eligibility.listingBlock(it, clock.now()) },
                 saving = busy,
                 alertsAgainOn = profile?.let { p ->
                     eligibility.evaluate(p, clock.now())?.let { e -> e.eligibleFrom.takeIf { IneligibleReason.REST_PERIOD in e.reasons } }

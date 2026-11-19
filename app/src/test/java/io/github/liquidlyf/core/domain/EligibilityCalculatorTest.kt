@@ -106,4 +106,23 @@ class EligibilityCalculatorTest {
         val newYearsEve = Instant.parse("2026-12-31T20:00:00Z")
         assertEquals(18, EligibilityCalculator.ageIn(2008, newYearsEve))
     }
+
+
+    @Test
+    fun `listing needs weight yes and age 18 to 60, counted as the rules do (D23)`() {
+        val calc = EligibilityCalculator()
+        val now = Instant.parse("2026-11-19T06:00:00Z")
+        assertEquals(null, calc.listingBlock(1966, true, now)) // 60
+        assertEquals(IneligibleReason.TOO_OLD, calc.listingBlock(1965, true, now)) // 61
+        assertEquals(IneligibleReason.LOW_WEIGHT, calc.listingBlock(1990, false, now))
+        assertEquals(IneligibleReason.LOW_WEIGHT, calc.listingBlock(1965, false, now)) // the weight first: it can change
+        assertEquals(IneligibleReason.TOO_YOUNG, calc.listingBlock(2009, true, now)) // 17
+        // 61 from 1 January, in UTC, as the rules and B's daily job count it.
+        assertEquals(null, calc.listingBlock(1966, true, Instant.parse("2026-12-31T23:59:59Z")))
+        assertEquals(IneligibleReason.TOO_OLD, calc.listingBlock(1966, true, Instant.parse("2027-01-01T00:00:00Z")))
+        // A Remote Config value can't raise it past the rules' 60.
+        val looser = EligibilityCalculator(EligibilityRules(maxAge = 65))
+        assertEquals(IneligibleReason.TOO_OLD, looser.listingBlock(1965, true, now))
+        assertTrue(IneligibleReason.TOO_OLD in looser.evaluate(1965, true, Gender.MALE, null, now).reasons)
+    }
 }

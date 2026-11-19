@@ -82,6 +82,7 @@ import io.github.liquidlyf.core.data.backend.AlertStatus
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.EdgeTextButton
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.ButtonLabel
 import io.github.liquidlyf.core.designsystem.components.ChooseHint
@@ -152,6 +153,8 @@ fun RequestDetailRoute(
     onAskDonors: () -> Unit = {},
     /** Low 10: to Requests, from a closed request. */
     onSeeNearby: () -> Unit = {},
+    /** D23 a: under 45 kg, the way back is to change the answer there. */
+    onEditProfile: () -> Unit = {},
     viewModel: RequestDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -166,7 +169,7 @@ fun RequestDetailRoute(
             }
         }
     }
-    RequestDetailScreen(state, online, viewModel, onBack, onOpenSafetyTips, onBecomeDonor, onAskDonors, onSeeNearby)
+    RequestDetailScreen(state, online, viewModel, onBack, onOpenSafetyTips, onBecomeDonor, onAskDonors, onSeeNearby, onEditProfile)
 }
 
 /**
@@ -185,6 +188,7 @@ private fun RequestDetailScreen(
     onBecomeDonor: () -> Unit,
     onAskDonors: () -> Unit,
     onSeeNearby: () -> Unit,
+    onEditProfile: () -> Unit,
 ) {
     val request = state.request
     var menuOpen by rememberSaveable { mutableStateOf(false) }
@@ -340,6 +344,15 @@ private fun RequestDetailScreen(
                                 }
                             }
                             DetailsSection(request, state)
+                            // D23 a: under 45 kg, the way back, under the details; the bar keeps the reason and Share.
+                            val block = state.offerBlock
+                            if (status == null && block is OfferBlock.NotEligible && IneligibleReason.LOW_WEIGHT in block.reasons) {
+                                LLNoticeCard(
+                                    stringResource(R.string.home_weight_way_back),
+                                    LLIcons.Info,
+                                    action = { EdgeTextButton(stringResource(R.string.title_edit_profile), onEditProfile, icon = LLIcons.Edit) },
+                                )
+                            }
                             PostedBy(request)
                             SafetyBanner(onOpenSafetyTips)
                         }

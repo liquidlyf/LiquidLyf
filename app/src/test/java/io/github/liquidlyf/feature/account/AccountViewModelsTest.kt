@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.FieldCheck
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -165,7 +166,7 @@ class AccountViewModelsTest {
     }
 
     private fun editVm(profiles: FakeProfileRepository, session: FakeSessionManager) =
-        EditProfileViewModel(session, profiles, auth, geoRepo, Clock { TestData.NOW })
+        EditProfileViewModel(session, profiles, auth, geoRepo, Clock { TestData.NOW }, EligibilityCalculator())
 
     @Test
     fun `edit profile starts from the profile and shows the phone the local way`() = test {
@@ -239,5 +240,89 @@ class AccountViewModelsTest {
         advanceUntilIdle()
         assertEquals(R.string.change_email_sent, vm.uiState.value.message)
         assertEquals(listOf("new@example.test"), auth.emailChanges)
+    }
+
+
+    // ---- D23 a: the weight answer in Edit profile ----
+
+    @Test
+    fun `weight no in Edit profile takes a listed donor off the list in the same save (D23)`() = test {
+        val me = TestData.profile()
+        val profiles = FakeProfileRepository().apply { profiles["uid-1"] = me }
+        val vm = editVm(profiles, FakeSessionManager(SessionState.Ready(TestData.user(), me)))
+        advanceUntilIdle()
+        assertEquals(true, vm.uiState.value.weightOk)
+        vm.edit { copy(weightOk = false) }
+        vm.save()
+        advanceUntilIdle()
+        val p = profiles.profiles.getValue("uid-1")
+        assertEquals(false, p.weightOk)
+        assertFalse(p.showInDonorSearch)
+        assertTrue(vm.uiState.value.saved)
+        assertFalse(vm.uiState.value.askListMe)
+    }
+
+    @Test
+    fun `a birth year over 60 in Edit profile unlists too (D23)`() = test {
+        val me = TestData.profile()
+        val profiles = FakeProfileRepository().apply { profiles["uid-1"] = me }
+        val vm = editVm(profiles, FakeSessionManager(SessionState.Ready(TestData.user(), me)))
+        advanceUntilIdle()
+        vm.edit { copy(birthYear = "1964") }
+        vm.save()
+        advanceUntilIdle()
+        assertFalse(profiles.profiles.getValue("uid-1").showInDonorSearch)
+        assertFalse(vm.uiState.value.askListMe)
+    }
+
+    @Test
+    fun `weight no then yes asks list me again after Save, and yes lists them (D23)`() = test {
+        val me = TestData.profile().copy(weightOk = false, showInDonorSearch = false, consentAt = null)
+        val profiles = FakeProfileRepository().apply { profiles["uid-1"] = me }
+        val session = FakeSessionManager(SessionState.Ready(TestData.user(), me))
+        val vm = editVm(profiles, session)
+        advanceUntilIdle()
+        vm.edit { copy(weightOk = true) }
+        vm.save()
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.askListMe)
+        assertFalse(vm.uiState.value.saved) // the question first, then Edit profile closes
+        assertEquals(true, profiles.profiles.getValue("uid-1").weightOk)
+        assertFalse(profiles.profiles.getValue("uid-1").showInDonorSearch) // nothing is chosen for them
+
+        vm.onListMeAnswered(true)
+        advanceUntilIdle()
+        assertTrue(profiles.profiles.getValue("uid-1").showInDonorSearch)
+        assertEquals(listOf(true), profiles.listingWrites)
+        assertTrue(vm.uiState.value.saved)
+    }
+
+    @Test
+    fun `weight no then yes, then Not now, leaves them unlisted (D23)`() = test {
+        val me = TestData.profile().copy(weightOk = false, showInDonorSearch = false)
+        val profiles = FakeProfileRepository().apply { profiles["uid-1"] = me }
+        val vm = editVm(profiles, FakeSessionManager(SessionState.Ready(TestData.user(), me)))
+        advanceUntilIdle()
+        vm.edit { copy(weightOk = true) }
+        vm.save()
+        advanceUntilIdle()
+        vm.onListMeAnswered(false)
+        advanceUntilIdle()
+        assertFalse(profiles.profiles.getValue("uid-1").showInDonorSearch)
+        assertTrue(profiles.listingWrites.isEmpty())
+        assertTrue(vm.uiState.value.saved)
+    }
+
+    @Test
+    fun `weight no then yes at 61 doesn't ask - age still keeps them off the list (D23)`() = test {
+        val me = TestData.profile().copy(weightOk = false, showInDonorSearch = false, birthYear = 1965)
+        val profiles = FakeProfileRepository().apply { profiles["uid-1"] = me }
+        val vm = editVm(profiles, FakeSessionManager(SessionState.Ready(TestData.user(), me)))
+        advanceUntilIdle()
+        vm.edit { copy(weightOk = true) }
+        vm.save()
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.askListMe)
+        assertTrue(vm.uiState.value.saved)
     }
 }

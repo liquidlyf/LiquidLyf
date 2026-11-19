@@ -94,6 +94,8 @@
     <string name="home_not_listed_title">আপনি রক্তদাতা হিসেবে তালিকায় নেই</string>
     <string name="home_not_listed_body">তালিকায় নাম দিন, যাতে কাছাকাছি যাঁদের আপনার গ্রুপের রক্ত দরকার তাঁরা আপনাকে খুঁজে অ্যালার্ট পাঠাতে পারেন।</string>
     <string name="home_list_me">রক্তদাতা হিসেবে তালিকায় নাম দিন</string>
+    <string name="home_weight_way_back">ওজন বাড়লে \"প্রোফাইল এডিট করুন\"-এ গিয়ে উত্তরটি বদলে নিন।</string>
+    <string name="home_over_60">৬০ বছরের পর রক্ত দেওয়া যায় না, তাই আপনি আর রক্তদাতার তালিকায় নেই। অনুরোধ শেয়ার করে এখনো সাহায্য করতে পারেন।</string>
     <string name="home_ready_to_donate">রক্ত দিতে প্রস্তুত</string>
     <string name="home_your_request">আপনার অনুরোধ</string>
     <string name="home_see_offers">সাড়াগুলো দেখুন</string>

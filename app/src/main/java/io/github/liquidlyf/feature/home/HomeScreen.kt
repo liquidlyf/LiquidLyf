@@ -59,6 +59,9 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.EdgeTextButton
+import io.github.liquidlyf.core.designsystem.components.listingBlock
+import io.github.liquidlyf.core.designsystem.components.listingBlockText
 import io.github.liquidlyf.core.designsystem.components.BloodGroupBadge
 import io.github.liquidlyf.core.designsystem.components.EligibilityRing
 import io.github.liquidlyf.core.designsystem.components.EmptyState
@@ -203,7 +206,7 @@ internal fun HomeScreen(
                     val becomeDonorBelow = BECOME_DONOR_BELOW_OWN_REQUEST && own.isNotEmpty()
                     when {
                         p == null -> Unit
-                        group != null -> item(key = "donor-line") { DonorLine(state, notificationsEnabled, now, onAvailableToggled, onListMe) }
+                        group != null -> item(key = "donor-line") { DonorLine(state, notificationsEnabled, now, onAvailableToggled, onListMe, onEditProfile) }
                         // Answered the questions but doesn't know the group yet (P1).
                         donor -> item(key = "no-group") { BloodGroupReminder(onAdd = onEditProfile) }
                         !becomeDonorBelow -> item(key = "become-donor") { BecomeDonorCard(onBecomeDonor = onBecomeDonor) }
@@ -328,9 +331,16 @@ private fun DonorLine(
     now: Instant,
     onAvailableToggled: (Boolean) -> Unit,
     onListMe: () -> Unit,
+    onEditProfile: () -> Unit,
 ) {
     val p = state.profile ?: return
     val e = state.eligibility ?: return
+    // D23 a: weight না or age outside 18–60 isn't listed: say why, with no switch and no "list me".
+    val block = e.listingBlock()
+    if (block != null) {
+        CantBeListedLine(state, block, now, onEditProfile)
+        return
+    }
     if (!p.showInDonorSearch) {
         NotListedLine(state, now, onListMe)
         return
@@ -374,6 +384,32 @@ private fun DonorLine(
                     Text(line, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 switch()
+            }
+        }
+    }
+}
+
+/**
+ * D23 a: a donor who can't be listed: the grey ring, why, and no switch. Under 45 kg, the way back
+ * ("If your weight goes up…") and Edit profile; over 60, that sharing requests still helps.
+ */
+@Composable
+private fun CantBeListedLine(state: HomeUiState, block: IneligibleReason, now: Instant, onEditProfile: () -> Unit) {
+    val p = state.profile ?: return
+    val e = state.eligibility ?: return
+    val weight = block == IneligibleReason.LOW_WEIGHT
+    LLCard(Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(Spacing.md), horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+            EligibilityRing(e, p.gender, now, size = 48.dp, showDays = false, dimmed = true)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                Text(listingBlockText(block), style = MaterialTheme.typography.titleMedium)
+                val line = when (block) {
+                    IneligibleReason.LOW_WEIGHT -> R.string.home_weight_way_back
+                    IneligibleReason.TOO_OLD -> R.string.home_over_60
+                    else -> null
+                }
+                line?.let { Text(stringResource(it), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                if (weight) EdgeTextButton(stringResource(R.string.title_edit_profile), onEditProfile, icon = LLIcons.Edit)
             }
         }
     }

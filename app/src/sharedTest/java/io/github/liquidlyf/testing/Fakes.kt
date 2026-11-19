@@ -8,6 +8,7 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.data.settings.SettingsRepository
 import io.github.liquidlyf.core.data.settings.ThemeMode
 import io.github.liquidlyf.core.data.settings.UserSettings
+import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.firebase.dto.UserDoc
 import io.github.liquidlyf.core.model.AppLocale
 import io.github.liquidlyf.core.model.Area
@@ -209,6 +210,9 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
     }
 
     override suspend fun update(before: UserProfile, draft: ProfileDraft) = result {
+        // D23: as the repository and the rules, a listing needs weight হ্যাঁ and age 18–60.
+        val block = draft.birthYear?.let { y -> draft.weightOk?.let { EligibilityCalculator().listingBlock(y, it, now) } }
+        if (draft.showInDonorSearch && block != null) return@result AppResult.Failure(AppError.InvalidInput)
         profiles[before.uid] = UserDoc.applyDraft(before, draft, now)
         AppResult.Success(Unit)
     }
@@ -227,6 +231,7 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
     val listingWrites = mutableListOf<Boolean>()
 
     override suspend fun setListed(profile: UserProfile, listed: Boolean) = result {
+        if (listed && !EligibilityCalculator().canBeListed(profile, now)) return@result AppResult.Failure(AppError.InvalidInput)
         listingWrites += listed
         profiles[profile.uid] = (profiles[profile.uid] ?: profile).copy(showInDonorSearch = listed)
         AppResult.Success(Unit)

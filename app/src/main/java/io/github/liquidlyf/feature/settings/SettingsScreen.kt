@@ -59,6 +59,7 @@ import io.github.liquidlyf.core.data.settings.AppLanguage
 import io.github.liquidlyf.core.data.settings.ThemeMode
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
+import io.github.liquidlyf.core.designsystem.components.listingBlockText
 import io.github.liquidlyf.core.designsystem.components.DialogBody
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
@@ -199,7 +200,7 @@ internal fun SettingsContent(
                 SwitchRow(
                     icon = LLIcons.Donors,
                     title = stringResource(R.string.settings_list_me),
-                    summary = stringResource(
+                    summary = uiState.listingBlock?.let { listingBlockText(it) } ?: stringResource(
                         when {
                             uiState.bloodGroup == null -> R.string.settings_list_me_needs_group
                             uiState.listed -> R.string.profile_listed_on
@@ -207,7 +208,8 @@ internal fun SettingsContent(
                         },
                     ),
                     checked = uiState.listed,
-                    enabled = !uiState.saving && (uiState.listed || uiState.bloodGroup != null),
+                    // D23 a: someone who can't be listed can still turn it off, never on.
+                    enabled = !uiState.saving && (uiState.listed || (uiState.bloodGroup != null && uiState.listingBlock == null)),
                     onChange = { on -> if (on) askListing = true else onListedChange(false) },
                 )
                 if (uiState.listed) {

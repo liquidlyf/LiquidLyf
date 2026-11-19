@@ -8,6 +8,7 @@ import io.github.liquidlyf.core.data.push.PushTopicManager
 import io.github.liquidlyf.core.data.request.RequestRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
+import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.ApplicationScope
 import io.github.liquidlyf.core.util.Clock
@@ -37,6 +38,7 @@ class PushHandler @Inject constructor(
     private val requests: RequestRepository,
     private val donations: VerifiedDonationRecorder,
     private val push: PushTopicManager,
+    private val eligibility: EligibilityCalculator,
     private val clock: Clock,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) {
@@ -51,7 +53,15 @@ class PushHandler @Inject constructor(
                 if (ready?.admin == true) notifier.showAdminReports(message.count)
             }
             is PushMessage.RequestAlert -> {
-                val blocked = ready?.profile?.blockedUids.orEmpty()
+                val profile = ready?.profile
+                if (profile != null && eligibility.listingBlock(profile, clock.now()) != null) {
+                    // D23: past 60 (or weight না), a phone that wasn't opened still has the topics. Drop
+                    // the alert and sync, which unsubscribes them.
+                    Log.i(TAG, "alert ${message.requestId}: can't be listed")
+                    scope.launch { push.sync(profile, force = true) }
+                    return null
+                }
+                val blocked = profile?.blockedUids.orEmpty()
                 // The push has no requester; look it up only if I blocked someone (1 read).
                 val requesterUid = if (blocked.isEmpty()) {
                     null

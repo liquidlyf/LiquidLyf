@@ -9,10 +9,12 @@ import io.github.liquidlyf.core.data.push.AlertStore
 import io.github.liquidlyf.core.data.push.PushTopicManager
 import io.github.liquidlyf.core.data.push.Reminders
 import io.github.liquidlyf.core.data.push.SystemNotifications
+import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.ApplicationScope
+import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.core.util.getOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -81,6 +83,8 @@ class AppSessionManager @Inject constructor(
     private val alerts: AlertStore,
     private val notifications: SystemNotifications,
     private val reminders: Reminders,
+    private val eligibility: EligibilityCalculator,
+    private val clock: Clock,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) : SessionManager {
     private val refreshes = MutableStateFlow(0)
@@ -98,7 +102,18 @@ class AppSessionManager @Inject constructor(
         scope.launch {
             var lastUid: String? = null
             var lastEligibleAgain: java.time.Instant? = null
+            var unlistedFor: String? = null
             state.filterIsInstance<SessionState.Ready>().collect { ready ->
+                // D23: weight না or past 60 ends a listing made before (B's daily job does the same
+                // on the server, for phones that aren't opened). The next state syncs without it.
+                val p = ready.profile
+                if (p.showInDonorSearch && unlistedFor != p.uid && eligibility.listingBlock(p, clock.now()) != null) {
+                    unlistedFor = p.uid
+                    if (profiles.setListed(p, false) is AppResult.Success) {
+                        refresh()
+                        return@collect
+                    }
+                }
                 val firstForUser = ready.user.uid != lastUid
                 lastUid = ready.user.uid
                 push.sync(ready.profile, force = firstForUser)

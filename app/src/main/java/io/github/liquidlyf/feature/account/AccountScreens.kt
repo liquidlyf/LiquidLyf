@@ -61,6 +61,7 @@ import io.github.liquidlyf.feature.auth.AuthLayout
 import io.github.liquidlyf.feature.auth.FormError
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.feature.profilesetup.AreaPickers
+import io.github.liquidlyf.feature.settings.ListMeDialog
 
 // ---- Change password ----
 
@@ -315,6 +316,13 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 fieldModifier = Modifier.errorAnchor(anchors, EditField.BIRTH_YEAR, textField = true),
             )
+            // D23 a: the weight answer can change here (after জন্মসাল, as in Become a donor).
+            Text(stringResource(R.string.setup_weight_question), style = MaterialTheme.typography.labelLarge)
+            ChoiceRow(
+                options = listOf("yes" to stringResource(R.string.answer_yes), "no" to stringResource(R.string.answer_no)),
+                selected = state.weightOk?.let { if (it) "yes" else "no" },
+                onSelect = { v -> viewModel.edit { copy(weightOk = v == "yes") } },
+            )
         }
         BloodGroupPicker(selected = state.bloodGroup, onSelect = { g -> viewModel.edit { copy(bloodGroup = g) } })
         Column(Modifier.errorAnchor(anchors, EditField.LOCATION)) {
@@ -335,6 +343,16 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
         FormError(state.formError)
     }
 
+    // D23 a: the weight answer is back to হ্যাঁ: the same "list me" question as Become a donor.
+    val listMeGroup = state.bloodGroup
+    if (state.askListMe && listMeGroup != null) {
+        ListMeDialog(
+            bloodGroup = listMeGroup,
+            onConfirm = { viewModel.onListMeAnswered(true) },
+            onDismiss = { viewModel.onListMeAnswered(false) },
+            title = stringResource(R.string.home_eligible_now),
+        )
+    }
     if (state.confirmBloodGroup && !state.saving) {
         AlertDialog(
             onDismissRequest = { viewModel.onBloodGroupConfirmed(false) },

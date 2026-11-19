@@ -15,7 +15,8 @@ data class EligibilityRules(
     /** Doc 07 §4 allows a longer interval for women (e.g. 180) through Remote Config. */
     val femaleWholeBloodIntervalDays: Int = MIN_INTERVAL_DAYS,
     val minAge: Int = 18,
-    val maxAge: Int = 60,
+    /** Never above [MAX_AGE]: firestore.rules refuses a listing past it (D23). */
+    val maxAge: Int = MAX_AGE,
 ) {
     /**
      * Rest period after a whole-blood donation. Never below [MIN_INTERVAL_DAYS]: firestore.rules
@@ -29,6 +30,9 @@ data class EligibilityRules(
     companion object {
         /** The floor that firestore.rules checks (`donorMatches`). */
         const val MIN_INTERVAL_DAYS = 120
+
+        /** The oldest age firestore.rules lets be listed (D23, B's rules hard-code it). */
+        const val MAX_AGE = 60
     }
 }
 
@@ -63,15 +67,39 @@ class EligibilityCalculator(private val rules: EligibilityRules = EligibilityRul
         now: Instant,
     ): Eligibility {
         val from = eligibleFrom(lastDonationAt, gender)
-        val age = ageIn(birthYear, now)
         val reasons = buildSet {
+            val age = ageIn(birthYear, now)
             if (age < rules.minAge) add(IneligibleReason.TOO_YOUNG)
-            if (age > rules.maxAge) add(IneligibleReason.TOO_OLD)
+            if (age > maxAge) add(IneligibleReason.TOO_OLD)
             if (!weightOk) add(IneligibleReason.LOW_WEIGHT)
             if (now < from) add(IneligibleReason.REST_PERIOD)
         }
         return Eligibility(from, reasons)
     }
+
+    /**
+     * D23 a: why someone may not be listed in Find donors at all (weight না, or age outside
+     * 18–60), or null if they may be. Unlike the rest period, these don't pass by themselves, so
+     * the listing ends and Home shows the way back instead. The weight comes first: it can change.
+     */
+    fun listingBlock(birthYear: Int, weightOk: Boolean, now: Instant): IneligibleReason? {
+        val age = ageIn(birthYear, now)
+        return when {
+            !weightOk -> IneligibleReason.LOW_WEIGHT
+            age > maxAge -> IneligibleReason.TOO_OLD
+            age < rules.minAge -> IneligibleReason.TOO_YOUNG
+            else -> null
+        }
+    }
+
+    /** [listingBlock] for a profile; null also for someone without the donor details (D1). */
+    fun listingBlock(p: UserProfile, now: Instant): IneligibleReason? =
+        listingBlock(p.birthYear ?: return null, p.weightOk ?: return null, now)
+
+    /** A donor who may be listed: answered the donor questions, and nothing blocks it. */
+    fun canBeListed(p: UserProfile, now: Instant): Boolean = p.hasDonorDetails && listingBlock(p, now) == null
+
+    private val maxAge: Int get() = rules.maxAge.coerceAtMost(EligibilityRules.MAX_AGE)
 
     /** A donor's eligibility; null for someone who hasn't answered the donor questions (D1). */
     fun evaluate(p: UserProfile, now: Instant): Eligibility? {

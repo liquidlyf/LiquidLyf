@@ -56,6 +56,8 @@ import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.ErrorState
 import io.github.liquidlyf.core.designsystem.components.LLCard
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
+import io.github.liquidlyf.core.designsystem.components.listingBlock
+import io.github.liquidlyf.core.designsystem.components.listingBlockText
 import io.github.liquidlyf.core.designsystem.components.LLTag
 import io.github.liquidlyf.core.designsystem.components.isLargeText
 import io.github.liquidlyf.core.designsystem.components.showAppMessage
@@ -342,12 +344,15 @@ private fun DonorCard(
             }
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        // D23 a: weight না or age outside 18–60 can't be listed: the switch says why instead.
+        val block = e.listingBlock()
         LLSwitchRow(
             title = stringResource(R.string.settings_list_me),
             checked = p.showInDonorSearch,
             onCheckedChange = onListedChange,
-            summary = stringResource(if (p.showInDonorSearch) R.string.profile_listed_on else R.string.profile_listed_off),
-            enabled = !state.saving,
+            summary = block?.let { listingBlockText(it) }
+                ?: stringResource(if (p.showInDonorSearch) R.string.profile_listed_on else R.string.profile_listed_off),
+            enabled = !state.saving && (p.showInDonorSearch || block == null),
             horizontalPadding = Spacing.md,
         )
         if (p.showInDonorSearch) {

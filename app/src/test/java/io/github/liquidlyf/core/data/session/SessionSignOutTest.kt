@@ -66,7 +66,7 @@ class SessionSignOutTest {
         auth.accounts["me@example.com"] = FakeAuthRepository.Account("me", "secret-pw", "Me", verified = true)
         val profiles = FakeProfileRepository().apply { profiles["me"] = me }
         val push = PushTopicManager(messaging, store, EligibilityCalculator(), Clock { TestData.NOW }, FakeAlertPrefsStore(), auth)
-        val session = AppSessionManager(auth, profiles, push, FakeAccountDeleter(), alerts, notifications, reminders, backgroundScope)
+        val session = AppSessionManager(auth, profiles, push, FakeAccountDeleter(), alerts, notifications, reminders, EligibilityCalculator(), Clock { TestData.NOW }, backgroundScope)
         auth.signInEmail("me@example.com", "secret-pw")
         runCurrent() // the session runs in backgroundScope, which advanceUntilIdle() leaves alone
         assertTrue(session.state.value.toString(), session.state.value is SessionState.Ready)

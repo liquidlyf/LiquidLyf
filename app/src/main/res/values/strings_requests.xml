@@ -251,6 +251,9 @@
     <string name="home_not_listed_title">You\'re not listed as a donor</string>
     <string name="home_not_listed_body">List yourself so people nearby who need your blood group can find you and alert you.</string>
     <string name="home_list_me">List me as a donor</string>
+    <!-- D23 a: a donor who answered under 45 kg, or is over 60, isn\'t listed; Home and the request page say why. -->
+    <string name="home_weight_way_back">If your weight goes up, change your answer in Edit profile.</string>
+    <string name="home_over_60">After 60, donors can\'t give blood, so you\'re no longer listed. You can still help by sharing requests.</string>
     <string name="home_ready_to_donate">Ready to donate</string>
     <string name="home_your_request">Your request</string>
     <string name="home_see_offers">See offers</string>

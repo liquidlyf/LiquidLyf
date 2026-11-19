@@ -74,6 +74,7 @@ import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.SnackbarClearance
 import io.github.liquidlyf.core.designsystem.components.SuccessVisuals
 import io.github.liquidlyf.core.designsystem.currentAppLocale
+import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.domain.NewPassword
 import io.github.liquidlyf.core.domain.BadgeCalculator
 import io.github.liquidlyf.core.domain.EligibilityCalculator
@@ -656,6 +657,13 @@ class ScreenGalleryTest {
             Shot("become-donor-3-errors", content = donorStep(2, empty.copy(bloodGroup = "B_POS"), SetupField.entries.toSet())),
             Shot("become-donor-3-filled", content = donorStep(2, draft.copy(listed = true), emptySet())),
             Shot("become-donor-3-no-group", content = donorStep(2, draft.copy(bloodGroup = null), emptySet())),
+            // D23 a: one card says why, in place of "list me".
+            Shot("become-donor-3-weight-no") {
+                BecomeDonorScreen(BecomeDonorUiState(draft.copy(step = 2, weightOk = false), geo = geo, listingBlock = IneligibleReason.LOW_WEIGHT), {}, {}, {})
+            },
+            Shot("become-donor-3-over-60") {
+                BecomeDonorScreen(BecomeDonorUiState(draft.copy(step = 2, birthYear = "1960"), geo = geo, listingBlock = IneligibleReason.TOO_OLD), {}, {}, {})
+            },
             Shot("notification-permission") { NotificationPermissionScreen(onDone = {}) },
             Shot("session-problem") { SessionProblemScreen(AppError.Network, onRetry = {}, onSignOut = {}) },
             Shot("suspended") { SuspendedScreen(onSignOut = {}) },
@@ -696,6 +704,9 @@ class ScreenGalleryTest {
             Shot("home-not-ready", tab, content = home(me, feed, true, false, true, false, emptyList())),
             Shot("home-resting", tab, content = home(donorMe, feed, true, false, true, true, emptyList())),
             Shot("home-not-listed", tab, content = home(notListed, feed, true, false, true, false, emptyList())),
+            // D23 a: not listed, why, and (weight) the way back; no switch.
+            Shot("home-weight-no", tab, content = home(notListed.copy(weightOk = false), feed, true, false, true, false, emptyList())),
+            Shot("home-over-60", tab, content = home(notListed.copy(birthYear = 1960), feed, true, false, true, false, emptyList())),
             Shot("home-list-me-dialog", tab, overlay = true, prepare = { tap(R.string.home_list_me) }, content = home(notListed, feed, true, false, true, false, emptyList())),
             Shot("home-not-donor", tab, content = home(notDonor, feed, true, false, true, false, emptyList())),
             Shot("home-no-blood-group", tab, content = home(noGroup, feed, true, false, true, false, emptyList())),
@@ -920,6 +931,8 @@ class ScreenGalleryTest {
             Shot("details-donor-report", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more); tap(R.string.detail_report) }, content = detail(donor)),
             Shot("details-donor-block", overlay = true, prepare = { loaded(); tapDescribed(R.string.action_more); tap(R.string.action_block_person) }, content = detail(donor)),
             Shot("details-donor-wrong-group", prepare = loaded, content = detail(donor.copy(bloodGroup = BloodGroup.A_POS))),
+            // D23 a: the bar keeps the reason and Share; the way back is a card under the details.
+            Shot("details-donor-weight-no", prepare = loaded, content = detail(donor.copy(weightOk = false, showInDonorSearch = false))),
             // D1: "I can donate" opens Become a donor for someone who isn't one yet.
             Shot("details-not-a-donor", prepare = loaded, content = detail(requesterOnly(donor))),
             Shot("details-donor-closed", prepare = loaded, content = detail(donor, detailRequest.copy(status = RequestStatus.FULFILLED, unitsFulfilled = 2))),
@@ -1109,13 +1122,16 @@ class ScreenGalleryTest {
                 runBlocking { signInEmail("nusrat@example.test", "secret123") }
             }
         }
-        val editProfile = { change: (EditProfileViewModel) -> Unit ->
+        val editProfileOf = { p: UserProfile, change: (EditProfileViewModel) -> Unit ->
             @Composable {
-                val vm = remember { EditProfileViewModel(ready(me), FakeProfileRepository(now).apply { profiles[me.uid] = me }, signedIn(), geoRepository, clock) }
+                val vm = remember { EditProfileViewModel(ready(p), FakeProfileRepository(now).apply { profiles[p.uid] = p }, signedIn(), geoRepository, clock, EligibilityCalculator()) }
                 LaunchedEffect(vm) { change(vm) }
                 EditProfileRoute(onDone = {}, viewModel = vm)
             }
         }
+        val editProfile = { change: (EditProfileViewModel) -> Unit -> editProfileOf(me, change) }
+        // D23 a: a donor who answered under 45 kg (so not listed).
+        val underWeight = me.copy(weightOk = false, showInDonorSearch = false)
         val deleting = { failWith: AppError? ->
             @Composable {
                 val vm = remember {
@@ -1127,6 +1143,12 @@ class ScreenGalleryTest {
         }
         gallery(
             Shot("edit-profile", prepare = { waitForText("Nusrat Jahan") }, content = editProfile {}),
+            // D23 a: the weight question, answered না; after হ্যাঁ and Save, "list me" again.
+            Shot("edit-profile-weight-no", prepare = { waitForText("Nusrat Jahan") }, content = editProfileOf(underWeight) {}),
+            Shot("edit-profile-list-me-again", overlay = true, prepare = { waitFor(R.string.consent_yes) }, content = editProfileOf(underWeight) { vm ->
+                vm.edit { copy(weightOk = true) }
+                vm.save()
+            }),
             Shot("edit-profile-errors", prepare = { waitForText("1880") }, content = editProfile { vm ->
                 vm.edit { copy(fullName = "", birthYear = "1880", phone = "0170") }
                 vm.save()

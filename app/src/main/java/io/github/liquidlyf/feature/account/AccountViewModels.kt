@@ -14,6 +14,7 @@ import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.birthYearErrorRes
+import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.domain.NewPassword
 import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.model.Area
@@ -266,6 +267,10 @@ data class EditProfileUiState(
     val messageArg: String? = null,
     /** Answered the donor questions (D1): only then are gender and birth year asked here. */
     val isDonor: Boolean = true,
+    /** D23 a: "Do you weigh at least 45 kg?", which a donor can now change here. */
+    val weightOk: Boolean? = null,
+    /** D23 a: the answer went from না to হ্যাঁ: after Save, "list me" is asked again. */
+    val askListMe: Boolean = false,
 )
 
 @HiltViewModel
@@ -275,13 +280,14 @@ class EditProfileViewModel @Inject constructor(
     private val auth: AuthRepository,
     private val geoRepository: GeoRepository,
     private val clock: Clock,
+    private val eligibility: EligibilityCalculator,
 ) : ViewModel() {
     private val profile: UserProfile? = (session.state.value as? SessionState.Ready)?.profile
     private val state = MutableStateFlow(
         profile?.let { p ->
             EditProfileUiState(
                 fullName = p.fullName, gender = p.gender, birthYear = p.birthYear?.toString().orEmpty(), bloodGroup = p.bloodGroup,
-                isDonor = p.hasDonorDetails,
+                isDonor = p.hasDonorDetails, weightOk = p.weightOk,
                 division = p.area.division, district = p.area.district, upazila = p.area.upazila,
                 phone = "0" + p.phone.removePrefix("+880"), email = p.email,
             )
@@ -327,22 +333,55 @@ class EditProfileViewModel @Inject constructor(
             state.update { it.copy(confirmBloodGroup = true, previousBloodGroup = before.bloodGroup) }
             return
         }
+        val weightOk = if (s.isDonor) s.weightOk ?: before.weightOk else null
+        // D23 a: weight না or age over 60 can't stay listed; the same save unlists (the rules insist).
+        val block = if (year != null && weightOk != null) eligibility.listingBlock(year, weightOk, clock.now()) else null
+        val listed = before.showInDonorSearch && block == null
+        val group = s.bloodGroup ?: before.bloodGroup
         val draft = ProfileDraft(
-            fullName = s.fullName, phone = phone!!, bloodGroup = s.bloodGroup ?: before.bloodGroup,
+            fullName = s.fullName, phone = phone!!, bloodGroup = group,
             gender = if (s.isDonor) s.gender ?: before.gender else null, birthYear = if (s.isDonor) year else null,
-            weightOk = before.weightOk, area = area!!,
+            weightOk = weightOk, area = area!!,
             available = before.available, lastDonationAt = before.lastDonationAt,
-            showInDonorSearch = before.showInDonorSearch, locale = before.locale, termsVersion = before.termsVersion,
+            showInDonorSearch = listed, locale = before.locale, termsVersion = before.termsVersion,
         )
+        // Back to হ্যাঁ, and nothing else in the way: ask "list me" again (the person's own choice).
+        val askListMe = before.weightOk == false && weightOk == true && !listed && block == null && group != null
         state.update { it.copy(saving = true, confirmBloodGroup = false) }
         viewModelScope.launch {
             when (val result = profiles.update(before, draft)) {
                 is AppResult.Success -> {
                     // The session re-reads the profile; topics follow a new area or blood group.
                     session.refresh()
-                    state.update { it.copy(saving = false, saved = true) }
+                    // The question is its own step: Save isn't "Saving…" behind it.
+                    state.update { it.copy(saving = false, saved = !askListMe, askListMe = askListMe) }
                 }
                 is AppResult.Failure -> state.update { it.copy(saving = false, formError = result.error.messageRes) }
+            }
+        }
+    }
+
+    /**
+     * D23 a: the "list me" question after the weight answer went back to হ্যাঁ. Yes lists them (with
+     * its consent time); "Not now" leaves them unlisted. Either way Edit profile then closes.
+     */
+    fun onListMeAnswered(listMe: Boolean) {
+        val uid = profile?.uid ?: return
+        if (!state.value.askListMe) return
+        if (!listMe) {
+            state.update { it.copy(askListMe = false, saved = true) }
+            return
+        }
+        state.update { it.copy(askListMe = false, saving = true) }
+        viewModelScope.launch {
+            // The saved profile, so the new card carries this edit's area and group.
+            val saved = (profiles.profile(uid) as? AppResult.Success)?.data
+            val result = saved?.let { profiles.setListed(it, true) } ?: AppResult.Failure(AppError.Unknown)
+            if (result is AppResult.Success) {
+                session.refresh()
+                state.update { it.copy(saving = false, saved = true) }
+            } else {
+                state.update { it.copy(saving = false, formError = (result as AppResult.Failure).error.messageRes) }
             }
         }
     }

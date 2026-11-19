@@ -51,7 +51,7 @@ class SessionClaimsTest {
         auth.accounts["me@example.com"] = FakeAuthRepository.Account("me", "secret-pw", "Me", verified = true)
         val profiles = FakeProfileRepository().apply { profiles["me"] = TestData.profile(uid = "me") }
         val push = PushTopicManager(messaging, store, EligibilityCalculator(), Clock { TestData.NOW }, FakeAlertPrefsStore(), auth)
-        val session = AppSessionManager(auth, profiles, push, FakeAccountDeleter(), FakeAlertStore(), notifications, FakeReminders(), backgroundScope)
+        val session = AppSessionManager(auth, profiles, push, FakeAccountDeleter(), FakeAlertStore(), notifications, FakeReminders(), EligibilityCalculator(), Clock { TestData.NOW }, backgroundScope)
         auth.signInEmail("me@example.com", "secret-pw")
         runCurrent() // the session runs in backgroundScope
         return session

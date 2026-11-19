@@ -561,6 +561,7 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                 onBecomeDonor = dropUnlessResumed { navController.navigate(BecomeDonor) { launchSingleTop = true } },
                 onAskDonors = dropUnlessResumed { navController.navigateToTab(TopLevelDestination.DONORS) },
                 onSeeNearby = dropUnlessResumed { navController.navigateToTab(TopLevelDestination.REQUESTS) },
+                onEditProfile = dropUnlessResumed { navController.navigate(EditProfile) { launchSingleTop = true } },
             )
         }
         composable<BecomeDonor> { BecomeDonorRoute(onDone = { navController.popBackStack() }) }

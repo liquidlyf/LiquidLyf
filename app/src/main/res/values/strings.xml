@@ -184,6 +184,9 @@
     <string name="settings_list_me_needs_group">Add your blood group in Edit profile first.</string>
     <string name="settings_add_group_why">Needed to be listed as a donor</string>
     <string name="setup_no_group_later">You can\'t be listed without your blood group. Choose it now, or add it in Edit profile once you know it.</string>
+    <!-- D23 a: Become a donor step 3, in place of List me. -->
+    <string name="setup_cant_list_weight">You can\'t be listed yet: donors must weigh at least 45 kg. If your weight goes up, change your answer in Edit profile.</string>
+    <string name="setup_cant_list_age">You can\'t be listed: donors must be 18 to 60 years old. You can still help by sharing requests.</string>
     <string name="list_me_title">List me as a donor?</string>
     <string name="signing_out">Signing out…</string>
     <string name="action_forgot_password">Forgot password?</string>

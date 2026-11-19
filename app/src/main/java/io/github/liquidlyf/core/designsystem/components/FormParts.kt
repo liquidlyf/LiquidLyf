@@ -1,5 +1,6 @@
 package io.github.liquidlyf.core.designsystem.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -284,16 +287,29 @@ fun DropdownField(
 
 /**
  * A text button whose text starts at the content edge, like the fields above it (UI-07: "Forgot
- * password?", "Read the Terms" sat 12 dp in). Still 48 dp tall.
+ * password?", "Read the Terms" sat 12 dp in). Still 48 dp tall. [icon] goes before the text (D23:
+ * "✎ Edit profile").
  */
 @Composable
-fun EdgeTextButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
+fun EdgeTextButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    @DrawableRes icon: Int? = null,
+) {
     TextButton(
         onClick = onClick,
         enabled = enabled,
         contentPadding = PaddingValues(start = 0.dp, end = Spacing.sm, top = Spacing.xs, bottom = Spacing.xs),
         modifier = modifier.heightIn(min = Spacing.minTouchTarget),
-    ) { Text(text) }
+    ) {
+        if (icon != null) {
+            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        }
+        Text(text)
+    }
 }
 
 /** An error line under a group of controls, read out by TalkBack. Shows nothing when [show] is false. */

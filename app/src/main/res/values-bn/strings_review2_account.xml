@@ -190,6 +190,8 @@
     <string name="settings_list_me_needs_group">আগে \"প্রোফাইল এডিট করুন\" থেকে আপনার রক্তের গ্রুপ যোগ করুন।</string>
     <string name="settings_add_group_why">রক্তদাতা হিসেবে তালিকায় নাম দিতে এটি লাগবে</string>
     <string name="setup_no_group_later">রক্তের গ্রুপ ছাড়া রক্তদাতা হিসেবে তালিকায় নাম দেওয়া যায় না। গ্রুপটি এখনই বেছে নিন, অথবা জানার পর \"প্রোফাইল এডিট করুন\" থেকে যোগ করুন।</string>
+    <string name="setup_cant_list_weight">এখনই তালিকায় নাম দেওয়া যাবে না: রক্তদাতার ওজন অন্তত ৪৫ কেজি হতে হবে। ওজন বাড়লে \"প্রোফাইল এডিট করুন\"-এ গিয়ে উত্তরটি বদলে নিন।</string>
+    <string name="setup_cant_list_age">তালিকায় নাম দেওয়া যাবে না: রক্তদাতার বয়স ১৮ থেকে ৬০ বছর হতে হবে। অনুরোধ শেয়ার করে এখনো সাহায্য করতে পারেন।</string>
     <string name="list_me_title">রক্তদাতা হিসেবে তালিকায় নাম দেবেন?</string>
 
     <!-- Edit profile, passwords, email -->

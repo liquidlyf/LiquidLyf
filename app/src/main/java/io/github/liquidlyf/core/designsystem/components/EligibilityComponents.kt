@@ -68,6 +68,15 @@ fun EligibilityRing(eligibility: Eligibility, gender: Gender?, now: Instant, siz
     }
 }
 
+/** D23 a: what keeps a donor off the list (weight না, or age outside 18–60), the weight first; null if nothing. */
+fun Eligibility.listingBlock(): IneligibleReason? =
+    listOf(IneligibleReason.LOW_WEIGHT, IneligibleReason.TOO_OLD, IneligibleReason.TOO_YOUNG).firstOrNull { it in reasons }
+
+/** D23 a: why a list-me switch can't be turned on: "Donors must weigh at least 45 kg." or the age line. */
+@Composable
+fun listingBlockText(block: IneligibleReason): String =
+    stringResource(if (block == IneligibleReason.LOW_WEIGHT) R.string.detail_block_weight else R.string.detail_block_age)
+
 /** "You can donate now", "Eligible in 23 days", or why not. */
 @Composable
 fun eligibilityText(eligibility: Eligibility, now: Instant): String = when {

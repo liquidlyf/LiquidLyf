@@ -13,6 +13,8 @@ import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.components.AppSnackbar
 import io.github.liquidlyf.core.designsystem.components.AppSnackbars
+import io.github.liquidlyf.core.domain.EligibilityCalculator
+import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodGroup
@@ -47,6 +49,8 @@ data class BecomeDonorUiState(
     val errorAttempt: Int = 0,
     val saving: Boolean = false,
     @StringRes val formError: Int? = null,
+    /** D23 a: weight না or age outside 18–60: step 3 says why instead of asking "list me". */
+    val listingBlock: IneligibleReason? = null,
 ) {
     val step: Int get() = draft.step
     val isLastStep: Boolean get() = draft.step == BecomeDonorViewModel.STEPS - 1
@@ -76,11 +80,12 @@ class BecomeDonorViewModel @Inject constructor(
     private val profiles: ProfileRepository,
     private val clock: Clock,
     geoRepository: GeoRepository,
+    private val eligibility: EligibilityCalculator,
 ) : ViewModel() {
 
     private val profile: UserProfile? = (session.state.value as? SessionState.Ready)?.profile
 
-    private val state = MutableStateFlow(BecomeDonorUiState(restore(), area = profile?.area))
+    private val state = MutableStateFlow(restore().let { d -> BecomeDonorUiState(d, area = profile?.area, listingBlock = blockOf(d)) })
     val uiState: StateFlow<BecomeDonorUiState> = state.asStateFlow()
 
     private val events = Channel<BecomeDonorEvent>(Channel.BUFFERED)
@@ -95,7 +100,7 @@ class BecomeDonorViewModel @Inject constructor(
 
     /** Any answer: clears the errors, and is kept for rotation and process death. */
     fun edit(change: SetupDraft.() -> SetupDraft) {
-        state.update { it.copy(draft = it.draft.change(), errors = emptySet(), formError = null) }
+        state.update { s -> s.draft.change().let { d -> s.copy(draft = d, errors = emptySet(), formError = null, listingBlock = blockOf(d)) } }
         savedState[DRAFT_KEY] = JSON.encodeToString(SetupDraft.serializer(), state.value.draft)
     }
 
@@ -138,8 +143,8 @@ class BecomeDonorViewModel @Inject constructor(
                 val today = clock.now().atOffset(ZoneOffset.UTC).toLocalDate().toEpochDay()
                 val donationOk = d.neverDonated == true || (d.neverDonated == false && pickedDay != null && pickedDay <= today)
                 if (!donationOk) add(SetupField.LAST_DONATION)
-                // Without a known group there is no listing question (P1).
-                if (d.listed == null && BloodGroup.fromCode(d.bloodGroup) != null) add(SetupField.CONSENT)
+                // Without a known group there is no listing question (P1), nor for someone who can't be listed (D23).
+                if (d.listed == null && BloodGroup.fromCode(d.bloodGroup) != null && blockOf(d) == null) add(SetupField.CONSENT)
             }
         }
     }
@@ -147,7 +152,7 @@ class BecomeDonorViewModel @Inject constructor(
     private fun finish(d: SetupDraft) {
         val before = profile ?: return
         val group = BloodGroup.fromCode(d.bloodGroup) ?: before.bloodGroup
-        val listed = d.listed == true && group != null
+        val listed = d.listed == true && group != null && blockOf(d) == null
         val draft = ProfileDraft(
             fullName = before.fullName,
             phone = before.phone,
@@ -175,6 +180,12 @@ class BecomeDonorViewModel @Inject constructor(
                 is AppResult.Failure -> state.update { it.copy(saving = false, formError = result.error.messageRes) }
             }
         }
+    }
+
+    /** D23 a: why these answers can't be listed (weight না, or age outside 18–60); null if they can. */
+    private fun blockOf(d: SetupDraft): IneligibleReason? {
+        val year = d.birthYear.trim().toIntOrNull() ?: return null
+        return eligibility.listingBlock(year, d.weightOk ?: return null, clock.now())
     }
 
     private fun restore(): SetupDraft =

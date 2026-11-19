@@ -51,6 +51,7 @@ import io.github.liquidlyf.core.designsystem.components.ErrorAnchors
 import io.github.liquidlyf.core.designsystem.components.FieldError
 import io.github.liquidlyf.core.designsystem.components.IconLine
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
+import io.github.liquidlyf.core.designsystem.components.LLNoticeCard
 import io.github.liquidlyf.core.designsystem.components.LLSwitchRow
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
@@ -66,6 +67,7 @@ import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.localDateText
 import io.github.liquidlyf.core.designsystem.screenGutter
+import io.github.liquidlyf.core.domain.IneligibleReason
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.feature.auth.FormError
@@ -277,6 +279,16 @@ private fun HistoryStep(state: BecomeDonorUiState, anchors: ErrorAnchors<SetupFi
         TextButton(onClick = { onEdit { copy(step = 0, bloodGroupUnknown = false) } }, modifier = Modifier.heightIn(min = Spacing.minTouchTarget)) {
             Text(stringResource(R.string.action_add_blood_group))
         }
+        return
+    }
+    // D23 a: weight না, or age outside 18–60: one card says why, in place of "list me". Finish saves
+    // the answers without listing.
+    state.listingBlock?.let { block ->
+        LLNoticeCard(
+            stringResource(if (block == IneligibleReason.LOW_WEIGHT) R.string.setup_cant_list_weight else R.string.setup_cant_list_age),
+            LLIcons.Info,
+            modifier = Modifier.fillMaxWidth(),
+        )
         return
     }
     // VT-21: donors are found by area; say which one, and where it comes from (D18: the profile's).

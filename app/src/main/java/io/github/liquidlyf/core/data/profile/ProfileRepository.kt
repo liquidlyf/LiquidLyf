@@ -174,6 +174,8 @@ class FirestoreProfileRepository @Inject constructor(
     override suspend fun setListed(profile: UserProfile, listed: Boolean): AppResult<Unit> = when {
         profile.showInDonorSearch == listed -> AppResult.Success(Unit)
         listed && profile.bloodGroup == null -> AppResult.Failure(AppError.InvalidInput)
+        // D23: never list someone with weight না or age outside 18–60 (the rules refuse it too).
+        listed && !eligibility.canBeListed(profile, clock.now()) -> AppResult.Failure(AppError.InvalidInput)
         else -> writeProfile(profile, profile.copy(showInDonorSearch = listed), if (listed) setOf(UserDoc.CONSENT_AT) else emptySet())
     }
 
@@ -300,8 +302,8 @@ class FirestoreProfileRepository @Inject constructor(
             }) &&
             Validators.isCode(d.area.division) && Validators.isCode(d.area.district) && Validators.isCode(d.area.upazila) &&
             (d.lastDonationAt == null || !d.lastDonationAt.isAfter(clock.now())) && d.termsVersion.isNotBlank() &&
-            // Being listed needs a known blood group (P1; the rules check it too).
-            (!d.showInDonorSearch || d.bloodGroup != null)
+            // Being listed needs a known blood group (P1), weight হ্যাঁ and age 18–60 (D23); the rules check both.
+            (!d.showInDonorSearch || (d.bloodGroup != null && d.birthYear != null && d.weightOk != null && eligibility.listingBlock(d.birthYear, d.weightOk, clock.now()) == null))
 
     private companion object {
         val LAST_ACTIVE_EVERY: Duration = Duration.ofDays(3).plusHours(1)
