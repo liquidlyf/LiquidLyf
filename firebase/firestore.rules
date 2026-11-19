@@ -152,13 +152,13 @@ service cloud.firestore {
     // like the app's EligibilityCalculator. (18 is checked for every donor in donorDetailsOk.)
     // Checked when a write lists someone or changes their birth year or weight answer while
     // listed, so a donor who turns 61 on 1 January can still save until the Worker's daily job
-    // (retention, 09:00 Dhaka) unlists them.
-    function canBeListed(d) {
+    // (retention, 09:00 Dhaka) unlists them. B31: the same check guards every offer.
+    function canGiveBlood(d) {
       return d.get('weightOk', false) == true && d.get('birthYear', 0) >= request.time.year() - 60;
     }
     function listingOk(d, keys) {
       return d.showInDonorSearch == false || !keys.hasAny(['showInDonorSearch','birthYear','weightOk'])
-          || canBeListed(d);
+          || canGiveBlood(d);
     }
     function validUser(d) {
       return d.keys().hasOnly(userKeys())
@@ -645,7 +645,9 @@ service cloud.firestore {
       let u = get(userPath(me())).data;
       let g = u.get('bloodGroup', null);
       // D1: a requester (no donor details) chooses "Become a donor" before offering.
-      return g in rq.acceptedGroups && o.donorBloodGroup == g && hasDonorDetails(u);
+      // B31 (the maintainer, 19 Nov 2026): weight না or over 60 can't offer, listed or not.
+      return g in rq.acceptedGroups && o.donorBloodGroup == g && hasDonorDetails(u)
+          && canGiveBlood(u);
     }
     // The same batch must add me to the request's responders (offerUpdate).
     function offerCounted(rid, rq) {

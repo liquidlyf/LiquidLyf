@@ -103,6 +103,21 @@ describe('offers (doc 07 test 5)', () => {
     await assertFails(offer(as('bob', { banned: true }), 'bob', 'r1', 'alice', users.bob));
     await assertSucceeds(offer(as('bob', { banned: false }), 'bob', 'r1', 'alice', users.bob));
   });
+
+  // B31 (the maintainer, 19 Nov 2026): the same check as D23's listing, listed or not.
+  test('a donor who can\'t give blood (weight না, or over 60, UTC year) cannot offer; 60 can', async () => {
+    const Y = new Date().getUTCFullYear();
+    const setEve = (o) => seed(async (db) => updateDoc(doc(db, 'users/eve'), o)); // eve: B+, not listed
+    await setEve({ weightOk: false });
+    await assertFails(offer(as('eve'), 'eve', 'r1', 'alice', users.eve));
+    await setEve({ weightOk: true, birthYear: Y - 61 });
+    await assertFails(offer(as('eve'), 'eve', 'r1', 'alice', users.eve));
+    await setEve({ birthYear: Y - 60 });
+    await assertSucceeds(offer(as('eve'), 'eve', 'r1', 'alice', users.eve));
+    // A listed donor the daily job hasn't unlisted yet (turned 61 on 1 January) can't offer either.
+    await seed(async (db) => updateDoc(doc(db, 'users/bob'), { birthYear: Y - 61 }));
+    await assertFails(offer(as('bob'), 'bob', 'r1', 'alice', users.bob));
+  });
 });
 
 describe('responses: read', () => {
