@@ -1,6 +1,6 @@
 # Release notes
 
-Each release has one file here, named after its tag: `v1.0.0-beta1.md`, `v1.0.0.md`, `v1.0.1.md`.
+Each release has one file here, named after its tag: `v1.0.0-beta.1.md`, `v1.0.0.md`, `v1.0.1.md`.
 The release workflow ([`release.yml`](../../.github/workflows/release.yml)) copies the file, as it is,
 into the GitHub Release's description. If the tag has no file, the draft release gets a one-line
 placeholder instead. Then write the file and paste it into the draft before you publish.
@@ -8,10 +8,10 @@ placeholder instead. Then write the file and paste it into the draft before you 
 ## Rules
 
 - **Commit the file before you push the tag.** The workflow reads it from the tagged commit.
-- **The file name is the tag, exactly.** Tags look like `v1.2.3`, `v1.2.3-beta1` or `v1.2.3-rc1`,
+- **The file name is the tag, exactly.** Tags look like `v1.2.3`, `v1.2.3-beta.1` or `v1.2.3-rc.1`,
   as the plan writes them. [`release_version.py`](../../app/scripts/release_version.py) also accepts
-  the dotted form (`-beta.1`) and gives it the same version, but then the file must be named
-  `v1.2.3-beta.1.md`. Keep to one form.
+  the form without the dot (`-beta1`) and gives it the same version, but then the file must be named
+  `v1.2.3-beta1.md`. Keep to the dotted form.
 - **English first, then Bangla, with the same content.** Before the tag, every new Bangla line gets a
   meaning check, as the website's pages did ([website README](../website-drafts/README.md)). Checkers
   translate it back into English without seeing the English, and lines that don't match are fixed.
