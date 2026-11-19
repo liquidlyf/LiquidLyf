@@ -11,6 +11,7 @@
 // the tester's request page shows it within seconds, just like a real offer.
 import { pathToFileURL } from 'node:url';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
+import { displayName } from './seed.mjs';
 import {
   collection, doc, getDoc, getDocs, increment, query, serverTimestamp, where, writeBatch,
 } from 'firebase/firestore';
@@ -83,7 +84,7 @@ export async function karimOffers(env = process.env, message = MESSAGE) {
 
     // The app's offer batch (OfferRepository.offer), signed in as Karim, through the rules.
     const db = testEnv.authenticatedContext(KARIM, { email: karim.email, email_verified: true }).firestore();
-    const name = `${karim.fullName.split(' ')[1]} ${karim.fullName.split(' ')[2][0]}.`; // "Karim D."
+    const name = displayName(karim.fullName); // "Karim D.", the seed's short-name rule
     const b = writeBatch(db);
     b.set(doc(db, 'requests', id, 'responses', KARIM), {
       donorUid: KARIM, requestId: id, requesterUid: r.requesterUid, status: 'OFFERED',

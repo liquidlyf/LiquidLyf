@@ -43,9 +43,49 @@ const people = [
 
 function email(uid) { return `${uid}@example.test`; }
 function phone(i) { return `+88017000000${String(i + 10).padStart(2, '0')}`; }
-function displayName(full) {
-  const parts = full.split(' ');
-  return `${parts[1]} ${parts[2][0]}.`; // "Karim D."
+// ------------------------------------------------------------------ short names
+// The public short name, ported from the app's Validators.displayName (doc 07 §2), so the
+// test data reads like what the app writes. Keep the two in step.
+// D22 (the maintainer, 19 Nov 2026): the full Mohammad spellings, Mosammat and "Most" (no
+// dot) are skipped like "Md." and "Mst.": "Mohammad Rafiqul Islam" → "Rafiqul I.".
+const NAME_MIN = 2;
+const DISPLAY_NAME_MAX = 40;
+const NAME_PREFIXES = new Set([
+  'md', 'mst', 'mohd', 'dr',
+  'mohammad', 'mohammed', 'muhammad', 'muhammed', 'mohamed', 'mohamad', 'মোহাম্মদ', 'মোহাম্মাদ', 'মুহাম্মদ',
+  'mosammat', 'মোসাম্মৎ', 'most',
+]);
+const BRACKETED = /\([^)]*\)?|\[[^\]]*\]?/g; // "(brother)", "[ICU]", or an unclosed "(brother"
+const EDGE_PUNCTUATION = /^(?:(?!\.)[\p{P}\p{Sm}\p{So}])+|(?:(?!\.)[\p{P}\p{Sm}\p{So}])+$/gu; // keeps "Md."'s dot
+
+const normalizeName = (s) => s.trim().split(/\s+/).join(' ');
+/** "Md.", "MD", "Dr.", "মোঃ", "Mohammad", "Most" and any other word ending in '.' or 'ঃ'. */
+const isNamePrefix = (w) => w.endsWith('.') || w.endsWith('ঃ') || NAME_PREFIXES.has(w.toLowerCase());
+const trimPunctuation = (w) => w.replace(EDGE_PUNCTUATION, '');
+
+function shortName(words) {
+  if (words.length === 0) return '';
+  const first = words[0];
+  if (words.length === 1) return first.slice(0, DISPLAY_NAME_MAX);
+  const last = words[words.length - 1];
+  const suffix = ` ${String.fromCodePoint(last.codePointAt(0)).toUpperCase()}.`;
+  return first.slice(0, DISPLAY_NAME_MAX - suffix.length) + suffix;
+}
+
+/** The app's rule: first name and last initial, leading "Md."/"Mohammad"/"Most"… skipped. */
+export function appDisplayName(fullName) {
+  const cleaned = normalizeName(fullName.replace(BRACKETED, ' ')) || normalizeName(fullName);
+  const words = cleaned.split(' ').filter(Boolean);
+  const start = words.findIndex((w) => !isNamePrefix(w));
+  const withoutPrefixes = start === -1 ? words.slice(-1) : words.slice(start); // "Mohammad" alone stays whole
+  const clean = (ws) => ws.map(trimPunctuation).filter(Boolean);
+  const short = shortName(clean(withoutPrefixes));
+  return short.length >= NAME_MIN ? short : shortName(clean(words)); // "Md. X" alone is too short
+}
+
+/** Seed names start with the "Demo" marker, which the short name leaves out: "Demo Karim Donor" → "Karim D.". */
+export function displayName(full) {
+  return appDisplayName(full.replace(/^Demo\s+/, ''));
 }
 
 function userDoc(p, i) {
