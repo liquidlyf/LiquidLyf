@@ -21,6 +21,7 @@ describe('short names follow the app\'s rule (Validators.displayName, D22)', () 
     ['মোহাম্মদ রফিকুল ইসলাম', 'রফিকুল ই.'], ['মোহাম্মাদ রফিকুল ইসলাম', 'রফিকুল ই.'], ['মুহাম্মদ রফিকুল ইসলাম', 'রফিকুল ই.'],
     ['Mosammat Rokeya Begum', 'Rokeya B.'], ['মোসাম্মৎ রোকেয়া বেগম', 'রোকেয়া ব.'],
     ['Most Rokeya Begum', 'Rokeya B.'], ['Most. Rokeya Begum', 'Rokeya B.'],
+    ['মোহাম্মদ রফিকুল ইসলাম', 'রফিকুল ই.'], // "ো" typed as "ে" + "া" (NFC, like the app)
     // Unchanged before D22.
     ['Md. Mohammad Ali', 'Ali'], ['মোঃ করিম উদ্দিন', 'করিম উ.'], ['Dr. Nasrin Akter', 'Nasrin A.'],
     ['Rahim Khan (brother)', 'Rahim K.'], ['Rahim, Karim', 'Rahim K.'], ['Mostafa Kamal', 'Mostafa K.'],

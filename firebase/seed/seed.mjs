@@ -54,13 +54,14 @@ const NAME_PREFIXES = new Set([
   'md', 'mst', 'mohd', 'dr',
   'mohammad', 'mohammed', 'muhammad', 'muhammed', 'mohamed', 'mohamad', 'মোহাম্মদ', 'মোহাম্মাদ', 'মুহাম্মদ',
   'mosammat', 'মোসাম্মৎ', 'most',
-]);
+].map((w) => w.normalize('NFC')));
 const BRACKETED = /\([^)]*\)?|\[[^\]]*\]?/g; // "(brother)", "[ICU]", or an unclosed "(brother"
 const EDGE_PUNCTUATION = /^(?:(?!\.)[\p{P}\p{Sm}\p{So}])+|(?:(?!\.)[\p{P}\p{Sm}\p{So}])+$/gu; // keeps "Md."'s dot
 
 const normalizeName = (s) => s.trim().split(/\s+/).join(' ');
 /** "Md.", "MD", "Dr.", "মোঃ", "Mohammad", "Most" and any other word ending in '.' or 'ঃ'. */
-const isNamePrefix = (w) => w.endsWith('.') || w.endsWith('ঃ') || NAME_PREFIXES.has(w.toLowerCase());
+// Bangla in one Unicode form (NFC), like the app: "ো" typed as "ে" + "া" still matches.
+const isNamePrefix = (w) => w.endsWith('.') || w.endsWith('ঃ') || NAME_PREFIXES.has(w.normalize('NFC').toLowerCase());
 const trimPunctuation = (w) => w.replace(EDGE_PUNCTUATION, '');
 
 function shortName(words) {
