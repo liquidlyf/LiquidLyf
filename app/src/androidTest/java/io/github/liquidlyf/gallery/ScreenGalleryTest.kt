@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Rect
+import android.os.SystemClock
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -71,7 +72,9 @@ import io.github.liquidlyf.core.designsystem.SystemBarScrims
 import io.github.liquidlyf.core.designsystem.components.AppSnackbarHost
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarClearance
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.LocalStartLogoHandoff
 import io.github.liquidlyf.core.designsystem.components.SnackbarClearance
+import io.github.liquidlyf.core.designsystem.components.StartLogoHandoff
 import io.github.liquidlyf.core.designsystem.components.SuccessVisuals
 import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.domain.IneligibleReason
@@ -179,6 +182,10 @@ import io.github.liquidlyf.feature.settings.SettingsContent
 import io.github.liquidlyf.feature.settings.SettingsUiState
 import io.github.liquidlyf.navigation.AppNavigationBar
 import io.github.liquidlyf.navigation.TopLevelDestination
+import io.github.liquidlyf.start.StartClock
+import io.github.liquidlyf.start.StartLogo
+import io.github.liquidlyf.start.StartLogoArts
+import io.github.liquidlyf.start.StartScreen
 import io.github.liquidlyf.testing.FakeAccountDeleter
 import io.github.liquidlyf.testing.FakeAlertStore
 import io.github.liquidlyf.testing.FakeAuthRepository
@@ -261,6 +268,8 @@ class ScreenGalleryTest {
         val name: String,
         val tab: TopLevelDestination? = null,
         val animated: Boolean = false,
+        /** How far into its animation an [animated] shot is taken. */
+        val advanceMs: Long = 700,
         val overlay: Boolean = false,
         val scrollIn: (Steps.() -> SemanticsMatcher)? = null,
         val prepare: Steps.() -> Unit = {},
@@ -282,9 +291,25 @@ class ScreenGalleryTest {
 
     private fun gallery(vararg shots: Shot) {
         compose.setContent { Host() }
+        // The window has opened and drawn once, before a first shot that stops the clock.
+        compose.waitForIdle()
+        Thread.sleep(OVERLAY_SETTLE_MS)
         for (shot in shots) {
             if (only.isNotEmpty() && only.none { shot.name.startsWith(it) }) continue
             for (v in variants) take(shot, v)
+        }
+    }
+
+    /** D25: [screen] under the start logo, as MainActivity draws them, [sinceTapMs] after the tap. */
+    @Composable
+    private fun StartOver(sinceTapMs: Long, landing: StartScreen?, reduced: Boolean = false, screen: @Composable () -> Unit) {
+        val resources = LocalContext.current.resources
+        val handoff = remember { StartLogoHandoff() }
+        val clock = remember { StartClock(SystemClock.uptimeMillis() - sinceTapMs) }
+        val arts = remember { StartLogoArts(resources, clock) }
+        Box {
+            CompositionLocalProvider(LocalStartLogoHandoff provides handoff.takeUnless { it.done }) { screen() }
+            if (!handoff.done) StartLogo(handoff, clock, arts, landing = { landing }, reduced = reduced)
         }
     }
 
@@ -355,7 +380,7 @@ class ScreenGalleryTest {
             // Endless animations only run while the test clock is driven by hand.
             compose.mainClock.autoAdvance = false
             compose.runOnUiThread { current.value = shot to v }
-            compose.mainClock.advanceTimeBy(700)
+            compose.mainClock.advanceTimeBy(shot.advanceMs)
             save(base)
             saveTree(base)
             compose.mainClock.autoAdvance = true
@@ -601,6 +626,18 @@ class ScreenGalleryTest {
         }
         val empty = SetupDraft(uid = "me")
         gallery(
+            // D25: the start logo. Still (as the phone's still picture), loading after 1.5 s (the drop
+            // part drained, the thin line), the still words with Remove animations, and 0.12 s into the
+            // glide into the welcome page and Sign in.
+            Shot("start-still", animated = true, advanceMs = 100) { StartOver(sinceTapMs = 300, landing = null) {} },
+            Shot("start-loading", animated = true, advanceMs = 400) { StartOver(sinceTapMs = 2_000, landing = null) {} },
+            Shot("start-loading-no-animations", animated = true, advanceMs = 100) { StartOver(sinceTapMs = 2_000, landing = null, reduced = true) {} },
+            Shot("start-glide-welcome", animated = true, advanceMs = 120) {
+                StartOver(sinceTapMs = 1_000, landing = StartScreen.WELCOME) { OnboardingScreen(onFinished = {}) }
+            },
+            Shot("start-glide-sign-in", animated = true, advanceMs = 120) {
+                StartOver(sinceTapMs = 1_000, landing = StartScreen.SIGN_IN) { SignInScreen(SignInUiState(), {}, {}, {}, {}, {}, onContinueWithGoogle = {}) }
+            },
             Shot("onboarding-1") { OnboardingScreen(onFinished = {}) },
             Shot("onboarding-2", prepare = { tap(R.string.action_next) }) { OnboardingScreen(onFinished = {}) },
             Shot("onboarding-3", prepare = { repeat(2) { tap(R.string.action_next) } }) { OnboardingScreen(onFinished = {}) },
@@ -697,6 +734,14 @@ class ScreenGalleryTest {
         val noGroup = me.copy(bloodGroup = null, showInDonorSearch = false)
         gallery(
             Shot("home-filled", tab, content = home(me, feed, true, false, true, true, emptyList())),
+            // D25: 0.12 s into the start logo's shrink into Home's top-bar logo.
+            Shot("start-shrink-home", animated = true, advanceMs = 120) {
+                StartOver(sinceTapMs = 1_000, landing = StartScreen.HOME) {
+                    Scaffold(bottomBar = { AppNavigationBar(tab, onSelect = {}) }, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
+                        Box(Modifier.padding(padding).consumeWindowInsets(padding)) { home(me, feed, true, false, true, true, emptyList())() }
+                    }
+                }
+            },
             Shot("home-loading", tab, animated = true, content = home(me, null, true, false, true, true, emptyList())),
             Shot("home-empty", tab, content = home(me, emptyList(), true, false, true, true, emptyList())),
             Shot("home-offline", tab, content = home(me, feed, false, false, true, true, emptyList())),

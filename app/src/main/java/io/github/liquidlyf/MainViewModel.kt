@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -42,6 +43,14 @@ class MainViewModel @Inject constructor(
     // Eagerly: the start destination must survive the activity going to the background.
     /** A20: "Signing out…" over the whole app while sign-out runs. */
     val signingOut: StateFlow<Boolean> = sessionManager.signingOut
+
+    /**
+     * The theme setting, as soon as it's read (D25): the start logo draws while the session still
+     * loads, in the app's own light or dark. Null until read.
+     */
+    val themeMode: StateFlow<ThemeMode?> = settingsRepository.settings
+        .map { it.themeMode }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val uiState: StateFlow<MainUiState> = combine(settingsRepository.settings, sessionManager.state, ::Pair)
         .scan<_, MainUiState>(MainUiState.Loading) { previous, (settings, session) ->

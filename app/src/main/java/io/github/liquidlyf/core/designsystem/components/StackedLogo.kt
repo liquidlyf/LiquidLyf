@@ -21,7 +21,8 @@ import io.github.liquidlyf.R
  * The stacked LiquidLyf logo (branding/logo-full.svg, dark: logo-full-dark.svg) for the welcome page
  * and Sign in (BRAND-01, N4). The horizontal logo is for Home's top bar only. With the keyboard open
  * it shrinks, and with large text it's smaller, so it never pushes the fields off the screen.
- * Dark or light follows the app's own theme setting, which `drawable-night` wouldn't.
+ * Dark or light follows the app's own theme setting, which `drawable-night` wouldn't. At a fresh
+ * start, the start logo moves into it (D25, [StartLogoHandoff]).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -36,7 +37,10 @@ fun StackedLogo(modifier: Modifier = Modifier) {
     Image(
         painterResource(if (dark) R.drawable.logo_full_dark else R.drawable.logo_full),
         contentDescription = stringResource(R.string.app_name),
-        modifier = modifier.height(height).aspectRatio(LOGO_RATIO),
+        modifier = modifier
+            .height(height)
+            .aspectRatio(LOGO_RATIO)
+            .startLogoTarget(LocalStartLogoHandoff.current) { stacked = it },
     )
 }
 
@@ -45,7 +49,8 @@ private const val LOGO_RATIO = 1087.41f / 782.3f
 
 /**
  * The horizontal logo (branding/logo-horizontal.svg, dark: logo-horizontal-dark.svg), for Home's
- * top bar only (BRAND-01, N6). Its words are the app's name, so TalkBack reads that.
+ * top bar only (BRAND-01, N6). Its words are the app's name, so TalkBack reads that. At a fresh
+ * start on Home, the start logo shrinks into it (D25).
  */
 @Composable
 fun HorizontalLogo(modifier: Modifier = Modifier) {
@@ -53,7 +58,10 @@ fun HorizontalLogo(modifier: Modifier = Modifier) {
     Image(
         painterResource(if (dark) R.drawable.logo_horizontal_dark else R.drawable.logo_horizontal),
         contentDescription = stringResource(R.string.app_name),
-        modifier = modifier.height(28.dp).aspectRatio(HORIZONTAL_RATIO),
+        modifier = modifier
+            .height(28.dp)
+            .aspectRatio(HORIZONTAL_RATIO)
+            .startLogoTarget(LocalStartLogoHandoff.current) { horizontal = it },
     )
 }
 

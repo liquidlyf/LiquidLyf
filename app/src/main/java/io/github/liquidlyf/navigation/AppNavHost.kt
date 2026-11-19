@@ -138,6 +138,7 @@ import io.github.liquidlyf.feature.session.needsNotificationPermission
 import io.github.liquidlyf.feature.settings.LanguageViewModel
 import io.github.liquidlyf.feature.settings.NotificationPrefsRoute
 import io.github.liquidlyf.feature.settings.SettingsScreen
+import io.github.liquidlyf.start.StartScreen
 
 /** Used by the Phase 1 placeholders until real requests exist (Phase 4). */
 /** liquidlyf://request/{id} (the manifest declares the scheme and host). */
@@ -165,6 +166,8 @@ fun AppNavHost(
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
+    /** D25: the first screen a fresh start lands on, once it's settled (after the hop to the last tab). */
+    onStartScreen: (StartScreen) -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -187,15 +190,27 @@ fun AppNavHost(
 
     // Reopen the tab used last time, once per launch (not after rotation), but only when the
     // app opens on a tab's root. A notification's deep link (Moderation, a request) opens its
-    // own screen, and that screen stays.
+    // own screen, and that screen stays. D25: the hop is instant, behind the start logo, so the
+    // logo lands on that tab and Home never flashes first.
     var lastTabRestored by rememberSaveable { mutableStateOf(false) }
+    var instantHop by remember { mutableStateOf(false) }
+    var startReported by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(currentEntry?.destination) {
         val destination = currentEntry?.destination ?: return@LaunchedEffect
-        if (lastTabRestored || destination.zone() != GateZone.MAIN) return@LaunchedEffect
-        lastTabRestored = true
-        val tab = TopLevelDestination.entries.firstOrNull { destination.isInTab(it) } ?: return@LaunchedEffect
-        val atTabRoot = destination.hasRoute(tab.root::class)
-        if (atTabRoot && initialTab != null && initialTab != tab) navController.navigateToTab(initialTab)
+        instantHop = false
+        if (!lastTabRestored && destination.zone() == GateZone.MAIN) {
+            lastTabRestored = true
+            val tab = TopLevelDestination.entries.firstOrNull { destination.isInTab(it) }
+            if (tab != null && destination.hasRoute(tab.root::class) && initialTab != null && initialTab != tab) {
+                instantHop = true
+                navController.navigateToTab(initialTab)
+                return@LaunchedEffect // the start lands on that tab, reported when it's current
+            }
+        }
+        if (!startReported) {
+            startReported = true
+            onStartScreen(destination.startScreen())
+        }
     }
 
     val selectTab: (TopLevelDestination) -> Unit = { tab ->
@@ -250,8 +265,8 @@ fun AppNavHost(
                     NavHost(
                         navController = navController,
                         startDestination = startZone.route(),
-                        enterTransition = { if (isTabSwitch()) fadeThroughIn() else sharedAxisIn(forward = true) },
-                        exitTransition = { if (isTabSwitch()) fadeThroughOut() else sharedAxisOut(forward = true) },
+                        enterTransition = { if (instantHop) EnterTransition.None else if (isTabSwitch()) fadeThroughIn() else sharedAxisIn(forward = true) },
+                        exitTransition = { if (instantHop) ExitTransition.None else if (isTabSwitch()) fadeThroughOut() else sharedAxisOut(forward = true) },
                         popEnterTransition = { if (isTabSwitch()) fadeThroughIn() else sharedAxisIn(forward = false) },
                         popExitTransition = { if (isTabSwitch()) fadeThroughOut() else sharedAxisOut(forward = false) },
                         modifier = Modifier
@@ -279,6 +294,14 @@ fun AppNavHost(
 // ---- MOTION-01: M3 transitions. With "Remove animations" on, Compose runs them at no length. ----
 
 private val TAB_GRAPHS = listOf(HomeGraph::class, RequestsGraph::class, DonorsGraph::class, ProfileGraph::class)
+
+/** What the start logo moves into (D25): the welcome page and Sign in have the stacked logo, Home the top-bar one. */
+private fun NavDestination.startScreen(): StartScreen = when {
+    hasRoute(Onboarding::class) -> StartScreen.WELCOME
+    hasRoute(SignIn::class) -> StartScreen.SIGN_IN
+    hasRoute(Home::class) -> StartScreen.HOME
+    else -> StartScreen.OTHER
+}
 
 /** The tab graph a destination sits in, or null (sign-in, a request on top of the tabs…). */
 private fun NavBackStackEntry.tabGraph(): Int? =
