@@ -129,7 +129,9 @@ class SignUpToHomeTest {
      * area pickers' labels sit above their boxes (N3), so the box is found by its description.
      */
     private fun pick(@StringRes field: Int, item: String) {
-        compose.onNode((hasText(str(field)) or hasContentDescription(str(field), substring = true)) and hasClickAction()).performClick()
+        val box = compose.onNode((hasText(str(field)) or hasContentDescription(str(field), substring = true)) and hasClickAction())
+        runCatching { box.performScrollTo() } // as in tapText: the last box can sit under the pinned bar
+        box.performClick()
         waitFor(item)
         compose.onAllNodesWithText(item).onLast().performClick()
         compose.waitForIdle()
@@ -200,6 +202,8 @@ class SignUpToHomeTest {
         tap(R.string.answer_yes)
         tap(R.string.action_next)
         waitFor(str(R.string.become_donor_history_title))
+        // D18: the area donors are found by, from the short setup's answers (it never showed in the app).
+        waitFor(str(R.string.become_donor_area, "Dhaka South City Corporation, Dhaka"))
         tap(R.string.last_donation_never)
         tap(R.string.consent_yes)
         tap(R.string.action_finish)

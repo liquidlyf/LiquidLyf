@@ -279,8 +279,8 @@ private fun HistoryStep(state: BecomeDonorUiState, anchors: ErrorAnchors<SetupFi
         }
         return
     }
-    // VT-21: donors are found by area; say which one, and where it comes from.
-    val place = d.district?.let { district -> state.geo?.placeLabel(district, d.upazila, currentAppLocale()) }
+    // VT-21: donors are found by area; say which one, and where it comes from (D18: the profile's).
+    val place = state.area?.let { area -> state.geo?.placeLabel(area.district, area.upazila, currentAppLocale()) }
     place?.let { IconLine(LLIcons.Location, stringResource(R.string.become_donor_area, it)) }
     // VT-26: answering the last donation, then "Yes, list me", brings the List me question (and the
     // switch it adds) fully into view.

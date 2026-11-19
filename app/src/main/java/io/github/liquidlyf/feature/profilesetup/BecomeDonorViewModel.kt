@@ -14,6 +14,7 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.components.AppSnackbar
 import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.domain.Validators
+import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.core.model.ProfileDraft
@@ -39,6 +40,8 @@ data class BecomeDonorUiState(
     val draft: SetupDraft,
     /** For "Your area: …" on the List me step (VT-21). */
     val geo: BdGeo? = null,
+    /** D18: the profile's own area. The donor steps don't ask for it, so their draft has none. */
+    val area: Area? = null,
     val errors: Set<SetupField> = emptySet(),
     /** Counts failed Next taps: each one brings the first error into view (FLOW-04). */
     val errorAttempt: Int = 0,
@@ -77,7 +80,7 @@ class BecomeDonorViewModel @Inject constructor(
 
     private val profile: UserProfile? = (session.state.value as? SessionState.Ready)?.profile
 
-    private val state = MutableStateFlow(BecomeDonorUiState(restore()))
+    private val state = MutableStateFlow(BecomeDonorUiState(restore(), area = profile?.area))
     val uiState: StateFlow<BecomeDonorUiState> = state.asStateFlow()
 
     private val events = Channel<BecomeDonorEvent>(Channel.BUFFERED)

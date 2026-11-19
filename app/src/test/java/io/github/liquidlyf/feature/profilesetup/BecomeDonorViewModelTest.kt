@@ -115,6 +115,15 @@ class BecomeDonorViewModelTest {
     }
 
     @Test
+    fun `the List me step's area line has the profile's area (D18)`() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(requester.area, vm.uiState.value.area)
+        assertNull(vm.uiState.value.draft.district) // the donor steps never ask for it
+        assertNotNull(vm.uiState.value.geo)
+    }
+
+    @Test
     fun `without a known group the details are saved but nobody is listed (P1)`() = runTest(dispatcher) {
         val vm = vm()
         vm.skipBloodGroup()

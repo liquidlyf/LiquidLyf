@@ -77,6 +77,7 @@ import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.domain.BadgeCalculator
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.model.AppLocale
+import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodComponent
 import io.github.liquidlyf.core.model.BloodGroup
 import io.github.liquidlyf.core.model.BloodRequest
@@ -574,7 +575,7 @@ class ScreenGalleryTest {
             }
         }
         val donorStep = { step: Int, d: SetupDraft, errors: Set<SetupField> ->
-            @Composable { BecomeDonorScreen(BecomeDonorUiState(d.copy(step = step), geo = geo, errors = errors), {}, {}, {}) }
+            @Composable { BecomeDonorScreen(BecomeDonorUiState(d.copy(step = step), geo = geo, area = d.district?.let { Area(d.division.orEmpty(), it, d.upazila.orEmpty()) }, errors = errors), {}, {}, {}) }
         }
         val empty = SetupDraft(uid = "me")
         gallery(
