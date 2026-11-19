@@ -8,9 +8,10 @@ placeholder instead. Then write the file and paste it into the draft before you 
 ## Rules
 
 - **Commit the file before you push the tag.** The workflow reads it from the tagged commit.
-- **The file name is the tag, exactly.** Tags look like `v1.2.3`, `v1.2.3-beta1` or `v1.2.3-rc1`
-  (no dot before the number). [`release_version.py`](../../app/scripts/release_version.py) refuses
-  any other form.
+- **The file name is the tag, exactly.** Tags look like `v1.2.3`, `v1.2.3-beta1` or `v1.2.3-rc1`,
+  as the plan writes them. [`release_version.py`](../../app/scripts/release_version.py) also accepts
+  the dotted form (`-beta.1`) and gives it the same version, but then the file must be named
+  `v1.2.3-beta.1.md`. Keep to one form.
 - **English first, then Bangla, with the same content.** Before the tag, every new Bangla line gets a
   meaning check, as the website's pages did ([website README](../website-drafts/README.md)). Checkers
   translate it back into English without seeing the English, and lines that don't match are fixed.

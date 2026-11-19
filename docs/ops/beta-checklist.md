@@ -13,8 +13,8 @@ Copy this into a GitHub issue and tick it there ([how](README.md)).
       Never give testers a build signed with any other key.
 - [ ] The release notes are committed **before the tag**, as `docs/release-notes/<tag>.md`, in English
       and Bangla, with the Bangla meaning-checked and reviewed ([how](../release-notes/README.md)).
-- [ ] A `v1.0.0-betaN` tag (`v1.0.0-beta1`, with no dot before the number: the release workflow
-      refuses other forms) makes a **draft** release with `LiquidLyf.apk`, `SHA256SUMS.txt`,
+- [ ] A `v1.0.0-betaN` tag (`v1.0.0-beta1`, spelled exactly like its notes file) makes a **draft**
+      release with `LiquidLyf.apk`, `SHA256SUMS.txt`,
       `update.json` and a build attestation, and CI's fingerprint check passes. The draft shows the
       notes file, not the "Release notes to come" placeholder.
 - [ ] A maintainer installs the draft's APK on a real phone, checks sign-in and notifications, then
