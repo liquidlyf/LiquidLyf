@@ -1,0 +1,5 @@
+# The release key's certificate SHA-256, as `apksigner verify --print-certs` prints it (the same
+# one published on the website and registered in Firebase). release.yml refuses to make a release
+# signed with any other key. Not set yet: the maintainer creates the key (Phase 10.1, A48), then
+# its SHA-256 goes on the line below, in place of NOT-SET.
+NOT-SET

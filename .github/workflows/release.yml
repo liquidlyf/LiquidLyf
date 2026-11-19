@@ -1,0 +1,146 @@
+# The release pipeline (Phase 9.2, doc 10 §8, doc 11 §3). On a tag v* (pushed only with the
+# maintainer's OK): CI's checks run, a maintainer approves (the production-android environment's
+# required reviewer), and the signed APK goes to a *draft* GitHub Release with SHA256SUMS.txt,
+# update.json and a build-provenance attestation. A maintainer installs the draft's APK on a real
+# phone, then publishes it. -beta and -rc tags become pre-releases.
+#
+# The production-android environment (tags v* only, a required reviewer) holds the secrets:
+#   PROD_GOOGLE_SERVICES_JSON   app/src/prod/google-services.json of liquidlyf-app
+#   RELEASE_KEYSTORE_BASE64     the release keystore (Phase 10.1), base64
+#   RELEASE_KEYSTORE_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_KEY_PASSWORD
+# Actions are pinned to full commit SHAs; Dependabot keeps them current.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # 1. Lint, unit tests, the rules tests and the Worker tests: the same jobs as every push.
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: release
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # 2. Waits here for the required reviewer's approval.
+    environment: production-android
+    permissions:
+      contents: write # the draft release
+      id-token: write # the attestation's signature
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-read-only: true
+
+      # v1.2.3 -> versionName 1.2.3, versionCode 1020399; -betaN / -rcN come before it (the script says how).
+      - name: The version, from the tag
+        id: version
+        run: python3 app/scripts/release_version.py "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: The production Firebase config and the release key (from the environment's secrets)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.PROD_GOOGLE_SERVICES_JSON }}
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p app/src/prod
+          printf '%s' "$GOOGLE_SERVICES_JSON" > app/src/prod/google-services.json
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+
+      # 3. Signed in CI. LIQUIDLYF_RELEASE also turns off the local builds' logs and uploads the R8
+      #    mapping to Crashlytics.
+      - name: Build the signed APK and AAB
+        env:
+          LIQUIDLYF_RELEASE: '1'
+          LIQUIDLYF_KEYSTORE: ${{ runner.temp }}/release.jks
+          LIQUIDLYF_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          LIQUIDLYF_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          LIQUIDLYF_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
+        run: >-
+          ./gradlew assembleProdRelease bundleProdRelease --stacktrace
+          "-Pliquidlyf.versionCode=$VERSION_CODE" "-Pliquidlyf.versionName=$VERSION_NAME"
+
+      - name: Remove the key and the config
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks" app/src/prod/google-services.json
+
+      # 4. Only the published key: anything else (a wrong secret, a swapped key) stops here.
+      - name: The signing certificate must be the published one
+        run: |
+          if grep -q '^NOT-SET' .github/ci/release-cert-sha256.txt; then
+            echo "::error::The release key's SHA-256 isn't in .github/ci/release-cert-sha256.txt yet (Phase 10.1)"
+            exit 1
+          fi
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner"
+          expected="$(grep -v '^#' .github/ci/release-cert-sha256.txt | tr -d ' :\n' | tr 'A-F' 'a-f')"
+          actual="$("$apksigner" verify --print-certs app/build/outputs/apk/prod/release/app-prod-release.apk \
+            | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')"
+          echo "signed with SHA-256 $actual"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::The APK isn't signed with the published release key (.github/ci/release-cert-sha256.txt: $expected)"
+            exit 1
+          fi
+
+      # 5. The files people download: always LiquidLyf.apk, so releases/latest/download/LiquidLyf.apk never changes.
+      - name: LiquidLyf.apk, SHA256SUMS.txt and update.json
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.version_code }}
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
+        run: |
+          mkdir dist
+          cp app/build/outputs/apk/prod/release/app-prod-release.apk dist/LiquidLyf.apk
+          (cd dist && sha256sum LiquidLyf.apk > SHA256SUMS.txt)
+          python3 app/scripts/make_update_json.py --apk dist/LiquidLyf.apk \
+            --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" --tag "$GITHUB_REF_NAME" --out dist/update.json
+          cat dist/SHA256SUMS.txt dist/update.json
+
+      - name: Build provenance for LiquidLyf.apk
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/LiquidLyf.apk
+
+      # Kept for a possible later Play upload; not part of the release.
+      - name: Keep the AAB
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: liquidlyf-${{ steps.version.outputs.version_name }}-aab
+          path: app/build/outputs/bundle/prodRelease/*.aab
+          retention-days: 90
+
+      # The notes are docs/release-notes/<tag>.md (English and Bangla), when there is one.
+      - name: The draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION_NAME: ${{ steps.version.outputs.version_name }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          notes="docs/release-notes/$GITHUB_REF_NAME.md"
+          if [ ! -f "$notes" ]; then
+            notes="$RUNNER_TEMP/notes.md"
+            printf 'LiquidLyf %s.\n\nRelease notes to come (docs/release-notes/%s.md).\n' "$VERSION_NAME" "$GITHUB_REF_NAME" > "$notes"
+          fi
+          pre=""
+          if [ "$PRERELEASE" = "true" ]; then pre="--prerelease"; fi
+          gh release create "$GITHUB_REF_NAME" dist/LiquidLyf.apk dist/SHA256SUMS.txt dist/update.json \
+            --draft --verify-tag $pre --title "LiquidLyf $VERSION_NAME" --notes-file "$notes"

@@ -1,5 +1,6 @@
 import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -28,8 +29,9 @@ android {
         applicationId = "io.github.liquidlyf"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0-alpha01"
+        // Phase 9.2: release.yml passes the version made from the tag (app/scripts/release_version.py).
+        versionCode = providers.gradleProperty("liquidlyf.versionCode").map(String::toInt).getOrElse(1)
+        versionName = providers.gradleProperty("liquidlyf.versionName").getOrElse("1.0.0-alpha01")
 
         // Starts HiltTestApplication, so instrumented tests can use Hilt (src/androidTest).
         testInstrumentationRunner = "io.github.liquidlyf.HiltTestRunner"
@@ -76,6 +78,39 @@ android {
         }
     }
 
+    // Phase 9.2: the release key, never in the repo. In release.yml it comes from the
+    // production-android environment's secrets (LIQUIDLYF_KEYSTORE and the 3 below); a maintainer's
+    // local release build can use keystore.properties instead (git-ignored: storeFile, an absolute
+    // path outside the repo, storePassword, keyAlias, keyPassword). Only LIQUIDLYF_RELEASE uses it.
+    val releaseKey: Map<String, String>? = run {
+        val env = { name: String -> providers.environmentVariable(name).orNull }
+        val keystoreFile = rootDir.resolve("keystore.properties")
+        when {
+            env("LIQUIDLYF_KEYSTORE") != null -> mapOf(
+                "storeFile" to env("LIQUIDLYF_KEYSTORE")!!,
+                "storePassword" to env("LIQUIDLYF_KEYSTORE_PASSWORD").orEmpty(),
+                "keyAlias" to env("LIQUIDLYF_KEY_ALIAS").orEmpty(),
+                "keyPassword" to env("LIQUIDLYF_KEY_PASSWORD").orEmpty(),
+            )
+            keystoreFile.isFile -> {
+                val props = Properties()
+                keystoreFile.inputStream().use { props.load(it) }
+                props.stringPropertyNames().associateWith { props.getProperty(it) }
+            }
+            else -> null
+        }
+    }
+    signingConfigs {
+        if (releaseKey != null) {
+            create("release") {
+                storeFile = file(releaseKey.getValue("storeFile"))
+                storePassword = releaseKey["storePassword"]
+                keyAlias = releaseKey["keyAlias"]
+                keyPassword = releaseKey["keyPassword"]
+            }
+        }
+    }
+
     buildTypes {
         debug {
             // createDemoDebugUnitTestCoverageReport: Phase 2 asks for >= 90% line coverage
@@ -91,10 +126,13 @@ android {
             )
             // Local release builds are signed with the debug key, whose SHA-1 is registered in
             // Firebase, so a prod build can be installed on the test phone (Google sign-in, the
-            // live dispatch test). There are no prod debug builds. The release job signs with
-            // the real key (Phase 9/10) and sets LIQUIDLYF_RELEASE.
-            if (!providers.environmentVariable("LIQUIDLYF_RELEASE").isPresent) {
-                signingConfig = signingConfigs.getByName("debug")
+            // live dispatch test). There are no prod debug builds. The release job sets
+            // LIQUIDLYF_RELEASE and signs with the release key (Phase 9.2), which it must have.
+            signingConfig = if (providers.environmentVariable("LIQUIDLYF_RELEASE").isPresent) {
+                signingConfigs.findByName("release")
+                    ?: throw GradleException("LIQUIDLYF_RELEASE is set, but there's no release key: set LIQUIDLYF_KEYSTORE (and its passwords), or keystore.properties")
+            } else {
+                signingConfigs.getByName("debug")
             }
             // Only the real release job uploads R8 mappings. PR CI builds prodRelease with a
             // dummy config, where an upload would fail.
