@@ -270,6 +270,68 @@ describe('donors: owner-written mirror (Spark test 1)', () => {
   });
 });
 
+describe('users: only someone who can give blood is listed (D23)', () => {
+  const Y = new Date().getUTCFullYear(); // the rules use request.time's UTC year, like the app
+  const listed = { showInDonorSearch: true, consentAt: serverTimestamp() };
+
+  /** "List me": users + a new donor card in one batch. */
+  function listMe(uid, u, fields = {}) {
+    const db = as(uid);
+    const b = writeBatch(db);
+    b.update(doc(db, 'users', uid), { ...fields, ...listed, updatedAt: serverTimestamp() });
+    b.set(doc(db, 'donors', uid), donorCard(u));
+    return b.commit();
+  }
+  /** Leave the list: users (+ other changes) and the card's delete in one batch. */
+  function unlist(uid, fields = {}) {
+    const db = as(uid);
+    const b = writeBatch(db);
+    b.update(doc(db, 'users', uid), { ...fields, showInDonorSearch: false, updatedAt: serverTimestamp() });
+    b.delete(doc(db, 'donors', uid));
+    return b.commit();
+  }
+
+  test('profile setup: weight না, or over 60, can\'t be listed; 60 can; unlisted is fine', async () => {
+    for (const [uid, o] of [['zed1', { weightOk: false }], ['zed2', { birthYear: Y - 61 }]]) {
+      await assertFails(profileSetup(as(uid), uid, newUserDoc(uid, { ...listed, ...o }), donorCard(userDoc(uid, o))));
+      await assertSucceeds(profileSetup(as(uid), uid, newUserDoc(uid, o)));
+    }
+    await assertSucceeds(profileSetup(as('zed3'), 'zed3',
+      newUserDoc('zed3', { ...listed, birthYear: Y - 60 }), donorCard(userDoc('zed3'))));
+  });
+
+  test('"list me" later needs weight হ্যাঁ and 60 or younger', async () => {
+    const wina = userDoc('wina', { weightOk: false });
+    const olga = userDoc('olga', { birthYear: Y - 61 });
+    await seedUsers({ wina, olga });
+    await assertFails(listMe('wina', wina));
+    await assertFails(listMe('olga', olga));
+    await assertSucceeds(listMe('alice', users.alice)); // the same batch for a donor who can give
+  });
+
+  test('weight না while listed: the same batch must leave the list; হ্যাঁ again can list again', async () => {
+    await assertFails(updateProfile(as('bob'), 'bob', { weightOk: false }));
+    await assertSucceeds(unlist('bob', { weightOk: false }));
+    await assertFails(listMe('bob', users.bob));
+    await assertSucceeds(listMe('bob', users.bob, { weightOk: true }));
+  });
+
+  test('a birth year over 60 while listed must leave the list too', async () => {
+    await assertFails(updateProfile(as('bob'), 'bob', { birthYear: Y - 61 }));
+    await assertSucceeds(updateProfile(as('bob'), 'bob', { birthYear: Y - 60 }));
+    await assertSucceeds(unlist('bob', { birthYear: Y - 61 }));
+  });
+
+  test('a listed donor who turned 61 on 1 January can still save and leave, but not list again', async () => {
+    const olaf = userDoc('olaf', { showInDonorSearch: true, consentAt: ts(-30 * DAY), birthYear: Y - 61 });
+    await seedUsers({ olaf });
+    await assertSucceeds(updateProfile(as('olaf'), 'olaf', { fullName: 'Olaf Older' }));
+    await assertSucceeds(updateProfile(as('olaf'), 'olaf', { available: false }, { available: false }));
+    await assertSucceeds(unlist('olaf'));
+    await assertFails(listMe('olaf', { ...olaf, available: false }));
+  });
+});
+
 describe('users: lastActiveAt throttle (Spark test 8)', () => {
   test('a lastActiveAt write within 3 days of the last one fails', async () => {
     await seed(async (db) => updateDoc(doc(db, 'users/alice'), { lastActiveAt: ts(-1 * DAY) }));

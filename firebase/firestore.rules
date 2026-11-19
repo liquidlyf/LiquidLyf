@@ -147,6 +147,19 @@ service cloud.firestore {
              && d.weightOk is bool
            : d.showInDonorSearch == false && d.available == false && absent(d, 'lastDonationAt');
     }
+    // D23 (the maintainer, 19 Nov 2026): only someone who can give blood is listed: weight at
+    // least 45 kg (weightOk) and 18 to 60 years old, as "this year minus the birth year" in UTC,
+    // like the app's EligibilityCalculator. (18 is checked for every donor in donorDetailsOk.)
+    // Checked when a write lists someone or changes their birth year or weight answer while
+    // listed, so a donor who turns 61 on 1 January can still save until the Worker's daily job
+    // (retention, 09:00 Dhaka) unlists them.
+    function canBeListed(d) {
+      return d.get('weightOk', false) == true && d.get('birthYear', 0) >= request.time.year() - 60;
+    }
+    function listingOk(d, keys) {
+      return d.showInDonorSearch == false || !keys.hasAny(['showInDonorSearch','birthYear','weightOk'])
+          || canBeListed(d);
+    }
     function validUser(d) {
       return d.keys().hasOnly(userKeys())
           && str(d.fullName, 2, 60) && d.email is string && bdPhone(d.phone)
@@ -235,6 +248,7 @@ service cloud.firestore {
                     && data().donationCount == 0 && data().verifiedDonations == 0
                     && absent(data(), 'lastDonationId') && absent(data(), 'rapidResponder')
                     && (absent(data(), 'lastActiveAt') || data().lastActiveAt == request.time)
+                    && listingOk(data(), data().keys())
                     && donorCardSynced(uid, data());
       allow update: if isOwner(uid) && verified() && validUser(data())
                     && data().updatedAt == request.time
@@ -242,6 +256,7 @@ service cloud.firestore {
                     && phoneVerifiedOk()
                     && lastActiveOk()
                     && donationCountersOk(uid)
+                    && listingOk(data(), changed())
                     && (!changed().hasAny(mirroredUserFields()) || donorCardSynced(uid, data()));
       // In-app account deletion (doc 10 §4): the donor card must go first or in the same batch.
       allow delete: if isOwner(uid) && !existsAfter(donorPath(uid));
