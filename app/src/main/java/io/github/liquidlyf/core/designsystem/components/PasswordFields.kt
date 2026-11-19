@@ -87,7 +87,11 @@ fun NewPasswordField(
         errorText = red, imeAction = ImeAction.Next, modifier = modifier, enabled = enabled,
         keyboardActions = keyboardActions, fieldModifier = fieldModifier,
     ) {
-        CheckLine(check, red ?: stringResource(R.string.password_rule), idleIcon = LLIcons.Circle, count = password.count)
+        CheckLine(
+            check, red ?: stringResource(R.string.password_rule), idleIcon = LLIcons.Circle, count = password.count,
+            // A44: the words stay the same at 8, so the tick says it: "Done, At least 8 characters".
+            okDescription = stringResource(R.string.password_rule_met),
+        )
         if (check != FieldCheck.ERROR) {
             Text(
                 stringResource(R.string.password_longer),
@@ -184,9 +188,18 @@ private fun KeepLinesInView(check: FieldCheck, focused: Boolean, group: BringInt
     }
 }
 
-/** One line under a box: its icon and words in the check's colour, and the count (not read out). */
+/**
+ * One line under a box: its icon and words in the check's colour, and the count (not read out).
+ * [okDescription]: the tick's spoken name, for a line whose words don't change when it turns green.
+ */
 @Composable
-private fun CheckLine(check: FieldCheck, text: String, @DrawableRes idleIcon: Int? = null, count: Int? = null) {
+private fun CheckLine(
+    check: FieldCheck,
+    text: String,
+    @DrawableRes idleIcon: Int? = null,
+    count: Int? = null,
+    okDescription: String? = null,
+) {
     val color: Color = when (check) {
         FieldCheck.OK -> LiquidLyfTheme.extendedColors.success
         FieldCheck.ERROR -> MaterialTheme.colorScheme.error
@@ -205,7 +218,14 @@ private fun CheckLine(check: FieldCheck, text: String, @DrawableRes idleIcon: In
             .padding(start = LINE_START, top = 4.dp, end = LINE_START)
             .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
     ) {
-        if (icon != null) Icon(painterResource(icon), contentDescription = null, tint = color, modifier = Modifier.size(lineIconSize()))
+        if (icon != null) {
+            Icon(
+                painterResource(icon),
+                contentDescription = okDescription.takeIf { check == FieldCheck.OK },
+                tint = color,
+                modifier = Modifier.size(lineIconSize()),
+            )
+        }
         Text(text, style = MaterialTheme.typography.bodySmall, color = color, modifier = Modifier.weight(1f))
         if (count != null) {
             val shown = "$count/${Validators.PASSWORD_MIN}"

@@ -201,6 +201,8 @@
     <!-- D24: the new password's rule under its box ("○ At least 8 characters"), then the second line. -->
     <string name="password_rule">At least 8 characters</string>
     <string name="password_longer">A longer password is stronger.</string>
+    <!-- A44: TalkBack only, once, when the rule above is met: "Done, At least 8 characters". -->
+    <string name="password_rule_met">Done</string>
     <string name="sign_up_consent">I am 18 or older, and I agree to the Terms and the Privacy Policy</string>
     <string name="error_consent_required">Please confirm you are 18 or older and agree to the Terms.</string>
     <string name="action_read_terms">Read the Terms</string>

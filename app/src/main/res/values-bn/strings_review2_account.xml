@@ -79,6 +79,7 @@
     <string name="error_password_short">অন্তত ৮ অক্ষর দিন।</string>
     <string name="password_rule">অন্তত ৮ অক্ষর</string>
     <string name="password_longer">লম্বা পাসওয়ার্ড বেশি নিরাপদ।</string>
+    <string name="password_rule_met">পূরণ হয়েছে</string>
     <string name="sign_up_consent">আমার বয়স ১৮ বা তার বেশি, এবং আমি শর্তাবলি ও গোপনীয়তা নীতিতে সম্মত</string>
     <string name="error_consent_required">আপনার বয়স ১৮ বা তার বেশি এবং আপনি শর্তাবলিতে সম্মত, তা নিশ্চিত করুন।</string>
     <string name="action_read_terms">শর্তাবলি পড়ুন</string>

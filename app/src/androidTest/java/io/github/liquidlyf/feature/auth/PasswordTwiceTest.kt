@@ -143,6 +143,9 @@ class PasswordTwiceTest {
         // Long enough now: the first box's red goes at once; the second box, left unfinished, is red.
         typeInto(R.string.label_password, "2026")
         assertTrue(compose.onAllNodesWithText(str(R.string.error_password_short)).fetchSemanticsNodes().isEmpty())
+        // A44: at 8 the words stay; TalkBack hears the tick once: "Done, At least 8 characters".
+        val met = compose.onNode(hasText(str(R.string.password_rule)) and hasContentDescription(str(R.string.password_rule_met))).fetchSemanticsNode()
+        assertEquals(LiveRegionMode.Polite, met.config[SemanticsProperties.LiveRegion])
         assertTrue("the second box, left unfinished", compose.onAllNodesWithText(str(R.string.error_passwords_differ)).fetchSemanticsNodes().isNotEmpty())
 
         typeInto(R.string.label_confirm_password, "2026")
