@@ -54,6 +54,7 @@ import io.github.liquidlyf.core.designsystem.currentAppLocale
 import io.github.liquidlyf.core.designsystem.rememberNow
 import io.github.liquidlyf.core.designsystem.screenGutter
 import io.github.liquidlyf.core.model.BloodRequest
+import kotlinx.coroutines.flow.filterNotNull
 
 @Composable
 fun RequestsRoute(
@@ -63,6 +64,8 @@ fun RequestsRoute(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val online by viewModel.online.collectAsStateWithLifecycle()
+    // D21: asked for while this screen already existed, kept with Requests' back stack.
+    LaunchedEffect(viewModel) { RequestsTabRequest.asked.filterNotNull().collect { viewModel.takeAskedTab() } }
     RequestsScreen(state, online, viewModel::selectTab, viewModel::refresh, viewModel::loadMore, onOpenRequest, onCreateRequest)
 }
 

@@ -50,7 +50,10 @@ class RequestsViewModelTest {
     fun setUp() = Dispatchers.setMain(dispatcher)
 
     @After
-    fun tearDown() = Dispatchers.resetMain()
+    fun tearDown() {
+        Dispatchers.resetMain()
+        RequestsTabRequest.take() // the object outlives a test
+    }
 
     private fun vm() = RequestsViewModel(saved, session, requests, offers, geoRepo, Clock { TestData.NOW }, FakeNetworkMonitor())
 
@@ -87,6 +90,36 @@ class RequestsViewModelTest {
         vm.refresh()
         advanceUntilIdle()
         assertEquals(20, vm.uiState.value.nearby.items.size)
+    }
+
+    @Test
+    fun `the limit message's button opens a new Requests screen on My requests, once (D21)`() = runTest(dispatcher) {
+        requests.put(TestData.request(id = "mine-open", requesterUid = "me"))
+        saved["requests_tab"] = RequestsTab.OFFERS.name // the tab used last
+        RequestsTabRequest.open(RequestsTab.MINE)
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(RequestsTab.MINE, vm.uiState.value.tab)
+        assertEquals(listOf("mine-open"), vm.uiState.value.mine.items.map { it.id })
+        assertEquals(RequestsTab.MINE.name, saved.get<String>("requests_tab")) // kept for rotation
+        assertNull(RequestsTabRequest.take())
+        assertEquals(RequestsTab.NEARBY, RequestsViewModel(SavedStateHandle(), session, requests, offers, geoRepo, Clock { TestData.NOW }, FakeNetworkMonitor()).uiState.value.tab)
+    }
+
+    @Test
+    fun `a Requests screen kept with its tab switches to My requests when asked (D21)`() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(RequestsTab.NEARBY, vm.uiState.value.tab)
+        RequestsTabRequest.open(RequestsTab.MINE)
+        vm.takeAskedTab() // the screen, shown again, asks its model
+        advanceUntilIdle()
+        assertEquals(RequestsTab.MINE, vm.uiState.value.tab)
+        assertTrue(vm.uiState.value.mine.loaded)
+        vm.selectTab(RequestsTab.NEARBY) // the person's own choice afterwards stays
+        advanceUntilIdle()
+        assertEquals(RequestsTab.NEARBY, vm.uiState.value.tab)
+        assertNull(RequestsTabRequest.take())
     }
 
     @Test

@@ -22,12 +22,31 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 enum class RequestsTab { NEARBY, MINE, OFFERS }
+
+/**
+ * D21: the tab the Requests screen opens on next, asked for just before going there (the limit
+ * message's "See my requests"). A new screen takes it before its first load. One kept with the
+ * tab's back stack takes it once it's shown again ([RequestsViewModel.takeAskedTab]); only the
+ * shown screen does, so a screen kept elsewhere can't take it first.
+ */
+object RequestsTabRequest {
+    private val pending = MutableStateFlow<RequestsTab?>(null)
+    internal val asked: StateFlow<RequestsTab?> = pending.asStateFlow()
+
+    fun open(tab: RequestsTab) {
+        pending.value = tab
+    }
+
+    /** The asked tab, once: the next screen to open keeps its own. */
+    internal fun take(): RequestsTab? = pending.getAndUpdate { null }
+}
 
 /** One paged list. Plain reads with pull-to-refresh, never a listener (doc 10 §5.1). */
 data class PagedList<T>(
@@ -75,7 +94,9 @@ class RequestsViewModel @Inject constructor(
 
     private val state = MutableStateFlow(
         RequestsUiState(
-            tab = savedState.get<String>(TAB_KEY)?.let { t -> RequestsTab.entries.firstOrNull { it.name == t } } ?: RequestsTab.NEARBY,
+            tab = RequestsTabRequest.take()?.also { savedState[TAB_KEY] = it.name }
+                ?: savedState.get<String>(TAB_KEY)?.let { t -> RequestsTab.entries.firstOrNull { it.name == t } }
+                ?: RequestsTab.NEARBY,
             myUid = (session.state.value as? SessionState.Ready)?.profile?.uid,
         ),
     )
@@ -91,6 +112,11 @@ class RequestsViewModel @Inject constructor(
     init {
         viewModelScope.launch { state.update { it.copy(geo = geoRepository.geo()) } }
         load(state.value.tab, fresh = true)
+    }
+
+    /** D21: the shown screen opens a tab asked for since it was made ([RequestsTabRequest]). */
+    fun takeAskedTab() {
+        RequestsTabRequest.take()?.let(::selectTab)
     }
 
     fun selectTab(tab: RequestsTab) {

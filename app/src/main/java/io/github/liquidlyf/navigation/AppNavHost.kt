@@ -127,6 +127,8 @@ import io.github.liquidlyf.feature.profilesetup.ProfileSetupRoute
 import io.github.liquidlyf.feature.request.create.CreateRequestRoute
 import io.github.liquidlyf.feature.request.detail.RequestDetailRoute
 import io.github.liquidlyf.feature.request.list.RequestsRoute
+import io.github.liquidlyf.feature.request.list.RequestsTab
+import io.github.liquidlyf.feature.request.list.RequestsTabRequest
 import io.github.liquidlyf.feature.safety.BlockedPeopleRoute
 import io.github.liquidlyf.feature.safety.SafetyTipsRoute
 import io.github.liquidlyf.feature.session.NotificationPermissionScreen
@@ -570,11 +572,12 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                         popUpTo<CreateRequest> { inclusive = true }
                     }
                 },
-                onOpenMyRequests = {
-                    navController.navigate(RequestsGraph) {
-                        popUpTo<CreateRequest> { inclusive = true }
-                        launchSingleTop = true
-                    }
+                // D21: Requests opens on My requests, not on the tab used last. Request blood closes
+                // first, so it isn't kept in the old tab's back stack.
+                onOpenMyRequests = dropUnlessResumed {
+                    RequestsTabRequest.open(RequestsTab.MINE)
+                    navController.popBackStack()
+                    navController.navigateToTab(TopLevelDestination.REQUESTS)
                 },
             )
         }
