@@ -318,11 +318,16 @@ class HomeViewModel @Inject constructor(
         if (geo.value?.isValid(area) != true) return
         areaSheetState.update { it.copy(saving = true, error = null) }
         viewModelScope.launch {
+            // As Edit profile (D23): someone who can't be listed any more (just turned 61, say) is
+            // unlisted by the same save, which the rules insist on.
+            val year = before.birthYear
+            val weightOk = before.weightOk
+            val block = if (year != null && weightOk != null) eligibility.listingBlock(year, weightOk, clock.now()) else null
             val draft = ProfileDraft(
                 fullName = before.fullName, phone = before.phone, bloodGroup = before.bloodGroup,
-                gender = before.gender, birthYear = before.birthYear, weightOk = before.weightOk, area = area,
+                gender = before.gender, birthYear = year, weightOk = weightOk, area = area,
                 available = before.available, lastDonationAt = before.lastDonationAt,
-                showInDonorSearch = before.showInDonorSearch, locale = before.locale, termsVersion = before.termsVersion,
+                showInDonorSearch = before.showInDonorSearch && block == null, locale = before.locale, termsVersion = before.termsVersion,
             )
             when (val result = profiles.update(before, draft)) {
                 is AppResult.Success -> {

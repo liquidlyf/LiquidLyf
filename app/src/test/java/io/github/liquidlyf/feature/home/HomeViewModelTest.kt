@@ -433,4 +433,20 @@ class HomeViewModelTest {
         assertEquals(me.area, profiles.profiles.getValue("me").area)
         assertTrue(vm.areaSheet.value.open)
     }
+
+    @Test
+    fun `a donor who just turned 61 and is still listed is unlisted by the same save, as Edit profile does (D27, D23)`() = runTest(dispatcher) {
+        val old = me.copy(birthYear = 1965) // 61 in 2026, not yet unlisted by the app or the daily job
+        profiles.profiles["me"] = old
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), old)
+        val vm = vm()
+        advanceUntilIdle()
+        vm.openAreaSheet()
+        vm.saveArea(jashore)
+        advanceUntilIdle()
+        val saved = profiles.profiles.getValue("me")
+        assertEquals(jashore, saved.area)
+        assertFalse(saved.showInDonorSearch)
+        assertFalse(vm.areaSheet.value.open)
+    }
 }

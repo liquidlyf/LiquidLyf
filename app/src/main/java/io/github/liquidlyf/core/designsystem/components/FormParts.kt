@@ -234,7 +234,7 @@ fun DropdownField(
     var expanded by rememberSaveable { mutableStateOf(false) }
     val selectedLabel = options.firstOrNull { it.first == selected }?.second.orEmpty()
     Column(modifier) {
-        if (labelAbove) FieldLabelAbove(label, isError)
+        if (labelAbove) FieldLabelAbove(label, isError && enabled) // D's §15: a locked box's label isn't red
         ExposedDropdownMenuBox(expanded = expanded && enabled, onExpandedChange = { if (enabled) expanded = it }) {
             OutlinedTextField(
                 value = selectedLabel,
