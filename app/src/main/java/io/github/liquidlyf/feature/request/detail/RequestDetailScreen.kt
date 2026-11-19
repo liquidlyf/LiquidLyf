@@ -788,22 +788,27 @@ private fun OffersSection(
     SectionHeader(stringResource(R.string.detail_offers))
     if (state.responses.isEmpty()) AlertLine(r, state)
     // VT-26: the first offer waiting for the requester (Confirm, or Mark donated) comes fully into
-    // view once; at 130% its buttons sat under the Share bar ("Karim's box looks cut off").
+    // view; at 130% its buttons sat under the Share bar ("Karim's box looks cut off").
+    // D17: again after each step on it. After Confirm the card grows (the hint above Mark donated),
+    // and at the largest text only a third of Mark donated showed above the Share bar. After Mark
+    // donated, the same card comes into view once more.
     val waiting = state.responses.firstOrNull { StatusTransitions.requesterNext(it.status).any { s -> s == ResponseStatus.CONFIRMED || s == ResponseStatus.DONATED } }
-    val waitingView = remember { BringIntoViewRequester() }
-    var shownWaiting by rememberSaveable { mutableStateOf<String?>(null) }
-    LaunchedEffect(waiting?.donorUid) {
-        val uid = waiting?.donorUid ?: return@LaunchedEffect
-        if (shownWaiting != uid) {
-            shownWaiting = uid
-            withFrameNanos { }
-            runCatching { waitingView.bringIntoView() }
-        }
+    var shown by rememberSaveable { mutableStateOf<String?>(null) } // "<donor uid> <status>" last brought into view
+    val target = waiting ?: shown?.substringBefore(' ')?.let { uid ->
+        state.responses.firstOrNull { it.donorUid == uid && it.status == ResponseStatus.DONATED }
+    }
+    val targetKey = target?.let { "${it.donorUid} ${it.status}" }
+    val targetView = remember { BringIntoViewRequester() }
+    LaunchedEffect(targetKey) {
+        if (targetKey == null || targetKey == shown) return@LaunchedEffect
+        shown = targetKey
+        withFrameNanos { } // the card's new size is laid out first
+        runCatching { targetView.bringIntoView() }
     }
     state.responses.forEach { response ->
         OfferCard(
             response, enabled = !state.working, onCall, onConfirm, onDecline, onDonated, onReportPerson, onBlockPerson,
-            modifier = if (response.donorUid == waiting?.donorUid) Modifier.bringIntoViewRequester(waitingView) else Modifier,
+            modifier = if (response.donorUid == target?.donorUid) Modifier.bringIntoViewRequester(targetView) else Modifier,
         )
     }
     // FLOW-06 part 1: don't only wait for offers; ask listed donors near the hospital directly.
