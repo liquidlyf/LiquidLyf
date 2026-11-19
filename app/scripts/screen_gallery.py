@@ -100,7 +100,14 @@ def run_gallery(args) -> None:
                 print((stack[0] if stack else out)[-3000:], flush=True)
     finally:
         for (ns, key), value in saved.items():
-            shell(f"settings delete {ns} {key}" if value == "null" else f"settings put {ns} {key} {value}", check=False)
+            if value == "null":
+                # Unset before: put the default (1, for these scales) first, then delete. A delete alone
+                # leaves Android 11's window manager on the 0 it last read, so every app's view animations
+                # stay off until a restart, though the setting reads unset (D25, A46: 20 Nov 2026).
+                shell(f"settings put {ns} {key} 1", check=False)
+                shell(f"settings delete {ns} {key}", check=False)
+            else:
+                shell(f"settings put {ns} {key} {value}", check=False)
         for _ in range(5 if zen == "0" else 0):  # only if this script turned it on; once it didn't take at the first try
             shell("cmd notification set_dnd off", check=False)
             time.sleep(1)
