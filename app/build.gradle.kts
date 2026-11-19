@@ -167,6 +167,12 @@ android {
         // Digital Asset Links share saved passwords between the app and a website login.
         // liquidlyf.github.io has no login, and saving passwords in the app works without them.
         disable += "CredManMissingDal"
+        // Phase 9.5. Dependabot (.github/dependabot.yml) proposes every dependency update as a
+        // pull request, with CI; lint repeating it on every build adds nothing.
+        disable += "NewerVersionAvailable"
+        // targetSdk stays 36 until the app is tested on Android 17 (API 37): raising it turns on
+        // that version's behaviour changes. compileSdk is 37 already. Raise it with a device test.
+        disable += "OldTargetApi"
     }
 
     testOptions {
