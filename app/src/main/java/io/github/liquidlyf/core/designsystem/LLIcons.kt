@@ -48,6 +48,9 @@ object LLIcons {
     // Request and offer status
     val HourglassTop = R.drawable.ic_hourglass_top
     val CheckCircle = R.drawable.ic_check_circle
+
+    /** A rule not met yet (D24: "○ At least 8 characters"); [CheckCircle] once it is. */
+    val Circle = R.drawable.ic_circle
     val Cancel = R.drawable.ic_cancel
     val History = R.drawable.ic_history
     val Block = R.drawable.ic_block

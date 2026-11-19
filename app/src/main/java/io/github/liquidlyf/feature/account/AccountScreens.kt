@@ -48,11 +48,14 @@ import io.github.liquidlyf.core.designsystem.components.LLNoticeCard
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
+import io.github.liquidlyf.core.designsystem.components.NewPasswordField
+import io.github.liquidlyf.core.designsystem.components.RetypePasswordField
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
 import io.github.liquidlyf.core.designsystem.components.errorAnchor
 import io.github.liquidlyf.core.designsystem.components.rememberErrorAnchors
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.designsystem.screenGutter
+import io.github.liquidlyf.core.domain.FieldCheck
 import io.github.liquidlyf.core.model.Gender
 import io.github.liquidlyf.feature.auth.AuthLayout
 import io.github.liquidlyf.feature.auth.FormError
@@ -61,9 +64,19 @@ import io.github.liquidlyf.feature.profilesetup.AreaPickers
 
 // ---- Change password ----
 
+private enum class ChangePasswordField { CURRENT, NEW, NEW_AGAIN }
+
 @Composable
 fun ChangePasswordRoute(onDone: () -> Unit, viewModel: ChangePasswordViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // D24: a failed Save brings the first red box into view.
+    val anchors = rememberErrorAnchors<ChangePasswordField>()
+    val errors = buildSet {
+        if (state.currentError != null) add(ChangePasswordField.CURRENT)
+        if (state.newError != null || state.newPassword.valueCheck == FieldCheck.ERROR) add(ChangePasswordField.NEW)
+        if (state.newPassword.againCheck == FieldCheck.ERROR) add(ChangePasswordField.NEW_AGAIN)
+    }
+    ShowFirstErrorOnAttempt(anchors, state.errorAttempt, errors, ChangePasswordField.entries)
     val snackbar = LocalSnackbarHostState.current
     val doneText = stringResource(R.string.password_changed)
     LaunchedEffect(state.done) {
@@ -87,6 +100,7 @@ fun ChangePasswordRoute(onDone: () -> Unit, viewModel: ChangePasswordViewModel =
             isPassword = true,
             contentType = ContentType.Password,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+            fieldModifier = Modifier.errorAnchor(anchors, ChangePasswordField.CURRENT, textField = true),
         )
         // Low 25: forgot the current one? The reset link goes to this account's email.
         val sentTo = state.resetSentTo
@@ -95,15 +109,21 @@ fun ChangePasswordRoute(onDone: () -> Unit, viewModel: ChangePasswordViewModel =
         } else {
             LLNoticeCard(stringResource(R.string.reset_link_sent_to, sentTo), LLIcons.CheckCircle)
         }
-        LLTextField(
-            value = state.new,
+        // D24: typed twice; Next goes to the second box.
+        NewPasswordField(
+            password = state.newPassword,
             onValueChange = viewModel::onNewChange,
+            onFocusChange = viewModel::onNewFocus,
             label = stringResource(R.string.label_new_password),
-            supportingText = stringResource(R.string.password_hint),
             errorText = state.newError?.let { stringResource(it) },
-            isPassword = true,
-            contentType = ContentType.NewPassword,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+            fieldModifier = Modifier.errorAnchor(anchors, ChangePasswordField.NEW, textField = true),
+        )
+        RetypePasswordField(
+            password = state.newPassword,
+            onValueChange = viewModel::onNewAgainChange,
+            onFocusChange = viewModel::onNewAgainFocus,
+            label = stringResource(R.string.label_confirm_new_password),
+            fieldModifier = Modifier.errorAnchor(anchors, ChangePasswordField.NEW_AGAIN, textField = true),
         )
         FormError(state.formError)
     }

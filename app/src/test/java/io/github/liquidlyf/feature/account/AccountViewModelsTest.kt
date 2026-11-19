@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import io.github.liquidlyf.core.domain.FieldCheck
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -60,9 +61,15 @@ class AccountViewModelsTest {
         vm.onCurrentChange("wrong")
         vm.onNewChange("short")
         vm.save()
-        assertEquals(R.string.error_password_short, vm.uiState.value.newError)
+        assertEquals(FieldCheck.ERROR, vm.uiState.value.newPassword.valueCheck) // "Use at least 8 characters."
 
+        // D24: typed once isn't enough; the second box turns red.
         vm.onNewChange("a-new-password")
+        vm.save()
+        assertEquals(FieldCheck.ERROR, vm.uiState.value.newPassword.againCheck)
+        assertEquals(2, vm.uiState.value.errorAttempt)
+        vm.onNewAgainChange("a-new-password")
+        assertEquals(FieldCheck.OK, vm.uiState.value.newPassword.againCheck)
         vm.save()
         advanceUntilIdle()
         assertEquals(R.string.error_invalid_credentials, vm.uiState.value.currentError)

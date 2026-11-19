@@ -159,6 +159,8 @@ class SignUpToHomeTest {
         type(R.string.label_full_name, "Test Donor")
         type(R.string.label_email, email)
         type(R.string.label_password, "long-enough-1")
+        type(R.string.label_confirm_password, "long-enough-1") // D24: typed twice
+        waitFor(str(R.string.passwords_match))
         compose.onNode(hasText(str(R.string.sign_up_consent)) and hasClickAction()).performClick()
         tap(R.string.action_create_account)
 

@@ -198,7 +198,9 @@
     <string name="error_name_invalid">Enter your name (2 to 60 characters).</string>
     <string name="error_contact_name_invalid">Enter the contact person\'s name (2 to 60 characters).</string>
     <string name="error_password_short">Use at least 8 characters.</string>
-    <string name="password_hint">At least 8 characters. A longer password is stronger.</string>
+    <!-- D24: the new password's rule under its box ("○ At least 8 characters"), then the second line. -->
+    <string name="password_rule">At least 8 characters</string>
+    <string name="password_longer">A longer password is stronger.</string>
     <string name="sign_up_consent">I am 18 or older, and I agree to the Terms and the Privacy Policy</string>
     <string name="error_consent_required">Please confirm you are 18 or older and agree to the Terms.</string>
     <string name="action_read_terms">Read the Terms</string>
@@ -309,7 +311,10 @@
     <string name="settings_add_password_summary">Also sign in with your email and a password</string>
     <string name="add_password_body">Add a password to sign in with %1$s and that password too, for example on a phone without your Google account. Google will ask you to confirm it\'s you first.</string>
     <string name="label_confirm_password">Type the password again</string>
-    <string name="error_passwords_differ">The two passwords don\'t match.</string>
+    <!-- D24: Change password and Add a password, where the box above is "New password". -->
+    <string name="label_confirm_new_password">Type the new password again</string>
+    <string name="passwords_match">Passwords match</string>
+    <string name="error_passwords_differ">Passwords don\'t match. Tap the eye to see what you typed.</string>
     <string name="action_add_password">Confirm with Google and add</string>
     <string name="add_password_done">Password added. You can sign in with Google, or with %1$s and this password.</string>
     <string name="add_password_wrong_account">That\'s a different Google account. Pick the one you signed in with.</string>

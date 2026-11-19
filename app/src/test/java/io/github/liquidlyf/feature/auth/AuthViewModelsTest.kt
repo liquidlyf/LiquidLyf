@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import io.github.liquidlyf.core.domain.FieldCheck
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -135,7 +136,7 @@ class AuthViewModelsTest {
         val s = vm.uiState.value
         assertEquals(R.string.error_name_invalid, s.nameError)
         assertEquals(R.string.error_invalid_email, s.emailError)
-        assertEquals(R.string.error_password_short, s.passwordError)
+        assertEquals(FieldCheck.ERROR, s.password.valueCheck) // "Use at least 8 characters."
         assertEquals(R.string.error_consent_required, s.consentError)
         assertFalse(s.consent)
         assertTrue(auth.accounts.isEmpty())
@@ -147,6 +148,7 @@ class AuthViewModelsTest {
         vm.onNameChange("  Rahim   Uddin ")
         vm.onEmailChange("rahim@example.test")
         vm.onPasswordChange("long-enough")
+        vm.onPasswordAgainChange("long-enough")
         vm.onConsentChange(true)
         vm.signUp()
         advanceUntilIdle()
@@ -171,12 +173,52 @@ class AuthViewModelsTest {
     }
 
     @Test
+    fun `Create account needs the same password twice, and shows red under the second box (D24)`() = test {
+        val vm = SignUpViewModel(auth)
+        vm.onNameChange("Rahim Uddin")
+        vm.onEmailChange("rahim@example.test")
+        vm.onPasswordChange("long-enough")
+        vm.onPasswordAgainChange("long-enougH")
+        vm.onConsentChange(true)
+        assertEquals(FieldCheck.ERROR, vm.uiState.value.password.againCheck) // a wrong letter: at once
+        vm.onPasswordAgainChange("long-enoug")
+        vm.onPasswordAgainFocus(true)
+        assertEquals(FieldCheck.NONE, vm.uiState.value.password.againCheck) // a correct start, still typing
+        vm.signUp()
+        advanceUntilIdle()
+        assertTrue(auth.accounts.isEmpty())
+        assertEquals(FieldCheck.ERROR, vm.uiState.value.password.againCheck) // the button: red until they match
+        assertEquals(1, vm.uiState.value.errorAttempt)
+
+        vm.onPasswordAgainChange("long-enough")
+        assertEquals(FieldCheck.OK, vm.uiState.value.password.againCheck)
+        vm.signUp()
+        advanceUntilIdle()
+        assertEquals("Rahim Uddin", auth.accounts.getValue("rahim@example.test").name)
+    }
+
+    @Test
+    fun `leaving the password box short says so at once, never while typing (D24)`() = test {
+        val vm = SignUpViewModel(auth)
+        vm.onPasswordFocus(true)
+        vm.onPasswordChange("rokto")
+        assertEquals(FieldCheck.NONE, vm.uiState.value.password.valueCheck)
+        assertEquals(5, vm.uiState.value.password.count)
+        vm.onPasswordFocus(false)
+        assertEquals(FieldCheck.ERROR, vm.uiState.value.password.valueCheck)
+        vm.onPasswordFocus(true)
+        vm.onPasswordChange("rokto202")
+        assertEquals(FieldCheck.OK, vm.uiState.value.password.valueCheck)
+    }
+
+    @Test
     fun `an email that's taken shows under the email field`() = test {
         auth.accounts["rahim@example.test"] = FakeAuthRepository.Account("u1", "x", "R", verified = true)
         val vm = SignUpViewModel(auth)
         vm.onNameChange("Rahim")
         vm.onEmailChange("rahim@example.test")
         vm.onPasswordChange("long-enough")
+        vm.onPasswordAgainChange("long-enough")
         vm.onConsentChange(true)
         vm.signUp()
         advanceUntilIdle()

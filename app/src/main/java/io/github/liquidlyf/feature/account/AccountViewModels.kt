@@ -14,6 +14,7 @@ import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.birthYearErrorRes
+import io.github.liquidlyf.core.domain.NewPassword
 import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.model.Area
 import io.github.liquidlyf.core.model.BloodGroup
@@ -34,14 +35,18 @@ import javax.inject.Inject
 
 data class ChangePasswordUiState(
     val current: String = "",
-    val new: String = "",
+    /** D24: typed twice; it decides when each box is grey, green or red. */
+    val newPassword: NewPassword = NewPassword(),
     @StringRes val currentError: Int? = null,
+    /** Firebase's own "weak password"; the 8-character rule is [newPassword]'s. */
     @StringRes val newError: Int? = null,
     @StringRes val formError: Int? = null,
     val saving: Boolean = false,
     val done: Boolean = false,
     /** Low 25: where "Forgot your password?" sent the reset link. */
     val resetSentTo: String? = null,
+    /** Counts failed taps on Save: the screen brings the first red box into view. */
+    val errorAttempt: Int = 0,
 )
 
 /** Re-authenticate with the current password, then set the new one. Hidden for Google-only accounts. */
@@ -52,7 +57,13 @@ class ChangePasswordViewModel @Inject constructor(private val auth: AuthReposito
 
     fun onCurrentChange(v: String) = state.update { it.copy(current = v, currentError = null, formError = null) }
 
-    fun onNewChange(v: String) = state.update { it.copy(new = v, newError = null, formError = null) }
+    fun onNewChange(v: String) = state.update { it.copy(newPassword = it.newPassword.type(v), newError = null, formError = null) }
+
+    fun onNewAgainChange(v: String) = state.update { it.copy(newPassword = it.newPassword.typeAgain(v), formError = null) }
+
+    fun onNewFocus(focused: Boolean) = state.update { it.copy(newPassword = it.newPassword.focusValue(focused)) }
+
+    fun onNewAgainFocus(focused: Boolean) = state.update { it.copy(newPassword = it.newPassword.focusAgain(focused)) }
 
     /** Low 25: forgot the current password: the reset link to this account's email. */
     fun sendReset() {
@@ -71,9 +82,8 @@ class ChangePasswordViewModel @Inject constructor(private val auth: AuthReposito
         val s = state.value
         if (s.saving) return
         val currentError = if (s.current.isEmpty()) R.string.error_password_required else null
-        val newError = if (s.new.length < Validators.PASSWORD_MIN) R.string.error_password_short else null
-        if (currentError != null || newError != null) {
-            state.update { it.copy(currentError = currentError, newError = newError) }
+        if (currentError != null || !s.newPassword.isValid) {
+            state.update { it.copy(currentError = currentError, newPassword = it.newPassword.check(), errorAttempt = it.errorAttempt + 1) }
             return
         }
         state.update { it.copy(saving = true, formError = null) }
@@ -89,8 +99,8 @@ class ChangePasswordViewModel @Inject constructor(private val auth: AuthReposito
                 }
                 return@launch
             }
-            when (val result = auth.changePassword(s.new)) {
-                is AppResult.Success -> state.update { it.copy(saving = false, done = true, current = "", new = "") }
+            when (val result = auth.changePassword(s.newPassword.value)) {
+                is AppResult.Success -> state.update { it.copy(saving = false, done = true, current = "", newPassword = NewPassword()) }
                 is AppResult.Failure -> state.update {
                     if (result.error == AppError.WeakPassword) {
                         it.copy(saving = false, newError = result.error.messageRes)

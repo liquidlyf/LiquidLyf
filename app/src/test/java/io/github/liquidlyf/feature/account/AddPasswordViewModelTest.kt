@@ -2,6 +2,7 @@ package io.github.liquidlyf.feature.account
 
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.auth.GoogleSignInResult
+import io.github.liquidlyf.core.domain.FieldCheck
 import io.github.liquidlyf.testing.FakeAuthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,14 +43,18 @@ class AddPasswordViewModelTest {
         assertEquals("google-tok@example.test", vm.uiState.value.email)
         vm.onPassword("short")
         assertFalse(vm.readyToConfirm())
-        assertEquals(R.string.error_password_short, vm.uiState.value.passwordError)
+        assertEquals(FieldCheck.ERROR, vm.uiState.value.password.valueCheck) // "Use at least 8 characters."
 
+        // D24 (pick 4): live, like Create account. A wrong letter is red at once.
         vm.onPassword("long enough pw")
+        vm.onConfirmFocus(true)
         vm.onConfirm("long enough pv")
+        assertEquals(FieldCheck.ERROR, vm.uiState.value.password.againCheck)
         assertFalse(vm.readyToConfirm())
-        assertEquals(R.string.error_passwords_differ, vm.uiState.value.confirmError)
+        assertEquals(2, vm.uiState.value.errorAttempt)
 
         vm.onConfirm("long enough pw")
+        assertEquals(FieldCheck.OK, vm.uiState.value.password.againCheck)
         assertTrue(vm.readyToConfirm())
         assertTrue(vm.uiState.value.working)
         assertFalse("no second sheet while one is open", vm.readyToConfirm())

@@ -502,7 +502,10 @@ class AccessibilityLabelsTest {
     fun addAPassword() {
         show {
             io.github.liquidlyf.feature.account.AddPasswordScreen(
-                io.github.liquidlyf.feature.account.AddPasswordUiState(email = "someone@gmail.com", confirmError = R.string.error_passwords_differ),
+                io.github.liquidlyf.feature.account.AddPasswordUiState(
+                    email = "someone@gmail.com",
+                    password = io.github.liquidlyf.core.domain.NewPassword("rokto2026").focusAgain(true).typeAgain("rokto2O"),
+                ),
                 onPassword = {}, onConfirm = {}, onAdd = {}, onBack = {},
             )
         }

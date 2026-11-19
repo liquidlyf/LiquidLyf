@@ -74,6 +74,7 @@ import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.SnackbarClearance
 import io.github.liquidlyf.core.designsystem.components.SuccessVisuals
 import io.github.liquidlyf.core.designsystem.currentAppLocale
+import io.github.liquidlyf.core.domain.NewPassword
 import io.github.liquidlyf.core.domain.BadgeCalculator
 import io.github.liquidlyf.core.domain.EligibilityCalculator
 import io.github.liquidlyf.core.model.AppLocale
@@ -492,6 +493,26 @@ class ScreenGalleryTest {
     private val requesterProfile = TestData.profile(uid = "requester-1").copy(fullName = "Karim Hossain", email = "karim@example.test")
     private val hospital = "Dhaka Medical College Hospital"
 
+    /** D24's test password (as in D's picture) typed twice. */
+    private val matched = NewPassword("rokto2026", "rokto2026")
+
+    /** D24: the password states D checks, besides empty and the button's errors. */
+    private val passwordStates = listOf(
+        "short" to NewPassword("rokto"), // typing: grey, 5/8
+        "short-left" to NewPassword("rokto").focusValue(false), // left with 5: red, 5/8
+        "typing-again" to NewPassword("rokto2026").focusAgain(true).typeAgain("rokto"), // a correct start: no colour
+        "match" to matched,
+        "no-match" to NewPassword("rokto2026").focusAgain(true).typeAgain("rokto2O"), // a wrong letter: red at once
+    )
+
+    /** Change password's view model, typed into the way [target] was made. */
+    private fun ChangePasswordViewModel.typeTo(target: NewPassword) {
+        onNewChange(target.value)
+        if (target.shortShown) { onNewFocus(true); onNewFocus(false) }
+        onNewAgainFocus(target.typingAgain)
+        if (target.again.isNotEmpty()) onNewAgainChange(target.again)
+    }
+
     private fun eligibility(p: UserProfile) = EligibilityCalculator().evaluate(p, now)
 
     private val feed: List<BloodRequest> = listOf(
@@ -594,20 +615,26 @@ class ScreenGalleryTest {
             Shot("sign-up-empty") { SignUpScreen(SignUpUiState(), {}, {}, {}, {}, {}, {}, onContinueWithGoogle = {}) },
             Shot("sign-up-errors") {
                 SignUpScreen(
-                    SignUpUiState(name = "N", email = "nusrat@", password = "12", nameError = R.string.error_name_invalid, emailError = R.string.error_invalid_email,
-                        passwordError = R.string.error_password_short, consentError = R.string.error_consent_required),
+                    SignUpUiState(name = "N", email = "nusrat@", password = NewPassword("12").check(), nameError = R.string.error_name_invalid, emailError = R.string.error_invalid_email,
+                        consentError = R.string.error_consent_required),
                     {}, {}, {}, {}, {}, {}, onContinueWithGoogle = {},
                 )
             },
             Shot("sign-up-email-in-use") {
                 // As SignUpViewModel shows it: on the email field (FORM-04), with Sign in next to it.
-                SignUpScreen(SignUpUiState(name = "Nusrat Jahan", email = "nusrat@example.test", password = "secret12", consent = true, emailError = AppError.EmailInUse.messageRes),
+                SignUpScreen(SignUpUiState(name = "Nusrat Jahan", email = "nusrat@example.test", password = matched, consent = true, emailError = AppError.EmailInUse.messageRes),
                     {}, {}, {}, {}, {}, {}, onContinueWithGoogle = {})
             },
-            // VT-13: Done on the password closes the keyboard and shows the 18+ box.
+            // VT-13: Done on the second password box closes the keyboard and shows the 18+ box.
             Shot("sign-up-password-done", prepare = { doneOnLastField() }) {
-                SignUpScreen(SignUpUiState(name = "Nusrat Jahan", email = "nusrat@example.test", password = "secret12"), {}, {}, {}, {}, {}, {}, onContinueWithGoogle = {})
+                SignUpScreen(SignUpUiState(name = "Nusrat Jahan", email = "nusrat@example.test", password = matched), {}, {}, {}, {}, {}, {}, onContinueWithGoogle = {})
             },
+            // D24: the two password boxes while typing, as NewPassword decides them.
+            *passwordStates.map { (state, password) ->
+                Shot("sign-up-password-$state") {
+                    SignUpScreen(SignUpUiState(name = "Nusrat Jahan", email = "nusrat@example.test", password = password), {}, {}, {}, {}, {}, {}, onContinueWithGoogle = {})
+                }
+            }.toTypedArray(),
             Shot("verify-email-wait") { VerifyEmailScreen(VerifyEmailUiState(email = "nusrat@example.test", sender = SENDER, resendIn = 42), {}, {}, {}) },
             Shot("verify-email-can-resend") { VerifyEmailScreen(VerifyEmailUiState(email = "nusrat@example.test", sender = SENDER, resendIn = 0), {}, {}, {}) },
             Shot("forgot-password-empty") { ForgotPasswordScreen(ForgotPasswordUiState(sender = SENDER), {}, {}, {}) },
@@ -1115,13 +1142,26 @@ class ScreenGalleryTest {
                 LaunchedEffect(vm) { vm.onNewChange("123"); vm.save() }
                 ChangePasswordRoute(onDone = {}, viewModel = vm)
             },
+            // D24: the view model's own steps to each state, as typing makes them.
+            *passwordStates.map { (state, password) ->
+                Shot("change-password-$state") {
+                    val vm = remember { ChangePasswordViewModel(signedIn()) }
+                    LaunchedEffect(vm) { vm.typeTo(password) }
+                    ChangePasswordRoute(onDone = {}, viewModel = vm)
+                }
+            }.toTypedArray(),
             Shot("add-password") { AddPasswordScreen(AddPasswordUiState(email = "nusrat@gmail.example"), onPassword = {}, onConfirm = {}, onAdd = {}, onBack = {}) },
             Shot("add-password-errors") {
                 AddPasswordScreen(
-                    AddPasswordUiState(email = "nusrat@gmail.example", password = "123", confirm = "1234", passwordError = R.string.error_password_short, confirmError = R.string.error_passwords_differ),
+                    AddPasswordUiState(email = "nusrat@gmail.example", password = NewPassword("123", "1234").check()),
                     onPassword = {}, onConfirm = {}, onAdd = {}, onBack = {},
                 )
             },
+            *passwordStates.map { (state, password) ->
+                Shot("add-password-$state") {
+                    AddPasswordScreen(AddPasswordUiState(email = "nusrat@gmail.example", password = password), onPassword = {}, onConfirm = {}, onAdd = {}, onBack = {})
+                }
+            }.toTypedArray(),
             Shot("delete-account") {
                 DeleteAccountRoute(onBack = {}, viewModel = remember { DeleteAccountViewModel(signedIn(), FakeAccountDeleter(), ready(me)) })
             },

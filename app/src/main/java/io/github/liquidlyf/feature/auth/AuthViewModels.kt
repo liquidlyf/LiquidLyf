@@ -8,6 +8,7 @@ import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.auth.AuthRepository
 import io.github.liquidlyf.core.data.auth.GoogleSignInResult
 import io.github.liquidlyf.core.data.session.SessionManager
+import io.github.liquidlyf.core.domain.NewPassword
 import io.github.liquidlyf.core.domain.Validators
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
@@ -124,11 +125,13 @@ class SignInViewModel @Inject constructor(private val auth: AuthRepository) : Vi
 data class SignUpUiState(
     val name: String = "",
     val email: String = "",
-    val password: String = "",
+    /** D24: typed twice; it decides when each box is grey, green or red. */
+    val password: NewPassword = NewPassword(),
     /** 18+ and Terms: required, and never ticked for the user (doc 09 Phase 3.5). */
     val consent: Boolean = false,
     @StringRes val nameError: Int? = null,
     @StringRes val emailError: Int? = null,
+    /** Firebase's own "weak password"; the 8-character rule is [password]'s. */
     @StringRes val passwordError: Int? = null,
     @StringRes val consentError: Int? = null,
     @StringRes val formError: Int? = null,
@@ -146,7 +149,13 @@ class SignUpViewModel @Inject constructor(private val auth: AuthRepository) : Vi
 
     fun onEmailChange(value: String) = state.update { it.copy(email = value, emailError = null, formError = null) }
 
-    fun onPasswordChange(value: String) = state.update { it.copy(password = value, passwordError = null, formError = null) }
+    fun onPasswordChange(value: String) = state.update { it.copy(password = it.password.type(value), passwordError = null, formError = null) }
+
+    fun onPasswordAgainChange(value: String) = state.update { it.copy(password = it.password.typeAgain(value), formError = null) }
+
+    fun onPasswordFocus(focused: Boolean) = state.update { it.copy(password = it.password.focusValue(focused)) }
+
+    fun onPasswordAgainFocus(focused: Boolean) = state.update { it.copy(password = it.password.focusAgain(focused)) }
 
     fun onConsentChange(value: Boolean) = state.update { it.copy(consent = value, consentError = null) }
 
@@ -156,16 +165,16 @@ class SignUpViewModel @Inject constructor(private val auth: AuthRepository) : Vi
         val errors = s.copy(
             nameError = if (Validators.isValidName(s.name)) null else R.string.error_name_invalid,
             emailError = emailError(s.email),
-            passwordError = if (s.password.length >= Validators.PASSWORD_MIN) null else R.string.error_password_short,
+            password = s.password.check(),
             consentError = if (s.consent) null else R.string.error_consent_required,
         )
-        if (listOf(errors.nameError, errors.emailError, errors.passwordError, errors.consentError).any { it != null }) {
+        if (listOf(errors.nameError, errors.emailError, errors.passwordError, errors.consentError).any { it != null } || !s.password.isValid) {
             state.value = errors.copy(errorAttempt = s.errorAttempt + 1)
             return
         }
         state.update { it.copy(loading = true, formError = null) }
         viewModelScope.launch {
-            when (val result = auth.signUpEmail(Validators.normalizeName(s.name), s.email, s.password)) {
+            when (val result = auth.signUpEmail(Validators.normalizeName(s.name), s.email, s.password.value)) {
                 is AppResult.Success -> Unit // the gate moves on; Autofill offers to save the password
                 is AppResult.Failure -> state.update {
                     when (result.error) {

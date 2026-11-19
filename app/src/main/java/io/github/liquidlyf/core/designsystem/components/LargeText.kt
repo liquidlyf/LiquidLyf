@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Density
+import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
 
 /*
@@ -42,14 +43,18 @@ const val MAX_LABEL_SCALE = 1.5f
  * A field's label above its box, used with large text instead of Material's label on the box's
  * border (A11Y-03, FORM-01: at 200% a two-line label like "Notes for donors (optional)" rose out
  * of the box and over the field above it). TalkBack hears it on the field itself, so this copy is
- * hidden from it.
+ * hidden from it. It turns red or (D24) green with its box.
  */
 @Composable
-internal fun FieldLabelAbove(label: String, isError: Boolean = false) {
+internal fun FieldLabelAbove(label: String, isError: Boolean = false, isOk: Boolean = false) {
     Text(
         label,
         style = MaterialTheme.typography.labelLarge,
-        color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        color = when {
+            isError -> MaterialTheme.colorScheme.error
+            isOk -> LiquidLyfTheme.extendedColors.success
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
         modifier = Modifier
             .padding(bottom = Spacing.xxs)
             .clearAndSetSemantics { },

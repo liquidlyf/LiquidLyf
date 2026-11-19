@@ -70,6 +70,7 @@ import io.github.liquidlyf.core.data.auth.GoogleSignInResult
 import io.github.liquidlyf.core.data.auth.googleWebClientId
 import io.github.liquidlyf.core.data.auth.requestGoogleIdToken
 import io.github.liquidlyf.core.data.settings.AppLanguage
+import io.github.liquidlyf.core.domain.FieldCheck
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.ButtonLabel
@@ -78,6 +79,8 @@ import io.github.liquidlyf.core.designsystem.components.EmptyState
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
 import io.github.liquidlyf.core.designsystem.components.LLTextField
+import io.github.liquidlyf.core.designsystem.components.NewPasswordField
+import io.github.liquidlyf.core.designsystem.components.RetypePasswordField
 import io.github.liquidlyf.core.designsystem.components.LLTopBar
 import io.github.liquidlyf.core.designsystem.components.LocalSnackbarHostState
 import io.github.liquidlyf.core.designsystem.components.ShowFirstErrorOnAttempt
@@ -301,7 +304,7 @@ fun SignInScreen(
 // ---- Sign up ----
 
 /** Sign up's fields in screen order, for FLOW-04. */
-private enum class SignUpField { NAME, EMAIL, PASSWORD, CONSENT }
+private enum class SignUpField { NAME, EMAIL, PASSWORD, PASSWORD_AGAIN, CONSENT }
 
 @Composable
 fun SignUpRoute(
@@ -327,6 +330,9 @@ fun SignUpRoute(
         onContinueWithGoogle = rememberContinueWithGoogle(viewModel::onGoogleStarted, viewModel::onGoogleResult),
         onLanguageChange = language::set,
         onSignInWithEmail = { onSignInWithEmail(state.email.trim()) },
+        onPasswordAgainChange = viewModel::onPasswordAgainChange,
+        onPasswordFocus = viewModel::onPasswordFocus,
+        onPasswordAgainFocus = viewModel::onPasswordAgainFocus,
     )
 }
 
@@ -343,6 +349,9 @@ fun SignUpScreen(
     onContinueWithGoogle: (() -> Unit)? = null,
     onLanguageChange: (AppLanguage) -> Unit = {},
     onSignInWithEmail: () -> Unit = onBack,
+    onPasswordAgainChange: (String) -> Unit = {},
+    onPasswordFocus: (Boolean) -> Unit = {},
+    onPasswordAgainFocus: (Boolean) -> Unit = {},
 ) {
     val links = rememberSafeIntentLauncher()
     val locale = currentAppLocale()
@@ -351,7 +360,8 @@ fun SignUpScreen(
     val errors = buildSet {
         if (state.nameError != null) add(SignUpField.NAME)
         if (state.emailError != null) add(SignUpField.EMAIL)
-        if (state.passwordError != null) add(SignUpField.PASSWORD)
+        if (state.passwordError != null || state.password.valueCheck == FieldCheck.ERROR) add(SignUpField.PASSWORD)
+        if (state.password.againCheck == FieldCheck.ERROR) add(SignUpField.PASSWORD_AGAIN)
         if (state.consentError != null) add(SignUpField.CONSENT)
     }
     ShowFirstErrorOnAttempt(anchors, state.errorAttempt, errors, SignUpField.entries)
@@ -394,18 +404,24 @@ fun SignUpScreen(
             fieldModifier = Modifier.errorAnchor(anchors, SignUpField.EMAIL, textField = true),
         )
         // FORM-04 and Low 6: "Sign in instead" is the bar's main button while the email is in use.
-        LLTextField(
-            value = state.password,
+        // D24: typed twice; Next goes to the second box.
+        NewPasswordField(
+            password = state.password,
             onValueChange = onPasswordChange,
+            onFocusChange = onPasswordFocus,
             label = stringResource(R.string.label_password),
-            supportingText = stringResource(R.string.password_hint),
             errorText = state.passwordError?.let { stringResource(it) },
             enabled = !state.loading,
-            isPassword = true,
-            contentType = ContentType.NewPassword,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-            keyboardActions = keyboardDoneShows(anchors, SignUpField.CONSENT), // VT-13: then the 18+ box
             fieldModifier = Modifier.errorAnchor(anchors, SignUpField.PASSWORD, textField = true),
+        )
+        RetypePasswordField(
+            password = state.password,
+            onValueChange = onPasswordAgainChange,
+            onFocusChange = onPasswordAgainFocus,
+            label = stringResource(R.string.label_confirm_password),
+            enabled = !state.loading,
+            keyboardActions = keyboardDoneShows(anchors, SignUpField.CONSENT), // VT-13: then the 18+ box
+            fieldModifier = Modifier.errorAnchor(anchors, SignUpField.PASSWORD_AGAIN, textField = true),
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,

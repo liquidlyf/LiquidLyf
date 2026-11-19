@@ -77,7 +77,8 @@
     <string name="error_name_invalid">আপনার নাম দিন (২ থেকে ৬০ অক্ষর)।</string>
     <string name="error_contact_name_invalid">যাঁর সঙ্গে যোগাযোগ করতে হবে, তাঁর নাম দিন (২ থেকে ৬০ অক্ষর)।</string>
     <string name="error_password_short">অন্তত ৮ অক্ষর দিন।</string>
-    <string name="password_hint">অন্তত ৮ অক্ষর। লম্বা পাসওয়ার্ড বেশি নিরাপদ।</string>
+    <string name="password_rule">অন্তত ৮ অক্ষর</string>
+    <string name="password_longer">লম্বা পাসওয়ার্ড বেশি নিরাপদ।</string>
     <string name="sign_up_consent">আমার বয়স ১৮ বা তার বেশি, এবং আমি শর্তাবলি ও গোপনীয়তা নীতিতে সম্মত</string>
     <string name="error_consent_required">আপনার বয়স ১৮ বা তার বেশি এবং আপনি শর্তাবলিতে সম্মত, তা নিশ্চিত করুন।</string>
     <string name="action_read_terms">শর্তাবলি পড়ুন</string>
@@ -204,7 +205,9 @@
     <string name="settings_add_password_summary">ইমেইল ও পাসওয়ার্ড দিয়েও সাইন ইন করুন</string>
     <string name="add_password_body">একটি পাসওয়ার্ড যোগ করলে %1$s ও সেই পাসওয়ার্ড দিয়েও সাইন ইন করতে পারবেন, যেমন যে ফোনে আপনার Google অ্যাকাউন্ট নেই সেখানে। প্রথমে Google আপনাকে নিশ্চিত করতে বলবে যে এটা আপনিই।</string>
     <string name="label_confirm_password">পাসওয়ার্ডটি আবার লিখুন</string>
-    <string name="error_passwords_differ">দুটি পাসওয়ার্ড মেলেনি।</string>
+    <string name="label_confirm_new_password">নতুন পাসওয়ার্ডটি আবার লিখুন</string>
+    <string name="passwords_match">পাসওয়ার্ড মিলেছে</string>
+    <string name="error_passwords_differ">পাসওয়ার্ড মেলেনি। যা লিখেছেন তা দেখতে চোখের চিহ্নে চাপুন।</string>
     <string name="action_add_password">Google দিয়ে নিশ্চিত করে যোগ করুন</string>
     <string name="add_password_done">পাসওয়ার্ড যোগ হয়েছে। এখন Google দিয়ে, অথবা %1$s ও এই পাসওয়ার্ড দিয়ে সাইন ইন করতে পারবেন।</string>
     <string name="add_password_wrong_account">এটি অন্য একটি Google অ্যাকাউন্ট। যেটি দিয়ে সাইন ইন করেছেন সেটি বেছে নিন।</string>
