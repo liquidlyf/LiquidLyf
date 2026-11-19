@@ -289,6 +289,38 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `on a phone whose clock runs fast, a push read in the inbox doesn't keep the bell lit (A43)`() = runTest(dispatcher) {
+        // The phone's clock is 5 minutes ahead of the server's. The offer's push came 10 s before the visit.
+        val fast = Duration.ofMinutes(5)
+        alerts.recordPersonal(TestData.NOW.plus(fast).minusSeconds(10).toEpochMilli())
+        alerts.recordShown(LocalAlert("area-1", stillNeeded = false, receivedAtMillis = TestData.NOW.plus(fast).minusSeconds(20).toEpochMilli()))
+        // The visit: the server's inboxSeenAt, and this phone's own time of it.
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(inboxSeenAt = TestData.NOW))
+        alerts.recordInboxVisit(TestData.NOW.plus(fast).toEpochMilli())
+        val vm = vm()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.unreadInbox.collect {} }
+        advanceUntilIdle()
+        assertFalse(vm.unreadInbox.value) // by the server's time alone, both looked newer
+
+        // A push after the visit still lights it.
+        alerts.recordPersonal(TestData.NOW.plus(fast).plusSeconds(30).toEpochMilli())
+        advanceUntilIdle()
+        assertTrue(vm.unreadInbox.value)
+    }
+
+    @Test
+    fun `a visit on another phone still counts for this phone's older pushes (A43)`() = runTest(dispatcher) {
+        // This phone's own visit was long ago; the inbox was read later elsewhere (the server's time).
+        alerts.recordInboxVisit(TestData.NOW.minus(Duration.ofHours(2)).toEpochMilli())
+        alerts.recordPersonal(TestData.NOW.minus(Duration.ofHours(1)).toEpochMilli())
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), me.copy(inboxSeenAt = TestData.NOW))
+        val vm = vm()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.unreadInbox.collect {} }
+        advanceUntilIdle()
+        assertFalse(vm.unreadInbox.value)
+    }
+
+    @Test
     fun `a feed listener closed by Firestore shows an empty list instead of crashing`() = runTest(dispatcher) {
         requests.put(TestData.request(id = "r1"))
         val vm = vm()

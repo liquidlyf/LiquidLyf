@@ -16,6 +16,7 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.model.InboxItem
 import io.github.liquidlyf.core.model.InboxType
 import io.github.liquidlyf.core.util.AppResult
+import io.github.liquidlyf.core.util.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -77,10 +78,11 @@ private data class Remote(
 class InboxViewModel @Inject constructor(
     private val session: SessionManager,
     private val inbox: InboxRepository,
-    alerts: AlertStore,
+    private val alerts: AlertStore,
     private val profiles: ProfileRepository,
     private val donations: VerifiedDonationRecorder,
     geoRepository: GeoRepository,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val me = (session.state.value as? SessionState.Ready)?.profile
@@ -134,6 +136,7 @@ class InboxViewModel @Inject constructor(
         val profile = me ?: return
         if (markedSeen) return
         markedSeen = true
+        alerts.recordInboxVisit(clock.now().toEpochMilli()) // A43: for this phone's pushes, by its own clock
         if (profiles.markInboxSeen(profile) is AppResult.Success) session.refresh() // the bell's badge clears
     }
 

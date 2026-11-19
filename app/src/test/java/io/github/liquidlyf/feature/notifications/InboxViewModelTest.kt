@@ -61,7 +61,7 @@ class InboxViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun TestScope.vm() = InboxViewModel(
-        session, inbox, alerts, profiles, VerifiedDonationRecorder(profiles, offers, requests, Clock { TestData.NOW }), geoRepo,
+        session, inbox, alerts, profiles, VerifiedDonationRecorder(profiles, offers, requests, Clock { TestData.NOW }), geoRepo, Clock { TestData.NOW },
     ).also { vm -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} } }
 
     private fun item(id: String, type: InboxType, minutesAgo: Long, requestId: String = "r-$id") =
@@ -81,6 +81,7 @@ class InboxViewModelTest {
         assertEquals(listOf(true, true, false), state.entries!!.map { state.isNew(it) })
         assertTrue(state.endReached)
         assertEquals(1, profiles.inboxSeenMarks)
+        assertEquals(TestData.NOW.toEpochMilli(), alerts.visited.value) // A43: by this phone's clock too
         assertEquals(1, session.refreshes)
 
         vm.loadMore() // nothing more to load, nothing more to mark

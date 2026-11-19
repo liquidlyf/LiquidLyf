@@ -53,6 +53,15 @@ interface AlertStore {
 
     suspend fun recordPersonal(receivedAtMillis: Long)
 
+    /**
+     * A43: when the inbox was last opened, by this phone's clock. Home compares this phone's push
+     * times with the later of this and the server's `inboxSeenAt`: on a phone whose clock runs
+     * fast, a push from just before the visit kept the bell lit after reading it. Null if never.
+     */
+    val inboxVisitedAtMillis: Flow<Long?>
+
+    suspend fun recordInboxVisit(atMillis: Long)
+
     /** Called when I post a request: its alerts are for others. */
     suspend fun rememberMyRequest(requestId: String)
 
@@ -73,6 +82,7 @@ private data class AlertState(
     val shown: Map<String, Int> = emptyMap(),
     val mine: List<String> = emptyList(),
     val personalAtMillis: Long? = null,
+    val inboxVisitAtMillis: Long? = null,
 )
 
 /** One small JSON value in its own DataStore file. */
@@ -109,6 +119,12 @@ class DataStoreAlertStore @Inject constructor(
 
     override suspend fun recordPersonal(receivedAtMillis: Long) = update { s ->
         s.copy(personalAtMillis = maxOf(s.personalAtMillis ?: 0L, receivedAtMillis))
+    }
+
+    override val inboxVisitedAtMillis: Flow<Long?> = dataStore.data.map { decode(it[STATE]).inboxVisitAtMillis }.distinctUntilChanged()
+
+    override suspend fun recordInboxVisit(atMillis: Long) = update { s ->
+        s.copy(inboxVisitAtMillis = maxOf(s.inboxVisitAtMillis ?: 0L, atMillis))
     }
 
     override suspend fun rememberMyRequest(requestId: String) = update { s ->
