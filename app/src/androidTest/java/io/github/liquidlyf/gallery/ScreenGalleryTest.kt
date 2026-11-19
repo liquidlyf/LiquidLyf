@@ -303,7 +303,7 @@ class ScreenGalleryTest {
     /** D25: [screen] under the start logo, as MainActivity draws them, [sinceTapMs] after the tap. */
     @Composable
     private fun StartOver(sinceTapMs: Long, landing: StartScreen?, reduced: Boolean = false, screen: @Composable () -> Unit) {
-        val resources = LocalContext.current.resources
+        val resources = LocalResources.current
         val handoff = remember { StartLogoHandoff() }
         val clock = remember { StartClock(SystemClock.uptimeMillis() - sinceTapMs) }
         val arts = remember { StartLogoArts(resources, clock) }

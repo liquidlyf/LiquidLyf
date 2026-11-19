@@ -11,10 +11,29 @@ import org.junit.Test
 class StartLogoRulesTest {
 
     @Test
-    fun `the maintainer's times - the drop at 1,3 s, the line at 1,5 s, the still picture held at most 1,2 s (A45 b)`() {
+    fun `the maintainer's times - the drop at 1,3 s, the line at 1,5 s (A45 b), the still picture held at most 0,9 s (A46)`() {
         assertEquals(1_300L, StartClock.DROP_MS)
         assertEquals(1_500L, StartClock.LINE_MS)
-        assertEquals(1_200L, StartClock.HOLD_MS)
+        assertEquals(900L, StartClock.HOLD_MS)
+    }
+
+    @Test
+    fun `the render-thread drop and line take the generated delay nearest the one wanted`() {
+        val drop = listOf(0, 200, 400)
+        assertEquals(400, StartViews.nearest(1_300L - 900L, drop)) // drawn at the hold's end
+        assertEquals(200, StartViews.nearest(1_300L - 1_150L, drop))
+        assertEquals(0, StartViews.nearest(1_300L - 4_200L, drop)) // a late first frame: at once
+        assertEquals(600, StartViews.nearest(1_500L - 900L, listOf(0, 300, 600)))
+    }
+
+    @Test
+    fun `the drop's level, as the drawable draws it - empty at 45% of the cycle, full again at its end`() {
+        assertEquals(0f, StartViews.drained(-50L), 0f)
+        assertEquals(0f, StartViews.drained(0L), 0f)
+        assertEquals(1f, StartViews.drained(720L), 1e-4f)
+        assertEquals(0f, StartViews.drained(1_600L), 1e-4f)
+        assertEquals(0.5f, StartViews.drained(360L), 1e-3f) // half way down, eased
+        assertEquals(StartViews.drained(360L), StartViews.drained(1_600L + 360L), 1e-4f) // it repeats
     }
 
     @Test
@@ -23,7 +42,7 @@ class StartLogoRulesTest {
         val clock = StartClock.begin(processStart = 50_000L, now = 50_300L, uptime = { uptime })
         assertEquals(400L, clock.now())
         assertFalse(clock.holdOver())
-        uptime = 51_200L
+        uptime = 50_900L
         assertTrue(clock.holdOver())
     }
 

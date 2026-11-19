@@ -1,11 +1,16 @@
 package io.github.liquidlyf.start
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.Resources
+import android.os.Build
 import android.provider.Settings
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
@@ -14,8 +19,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +41,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -87,11 +92,11 @@ internal fun StartScreen.exit(): StartExit = when (this) {
  *
  * While loading: from [StartClock.DROP_MS] the drop in the logo drains and refills, and from
  * [StartClock.LINE_MS] a thin loading line fades in under it; a later first frame starts them at
- * once. They run on the main thread, so they pause while it builds the first screen (0.35 s on a
- * usual start, up to 0.85 s just after installing, 1.5 s on a debug build; A's measure, 20 Nov 2026).
- * With "Remove animations" nothing moves: the words "Loading…" show instead of the line, and the
- * screen comes at once. The copy takes no taps and no TalkBack focus; TalkBack hears "Loading…"
- * once, when the line appears.
+ * once. Those two are [views] when given (render-thread drawables, which keep moving while the main
+ * thread builds the first screen; this leaves out the drop while they show and takes it over at the
+ * move), else drawn here. With "Remove animations" nothing moves: the words "Loading…" show instead
+ * of the line, and the screen comes at once. The copy takes no taps and no TalkBack focus; TalkBack
+ * hears "Loading…" once, when the line appears.
  */
 @Composable
 fun StartLogo(
@@ -103,6 +108,8 @@ fun StartLogo(
     modifier: Modifier = Modifier,
     /** "Remove animations" (a parameter for StartLogoTest; the phone's setting otherwise). */
     reduced: Boolean = LocalContext.current.let { context -> remember { animationsOff(context) } },
+    /** The drop and the line on the render thread (MainActivity's), or null to draw them here. */
+    views: StartViews? = null,
     onComposed: () -> Unit = {},
 ) {
     val colors = MaterialTheme.colorScheme
@@ -122,7 +129,7 @@ fun StartLogo(
     // The drop: from 1.3 s (or the first frame, if later), drains and refills until the screen is ready.
     LaunchedEffect(Unit) {
         clock.log("the app draws the logo")
-        if (reduced) return@LaunchedEffect
+        if (reduced || views != null) return@LaunchedEffect
         delay((StartClock.DROP_MS - clock.now()).coerceAtLeast(0))
         if (exit != null) return@LaunchedEffect
         clock.log("drop")
@@ -138,7 +145,7 @@ fun StartLogo(
         )
     }
     // The thin line (with Remove animations, the words): from 1.5 s, or the first frame if later.
-    LaunchedEffect(Unit) {
+    if (views == null) LaunchedEffect(Unit) {
         delay((StartClock.LINE_MS - clock.now()).coerceAtLeast(0))
         if (exit != null) return@LaunchedEffect
         clock.log("line")
@@ -156,6 +163,9 @@ fun StartLogo(
             StartExit.FADE -> null
         }
         val how = if (target == null) StartExit.FADE else wanted
+        // The drop from where the render thread drew it; they go, and the line fades out.
+        if (views?.active == true) drain.snapTo(views.drainedAt(clock.now()))
+        views?.hide()
         exit = how
         clock.log("move $how")
         if (!reduced) {
@@ -186,7 +196,9 @@ fun StartLogo(
             val stacked = handoff.stacked?.takeIf { exit == StartExit.GLIDE }
             val bar = art.bar?.takeIf { exit == StartExit.SHRINK }
             val barRect = handoff.horizontal?.takeIf { bar != null }
+            val viewsDrawTheDrop = views?.active == true
             for (shape in art.shapes) {
+                if (shape.drop && viewsDrawTheDrop) continue
                 val placement = when {
                     stacked != null -> start.lerp(Placement.of(stacked.translate(-origin), art.width), p, ART_BOX.center)
                     bar != null && barRect != null -> {
@@ -220,7 +232,7 @@ fun StartLogo(
                 if (reduced) {
                     Text(loading, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                 } else {
-                    LinearProgressIndicator(Modifier.width(HINT_WIDTH))
+                    LoadingLine(Modifier.size(HINT_WIDTH, HINT_HEIGHT))
                 }
             }
         }
@@ -244,6 +256,32 @@ private suspend fun moveSmoothly(durationMs: Int, onProgress: (Float) -> Unit) {
     }
 }
 
+/**
+ * The thin loading line, as the render-thread one draws it (avd_start_line_*): a primary bar, 40% of
+ * the track, sweeping along the secondary-container track from off its left to off its right in
+ * 1.5 s (fast out, slow in), as D's picture the maintainer chose.
+ */
+@Composable
+private fun LoadingLine(modifier: Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val t by rememberInfiniteTransition(label = "loadingLine").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(SWEEP_MS, easing = LinearEasing)),
+        label = "sweep",
+    )
+    Canvas(modifier) {
+        val h = size.height
+        val y = h / 2
+        val x = { f: Float -> h / 2 + f * (size.width - h) }
+        drawLine(colors.secondaryContainer, Offset(x(0f), y), Offset(x(1f), y), strokeWidth = h, cap = StrokeCap.Round)
+        val e = FastOutSlowInEasing.transform(t)
+        val from = (-BAR + (1 + BAR) * e).coerceIn(0f, 1f)
+        val to = ((1 + BAR) * e).coerceIn(0f, 1f)
+        if (to > from) drawLine(colors.primary, Offset(x(from), y), Offset(x(to), y), strokeWidth = h, cap = StrokeCap.Round)
+    }
+}
+
 private suspend fun awaitTarget(read: () -> Rect?): Rect? =
     withTimeoutOrNull(TARGET_WAIT_MS) { snapshotFlow { read()?.takeIf { it.width > 0f } }.filterNotNull().first() }
 
@@ -263,9 +301,14 @@ private fun DrawScope.drawShape(shape: LogoShape, at: Placement, drained: Float,
     }
 }
 
-/** "Remove animations" (Settings › Accessibility, or the developer options' animator scale at 0). */
-internal fun animationsOff(context: Context): Boolean =
-    Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+/**
+ * "Remove animations" (Settings › Accessibility, or the developer options' animator scale at 0): as
+ * the setting says, which Compose follows, or as Android tells the app's view animations (A46: the
+ * two can differ, and then the render-thread drop and line wouldn't move).
+ */
+fun animationsOff(context: Context): Boolean =
+    Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f ||
+        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !ValueAnimator.areAnimatorsEnabled())
 
 /** Where a drawing in logo units goes on the screen: screen = offset + scale × point. */
 @Immutable
@@ -375,6 +418,9 @@ internal const val SPLASH_ART_DP = 161
 private val MoveEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 private val HINT_BELOW_CENTRE = 84.dp
 private val HINT_WIDTH = 120.dp
+private val HINT_HEIGHT = 4.dp
+private const val SWEEP_MS = 1_500
+private const val BAR = 0.4f
 private const val DRAIN_CYCLE_MS = 1_600
 private const val DRAINED_AT_MS = 720
 private const val HINT_IN_MS = 400

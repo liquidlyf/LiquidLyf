@@ -35,10 +35,12 @@ class StartClock internal constructor(private val zero: Long, private val uptime
 
         /**
          * The still picture stays until the start data is read, so a usual start's first screen comes
-         * as soon as before (read by 0.6–0.75 s; A's measure, 20 Nov 2026), but no later than this,
-         * so the app has drawn its copy by the time the drop starts.
+         * as soon as before (read by 0.6–0.75 s; A's measure, 20 Nov 2026), but no later than this. A
+         * slower start then draws the app's copy, with the drop and the line on the render thread
+         * ([StartViews]), before it builds its first screen, which keeps the main thread busy: so they
+         * move during that build too (A46).
          */
-        const val HOLD_MS = DROP_MS - 100
+        const val HOLD_MS = 900L
 
         /** A process older than this wasn't started by this tap. */
         private const val FRESH_PROCESS_MS = 10_000L

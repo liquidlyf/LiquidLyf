@@ -1,10 +1,9 @@
 package io.github.liquidlyf
 
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,6 +20,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.liquidlyf.core.data.settings.ThemeMode
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.SystemBarScrims
 import io.github.liquidlyf.core.designsystem.components.LocalStartLogoHandoff
@@ -32,6 +32,8 @@ import io.github.liquidlyf.start.StartClock
 import io.github.liquidlyf.start.StartLogo
 import io.github.liquidlyf.start.StartLogoArts
 import io.github.liquidlyf.start.StartScreen
+import io.github.liquidlyf.start.StartViews
+import io.github.liquidlyf.start.animationsOff
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -58,15 +60,26 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val start = if (savedInstanceState == null) StartClock.begin() else null
         val arts = start?.let { StartLogoArts(resources, it) }
+        val reduced = animationsOff(this)
+        // The drop and the line on the render thread (A46); not with Remove animations, nor before 7.1.
+        var views: StartViews? = null
         // Still loading near the hold's end: compose the copy, so it's there when the still picture goes.
-        val copyWanted = mutableStateOf(false)
+        val copyWanted = mutableStateOf(start != null && start.now() >= StartClock.HOLD_MS - COPY_LEAD_MS)
         var copyComposed = false
+        var released = false
+        // Polled every frame while the still picture is up.
         splashScreen.setKeepOnScreenCondition {
-            viewModel.uiState.value is MainUiState.Loading && (start == null || !start.holdOver() || !copyComposed)
+            val loading = viewModel.uiState.value is MainUiState.Loading
+            if (start != null && loading && start.now() >= StartClock.HOLD_MS - COPY_LEAD_MS) copyWanted.value = true
+            val keep = loading && (start == null || !start.holdOver() || !copyComposed)
+            if (!keep && !released) {
+                released = true
+                // The app's first frame: still loading, the drop and the line start; ready, they're not needed.
+                if (loading) views?.show(appDark()) else views?.remove()
+            }
+            keep
         }
         if (start != null) {
-            val copyIn = (StartClock.HOLD_MS - COPY_LEAD_MS - start.now()).coerceAtLeast(0)
-            Handler(Looper.getMainLooper()).postDelayed({ copyWanted.value = true }, copyIn)
             lifecycleScope.launch {
                 viewModel.uiState.first { it is MainUiState.Ready }
                 start.log("start data read")
@@ -120,11 +133,28 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 if (showCopy && handoff != null && start != null && arts != null) {
-                    StartLogo(handoff, start, arts, landing = { landing.value }, onComposed = { copyComposed = true })
+                    StartLogo(
+                        handoff, start, arts,
+                        landing = { landing.value },
+                        reduced = reduced,
+                        views = views,
+                        onComposed = { copyComposed = true },
+                    )
                 }
             }
         }
+        if (start != null && !reduced && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) views = StartViews(this, start, phoneDark())
     }
+
+    /** The app's theme setting once it's read, else the phone's, as the still picture. */
+    private fun appDark(): Boolean = when (viewModel.themeMode.value) {
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
+        ThemeMode.SYSTEM, null -> phoneDark()
+    }
+
+    private fun phoneDark(): Boolean =
+        resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
 
     private companion object {
         /** How long before the hold's end a still-loading start composes the copy. */
