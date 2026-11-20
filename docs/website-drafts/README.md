@@ -12,10 +12,22 @@ repo (`liquidlyf/liquidlyf.github.io`), which GitHub Pages serves.
 | Terms and Community Guidelines | [en/terms.md](en/terms.md) | [bn/terms.md](bn/terms.md) | `/terms`, `/bn/terms` | Phase 8.2 |
 | Delete your LiquidLyf account | [en/delete-account.md](en/delete-account.md) | [bn/delete-account.md](bn/delete-account.md) | `/delete-account`, `/bn/delete-account` | Phase 8.2 |
 | Download and install guide | [en/download.md](en/download.md) | [bn/download.md](bn/download.md) | `/download`, `/bn/download` | Phase 10.3 |
+| Request link (both languages on one page) | [site/r/index.html](site/r/index.html) | the same page | `/r/` | D31 |
 
 Until v1.0 is released, `/download` is a short "coming soon" page
 ([site/prerelease/](site/prerelease/)), and the home page says "Coming soon" instead of showing the
-download button. The request share page (`/r/`, v1.1) comes later.
+download button.
+
+**The request link page** (`/r/`, D31 = go, 20 Nov 2026): the app shares a request as
+`https://liquidlyf.github.io/r/#<ID>` (agreed with A: the ID after `#` never reaches GitHub; `?id=` works
+too). Android opens the link in the app once `.well-known/assetlinks.json` holds the release key's
+fingerprint (A48; `build_site.py` writes it from `.github/ci/release-cert-sha256.txt`). Until then, and
+in Facebook's or Messenger's own browser, people see this page: Bangla first, then English, and
+nothing about the request. It has its own layout, [site/_layouts/request.html](site/_layouts/request.html),
+with no menu, `noindex`, and the site's only script, [site/assets/r.js](site/assets/r.js) (C25 = a): it
+takes only a 20-character ID from the address and puts it into the "Open the request" button's link to
+the app. Without the script, or without a valid ID, there's no button, and step 3 says to tap the link
+again.
 
 **Bangla:** reviewed by the maintainer (C8, 16 Nov 2026), after a meaning check against the English:
 checkers translated each Bangla line back into English without seeing the English, and the lines that
@@ -62,8 +74,8 @@ so, is a question for the lawyer (C7). Set `bn_reviewed: true` only when the mai
 [`site/`](site/) holds the rest of the website: `_config.yml`, the page layout, the stylesheet, the
 icons (`assets/icons/`, line drawings painted with the text colour), the PNG images, the 404 page and
 the website repo's README. The logo files come from [`branding/`](../../branding/). The site has no
-scripts, cookies, analytics or web fonts, and a Content Security Policy allows nothing from other
-sites.
+cookies, analytics or web fonts, and a Content Security Policy allows nothing from other sites. It has
+no scripts either, except one on `/r/` (above), allowed only by that page's own layout.
 
 Switches in [`site/_config.yml`](site/_config.yml):
 
@@ -139,9 +151,9 @@ only; the build removes them.
   পারবেন"; Edit = "এডিট করুন"; version = ভার্সন (সংস্করণ only in a legal licence name). Change a word only
   where the page means the app's thing or quotes its button or tab.
 
-- The v1.1 share page needs `/.well-known/assetlinks.json`. Jekyll skips folders that start with a dot,
-  so add `include: [".well-known"]` to `site/_config.yml`. Don't add a `.nojekyll` file, because that
-  stops the Markdown pages from being built.
+- `/.well-known/assetlinks.json` (for `/r/`) is served because `site/_config.yml` has
+  `include: [".well-known"]`: Jekyll skips folders that start with a dot. Don't add a `.nojekyll` file,
+  because that stops the Markdown pages from being built.
 - Bangla lists show Bangla digits (১, ২, ৩) through the stylesheet: `:where(html[lang="bn"]) ol { list-style-type: bengali; }`.
 - **The footer's copyright year** is the year of the build (`site.time | date: "%Y"`, Bangla digits on
   the Bangla pages), so every publish updates it. The website repo also rebuilds every 1 January

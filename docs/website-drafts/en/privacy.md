@@ -117,6 +117,27 @@ sign out, or once you finish the steps and they're saved to your account.
   donor you asked to donate (only you can see it).
 - **When you last used the app,** updated at most once every 3 days.
 
+<!-- DRAFT for D31 (the maintainer, 20 Nov 2026 15:56): add when A commits the request share, after
+     checking A's code, with the Bangla reviewed. The share text (A's answers, D's words):
+     detail_share_text = the request's blood group, bags and component, hospital, area and "needed
+     by", then "Open it in LiquidLyf…: {link}" and the instruction; no names or phone numbers. The
+     link is https://liquidlyf.github.io/r/#<ID> (agreed with A, 20 Nov 2026: the ID after "#" never
+     reaches GitHub; the app and /r/ also accept ?id=). /r/ shows nothing about the request (site/r/).
+     Someone not signed in: the app keeps the ID on the phone (DataStore), used once, dropped after
+     3 days. CHECK in A's commit: the share text's fields, the kept ID and its 3 days, and that a
+     closed request has no Share.
+
+§2 "When you use the app", a last item:
+- **Sharing a request:** the app writes a message with the blood group and how many bags are needed,
+  the hospital and area, when it's needed, and a link. Neither the message nor the link has anyone's
+  name or phone number, and you choose who gets it. To identify the request, the link holds only a
+  random code. Browsers don't send the part of the link with the code to LiquidLyf's website (which
+  runs on GitHub), and the page the link opens shows nothing about the request. If the person who gets
+  it isn't signed in to the app yet, the app keeps the code only on their phone, to open the request
+  once they're signed in. The code is deleted once the request is open, or 3 days after the link was
+  tapped.
+-->
+
 ### From your phone
 - **Push notifications:** your phone subscribes to notification "topics" named after your area and
   blood group (for example, "Savar, B+"), through Google's Firebase Cloud Messaging. We don't
