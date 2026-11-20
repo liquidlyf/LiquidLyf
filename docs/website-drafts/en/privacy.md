@@ -127,8 +127,14 @@ sign out, or once you finish the steps and they're saved to your account.
      link is https://liquidlyf.github.io/r/#<ID> (agreed with A, 20 Nov 2026: the ID after "#" never
      reaches GitHub; the app and /r/ also accept ?id=). /r/ shows nothing about the request (site/r/).
      Someone not signed in: the app keeps the ID on the phone (DataStore), used once, dropped after
-     3 days. CHECK in A's commit: the share text's fields, the kept ID and its 3 days, and that a
-     closed request has no Share.
+     3 days. A, from the code (20 Nov 2026, before the commit): the share text has the blood group,
+     bags and component, hospital, area (upazila + district) and needed-by, then the link; no names,
+     phone numbers or patient details. The kept ID is in the app's DataStore file "pending_request"
+     (the ID and when it was tapped), used once when the person reaches the app, then deleted; after
+     3 days it's ignored, and deleted the next time it's read (not at sign-out; backups exclude it).
+     No Share on a closed request (the icon and both bars need an OPEN request). So the item's last
+     sentence ("deleted … 3 days after the link was tapped") over-promises: the fix is C29.
+     CHECK in A's commit (hash to come): the same facts.
 
 §2 "When you use the app", a last item:
 - **Sharing a request:** the app writes a message with the blood group and how many bags are needed,
