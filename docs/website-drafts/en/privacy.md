@@ -119,26 +119,6 @@ sign out, or once you finish the steps and they're saved to your account.
 - **Counters** that protect against abuse, such as how many open requests you have, and the last
   donor you asked to donate (only you can see it).
 - **When you last used the app,** updated at most once every 3 days.
-
-<!-- DRAFT for D31 (the maintainer, 20 Nov 2026 15:56): add when A commits the request share, after
-     checking A's code, with the Bangla reviewed. The share text (A's answers, D's words):
-     detail_share_text = the request's blood group, bags and component, hospital, area and "needed
-     by", then "Open it in LiquidLyf…: {link}" and the instruction; no names or phone numbers. The
-     link is https://liquidlyf.github.io/r/#<ID> (agreed with A, 20 Nov 2026: the ID after "#" never
-     reaches GitHub; the app and /r/ also accept ?id=). /r/ shows nothing about the request (site/r/).
-     Someone not signed in: the app keeps the ID on the phone (DataStore), used once, dropped after
-     3 days. A, from the code (20 Nov 2026, before the commit): the share text has the blood group,
-     bags and component, hospital, area (upazila + district) and needed-by, then the link; no names,
-     phone numbers or patient details. The kept ID is in the app's DataStore file "pending_request"
-     (the ID and when it was tapped), used once when the person reaches the app, then deleted; after
-     3 days it's ignored, and deleted the next time it's read (not at sign-out; backups exclude it).
-     No Share on a closed request (the icon and both bars need an OPEN request). So the item's last
-     sentence ("deleted … 3 days after the link was tapped") over-promised: fixed with C29 b (the
-     maintainer, 20 Nov 2026 16:47). A then changed the code to delete an expired ID at the app's next
-     start too, which is what the fixed sentence says.
-     CHECK in A's commit (hash to come): the same facts.
-
-§2 "When you use the app", a last item:
 - **Sharing a request:** the app writes a message with the blood group and how many bags are needed,
   the hospital and area, when it's needed, and a link. Neither the message nor the link has anyone's
   name or phone number, and you choose who gets it. To identify the request, the link holds only a
@@ -147,7 +127,16 @@ sign out, or once you finish the steps and they're saved to your account.
   it isn't signed in to the app yet, the app keeps the code only on their phone, to open the request
   once they're signed in. The code is deleted once the request is open. Three days after the link was
   tapped, it's no longer used, and it's deleted the first time the app opens after that.
--->
+
+<!-- D31 (the maintainer, 20 Nov 2026 15:56); the Bangla approved (C28 b 16:19, its last sentence
+     C29 b 16:47). Checked in A's commit 7dbc91b (20 Nov 2026): the share text is shareText() in
+     RequestDetailScreen.kt (detail_share_text, _open, _again: blood group, bags, component, hospital,
+     area, needed-by, the link and the instruction; no names, phone numbers or patient details), built
+     only for an OPEN request, which every Share place uses. The link is RequestLinks.of(id) =
+     https://liquidlyf.github.io/r/#id. The kept ID is the DataStore file "pending_request" (the ID and
+     when it was saved): kept on each link tap, taken once when the person is in the app (at once if
+     signed in), and dropIfOld() deletes one older than 3 days at each app start (MainActivity).
+     Re-check whenever the share text, the link or the kept ID changes. -->
 
 ### From your phone
 - **Push notifications:** your phone subscribes to notification "topics" named after your area and

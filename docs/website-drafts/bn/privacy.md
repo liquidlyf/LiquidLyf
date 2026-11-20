@@ -111,16 +111,6 @@ LiquidLyf-এর সার্ভারে আপনার অ্যাকাউ�
 - **কিছু হিসাব (কাউন্টার),** যা অপব্যবহার ঠেকায়: যেমন আপনার কয়টা পোস্ট এখন চালু আছে, আর শেষ কোন
   রক্তদাতাকে আপনি রক্ত দিতে অনুরোধ করেছেন (এটা শুধু আপনি দেখতে পান)।
 - **শেষ কবে অ্যাপ ব্যবহার করেছেন,** যা ৩ দিনে সর্বোচ্চ একবার আপডেট হয়।
-
-<!-- DRAFT for D31, the Bangla of the hidden English draft in en/privacy.md (facts there). Add both when
-     A commits the request share (the Bangla is approved: C28 OK, 20 Nov 2026 16:19; its last sentence
-     C29 b, 16:47). Meaning check, 20 Nov
-     2026: 2 blind rounds. Fixed after round 1: plainer words ("how many bags", "a random code", what
-     the browser doesn't send, not "#" and "host"), no repeated lead-in, the reader as the subject, and
-     when the kept code is deleted. After round 2: "র‍্যান্ডম" (not "এলোমেলো"), "LiquidLyf-এর ওয়েবসাইটে
-     (যা GitHub-এ চলে)", and "3 days after the link was tapped". Every meaning matched.
-
-§২ "অ্যাপ ব্যবহারের সময়", শেষ আইটেম:
 - **পোস্ট শেয়ার করলে:** অ্যাপ একটা মেসেজ লিখে দেয়, তাতে থাকে কোন গ্রুপের কত ব্যাগ রক্ত লাগবে, হাসপাতাল
   আর এলাকা, কবে লাগবে, আর একটা লিংক। মেসেজ বা লিংকে কারও নাম বা ফোন নম্বর থাকে না, আর কাকে পাঠাবেন তা
   আপনিই ঠিক করেন। লিংকে পোস্টটা চেনার জন্য শুধু একটা র‍্যান্ডম কোড থাকে। লিংকের যে অংশে কোডটা থাকে,
@@ -128,7 +118,9 @@ LiquidLyf-এর সার্ভারে আপনার অ্যাকাউ�
   তথ্য থাকে না। যিনি লিংক পান, তাঁর অ্যাপে সাইন ইন করা না থাকলে অ্যাপ কোডটা শুধু তাঁর ফোনে রাখে, যাতে
   সাইন ইন করার পর পোস্টটা খুলে দিতে পারে। পোস্টটা খোলা হলে কোডটা মুছে যায়। লিংকে চাপ দেওয়ার ৩ দিন পরে
   কোডটা আর কাজে লাগানো হয় না, আর তার পরে প্রথমবার অ্যাপ খুললেই মুছে যায়।
--->
+
+<!-- D31: the item above, meaning-checked (2 blind rounds; its last sentence 1 more) and approved by the
+     maintainer (C28 b, 20 Nov 2026 16:19; the last sentence C29 b, 16:47). Facts: see en/privacy.md. -->
 
 ### আপনার ফোন থেকে
 - **পুশ নোটিফিকেশন:** Google-এর Firebase Cloud Messaging-এর মাধ্যমে আপনার ফোন আপনার এলাকা আর রক্তের
