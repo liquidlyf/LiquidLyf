@@ -62,7 +62,14 @@ If you choose to become a donor, the app also asks for:
 - Whether you chose to be listed as a donor, and when you chose it.
 
 Until you choose to become a donor, the app doesn't ask for these. Until then, two of your settings are
-simply off: being listed as a donor, and being available to donate.
+simply off: being listed as a donor, and being available to donate. When you finish the donor steps,
+your answers are saved to your account on LiquidLyf's server, even if you choose "Not now" at the last
+step.
+
+If you stop partway through the donor steps, the answers you gave so far are kept **only on your
+phone**, so you don't have to answer again later. They aren't sent to LiquidLyf's server, and they
+aren't included in your phone's backup (such as Google's). They're deleted from your phone when you
+sign out, or once you finish the steps and they're saved to your account.
 
 <!-- D1 = a (the maintainer, 17 Nov 2026 22:31): people who only ask for blood skip the donor questions.
      Fields from B (rules 92218d2, 17 Nov): everyone has name, phone, area, app language; blood group is
@@ -72,61 +79,27 @@ simply off: being listed as a donor, and being available to donate.
      unlisted, unavailable and unable to offer. Nothing new is stored (no "need blood / want to donate"
      field). The page doesn't name the app's button, so it holds if A's label changes. -->
 
-<!-- DRAFT for D28 + D29 (the maintainer, 20 Nov 2026): add these when A commits them, after checking
-     A's code, with the Bangla meaning-checked and reviewed. Terms: no change (they don't cover
-     notifications). D28 = setup's donor path; its answers stay on the phone after "Need blood now?
-     Skip this". D29 = a "Become a donor" reminder made by WorkManager on the phone, sent nowhere:
-     Fridays for 4 weeks, then monthly for 3 months, then it stops (7 in all). The phone has no cloud
-     backup or device transfer (allowBackup false, data_extraction_rules exclude everything).
-     A's answers (20 Nov 2026), D28 checked in A's working copy the same day: the answers stay in the
-     app's DataStore file "profile_setup", for the signed-in account only: the setup choice, blood
-     group (or "don't know"), gender, birth year, the weight answer, last donation (or "never") and
-     the list-me answer if reached (SetupDraftStore.kt). They're deleted when Become a donor is
-     finished (BecomeDonorViewModel), at sign-out (MainViewModel), so at account deletion too, and
-     at uninstall. "Not now" at "list me" is the existing Become a donor finish, unchanged by D28:
-     bloodGroup, gender, birthYear, weightOk and lastDonationAt go to the person's own users
-     document with showInDonorSearch false, available false and no consentAt, and no donor card.
-     So B's 17 Nov note above ("absent until the person chooses to donate") means "until they finish
-     the donor steps". D29 (A's plan, not built yet): no network; it reads only the profile already
-     on the phone, the setup answers (to know they didn't finish) and whether their own request is
-     open. Its state (how many shown, the next date, "don't remind me") stays on the phone, and
-     sign-out clears it. At most 7; the first comes at least 7 days after setup.
-     D28 committed in 1728a71 (20 Nov 2026), re-checked there: "profile_setup", cleared at sign-out
-     (MainViewModel) and when Become a donor is finished (BecomeDonorViewModel). D29's words approved
-     by the maintainer (20 Nov 2026 07:00): the button "Don't remind me" / "আর মনে করাবেন না", the
-     switch "Reminders to become a donor" / "রক্তদাতা হওয়ার রিমাইন্ডার" (shown only to non-donors).
-     A Friday with their own request open is skipped, not moved, so "at most 7".
-     D29 committed in 7bfe8c3 (20 Nov 2026), checked there (DonorReminder.kt): WorkManager jobs on the
-     phone, times from the account's createdAt (nothing stored for the schedule); "wanted" = not
-     listed, Become a donor never finished, not ruled out by the kept answers (weight no, birth year
-     outside 18 to 60), the switch on (AlertPrefs, a DataStore on the phone; "Don't remind me" turns it
-     off; sign-out cancels the jobs and turns it back on). At each time it reads the person's own
-     userStats from Firestore (stats(uid, refresh = true) = Source.DEFAULT, the server when online) to
-     skip a Friday with an open request. So the §3 cell says the app checks the account, and that
-     nothing about the reminders is sent or kept with us; it doesn't say "sends nothing". The switch:
-     Profile → ⚙ Settings → Notifications, under "Reminders", shown only to people who aren't donors.
-     Labels as committed (values/, values-bn/).
-
-§2, replacing the paragraph "Until you choose to become a donor…":
-Until you choose to become a donor, the app doesn't ask for these. Until then, two of your settings are
-simply off: being listed as a donor, and being available to donate. When you finish the donor steps,
-your answers are sent to us and saved to your account, even if at the last step you choose not to be
-listed.
-
-If you stop partway through the donor steps, the answers you gave so far are kept **only on your
-phone**, so you don't have to answer again later. They aren't sent to us, and they aren't included in
-your phone's backup (such as Google's). They're deleted from your phone when you sign out, or once you
-finish the steps and they're saved to your account.
-
-§3, a row after the rest period:
-| If you aren't listed as a donor, reminding you a few times, in a notification, that you can become a donor if you want | Whether you're listed as a donor, the donor-step answers kept on your phone, and whether you have an open request (only this is checked in your account). The app makes these reminders on your phone, sends us no new information, and we keep no separate information about the reminders |
-
-§7, after "Pause alerts":
-- **Stop the reminders to become a donor:** tap "Don't remind me" on any reminder, or open Profile → ⚙
-  Settings → Notifications and turn off "Reminders to become a donor". Once you finish the donor steps,
-  they don't come any more. There are at most 7 in all, within about 4 months of creating your account,
-  and then they stop.
--->
+<!-- D28 + D29 (the maintainer, 20 Nov 2026), with the Bangla reviewed (C26 OK with the maintainer's
+     changes, 20 Nov 2026 12:45: "LiquidLyf's server", not "us"; the "Not now" button named). Checked in
+     A's commits, D28 1728a71 and D29 7bfe8c3. D28: the donor steps' answers so far stay in the app's
+     DataStore file "profile_setup", for the signed-in account only (the setup choice, blood group or
+     "don't know", gender, birth year, the weight answer, last donation or "never", the list-me
+     answer); deleted when Become a donor is finished (BecomeDonorViewModel), at sign-out
+     (MainViewModel, so at account deletion too) and at uninstall. No cloud backup or device transfer
+     (allowBackup false; data_extraction_rules exclude everything). "Not now" (consent_not_now) at
+     "list me" is the normal Become a donor finish: bloodGroup, gender, birthYear, weightOk and
+     lastDonationAt go to the person's own users document with showInDonorSearch false, available
+     false, no consentAt and no donor card. So B's note above ("absent until the person chooses to
+     donate") means "until they finish the donor steps". D29 (DonorReminder.kt): WorkManager jobs on
+     the phone, at most 7 (4 weekly, then 3 monthly; a Friday with an open request is skipped, not
+     moved), times from the account's createdAt; only for someone not listed, who never finished
+     Become a donor and isn't ruled out by the kept answers (weight no, birth year outside 18 to 60),
+     with the switch on (AlertPrefs, on the phone; "Don't remind me" turns it off; sign-out cancels
+     the jobs and turns it back on). Each time it reads the person's own userStats from Firestore
+     (Source.DEFAULT) to skip a Friday with an open request, so §3 says only that is checked in the
+     account. The switch: Profile → ⚙ Settings → Notifications, under "Reminders", shown only to
+     people who aren't donors. Labels as in values/ and values-bn/. Re-check whenever the setup
+     answers, the reminder or its switch change. -->
 
 ### When you use the app
 - **Blood requests you post:** the patient's blood group, the blood component and number of units,
@@ -193,6 +166,7 @@ ask for your national ID (NID).
 | Finding donors for a blood request, and alerting them | Blood group, area, availability, rest period, the request |
 | Letting a donor and a requester call each other | Phone numbers, only after a donor offers |
 | Counting your rest period and reminding you when you can donate again | Gender, birth year, last donation date |
+| If you aren't listed as a donor, the app reminds you a few times, in a notification, that you can become a donor if you want | Whether you're listed as a donor, the donor-step answers kept on your phone, and whether you have an open request (only this is checked in your account). The app makes these reminders on your phone, sends no new information to the server, and no separate information about the reminders is kept |
 | Running your account and showing the app in your language | Email, sign-in method, language |
 | Keeping people safe: stopping scams, fake requests and harassment | Reports, blocks, counters, App Check, flagged words such as payment requests |
 | Fixing crashes | Crash reports |
@@ -293,6 +267,10 @@ serious harm.
   stop getting request alerts.
 - **Pause alerts:** turn off "Ready to donate" on the Home screen or in Settings, or turn off
   notifications in Android settings.
+- **Stop the reminders to become a donor:** tap "Don't remind me" on any reminder, or open Profile → ⚙
+  Settings → Notifications and turn off "Reminders to become a donor". Once you finish the donor steps,
+  they don't come any more. There are at most 7 in all, within about 4 months of creating your account,
+  and then they stop.
 - **Withdraw an offer** at any time before you donate. You then no longer see the request's contact
   details. The requester can still see the number you
   shared with that offer until it is deleted, 90 days after the request closes (section 6), and may
