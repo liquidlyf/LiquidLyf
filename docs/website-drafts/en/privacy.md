@@ -50,24 +50,22 @@ it does with your data.
   account. The picture isn't shown anywhere in the app.
 - Your password is handled by Google's Firebase Authentication. We never see it.
 - That you are 18 or older and accepted these terms, with the date and the version you accepted.
-
-<!-- DRAFT for D34 (not decided yet, the maintainer's idea, 20 Nov 2026 18:51): add only if D34 is
-     picked and A builds it, after checking A's code, with the Bangla reviewed (C30). Today (D32,
-     d54ce37) the address a "Change email" asked for is kept in memory only (AuthRepository's
-     requestedEmail), so nothing needs saying yet. D34 would keep it on the phone (private storage, no
-     backup) to show "waiting to confirm" in Edit profile, until the change is confirmed, a different
-     address is asked for, sign-out, or 3 days. Firebase Authentication sends the link to the new
-     address and holds the pending change. The app's own words: change_email_sent "We sent a link to
-     … Your email changes when you open it." CHECK in A's build: where it's kept, each way it's
-     deleted, and when exactly after 3 days (at that moment, or at the next app start, as in D31).
-
-§2 "When you create an account", a last item:
 - **If you change your email address:** it changes only once you open the link sent to the new address
   (by Google's Firebase Authentication). Until then, the app also keeps the new email address on your
   phone, to show that the change is waiting for you to confirm it. The address kept on your phone is
-  deleted when the change is confirmed, when you ask to change to a different address, when you sign
-  out, or 3 days after you asked for the change.
--->
+  deleted when the change is confirmed, when you ask to change to a different address, or when you
+  sign out. Three days after you asked for the change, it's no longer shown, and it's deleted the
+  first time the app opens after that.
+
+<!-- D34 (picked 20 Nov 2026 19:03); the Bangla approved (C30 OK, 19:04), its 3-day clause then matched
+     to A's commit 8a73505, in the words of C29 b. Checked there: the pending address is the app's
+     DataStore file "requested_email" (the address and when Change email was asked; RequestedEmail.kt),
+     excluded from backups like everything the app stores. Cleared when the change is confirmed or the
+     session ends (AuthRepository.checkAccount), replaced by a newer Change email (keep() overwrites),
+     cleared at any sign-out (SessionManager.forgetThisPerson). From 3 days after the request it isn't
+     shown or used (freshAt), and dropIfOld() deletes it at the next app start (MainActivity). Firebase
+     Authentication sends the link and holds the pending change. Re-check when Change email or the
+     requested_email store changes. -->
 
 ### Your profile
 - Your full name and phone number.
