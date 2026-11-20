@@ -96,7 +96,16 @@ simply off: being listed as a donor, and being available to donate.
      by the maintainer (20 Nov 2026 07:00): the button "Don't remind me" / "আর মনে করাবেন না", the
      switch "Reminders to become a donor" / "রক্তদাতা হওয়ার রিমাইন্ডার" (shown only to non-donors).
      A Friday with their own request open is skipped, not moved, so "at most 7".
-     CHECK when A commits D29: the code, and the switch's place (Profile → ⚙ Settings → Notifications).
+     D29 committed in 7bfe8c3 (20 Nov 2026), checked there (DonorReminder.kt): WorkManager jobs on the
+     phone, times from the account's createdAt (nothing stored for the schedule); "wanted" = not
+     listed, Become a donor never finished, not ruled out by the kept answers (weight no, birth year
+     outside 18 to 60), the switch on (AlertPrefs, a DataStore on the phone; "Don't remind me" turns it
+     off; sign-out cancels the jobs and turns it back on). At each time it reads the person's own
+     userStats from Firestore (stats(uid, refresh = true) = Source.DEFAULT, the server when online) to
+     skip a Friday with an open request. So the §3 cell says the app checks the account, and that
+     nothing about the reminders is sent or kept with us; it doesn't say "sends nothing". The switch:
+     Profile → ⚙ Settings → Notifications, under "Reminders", shown only to people who aren't donors.
+     Labels as committed (values/, values-bn/).
 
 §2, replacing the paragraph "Until you choose to become a donor…":
 Until you choose to become a donor, the app doesn't ask for these. Until then, two of your settings are
@@ -110,7 +119,7 @@ your phone's backup (such as Google's). They're deleted from your phone when you
 finish the steps and they're saved to your account.
 
 §3, a row after the rest period:
-| If you aren't listed as a donor, reminding you a few times, in a notification, that you can become a donor if you want | Whether you're listed as a donor, the donor-step answers kept on your phone, and whether you have an open request. The app makes these reminders on your phone and sends us nothing for them |
+| If you aren't listed as a donor, reminding you a few times, in a notification, that you can become a donor if you want | Whether you're listed as a donor, the donor-step answers kept on your phone, and whether you have an open request (only this is checked in your account). The app makes these reminders on your phone, sends us no new information, and we keep no separate information about the reminders |
 
 §7, after "Pause alerts":
 - **Stop the reminders to become a donor:** tap "Don't remind me" on any reminder, or open Profile → ⚙
