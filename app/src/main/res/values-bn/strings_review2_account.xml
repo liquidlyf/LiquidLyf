@@ -224,6 +224,8 @@
     <string name="add_password_no_google">অ্যাপের এই ভার্সনে Google দিয়ে সাইন ইন করা যায় না।</string>
     <string name="label_email_readonly">ইমেইল: %1$s</string>
     <string name="action_change_email">ইমেইল বদলান</string>
+    <!-- D30: approved by the maintainer (20 Nov 2026 12:47, "D30 BN a"), as sign_out_account. -->
+    <string name="label_email_google">Google দিয়ে সাইন ইন করা আছে: %1$s</string>
     <string name="label_new_email">নতুন ইমেইল</string>
     <string name="change_email_sent">আমরা %1$s ঠিকানায় একটি লিংক পাঠিয়েছি। লিংকটি খুললে আপনার ইমেইল বদলে যাবে।</string>
 

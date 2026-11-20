@@ -333,6 +333,8 @@
     <string name="add_password_no_google">Google sign-in isn\'t available in this build.</string>
     <string name="label_email_readonly">Email: %1$s</string>
     <string name="action_change_email">Change email</string>
+    <!-- D30: a Google-only account has no Change email (Google keeps its own address). -->
+    <string name="label_email_google">You sign in with Google: %1$s</string>
     <string name="label_new_email">New email</string>
     <string name="change_email_sent">We sent a link to %1$s. Your email changes when you open it.</string>
     <string name="confirm_blood_group_title">Change your blood group?</string>

@@ -3,6 +3,7 @@ package io.github.liquidlyf.feature.account
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.account.AccountDeleter
@@ -253,6 +254,8 @@ data class EditProfileUiState(
     val upazila: String? = null,
     val phone: String = "",
     val email: String = "",
+    /** D30: signs in with Google only (no password): no Change email, Google keeps its own address. */
+    val googleOnly: Boolean = false,
     val geo: BdGeo? = null,
     @StringRes val nameError: Int? = null,
     @StringRes val birthYearError: Int? = null,
@@ -290,6 +293,7 @@ class EditProfileViewModel @Inject constructor(
                 isDonor = p.hasDonorDetails, weightOk = p.weightOk,
                 division = p.area.division, district = p.area.district, upazila = p.area.upazila,
                 phone = "0" + p.phone.removePrefix("+880"), email = p.email,
+                googleOnly = auth.authState.value?.let { !it.hasPassword && GoogleAuthProvider.PROVIDER_ID in it.providers } == true,
             )
         } ?: EditProfileUiState(),
     )

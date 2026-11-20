@@ -1233,6 +1233,13 @@ class ScreenGalleryTest {
             }
         }
         val editProfile = { change: (EditProfileViewModel) -> Unit -> editProfileOf(me, change) }
+        // D30: a Google-only account (no password) has no Change email.
+        val googleOnly = {
+            FakeAuthRepository().apply {
+                accounts["nusrat@gmail.example"] = FakeAuthRepository.Account("me", "x", "Nusrat Jahan", verified = true, providers = setOf("google.com"))
+                runBlocking { signInEmail("nusrat@gmail.example", "x") }
+            }
+        }
         // D23 a: a donor who answered under 45 kg (so not listed).
         val underWeight = me.copy(weightOk = false, showInDonorSearch = false)
         val deleting = { failWith: AppError? ->
@@ -1248,6 +1255,11 @@ class ScreenGalleryTest {
             Shot("edit-profile", prepare = { waitForText("Nusrat Jahan") }, content = editProfile {}),
             // D23 a: the weight question, answered না; after হ্যাঁ and Save, "list me" again.
             Shot("edit-profile-weight-no", prepare = { waitForText("Nusrat Jahan") }, content = editProfileOf(underWeight) {}),
+            Shot("edit-profile-google", prepare = { waitForText("Nusrat Jahan") }) {
+                val p = me.copy(email = "nusrat@gmail.example")
+                val vm = remember { EditProfileViewModel(ready(p), FakeProfileRepository(now).apply { profiles[p.uid] = p }, googleOnly(), geoRepository, clock, EligibilityCalculator()) }
+                EditProfileRoute(onDone = {}, viewModel = vm)
+            },
             Shot("edit-profile-list-me-again", overlay = true, prepare = { waitFor(R.string.consent_yes) }, content = editProfileOf(underWeight) { vm ->
                 vm.edit { copy(weightOk = true) }
                 vm.save()

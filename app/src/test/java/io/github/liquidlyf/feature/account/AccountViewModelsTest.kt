@@ -15,6 +15,7 @@ import io.github.liquidlyf.testing.FakeSessionManager
 import io.github.liquidlyf.testing.TestData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -175,6 +176,20 @@ class AccountViewModelsTest {
         advanceUntilIdle()
         assertEquals("01712345678", vm.uiState.value.phone)
         assertEquals("BD30262000", vm.uiState.value.upazila)
+    }
+
+    @Test
+    fun `a Google-only account has no Change email, one with a password keeps it (D30)`() = test {
+        val profiles = FakeProfileRepository().apply { profiles["uid-1"] = TestData.profile() }
+        val session = FakeSessionManager(SessionState.Ready(TestData.user(), TestData.profile()))
+        fun signedIn(providers: Set<String>) = FakeAuthRepository().apply {
+            accounts["rahim@example.test"] = FakeAuthRepository.Account("uid-1", "pw-123456", "Rahim", verified = true, providers = providers)
+            runBlocking { signInEmail("rahim@example.test", "pw-123456") }
+        }
+        fun vm(providers: Set<String>) = EditProfileViewModel(session, profiles, signedIn(providers), geoRepo, Clock { TestData.NOW }, EligibilityCalculator())
+        assertTrue(vm(setOf("google.com")).uiState.value.googleOnly)
+        assertFalse(vm(setOf("google.com", "password")).uiState.value.googleOnly)
+        assertFalse(vm(setOf("password")).uiState.value.googleOnly)
     }
 
     @Test

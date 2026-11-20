@@ -287,8 +287,13 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
             contentType = ContentType.PersonFullName,
             fieldModifier = Modifier.errorAnchor(anchors, EditField.NAME, textField = true),
         )
-        Text(stringResource(R.string.label_email_readonly, state.email), style = MaterialTheme.typography.bodyMedium)
-        TextButton(onClick = { changingEmail = true }) { Text(stringResource(R.string.action_change_email)) }
+        if (state.googleOnly) {
+            // D30: changing it would leave Google on the old address and no way to use the new one.
+            Text(stringResource(R.string.label_email_google, state.email), style = MaterialTheme.typography.bodyMedium)
+        } else {
+            Text(stringResource(R.string.label_email_readonly, state.email), style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = { changingEmail = true }) { Text(stringResource(R.string.action_change_email)) }
+        }
         LLTextField(
             value = state.phone,
             onValueChange = { v -> viewModel.edit { copy(phone = v.take(20)) } },
