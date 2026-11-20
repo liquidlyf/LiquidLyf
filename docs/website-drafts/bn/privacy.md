@@ -80,6 +80,28 @@ LiquidLyf একটা ওপেন সোর্স প্রজেক্ট, �
      values-bn: "রক্তের গ্রুপ যোগ করে রক্তদাতা হতে" (setup_blood_unknown_body, setup_no_group_listing).
      Meaning check: 2 blind rounds. Facts: see the comment in en/privacy.md. -->
 
+<!-- DRAFT for D28 + D29, the Bangla of the hidden English draft in en/privacy.md (facts there). Add
+     these when A commits D28 + D29, together with the English. Meaning check, 20 Nov 2026: 3 blind
+     rounds (5 lines). Fixed after round 1: "আবার দিতে" could be read as "donate again"; "রক্তদাতা হওয়া
+     শেষ করলে" as "stop being a donor"; "মুছে যায়" said nothing of the phone; "হতে পারেন" could be
+     "you might be"; the phone, not the app, made the reminder. After round 2: say that finished answers
+     come to us; deleted once saved to the account; Google's backup as the example; "তালিকায় না থাকলে"
+     instead of "not a donor"; "sends us nothing". After round 3: "নাম না রাখা বেছে নিলেও" (choosing,
+     as in the reviewed list item) and "the donor-step answers". Every meaning matched in each round.
+     Needs the maintainer's review (C26). §7's line waits for A's approved words.
+
+§২, "রক্তদাতা না হওয়া পর্যন্ত…" অনুচ্ছেদের শেষে:
+রক্তদাতা হওয়ার ধাপগুলো শেষ করলে আপনার উত্তরগুলো আমাদের কাছে আসে আর আপনার অ্যাকাউন্টে সেভ হয়, শেষ
+ধাপে রক্তদাতা তালিকায় নাম না রাখা বেছে নিলেও।
+
+রক্তদাতা হওয়ার ধাপগুলো মাঝপথে থামালে, এ পর্যন্ত দেওয়া উত্তরগুলো **শুধু আপনার ফোনে** থাকে, যাতে পরে
+আবার উত্তর দিতে না হয়। এগুলো আমাদের কাছে পাঠানো হয় না, ফোনের ব্যাকআপেও (যেমন Google-এর ব্যাকআপ)
+যায় না। সাইন আউট করলে, বা ধাপগুলো শেষ করে অ্যাকাউন্টে সেভ হয়ে গেলে, এগুলো ফোন থেকে মুছে যায়।
+
+§৩, বিরতির সারির পরে:
+| আপনি রক্তদাতা তালিকায় না থাকলে, নোটিফিকেশনে কয়েকবার মনে করিয়ে দেওয়া যে চাইলে আপনিও রক্তদাতা হতে পারেন | আপনি রক্তদাতা তালিকায় আছেন কি না, রক্তদাতা হওয়ার যেসব উত্তর ফোনে রাখা আছে, আর আপনার কোনো পোস্ট চালু আছে কি না। অ্যাপ এই রিমাইন্ডার আপনার ফোনেই তৈরি করে, এর জন্য আমাদের কাছে কিছুই পাঠায় না |
+-->
+
 ### অ্যাপ ব্যবহারের সময়
 - **রক্তের জন্য আপনার পোস্ট** (অ্যাপে "রক্তের অনুরোধ"): রোগীর রক্তের গ্রুপ, রক্তের কোন উপাদান লাগবে
   (যেমন পূর্ণ রক্ত বা প্লাটিলেট) আর কত ব্যাগ, হাসপাতাল আর তার এলাকা, কতটা জরুরি, কবে লাগবে, চাইলে

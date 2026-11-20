@@ -97,14 +97,16 @@ simply off: being listed as a donor, and being available to donate.
 §2, replacing the paragraph "Until you choose to become a donor…":
 Until you choose to become a donor, the app doesn't ask for these. Until then, two of your settings are
 simply off: being listed as a donor, and being available to donate. When you finish the donor steps,
-your answers are saved to your account, even if you choose not to be listed.
+your answers are sent to us and saved to your account, even if at the last step you choose not to be
+listed.
 
 If you stop partway through the donor steps, the answers you gave so far are kept **only on your
-phone**, so you don't have to type them again. They aren't sent to us or backed up, and they're deleted
-when you finish becoming a donor or sign out.
+phone**, so you don't have to answer again later. They aren't sent to us, and they aren't included in
+your phone's backup (such as Google's). They're deleted from your phone when you sign out, or once you
+finish the steps and they're saved to your account.
 
 §3, a row after the rest period:
-| Reminding you a few times that you can become a donor, if you aren't one yet | Whether you're a donor, the answers kept on your phone, and whether you have an open request. Your phone makes these reminders by itself and sends nothing |
+| If you aren't listed as a donor, reminding you a few times, in a notification, that you can become a donor if you want | Whether you're listed as a donor, the donor-step answers kept on your phone, and whether you have an open request. The app makes these reminders on your phone and sends us nothing for them |
 
 §7, after "Pause alerts":
 - **Stop the "Become a donor" reminders:** tap **Don't remind me** on one, or turn them off in
