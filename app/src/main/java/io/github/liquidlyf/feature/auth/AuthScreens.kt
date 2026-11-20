@@ -67,9 +67,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.auth.GoogleSignInResult
+import io.github.liquidlyf.core.data.auth.SignInNotice
 import io.github.liquidlyf.core.data.auth.googleWebClientId
 import io.github.liquidlyf.core.data.auth.requestGoogleIdToken
 import io.github.liquidlyf.core.data.settings.AppLanguage
+import io.github.liquidlyf.core.designsystem.components.NoticeLine
 import io.github.liquidlyf.core.designsystem.components.PendingRequestLine
 import io.github.liquidlyf.core.domain.FieldCheck
 import io.github.liquidlyf.core.designsystem.LLIcons
@@ -181,8 +183,14 @@ fun SignInRoute(
     onPrefillUsed: () -> Unit = {},
     /** D31: a shared request waits on this phone; the screen says so. */
     waitingRequest: Boolean = false,
+    /** D32: why the person is here again, after Firebase ended the session. */
+    notice: SignInNotice? = null,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // The new address, filled in once.
+    LaunchedEffect(notice) {
+        if (notice is SignInNotice.EmailChanged && state.email.isBlank()) viewModel.onEmailChange(notice.email)
+    }
     LaunchedEffect(prefillEmail) {
         if (prefillEmail != null) {
             viewModel.onEmailChange(prefillEmail)
@@ -194,6 +202,7 @@ fun SignInRoute(
         state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, { onCreateAccount(state.email.trim()) }, onForgotPassword, onGoogle,
         onLanguageChange = language::set,
         waitingRequest = waitingRequest,
+        notice = notice,
     )
 }
 
@@ -251,6 +260,7 @@ fun SignInScreen(
     onContinueWithGoogle: (() -> Unit)? = null,
     onLanguageChange: (AppLanguage) -> Unit = {},
     waitingRequest: Boolean = false,
+    notice: SignInNotice? = null,
 ) {
     // Before sign-in, Settings → Language can't be reached: the switch is in the top bar.
     // N4 (BRAND-01): the big stacked logo on top, and "Sign in" pinned above the keyboard (UI-05).
@@ -268,6 +278,11 @@ fun SignInScreen(
         },
     ) {
         StackedLogo(Modifier.align(Alignment.CenterHorizontally).padding(bottom = Spacing.xs))
+        when (notice) {
+            is SignInNotice.EmailChanged -> NoticeLine(stringResource(R.string.signed_out_email_changed, notice.email))
+            SignInNotice.SignedOut -> NoticeLine(stringResource(R.string.signed_out_session_ended), icon = LLIcons.Info)
+            null -> Unit
+        }
         if (waitingRequest) PendingRequestLine()
         if (onContinueWithGoogle != null) GoogleOption(onContinueWithGoogle, enabled = !state.loading)
         LLTextField(

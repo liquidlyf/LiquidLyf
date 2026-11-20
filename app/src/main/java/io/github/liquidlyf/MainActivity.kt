@@ -22,6 +22,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.liquidlyf.core.data.auth.AccountChecker
 import io.github.liquidlyf.core.data.link.PendingRequestStore
 import io.github.liquidlyf.core.data.link.RequestLinks
 import io.github.liquidlyf.core.data.settings.OffScreenLanguage
@@ -64,6 +65,13 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     @Inject lateinit var pendingRequests: PendingRequestStore
+    @Inject lateinit var accountChecker: AccountChecker
+
+    override fun onStart() {
+        super.onStart()
+        // D32: the account is read again at start and on each return (at most every 10 minutes).
+        accountChecker.onAppVisible()
+    }
 
     /**
      * The app's language for notifications ([OffScreenLanguage]): keeps a choice made before it was

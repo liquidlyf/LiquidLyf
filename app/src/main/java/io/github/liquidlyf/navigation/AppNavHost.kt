@@ -89,6 +89,8 @@ import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.auth.AccountChecker
+import io.github.liquidlyf.core.data.auth.SignInNotice
 import io.github.liquidlyf.core.data.link.PendingRequestStore
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
@@ -208,6 +210,8 @@ fun AppNavHost(
     val pendingRequests: PendingRequestViewModel = hiltViewModel()
     // A State, not its value, for the graph: the screens read it, so the graph isn't rebuilt.
     val pendingState = pendingRequests.pending.collectAsStateWithLifecycle()
+    // D32: why Sign in shows again, when Firebase ended the session.
+    val signInNotice = pendingRequests.signInNotice.collectAsStateWithLifecycle()
     val pendingRequest = pendingState.value
     // Signed in too: a link can land on a request's page before the gate has moved a signed-out person on.
     val inApp = session is SessionState.Ready && currentEntry?.destination?.zone() == GateZone.MAIN
@@ -323,7 +327,7 @@ fun AppNavHost(
                             ),
                     ) {
                         onboarding(navController, onOnboardingFinished)
-                        authGraph(navController, pendingState)
+                        authGraph(navController, pendingState, signInNotice)
                         sessionScreens(navController, session, pendingState, onRetrySession, onSignOut)
                         mainGraph(navController, session, onSignOut)
                     }
@@ -485,7 +489,7 @@ private fun NavGraphBuilder.onboarding(navController: NavController, onFinished:
 }
 
 /** Signed out. Success needs no navigation here: the session changes and the gate moves on. */
-private fun NavGraphBuilder.authGraph(navController: NavController, pendingRequest: State<String?>) {
+private fun NavGraphBuilder.authGraph(navController: NavController, pendingRequest: State<String?>, notice: State<SignInNotice?>) {
     navigation<AuthGraph>(startDestination = SignIn) {
         composable<SignIn> { entry ->
             val prefill by entry.savedStateHandle.getStateFlow<String?>(PREFILL_EMAIL, null).collectAsStateWithLifecycle()
@@ -495,6 +499,7 @@ private fun NavGraphBuilder.authGraph(navController: NavController, pendingReque
                 prefillEmail = prefill,
                 onPrefillUsed = { entry.savedStateHandle[PREFILL_EMAIL] = null },
                 waitingRequest = pendingRequest.value != null,
+                notice = notice.value,
             )
         }
         // Back to the existing sign-in screen, never a second copy on top (BUG-031).
@@ -692,10 +697,17 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
 /** Sign up hands an email to Sign in through this saved-state key (FORM-04). */
 private const val PREFILL_EMAIL = "prefillEmail"
 
-/** D31: the request link kept on this phone ([PendingRequestStore]), for [AppNavHost]. */
+/**
+ * D31: the request link kept on this phone ([PendingRequestStore]), for [AppNavHost]. D32: and why
+ * Sign in shows again after Firebase ended the session ([AccountChecker]).
+ */
 @HiltViewModel
-class PendingRequestViewModel @Inject constructor(private val store: PendingRequestStore) : ViewModel() {
+class PendingRequestViewModel @Inject constructor(
+    private val store: PendingRequestStore,
+    checker: AccountChecker,
+) : ViewModel() {
     val pending: StateFlow<String?> = store.pending.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    val signInNotice: StateFlow<SignInNotice?> = checker.signInNotice
 
     suspend fun take(): String? = store.take()
 }

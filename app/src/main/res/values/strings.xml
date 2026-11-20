@@ -239,6 +239,9 @@
     <!-- Phase 3: profile setup -->
     <string name="setup_step">Step %1$d of %2$d</string>
     <!-- D28: setup's first page, and the skip link on its donor steps. -->
+    <!-- D32: Sign in after Firebase ended the session (never after the person's own Sign out). -->
+    <string name="signed_out_email_changed">Your email was changed. Sign in with %1$s.</string>
+    <string name="signed_out_session_ended">You were signed out. Please sign in again.</string>
     <!-- D31: on Sign in and setup's first page while a shared request waits. -->
     <string name="pending_request_line">After this, we\'ll open the blood request you were sent.</string>
     <string name="setup_choice_title">What would you like to do?</string>

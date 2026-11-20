@@ -1,5 +1,6 @@
 package io.github.liquidlyf.core.designsystem.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -20,7 +21,11 @@ import io.github.liquidlyf.core.designsystem.Spacing
  * request was lost.
  */
 @Composable
-fun PendingRequestLine(modifier: Modifier = Modifier) {
+fun PendingRequestLine(modifier: Modifier = Modifier) = NoticeLine(stringResource(R.string.pending_request_line), modifier)
+
+/** A short line in a tinted box, with an icon on its first line: what's happening, not an error. */
+@Composable
+fun NoticeLine(text: String, modifier: Modifier = Modifier, @DrawableRes icon: Int = LLIcons.Mail) {
     val colors = MaterialTheme.colorScheme
     val style = MaterialTheme.typography.bodyMedium
     Row(
@@ -30,7 +35,7 @@ fun PendingRequestLine(modifier: Modifier = Modifier) {
             .padding(horizontal = Spacing.sm, vertical = Spacing.sm),
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
     ) {
-        FirstLineIcon(LLIcons.Mail, style, tint = colors.primary)
-        Text(stringResource(R.string.pending_request_line), style = style, color = colors.onSecondaryContainer)
+        FirstLineIcon(icon, style, tint = colors.primary)
+        Text(text, style = style, color = colors.onSecondaryContainer)
     }
 }

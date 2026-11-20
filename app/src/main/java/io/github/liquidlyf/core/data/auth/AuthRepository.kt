@@ -3,6 +3,7 @@ package io.github.liquidlyf.core.data.auth
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.userProfileChangeRequest
@@ -37,6 +38,21 @@ data class AuthUser(
     val providers: Set<String>,
 ) {
     val hasPassword: Boolean get() = EmailAuthProvider.PROVIDER_ID in providers
+}
+
+/** D32: what a fresh look at the account found. */
+sealed interface AccountCheck {
+    /** Nothing new, or no answer (offline): the next check tries again. */
+    data object Same : AccountCheck
+
+    /** The email changed (the link was opened, on any device); the app now shows it. */
+    data class EmailChanged(val email: String) : AccountCheck
+
+    /**
+     * Firebase ended this phone's session (it does after an email or password change), so it's
+     * signed out. [newEmail]: the account's new address, when the email is what changed.
+     */
+    data class SessionEnded(val newEmail: String?) : AccountCheck
 }
 
 /**
@@ -86,6 +102,16 @@ interface AuthRepository {
 
     /** Sends a link to [newEmail]; the email changes only when the user opens it. */
     suspend fun changeEmail(newEmail: String): AppResult<Unit>
+
+    /** D32: the address the last "Change email" on this phone asked for, until the change shows (memory only). */
+    val requestedEmail: String?
+
+    /**
+     * D32: reads the account again and renews this phone's session. Without it the phone shows the
+     * email it saved until the next sign-in, and a session Firebase ended (after an email change)
+     * only signs out at the hourly renewal, with no reason given.
+     */
+    suspend fun checkAccount(): AccountCheck
 
     fun signOut()
 
@@ -217,8 +243,50 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
         return appResultOf {
             auth.useAppLanguage()
             user.verifyBeforeUpdateEmail(newEmail.trim()).await()
-            Unit
+            requestedEmail = newEmail.trim()
         }
+    }
+
+    @Volatile override var requestedEmail: String? = null
+        private set
+
+    override suspend fun checkAccount(): AccountCheck {
+        val user = auth.currentUser ?: return AccountCheck.Same
+        val before = user.email
+        try {
+            user.reload().await()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: FirebaseAuthInvalidUserException) {
+            return ended(newEmail = null) // gone, disabled, or its session ended
+        } catch (_: Exception) {
+            return AccountCheck.Same // offline: try again next time
+        }
+        val now = auth.currentUser?.email ?: before
+        try {
+            user.getIdToken(true).await()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: FirebaseAuthInvalidUserException) {
+            return ended(newEmail = now.takeIf { it != before })
+        } catch (_: Exception) {
+            // Offline for the token: still show what the account says now.
+        }
+        publish()
+        if (now != null && now != before) {
+            requestedEmail = null
+            return AccountCheck.EmailChanged(now)
+        }
+        return AccountCheck.Same
+    }
+
+    /** Only what the app knows: the new address from the account, or the one asked for here. */
+    private fun ended(newEmail: String?): AccountCheck {
+        val email = newEmail ?: requestedEmail
+        requestedEmail = null
+        auth.signOut()
+        state.value = null
+        return AccountCheck.SessionEnded(email)
     }
 
     override fun signOut() {

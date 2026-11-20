@@ -59,6 +59,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.liquidlyf.BuildConfig
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.auth.SignInNotice
 import io.github.liquidlyf.core.data.backend.AlertStatus
 import io.github.liquidlyf.core.data.backend.AlertStatusStore
 import io.github.liquidlyf.core.data.geo.BdGeoParser
@@ -670,6 +671,12 @@ class ScreenGalleryTest {
             Shot("sign-in-empty") { SignInScreen(SignInUiState(), {}, {}, {}, {}, {}, onContinueWithGoogle = {}) },
             Shot("sign-in-errors") { SignInScreen(signInErrors, {}, {}, {}, {}, {}, onContinueWithGoogle = {}) },
             // D31: a shared request waits on this phone.
+            // D32: after Firebase ended the session, Sign in says why (the new address filled in).
+            Shot("sign-in-email-changed") {
+                SignInScreen(SignInUiState(email = "nusrat.new@example.test"), {}, {}, {}, {}, {}, onContinueWithGoogle = {},
+                    notice = SignInNotice.EmailChanged("nusrat.new@example.test"))
+            },
+            Shot("sign-in-signed-out") { SignInScreen(SignInUiState(), {}, {}, {}, {}, {}, onContinueWithGoogle = {}, notice = SignInNotice.SignedOut) },
             Shot("sign-in-waiting-request") { SignInScreen(SignInUiState(), {}, {}, {}, {}, {}, onContinueWithGoogle = {}, waitingRequest = true) },
             Shot("sign-in-wrong-password") {
                 SignInScreen(SignInUiState(email = "nusrat@example.test", password = "secret12", formError = AppError.InvalidCredentials.messageRes), {}, {}, {}, {}, {}, onContinueWithGoogle = {})
