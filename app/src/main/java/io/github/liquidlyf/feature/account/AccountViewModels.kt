@@ -265,6 +265,13 @@ data class EditProfileUiState(
     val pendingEmail: String? = null,
     /** D34: seconds until "Resend email" works again (the confirm-email page's 60). */
     val resendIn: Int = 0,
+    /** D35: the Change email box: working, its two fields' errors, and "sent, close it". */
+    val changeEmailBusy: Boolean = false,
+    @StringRes val newEmailError: Int? = null,
+    @StringRes val passwordError: Int? = null,
+    val changeEmailSent: Boolean = false,
+    /** D35: Resend met "sign in again": the box opens again with this address, for the password. */
+    val askPasswordFor: String? = null,
     val geo: BdGeo? = null,
     @StringRes val nameError: Int? = null,
     @StringRes val birthYearError: Int? = null,
@@ -341,10 +348,17 @@ class EditProfileViewModel @Inject constructor(
         viewModelScope.launch {
             val result = auth.changeEmail(pending)
             state.update {
-                it.copy(message = if (result is AppResult.Failure) result.error.messageRes else R.string.verify_email_sent, messageArg = null)
+                when {
+                    // D35: Firebase wants a recent sign-in: the box again, the address filled in.
+                    result is AppResult.Failure && result.error == AppError.RecentLoginRequired -> it.copy(askPasswordFor = pending, resendIn = 0)
+                    result is AppResult.Failure -> it.copy(message = result.error.messageRes, messageArg = null)
+                    else -> it.copy(message = R.string.verify_email_sent, messageArg = null)
+                }
             }
         }
     }
+
+    fun onPasswordAsked() = state.update { it.copy(askPasswordFor = null) }
 
     private fun startCooldown(seconds: Int = RESEND_WAIT_SECONDS) {
         countdown?.cancel()
@@ -451,24 +465,46 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
-    fun changeEmail(newEmail: String) {
-        if (!Validators.isValidEmail(newEmail)) {
-            state.update { it.copy(message = R.string.error_invalid_email, messageArg = null) }
+    /**
+     * D35: Firebase allows a change of email only soon after signing in, so the box always asks for
+     * the current password (as Change password does), checks it, then sends the link, in one tap.
+     */
+    fun changeEmail(newEmail: String, password: String) {
+        if (state.value.changeEmailBusy) return
+        val emailError = if (Validators.isValidEmail(newEmail)) null else R.string.error_invalid_email
+        val passwordError = if (password.isEmpty()) R.string.error_password_required else null
+        if (emailError != null || passwordError != null) {
+            state.update { it.copy(newEmailError = emailError, passwordError = passwordError) }
             return
         }
+        state.update { it.copy(changeEmailBusy = true, newEmailError = null, passwordError = null) }
         viewModelScope.launch {
+            val reauth = auth.reauthenticate(password)
+            if (reauth is AppResult.Failure) {
+                state.update {
+                    if (reauth.error == AppError.InvalidCredentials) {
+                        it.copy(changeEmailBusy = false, passwordError = reauth.error.messageRes)
+                    } else {
+                        it.copy(changeEmailBusy = false, message = reauth.error.messageRes, messageArg = null)
+                    }
+                }
+                return@launch
+            }
             val result = auth.changeEmail(newEmail)
             state.update {
-                if (result is AppResult.Failure) {
-                    it.copy(message = result.error.messageRes, messageArg = null)
-                } else {
-                    it.copy(message = R.string.change_email_sent, messageArg = newEmail.trim())
+                when {
+                    result is AppResult.Failure && result.error == AppError.EmailInUse -> it.copy(changeEmailBusy = false, newEmailError = result.error.messageRes)
+                    result is AppResult.Failure -> it.copy(changeEmailBusy = false, message = result.error.messageRes, messageArg = null)
+                    else -> it.copy(changeEmailBusy = false, changeEmailSent = true, message = R.string.change_email_sent, messageArg = newEmail.trim())
                 }
             }
             // A link was just sent: wait before offering another, as on the confirm-email page.
             if (result is AppResult.Success) startCooldown()
         }
     }
+
+    /** The box closed (sent, or Cancel): its errors go. */
+    fun onChangeEmailClosed() = state.update { it.copy(changeEmailSent = false, newEmailError = null, passwordError = null) }
 
     fun onMessageShown() = state.update { it.copy(message = null, messageArg = null) }
 }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -23,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -382,26 +384,62 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
             dismissButton = { TextButton(onClick = { viewModel.onBloodGroupConfirmed(false) }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
+    // D35: Resend met "sign in again": the box opens with the address, for the password.
+    LaunchedEffect(state.askPasswordFor) {
+        state.askPasswordFor?.let { address ->
+            newEmail = address
+            changingEmail = true
+            viewModel.onPasswordAsked()
+        }
+    }
+    // Never kept in saved state: a password only lives while the box is open.
+    var emailPassword by remember { mutableStateOf("") }
+    val closeChangeEmail = {
+        changingEmail = false
+        emailPassword = ""
+        viewModel.onChangeEmailClosed()
+    }
+    LaunchedEffect(state.changeEmailSent) {
+        if (state.changeEmailSent) {
+            newEmail = ""
+            closeChangeEmail()
+        }
+    }
     if (changingEmail) {
         AlertDialog(
-            onDismissRequest = { changingEmail = false },
+            onDismissRequest = { if (!state.changeEmailBusy) closeChangeEmail() },
             title = { Text(stringResource(R.string.action_change_email)) },
             text = {
-                LLTextField(
-                    value = newEmail,
-                    onValueChange = { newEmail = it },
-                    label = stringResource(R.string.label_new_email),
-                    contentType = ContentType.EmailAddress,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                )
+                DialogBody {
+                    LLTextField(
+                        value = newEmail,
+                        onValueChange = { newEmail = it },
+                        label = stringResource(R.string.label_new_email),
+                        errorText = state.newEmailError?.let { stringResource(it) },
+                        enabled = !state.changeEmailBusy,
+                        contentType = ContentType.EmailAddress,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                    )
+                    // D35: as Change password: Firebase changes an email only soon after a sign-in.
+                    LLTextField(
+                        value = emailPassword,
+                        onValueChange = { emailPassword = it },
+                        label = stringResource(R.string.label_current_password),
+                        errorText = state.passwordError?.let { stringResource(it) },
+                        enabled = !state.changeEmailBusy,
+                        isPassword = true,
+                        contentType = ContentType.Password,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { viewModel.changeEmail(newEmail, emailPassword) }),
+                    )
+                }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    viewModel.changeEmail(newEmail)
-                    changingEmail = false
-                }) { Text(stringResource(R.string.action_send_link)) }
+                TextButton(onClick = { viewModel.changeEmail(newEmail, emailPassword) }, enabled = !state.changeEmailBusy) {
+                    Text(stringResource(R.string.action_send_link))
+                }
             },
-            dismissButton = { TextButton(onClick = { changingEmail = false }) { Text(stringResource(R.string.action_cancel)) } },
+            dismissButton = { TextButton(onClick = closeChangeEmail, enabled = !state.changeEmailBusy) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }

@@ -181,6 +181,8 @@ class AccountCheckE2ETest {
         // "Change email" on the page, as a person does.
         compose.onNode(hasText(str(R.string.action_change_email)) and hasClickAction()).performClick()
         compose.onNode(hasText(str(R.string.label_new_email)) and hasSetTextAction()).performTextInput(new)
+        // D35: the current password, checked before the link goes.
+        compose.onNode(hasText(str(R.string.label_current_password)) and hasSetTextAction()).performTextInput(EmulatorAccounts.PASSWORD)
         compose.onNode(hasText(str(R.string.action_send_link)) and hasClickAction()).performClick()
         waitFor(str(R.string.email_pending_title, new))
         waitFor(str(R.string.email_pending_body, old))

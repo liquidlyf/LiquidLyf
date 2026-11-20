@@ -202,7 +202,7 @@ class AccountViewModelsTest {
         advanceUntilIdle()
         assertNull(vm.uiState.value.pendingEmail)
 
-        vm.changeEmail("rahim.new@example.test")
+        vm.changeEmail("rahim.new@example.test", "old-password")
         runCurrent()
         assertEquals("rahim.new@example.test", vm.uiState.value.pendingEmail)
         assertEquals(60, vm.uiState.value.resendIn) // a link was just sent
@@ -298,15 +298,44 @@ class AccountViewModelsTest {
     }
 
     @Test
-    fun `change email sends a link to the new address`() = test {
+    fun `change email asks for the password, checks it, then sends the link (D35)`() = test {
         signedIn()
         val vm = editVm(FakeProfileRepository(), FakeSessionManager(SessionState.Ready(TestData.user(), TestData.profile())))
-        vm.changeEmail("nope")
-        assertEquals(R.string.error_invalid_email, vm.uiState.value.message)
-        vm.changeEmail(" new@example.test ")
+        // Both fields are checked first, under each field.
+        vm.changeEmail("nope", "")
+        assertEquals(R.string.error_invalid_email, vm.uiState.value.newEmailError)
+        assertEquals(R.string.error_password_required, vm.uiState.value.passwordError)
+        // A wrong password: the box stays, nothing is sent.
+        vm.changeEmail(" new@example.test ", "not-it")
         advanceUntilIdle()
+        assertEquals(AppError.InvalidCredentials.messageRes, vm.uiState.value.passwordError)
+        assertFalse(vm.uiState.value.changeEmailSent)
+        assertTrue(auth.emailChanges.isEmpty())
+        // The right one: sent, and the box closes.
+        vm.changeEmail(" new@example.test ", "old-password")
+        advanceTimeBy(1)
+        runCurrent()
         assertEquals(R.string.change_email_sent, vm.uiState.value.message)
+        assertTrue(vm.uiState.value.changeEmailSent)
         assertEquals(listOf("new@example.test"), auth.emailChanges)
+        vm.onChangeEmailClosed()
+        assertFalse(vm.uiState.value.changeEmailSent)
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `a Resend that needs a fresh sign-in opens the box again with the address (D35)`() = test {
+        signedIn()
+        auth.requestedEmail.value = io.github.liquidlyf.core.data.auth.RequestedEmail("rahim.new@example.test", TestData.NOW.minusSeconds(120))
+        val vm = editVm(FakeProfileRepository(), FakeSessionManager(SessionState.Ready(TestData.user(), TestData.profile())))
+        runCurrent()
+        auth.failNext = AppError.RecentLoginRequired
+        vm.resendEmailChange()
+        runCurrent()
+        assertEquals("rahim.new@example.test", vm.uiState.value.askPasswordFor)
+        vm.onPasswordAsked()
+        assertEquals(null, vm.uiState.value.askPasswordFor)
+        advanceUntilIdle()
     }
 
 
