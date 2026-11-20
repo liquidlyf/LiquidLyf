@@ -72,6 +72,29 @@ simply off: being listed as a donor, and being available to donate.
      unlisted, unavailable and unable to offer. Nothing new is stored (no "need blood / want to donate"
      field). The page doesn't name the app's button, so it holds if A's label changes. -->
 
+<!-- DRAFT for D28 + D29 (the maintainer, 20 Nov 2026): add these when A commits them, after checking
+     A's code, with the Bangla meaning-checked and reviewed. Terms: no change (they don't cover
+     notifications). D28 = setup's donor path; its answers stay on the phone after "Need blood now?
+     Skip this". D29 = a "Become a donor" reminder made by WorkManager on the phone, sent nowhere:
+     Fridays for 4 weeks, then monthly for 3 months, then it stops (7 in all). The phone has no cloud
+     backup or device transfer (allowBackup false, data_extraction_rules exclude everything).
+     CHECK with A: which answers stay on the phone, that sign-out deletes them and the reminder's
+     schedule, what "Not now" at "list me" saves, the switch's name and place, and the final words.
+
+§2, after "Until you choose to become a donor…":
+If you stop partway through becoming a donor, the answers you gave so far are kept **only on your
+phone**, so you don't have to type them again. They aren't sent to us or backed up, and they're deleted
+when you sign out.
+
+§3, a row after the rest period:
+| Reminding you a few times that you can become a donor, if you aren't one yet | Whether you're a donor, and the answers kept on your phone. Your phone makes these reminders by itself and sends nothing |
+
+§7, after "Pause alerts":
+- **Stop the "Become a donor" reminders:** tap **Don't remind me** on one, or turn them off in
+  Profile → ⚙ Settings → Notifications. They stop by themselves when you become a donor, and after 7
+  reminders (about 4 months).
+-->
+
 ### When you use the app
 - **Blood requests you post:** the patient's blood group, the blood component and number of units,
   the hospital and its area, how urgent it is, when the blood is needed, an optional condition (such as
