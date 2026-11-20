@@ -389,6 +389,9 @@
     <string name="notification_request_ending_body">Still need blood? Open it to change the time, or close it if you found blood.</string>
     <string name="notification_did_donate_title">Did %1$s donate?</string>
     <string name="notification_did_donate_body">Mark it on your request so they get credit and a thank-you.</string>
+    <!-- D29: the "Become a donor" reminder (its title is home_become_donor_title, "Want to donate too?"). -->
+    <string name="notification_donor_reminder_body">Someone near you may need blood soon. Becoming a donor takes 3 short steps, and you choose if you\'re listed.</string>
+    <string name="action_dont_remind_me">Don\'t remind me</string>
 
     <!-- Inbox, the bell (Phase 5.9) -->
     <string name="inbox_empty_title">No notifications yet</string>
@@ -408,6 +411,8 @@
     <string name="notif_prefs_updates_summary">When someone offers on your request, or a requester answers your offer. They also stay in the inbox.</string>
     <string name="notif_prefs_reminders_title">Reminders</string>
     <string name="notif_prefs_reminders_summary">When you can donate again, and 2 hours before your request ends.</string>
+    <string name="notif_prefs_donor_reminder_title">Reminders to become a donor</string>
+    <string name="notif_prefs_donor_reminder_summary">A few Friday reminders in your first months. They stop once you\'re a donor.</string>
     <string name="notif_prefs_system_title">Phone notification settings</string>
     <string name="notif_prefs_system_summary">Sound, vibration and more, in your phone\'s settings.</string>
     <string name="notif_off_title">Notifications are off</string>

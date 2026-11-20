@@ -19,6 +19,7 @@ import io.github.liquidlyf.core.data.settings.OffScreenLanguage
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.model.AppLocale
+import io.github.liquidlyf.navigation.BECOME_DONOR_DEEP_LINK
 import io.github.liquidlyf.navigation.MODERATION_DEEP_LINK
 import io.github.liquidlyf.navigation.REQUEST_DEEP_LINK
 import javax.inject.Inject
@@ -128,6 +129,30 @@ class AlertNotifier @Inject constructor(
         priority = NotificationCompat.PRIORITY_DEFAULT,
     )
 
+    /**
+     * D29: "Want to donate too?" for someone who isn't a donor yet. The tap opens Become a donor
+     * (with any answers kept on this phone); "Don't remind me" turns these off.
+     */
+    fun showDonorReminder() = post(
+        id = DONOR_REMINDER_NOTIFICATION_ID,
+        channel = NotificationChannels.REMINDERS,
+        title = words().getString(R.string.home_become_donor_title),
+        body = words().getString(R.string.notification_donor_reminder_body),
+        requestId = null,
+        priority = NotificationCompat.PRIORITY_DEFAULT,
+        open = openUri(BECOME_DONOR_DEEP_LINK),
+        action = NotificationCompat.Action(
+            0,
+            words().getString(R.string.action_dont_remind_me),
+            PendingIntent.getBroadcast(
+                context,
+                DONOR_REMINDER_NOTIFICATION_ID,
+                Intent(context, DonorReminderReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            ),
+        ),
+    )
+
     override fun cancelAll() = NotificationManagerCompat.from(context).cancelAll()
 
     /** Opens the request in a fresh task: the deep link builds Home → request under it. */
@@ -161,7 +186,16 @@ class AlertNotifier @Inject constructor(
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
-    private fun post(id: Int, channel: String, title: String, body: String, requestId: String?, priority: Int, open: PendingIntent? = null) {
+    private fun post(
+        id: Int,
+        channel: String,
+        title: String,
+        body: String,
+        requestId: String?,
+        priority: Int,
+        open: PendingIntent? = null,
+        action: NotificationCompat.Action? = null,
+    ) {
         if (!canPost()) return // the app's own screens still show everything
         channelsReady
         val notification = NotificationCompat.Builder(context, channel)
@@ -173,6 +207,7 @@ class AlertNotifier @Inject constructor(
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setAutoCancel(true)
             .setContentIntent(open ?: requestId?.let { openRequest(it) } ?: openApp())
+            .apply { if (action != null) addAction(action) }
             .build()
         try {
             NotificationManagerCompat.from(context).notify(id, notification)

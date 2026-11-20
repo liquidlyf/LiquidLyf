@@ -75,4 +75,17 @@ class NotificationPrefsViewModelTest {
         assertFalse(vm.uiState.value.prefs.requestAlerts)
         assertEquals(setOf("usr_me"), subscribed)
     }
+
+    @Test
+    fun `the donor reminder's switch shows only for someone who isn't a donor (D29)`() = runTest(dispatcher) {
+        val vm = NotificationPrefsViewModel(prefs, push, session, backgroundScope)
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
+        advanceUntilIdle()
+        assertFalse(vm.uiState.value.showDonorReminder)
+
+        val asker = me.copy(gender = null, birthYear = null, weightOk = null, showInDonorSearch = false, available = false)
+        session.state.value = SessionState.Ready(TestData.user(uid = "me"), asker)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.showDonorReminder)
+    }
 }

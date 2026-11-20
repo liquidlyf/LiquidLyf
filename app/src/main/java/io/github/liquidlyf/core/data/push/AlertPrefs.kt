@@ -16,12 +16,14 @@ import javax.inject.Singleton
 /**
  * Which notifications this phone wants (phase-05 5.10). Topics are per phone, so these are too.
  * Off for request alerts = no area topics; off for updates = no `usr_` topic (the inbox still
- * has them); off for reminders = the on-device reminders stay silent.
+ * has them); off for reminders = the on-device reminders stay silent. [donorReminder] (D29): the
+ * "Want to donate too?" reminders, for people who aren't donors; it's back on after a sign-out.
  */
 data class AlertPrefs(
     val requestAlerts: Boolean = true,
     val updates: Boolean = true,
     val reminders: Boolean = true,
+    val donorReminder: Boolean = true,
 )
 
 interface AlertPrefsStore {
@@ -43,6 +45,7 @@ class DataStoreAlertPrefsStore @Inject constructor(
             requestAlerts = it[REQUEST_ALERTS] ?: true,
             updates = it[UPDATES] ?: true,
             reminders = it[REMINDERS] ?: true,
+            donorReminder = it[DONOR_REMINDER] ?: true,
         )
     }
 
@@ -51,6 +54,7 @@ class DataStoreAlertPrefsStore @Inject constructor(
             it[REQUEST_ALERTS] = prefs.requestAlerts
             it[UPDATES] = prefs.updates
             it[REMINDERS] = prefs.reminders
+            it[DONOR_REMINDER] = prefs.donorReminder
         }
     }
 
@@ -58,5 +62,6 @@ class DataStoreAlertPrefsStore @Inject constructor(
         val REQUEST_ALERTS = booleanPreferencesKey("request_alerts")
         val UPDATES = booleanPreferencesKey("updates")
         val REMINDERS = booleanPreferencesKey("reminders")
+        val DONOR_REMINDER = booleanPreferencesKey("donor_reminder")
     }
 }

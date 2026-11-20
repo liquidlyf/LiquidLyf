@@ -399,11 +399,18 @@ class FakeReminders : io.github.liquidlyf.core.data.push.Reminders {
         didDonate -= requestId
     }
 
+    var donorSlots: List<java.time.Instant> = emptyList()
+
+    override fun scheduleDonorReminders(slots: List<java.time.Instant>) {
+        donorSlots = slots
+    }
+
     override fun cancelAll() {
         cancelledAll++
         eligibleAgain = null
         ending.clear()
         didDonate.clear()
+        donorSlots = emptyList()
     }
 }
 

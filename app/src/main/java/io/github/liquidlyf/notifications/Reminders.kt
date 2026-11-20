@@ -14,6 +14,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.liquidlyf.core.data.profile.ProfileRepository
 import io.github.liquidlyf.core.data.push.AlertPrefsStore
 import io.github.liquidlyf.core.data.push.PushTopicManager
 import io.github.liquidlyf.core.data.push.Reminders
@@ -23,8 +24,12 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.model.RequestStatus
 import io.github.liquidlyf.core.model.ResponseStatus
 import io.github.liquidlyf.core.util.AppResult
+import io.github.liquidlyf.core.util.ApplicationScope
 import io.github.liquidlyf.core.util.Clock
+import io.github.liquidlyf.feature.profilesetup.SetupDraftStore
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Duration
 import java.time.Instant
@@ -36,6 +41,8 @@ import javax.inject.Singleton
 class WorkManagerReminders @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val clock: Clock,
+    private val alertPrefs: AlertPrefsStore,
+    @param:ApplicationScope private val scope: CoroutineScope,
 ) : Reminders {
     private val work by lazy { WorkManager.getInstance(context) }
 
@@ -84,8 +91,27 @@ class WorkManagerReminders @Inject constructor(
         work.cancelUniqueWork(didDonate(requestId))
     }
 
+    override fun scheduleDonorReminders(slots: List<Instant>) {
+        if (slots.isEmpty()) {
+            work.cancelAllWorkByTag(DONOR_TAG)
+            return
+        }
+        for (at in slots) {
+            val request = OneTimeWorkRequestBuilder<DonorReminderWorker>()
+                .setInitialDelay(delayUntil(at), TimeUnit.MILLISECONDS)
+                .setInputData(workDataOf(DonorReminderWorker.SLOT to at.toEpochMilli()))
+                .addTag(TAG)
+                .addTag(DONOR_TAG)
+                .build()
+            // KEEP: asked again at every start, a time already set stays as it is.
+            work.enqueueUniqueWork(donorReminder(at), ExistingWorkPolicy.KEEP, request)
+        }
+    }
+
     override fun cancelAll() {
         work.cancelAllWorkByTag(TAG)
+        // "Don't remind me" was this person's; the next one on the phone starts with it on.
+        scope.launch { alertPrefs.set(alertPrefs.current().copy(donorReminder = true)) }
     }
 
     private fun delayUntil(at: Instant): Long = Duration.between(clock.now(), at).toMillis().coerceAtLeast(0)
@@ -93,11 +119,13 @@ class WorkManagerReminders @Inject constructor(
     companion object {
         const val TAG = "liquidlyf_reminder"
         const val ELIGIBLE_AGAIN = "eligible_again"
+        const val DONOR_TAG = "liquidlyf_donor_reminder"
         val ENDING_NOTICE: Duration = Duration.ofHours(2)
         val DID_DONATE_AFTER: Duration = Duration.ofHours(1)
 
         fun ending(requestId: String) = "request_ending_$requestId"
         fun didDonate(requestId: String) = "did_donate_$requestId"
+        fun donorReminder(at: Instant) = "donor_reminder_${at.toEpochMilli()}"
     }
 }
 
@@ -110,9 +138,17 @@ interface ReminderEntryPoint {
     fun push(): PushTopicManager
     fun requests(): RequestRepository
     fun alertPrefs(): AlertPrefsStore
+    fun clock(): Clock
+    fun drafts(): SetupDraftStore
+    fun donorPlan(): DonorReminderPlan
+    fun profiles(): ProfileRepository
+    fun reminders(): Reminders
+
+    @ApplicationScope
+    fun appScope(): CoroutineScope
 }
 
-private suspend fun readySession(session: SessionManager): SessionState.Ready? =
+internal suspend fun readySession(session: SessionManager): SessionState.Ready? =
     withTimeoutOrNull(10_000) { session.state.first { it !is SessionState.Loading } } as? SessionState.Ready
 
 class EligibleAgainWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {

@@ -42,12 +42,19 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- liquidlyf://request/{id} (alerts), liquidlyf://moderation (the admins' new-report alert, Phase 7). -->
+                <!-- liquidlyf://request/{id} (alerts), liquidlyf://moderation (the admins' new-report alert, Phase 7),
+                     liquidlyf://become-donor (D29's reminder). -->
                 <data android:scheme="liquidlyf" />
                 <data android:host="request" />
                 <data android:host="moderation" />
+                <data android:host="become-donor" />
             </intent-filter>
         </activity>
+
+        <!-- D29: "Don't remind me" on the become-a-donor reminder. Only the app's own notification sends it. -->
+        <receiver
+            android:name=".notifications.DonorReminderReceiver"
+            android:exported="false" />
 
         <!-- The Worker's topic alerts (doc 10 §6). Not exported: only Firebase delivers to it. -->
         <service

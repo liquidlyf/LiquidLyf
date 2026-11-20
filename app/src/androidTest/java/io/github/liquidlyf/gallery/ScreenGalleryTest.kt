@@ -1196,6 +1196,10 @@ class ScreenGalleryTest {
             Shot("success-snackbar-listed", content = withSuccess(R.string.success_listed, screen(state))),
             Shot("settings-resting", content = screen(state.copy(alertsAgainOn = now.plus(Duration.ofDays(80))))),
             Shot("notification-settings") { NotificationPrefsScreen(NotificationPrefsUiState(loaded = true), systemEnabled = true, onChange = {}, onOpenSystemSettings = {}, onBack = {}) },
+            // D29: someone who isn't a donor also has "Reminders to become a donor".
+            Shot("notification-settings-not-donor") {
+                NotificationPrefsScreen(NotificationPrefsUiState(loaded = true, showDonorReminder = true), systemEnabled = true, onChange = {}, onOpenSystemSettings = {}, onBack = {})
+            },
             Shot("notification-settings-phone-off") {
                 NotificationPrefsScreen(NotificationPrefsUiState(loaded = true), systemEnabled = false, onChange = {}, onOpenSystemSettings = {}, onBack = {})
             },

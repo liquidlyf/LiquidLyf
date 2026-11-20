@@ -243,4 +243,10 @@
     <string name="deleting_step_private">যোগাযোগের তথ্য ও বার্তা মুছে ফেলা হচ্ছে</string>
     <string name="deleting_step_profile">আপনার প্রোফাইল মুছে ফেলা হচ্ছে</string>
     <string name="deleting_sign_in_again">আপনার নিরাপত্তার জন্য, অ্যাকাউন্ট মুছে ফেলা শেষ করতে পাসওয়ার্ড দিন।</string>
+
+    <!-- D29: approved by the maintainer (20 Nov 2026 07:00, "D29 words OK"). -->
+    <string name="notification_donor_reminder_body">কাছাকাছি কারও শিগগিরই রক্ত লাগতে পারে। রক্তদাতা হতে ৩টি ছোট ধাপ, আর তালিকায় থাকবেন কি না তা আপনিই ঠিক করবেন।</string>
+    <string name="action_dont_remind_me">আর মনে করাবেন না</string>
+    <string name="notif_prefs_donor_reminder_title">রক্তদাতা হওয়ার রিমাইন্ডার</string>
+    <string name="notif_prefs_donor_reminder_summary">প্রথম কয়েক মাসে কয়েকটি শুক্রবারে মনে করানো হবে। রক্তদাতা হলে আর আসবে না।</string>
 </resources>

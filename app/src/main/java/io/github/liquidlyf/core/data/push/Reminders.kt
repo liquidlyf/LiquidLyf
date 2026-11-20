@@ -23,6 +23,12 @@ interface Reminders {
 
     fun cancelDidDonate(requestId: String)
 
-    /** Sign-out: nothing of this person's may fire. */
+    /**
+     * D29: "Want to donate too?" at each of [slots] (the ones not set yet); empty cancels them all.
+     * Each one checks again when it's due.
+     */
+    fun scheduleDonorReminders(slots: List<Instant>)
+
+    /** Sign-out: nothing of this person's may fire, and the donor reminder's switch is on again. */
     fun cancelAll()
 }

@@ -149,6 +149,9 @@ const val REQUEST_DEEP_LINK = "liquidlyf://request"
 /** The admins' new-report notification opens Moderation (phase-07 7.3). */
 const val MODERATION_DEEP_LINK = "liquidlyf://moderation"
 
+/** liquidlyf://become-donor: D29's reminder opens Become a donor. */
+const val BECOME_DONOR_DEEP_LINK = "liquidlyf://become-donor"
+
 /**
  * The whole app UI: one NavHost with the auth graph and the main graph. The main graph's
  * four tabs keep their own back stacks (saveState/restoreState), so switching tabs never
@@ -611,7 +614,9 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
                 onEditProfile = dropUnlessResumed { navController.navigate(EditProfile) { launchSingleTop = true } },
             )
         }
-        composable<BecomeDonor> { BecomeDonorRoute(onDone = { navController.popBackStack() }) }
+        composable<BecomeDonor>(deepLinks = listOf(navDeepLink<BecomeDonor>(basePath = BECOME_DONOR_DEEP_LINK))) {
+            BecomeDonorRoute(onDone = { navController.popBackStack() })
+        }
         composable<CreateRequest> {
             CreateRequestRoute(
                 onClose = { navController.popBackStack() },

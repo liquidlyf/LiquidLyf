@@ -10,6 +10,7 @@ import io.github.liquidlyf.core.data.update.DailyChecks
 import io.github.liquidlyf.core.firebase.AppCheckInstaller
 import io.github.liquidlyf.core.firebase.CrashReports
 import io.github.liquidlyf.core.util.ApplicationScope
+import io.github.liquidlyf.notifications.DonorReminderScheduler
 import io.github.liquidlyf.notifications.NotificationChannels
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,7 @@ class LiquidLyfApp : Application() {
     @Inject lateinit var apkDownloader: ApkDownloader
     @Inject lateinit var apkInstaller: ApkInstaller
     @Inject @ApplicationScope lateinit var scope: CoroutineScope
+    @Inject lateinit var donorReminders: DonorReminderScheduler
 
     override fun onCreate() {
         super.onCreate()
@@ -31,6 +33,8 @@ class LiquidLyfApp : Application() {
         // The silent daily check (hospital list, app updates), plus one now if the last is over a day old.
         // Instrumented tests use HiltTestApplication, so they never reach the website.
         DailyChecks.schedule(this)
+        // D29: the "Want to donate too?" reminders follow the person (scheduled or cancelled).
+        donorReminders.start()
         // The APK and install session from the last in-app update (installed or not) go.
         scope.launch(Dispatchers.IO) {
             apkDownloader.cleanUp()

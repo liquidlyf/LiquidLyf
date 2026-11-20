@@ -57,12 +57,13 @@ import io.github.liquidlyf.notifications.NotificationChannels
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class NotificationPrefsUiState(val prefs: AlertPrefs = AlertPrefs(), val loaded: Boolean = false)
+/** [showDonorReminder]: D29's switch, only for someone who isn't a donor (for a donor it would do nothing). */
+data class NotificationPrefsUiState(val prefs: AlertPrefs = AlertPrefs(), val loaded: Boolean = false, val showDonorReminder: Boolean = false)
 
 /** Phase 5.10: which notifications this phone gets. A change re-syncs the topics at once. */
 @HiltViewModel
@@ -72,8 +73,10 @@ class NotificationPrefsViewModel @Inject constructor(
     private val session: SessionManager,
     @param:ApplicationScope private val appScope: CoroutineScope,
 ) : ViewModel() {
-    val uiState: StateFlow<NotificationPrefsUiState> = store.prefs
-        .map { NotificationPrefsUiState(it, loaded = true) }
+    val uiState: StateFlow<NotificationPrefsUiState> = combine(store.prefs, session.state) { prefs, state ->
+        val profile = (state as? SessionState.Ready)?.profile
+        NotificationPrefsUiState(prefs, loaded = true, showDonorReminder = profile != null && !profile.hasDonorDetails && !profile.showInDonorSearch)
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotificationPrefsUiState())
 
     /** Saved and applied in the app's scope, so leaving the screen at once can't stop it. */
@@ -130,6 +133,12 @@ internal fun NotificationPrefsScreen(
                 }
                 PrefSwitch(R.string.notif_prefs_reminders_title, R.string.notif_prefs_reminders_summary, p.reminders, enabled = state.loaded && systemEnabled) {
                     onChange(p.copy(reminders = it))
+                }
+                if (state.showDonorReminder) {
+                    PrefSwitch(
+                        R.string.notif_prefs_donor_reminder_title, R.string.notif_prefs_donor_reminder_summary, p.donorReminder,
+                        enabled = state.loaded && systemEnabled,
+                    ) { onChange(p.copy(donorReminder = it)) }
                 }
                 ListItem(
                     headlineContent = { Text(stringResource(R.string.notif_prefs_system_title)) },
