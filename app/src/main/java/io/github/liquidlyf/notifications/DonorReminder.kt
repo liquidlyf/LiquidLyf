@@ -36,12 +36,13 @@ import javax.inject.Singleton
 internal const val DONOR_REMINDER_NOTIFICATION_ID = 3
 
 /**
- * D29, the maintainer's idea: a few reminders to become a donor, made on this phone (nothing is
- * sent anywhere). Who gets them and when is worked out from the account's creation (setup), so
- * nothing is counted or kept: Fridays at 10:00 phone time (the weekend here, and before Jumu'ah),
- * the first one 7 or more days after setup, weekly for 4 weeks, then every 4
- * weeks for 3 more, then never: 7 in all. A Friday is skipped, not moved, while their own request
- * is open.
+ * D29, the maintainer's idea: a few reminders to become a donor, made on this phone: no server
+ * sends them, and nothing new is written. When one is due, the phone reads only the person's own
+ * data (the profile, and their userStats for an open request). Who gets them and when is worked
+ * out from the account's creation (setup), so nothing is counted or kept: Fridays at 10:00 phone
+ * time (the weekend here, and before Jumu'ah), the first one 7 or more days after setup, weekly
+ * for 4 weeks, then every 4 weeks for 3 more, then never: 7 in all. A Friday is skipped, not
+ * moved, while their own request is open.
  */
 class DonorReminderPlan @Inject constructor(private val eligibility: EligibilityCalculator) {
 
