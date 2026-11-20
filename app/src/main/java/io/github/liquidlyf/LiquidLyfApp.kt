@@ -3,6 +3,7 @@ package io.github.liquidlyf
 import android.app.Application
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
+import io.github.liquidlyf.core.data.settings.OffScreenLanguage
 import io.github.liquidlyf.core.data.update.ApkDownloader
 import io.github.liquidlyf.core.data.update.ApkInstaller
 import io.github.liquidlyf.core.data.update.DailyChecks
@@ -26,7 +27,7 @@ class LiquidLyfApp : Application() {
         // App Check first, before anything talks to Firebase.
         AppCheckInstaller.install()
         installCrashReports()
-        NotificationChannels.createAll(this)
+        NotificationChannels.createAll(OffScreenLanguage.wrap(this))
         // The silent daily check (hospital list, app updates), plus one now if the last is over a day old.
         // Instrumented tests use HiltTestApplication, so they never reach the website.
         DailyChecks.schedule(this)

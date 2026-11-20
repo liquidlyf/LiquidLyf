@@ -15,6 +15,7 @@ import io.github.liquidlyf.MainActivity
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.geo.GeoRepository
 import io.github.liquidlyf.core.data.push.SystemNotifications
+import io.github.liquidlyf.core.data.settings.OffScreenLanguage
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.labelRes
 import io.github.liquidlyf.core.model.AppLocale
@@ -31,7 +32,7 @@ internal const val ADMIN_REPORTS_NOTIFICATION_ID = 2
 
 /**
  * Posts the app's notifications (phase-05 5.2). The push carries codes only; the text is
- * rendered here in the phone's language (per-app language comes in Phase 8). Every tap opens the
+ * rendered here in the app's own language (Phase 8.1; [OffScreenLanguage] on Android 12 and older). Every tap opens the
  * request through the `liquidlyf://request/{id}` deep link, also from a killed app.
  */
 @Singleton
@@ -48,19 +49,19 @@ class AlertNotifier @Inject constructor(
     }
 
     suspend fun showRequestAlert(alert: PushMessage.RequestAlert, stillNeeded: Boolean) {
-        val group = alert.bloodGroup?.let { context.getString(it.labelRes) }
+        val group = alert.bloodGroup?.let { words().getString(it.labelRes) }
         val title = when {
-            stillNeeded && group != null -> context.getString(R.string.notification_still_needed_title, group)
-            stillNeeded -> context.getString(R.string.notification_still_needed_title_any)
-            group != null -> context.getString(R.string.notification_new_request_title, group)
-            else -> context.getString(R.string.notification_new_request_title_any)
+            stillNeeded && group != null -> words().getString(R.string.notification_still_needed_title, group)
+            stillNeeded -> words().getString(R.string.notification_still_needed_title_any)
+            group != null -> words().getString(R.string.notification_new_request_title, group)
+            else -> words().getString(R.string.notification_new_request_title_any)
         }
         val place = alert.district?.let { code -> geoRepository.geo().district(code)?.name?.localized(locale()) }
-        val urgency = alert.urgency?.let { context.getString(it.labelRes) }
+        val urgency = alert.urgency?.let { words().getString(it.labelRes) }
         val body = if (place != null && urgency != null) {
-            context.getString(R.string.notification_request_body, urgency, place)
+            words().getString(R.string.notification_request_body, urgency, place)
         } else {
-            context.getString(R.string.notification_new_request_body)
+            words().getString(R.string.notification_new_request_body)
         }
         post(
             id = notificationId(alert.requestId, "alert"),
@@ -79,8 +80,8 @@ class AlertNotifier @Inject constructor(
         post(
             id = notificationId(requestId, type.code),
             channel = if (urgent) NotificationChannels.URGENT_REQUESTS else NotificationChannels.REQUEST_UPDATES,
-            title = context.getString(title),
-            body = context.getString(body),
+            title = words().getString(title),
+            body = words().getString(body),
             requestId = requestId,
             priority = if (urgent) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT,
         )
@@ -90,8 +91,8 @@ class AlertNotifier @Inject constructor(
     fun showAdminReports(count: String) = post(
         id = ADMIN_REPORTS_NOTIFICATION_ID,
         channel = NotificationChannels.REQUEST_UPDATES,
-        title = context.getString(R.string.notification_reports_title),
-        body = context.getString(R.string.notification_reports_body, count),
+        title = words().getString(R.string.notification_reports_title),
+        body = words().getString(R.string.notification_reports_body, count),
         requestId = null,
         priority = NotificationCompat.PRIORITY_DEFAULT,
         open = openUri(MODERATION_DEEP_LINK),
@@ -101,8 +102,8 @@ class AlertNotifier @Inject constructor(
     fun showEligibleAgain() = post(
         id = ELIGIBLE_AGAIN_NOTIFICATION_ID,
         channel = NotificationChannels.REMINDERS,
-        title = context.getString(R.string.notification_eligible_again_title),
-        body = context.getString(R.string.notification_eligible_again_body),
+        title = words().getString(R.string.notification_eligible_again_title),
+        body = words().getString(R.string.notification_eligible_again_body),
         requestId = null,
         priority = NotificationCompat.PRIORITY_DEFAULT,
     )
@@ -111,8 +112,8 @@ class AlertNotifier @Inject constructor(
     fun showRequestEnding(requestId: String) = post(
         id = notificationId(requestId, "ending"),
         channel = NotificationChannels.REMINDERS,
-        title = context.getString(R.string.notification_request_ending_title),
-        body = context.getString(R.string.notification_request_ending_body),
+        title = words().getString(R.string.notification_request_ending_title),
+        body = words().getString(R.string.notification_request_ending_body),
         requestId = requestId,
         priority = NotificationCompat.PRIORITY_DEFAULT,
     )
@@ -121,8 +122,8 @@ class AlertNotifier @Inject constructor(
     fun showDidDonate(requestId: String, donorName: String) = post(
         id = notificationId(requestId, "did_donate"),
         channel = NotificationChannels.REMINDERS,
-        title = context.getString(R.string.notification_did_donate_title, donorName),
-        body = context.getString(R.string.notification_did_donate_body),
+        title = words().getString(R.string.notification_did_donate_title, donorName),
+        body = words().getString(R.string.notification_did_donate_body),
         requestId = requestId,
         priority = NotificationCompat.PRIORITY_DEFAULT,
     )
@@ -139,7 +140,10 @@ class AlertNotifier @Inject constructor(
     )
 
     /** The app creates the channels at start; make sure of them here too (a push can start the process). */
-    private val channelsReady by lazy { NotificationChannels.createAll(context) }
+    private val channelsReady by lazy { NotificationChannels.createAll(words()) }
+
+    /** The app's own language, also where Android 12 and older don't apply it (no screen). */
+    private fun words(): Context = OffScreenLanguage.wrap(context)
 
     /** Opens a deep link (e.g. Moderation) in a fresh task, like [openRequest]. */
     private fun openUri(uri: String): PendingIntent = PendingIntent.getActivity(
@@ -178,7 +182,7 @@ class AlertNotifier @Inject constructor(
     }
 
     private fun locale(): AppLocale =
-        if (context.resources.configuration.locales[0].language == "bn") AppLocale.BN else AppLocale.EN
+        if (words().resources.configuration.locales[0].language == "bn") AppLocale.BN else AppLocale.EN
 
     private companion object {
         /** One notification per request and kind: a later tier replaces the first alert. */

@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -20,6 +21,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.liquidlyf.core.data.settings.OffScreenLanguage
 import io.github.liquidlyf.core.data.settings.ThemeMode
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.SystemBarScrims
@@ -28,12 +30,14 @@ import io.github.liquidlyf.core.designsystem.components.StartLogoHandoff
 import io.github.liquidlyf.core.designsystem.isDark
 import io.github.liquidlyf.feature.session.SigningOutDialog
 import io.github.liquidlyf.navigation.AppNavHost
+import io.github.liquidlyf.notifications.NotificationChannels
 import io.github.liquidlyf.start.StartClock
 import io.github.liquidlyf.start.StartLogo
 import io.github.liquidlyf.start.StartLogoArts
 import io.github.liquidlyf.start.StartScreen
 import io.github.liquidlyf.start.StartViews
 import io.github.liquidlyf.start.animationsOff
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -55,10 +59,25 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
+    /**
+     * The app's language for notifications ([OffScreenLanguage]): keeps a choice made before it was
+     * kept there, or (Android 13+) in the phone's own app settings, and names the channels in it
+     * (a language change restarts this screen, so they follow it).
+     */
+    private fun keepLanguageForNotifications() {
+        val tag = AppCompatDelegate.getApplicationLocales()[0]?.language.orEmpty()
+        val app = applicationContext
+        lifecycleScope.launch(Dispatchers.IO) {
+            OffScreenLanguage.remember(app, tag)
+            NotificationChannels.createAll(OffScreenLanguage.wrap(app))
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         val start = if (savedInstanceState == null) StartClock.begin() else null
+        keepLanguageForNotifications()
         val arts = start?.let { StartLogoArts(resources, it) }
         val reduced = animationsOff(this)
         // The drop and the line on the render thread (A46); not with Remove animations, nor before 7.1.

@@ -210,6 +210,14 @@ android {
             excludes += "**/*.proto"
         }
     }
+
+    // The app switches its own language (8.1), and notifications use it too: an app bundle must
+    // keep both languages, not split them by the phone's (we ship an APK, but a bundle stays safe).
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
 }
 
 kotlin {
