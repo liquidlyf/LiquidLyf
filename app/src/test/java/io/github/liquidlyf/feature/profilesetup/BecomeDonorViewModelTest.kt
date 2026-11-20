@@ -13,6 +13,7 @@ import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.Clock
 import io.github.liquidlyf.testing.FakeProfileRepository
 import io.github.liquidlyf.testing.FakeSessionManager
+import io.github.liquidlyf.testing.FakeSetupDraftStore
 import io.github.liquidlyf.testing.TestData
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +49,7 @@ class BecomeDonorViewModelTest {
     private val session = FakeSessionManager(SessionState.Ready(TestData.user(uid = "me"), requester))
     private val profiles = FakeProfileRepository().apply { profiles["me"] = requester }
     private val saved = SavedStateHandle()
+    private val store = FakeSetupDraftStore()
 
     @Before
     fun setUp() = Dispatchers.setMain(dispatcher)
@@ -58,7 +60,7 @@ class BecomeDonorViewModelTest {
     private val geo = BdGeoParser.parse(File("src/main/assets/bd-geo.json").readText())
     private fun vm() = BecomeDonorViewModel(saved, session, profiles, Clock { TestData.NOW }, object : GeoRepository {
         override suspend fun geo(): BdGeo = geo
-    }, EligibilityCalculator())
+    }, EligibilityCalculator(), store)
 
     private fun TestScope.events(vm: BecomeDonorViewModel): List<BecomeDonorEvent> =
         mutableListOf<BecomeDonorEvent>().also { list -> backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.eventFlow.collect { list += it } } }
@@ -194,5 +196,61 @@ class BecomeDonorViewModelTest {
         // An age that can be listed brings the question back.
         vm.edit { copy(birthYear = "1998") }
         assertEquals(null, vm.uiState.value.listingBlock)
+    }
+
+    // ---- D28: the answers kept on this phone, and "Need blood now? Skip this" ----
+
+    @Test
+    fun `the answers are kept on this phone as they're given, and Skip sends nothing (D28)`() = runTest(dispatcher) {
+        val vm = vm()
+        val events = events(vm)
+        advanceUntilIdle()
+        vm.edit { copy(bloodGroup = BloodGroup.O_NEG.code) }
+        vm.next()
+        vm.edit { copy(gender = Gender.FEMALE.code, birthYear = "1998") }
+        advanceUntilIdle()
+        assertEquals(BloodGroup.O_NEG.code, store.draft?.bloodGroup)
+        assertEquals("1998", store.draft?.birthYear)
+        assertEquals(1, store.draft?.step)
+
+        vm.skip()
+        advanceUntilIdle()
+        assertEquals(listOf<BecomeDonorEvent>(BecomeDonorEvent.Skipped), events)
+        assertEquals(requester, profiles.profiles.getValue("me")) // nothing sent
+        assertEquals("1998", store.draft?.birthYear) // still here for "Want to donate too?"
+    }
+
+    @Test
+    fun `Become a donor picks up where they stopped, from this phone (D28)`() = runTest(dispatcher) {
+        store.draft = SetupDraft(uid = "me", step = 1, bloodGroup = BloodGroup.B_POS.code, gender = Gender.MALE.code, birthYear = "1990")
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(1, vm.uiState.value.step)
+        assertEquals("1990", vm.uiState.value.draft.birthYear)
+        assertEquals(BloodGroup.B_POS.code, vm.uiState.value.draft.bloodGroup)
+    }
+
+    @Test
+    fun `another account's answers aren't used (D28)`() = runTest(dispatcher) {
+        store.draft = SetupDraft(uid = "someone-else", step = 2, birthYear = "1990")
+        val vm = vm()
+        advanceUntilIdle()
+        assertEquals(0, vm.uiState.value.step)
+        assertEquals("", vm.uiState.value.draft.birthYear)
+    }
+
+    @Test
+    fun `Finish clears the answers kept on this phone (D28)`() = runTest(dispatcher) {
+        val vm = vm()
+        advanceUntilIdle()
+        vm.edit { copy(bloodGroup = BloodGroup.O_NEG.code) }
+        vm.next()
+        vm.edit { copy(gender = Gender.FEMALE.code, birthYear = "1998", weightOk = true) }
+        vm.next()
+        vm.edit { copy(neverDonated = true, listed = false) }
+        vm.next()
+        advanceUntilIdle()
+        assertTrue(profiles.profiles.getValue("me").hasDonorDetails)
+        assertEquals(null, store.draft)
     }
 }

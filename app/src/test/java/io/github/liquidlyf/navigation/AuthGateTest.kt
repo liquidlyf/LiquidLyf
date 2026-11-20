@@ -82,4 +82,18 @@ class AuthGateTest {
         assertEquals(VerifyEmail, GateZone.VERIFY_EMAIL.route())
         assertEquals(NotificationPermission, GateZone.NOTIFICATION_PERMISSION.route())
     }
+
+    @Test
+    fun `setup starts with the choice page, and About you on the donor path goes on to the donor steps, which stay (D28)`() {
+        assertEquals(SetupChoice, GateZone.PROFILE_SETUP.route())
+        assertEquals(DonorSetup, GateZone.DONOR_SETUP.route())
+        // About you saved the account (the session is ready): the donor path continues, never jumping to Home.
+        assertEquals(GateZone.DONOR_SETUP, gateTarget(ready, GateZone.PROFILE_SETUP, askForNotifications = true, donorNext = true))
+        assertEquals(GateZone.DONOR_SETUP, gateTarget(ready, GateZone.PROFILE_SETUP, askForNotifications = false, donorNext = true))
+        assertNull(gateTarget(ready, GateZone.DONOR_SETUP, askForNotifications = true))
+        // The ask-only path is as before.
+        assertEquals(GateZone.MAIN, gateTarget(ready, GateZone.PROFILE_SETUP, askForNotifications = false, donorNext = false))
+        // Signed out from the donor steps: sign-in, as from anywhere.
+        assertEquals(GateZone.SIGNED_OUT, gateTarget(signedOut, GateZone.DONOR_SETUP, false))
+    }
 }

@@ -64,7 +64,7 @@ import io.github.liquidlyf.core.util.rememberSafeIntentLauncher
 import io.github.liquidlyf.feature.auth.FormError
 
 @Composable
-fun ProfileSetupRoute(viewModel: ProfileSetupViewModel = hiltViewModel()) {
+fun ProfileSetupRoute(donorPath: Boolean = false, onBack: (() -> Unit)? = null, viewModel: ProfileSetupViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val locale = currentAppLocale()
     ProfileSetupScreen(
@@ -74,12 +74,15 @@ fun ProfileSetupRoute(viewModel: ProfileSetupViewModel = hiltViewModel()) {
         onDivision = viewModel::onDivision,
         onDistrict = viewModel::onDistrict,
         onNext = { viewModel.next(locale) },
+        donorPath = donorPath,
+        onBack = onBack,
     )
 }
 
 /**
- * The short setup as D drew it (N3, FLOW-01, D1 = a): "About you" with the name, the mobile number
- * and the area, one screen, then Continue. Donor questions come later, only for donors.
+ * About you as D drew it (N3, FLOW-01): the name, the mobile number and the area, one screen. D28:
+ * after setup's choice page (Back returns to it); on the donor path it's "Step 1 of 4" with Next,
+ * since the donor steps follow; on the ask-only path, Continue goes on to the app.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,12 +93,14 @@ fun ProfileSetupScreen(
     onDivision: (String) -> Unit,
     onDistrict: (String) -> Unit,
     onNext: () -> Unit,
+    donorPath: Boolean = false,
+    onBack: (() -> Unit)? = null,
 ) {
     Scaffold(
-        topBar = { LLTopBar(title = stringResource(R.string.setup_about_title)) },
+        topBar = { LLTopBar(title = stringResource(R.string.setup_about_title), onBack = if (!state.saving) onBack else null) },
         bottomBar = {
             LLBottomBar(
-                primaryText = stringResource(R.string.action_continue),
+                primaryText = stringResource(if (donorPath) R.string.action_next else R.string.action_continue),
                 onPrimary = onNext,
                 primaryEnabled = state.loaded,
                 loading = state.saving,
@@ -121,12 +126,8 @@ fun ProfileSetupScreen(
                     .padding(horizontal = screenGutter(), vertical = Spacing.md),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
-                // D1: say why there's no blood group or age here. VT-15: up top, where it's read; at
-                // the end it peeked under Continue and no one read it.
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    Icon(painterResource(LLIcons.Info), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-                    Text(stringResource(R.string.setup_donor_later), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+                // D28: the donor path's step counter (the choice page now says what comes when).
+                if (donorPath) SetupStepHeader(step = 1)
                 LLTextField(
                     value = d.fullName,
                     onValueChange = { v -> onEdit { copy(fullName = v) } },

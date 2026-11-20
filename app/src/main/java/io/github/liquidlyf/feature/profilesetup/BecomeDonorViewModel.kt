@@ -59,6 +59,9 @@ data class BecomeDonorUiState(
 sealed interface BecomeDonorEvent {
     /** Saved: back to where the person came from. */
     data object Done : BecomeDonorEvent
+
+    /** D28: "Need blood now? Skip this" in setup: the answers so far stay on this phone only. */
+    data object Skipped : BecomeDonorEvent
 }
 
 /** The donor steps' fields, in the order they appear. */
@@ -71,7 +74,9 @@ internal val DONOR_ORDER = listOf(
  * group · gender, birth year and weight · last donation and the listing consent. One profile edit
  * adds them all (B's contract: all three details together, and with "list me" the same batch sets
  * consentAt and the donor card). Opened from Home's "Want to donate too?", Profile, Settings and
- * "I can donate".
+ * "I can donate", and (D28) as steps 2-4 of setup. The answers so far are kept on this phone only,
+ * per account and never sent, until Finish (or sign-out): someone who stops or skips picks up where
+ * they were from "Want to donate too?".
  */
 @HiltViewModel
 class BecomeDonorViewModel @Inject constructor(
@@ -81,6 +86,7 @@ class BecomeDonorViewModel @Inject constructor(
     private val clock: Clock,
     geoRepository: GeoRepository,
     private val eligibility: EligibilityCalculator,
+    private val store: SetupDraftStore,
 ) : ViewModel() {
 
     private val profile: UserProfile? = (session.state.value as? SessionState.Ready)?.profile
@@ -96,12 +102,32 @@ class BecomeDonorViewModel @Inject constructor(
             val geo = geoRepository.geo()
             state.update { it.copy(geo = geo) }
         }
+        // D28: the answers kept on this phone (skipped in setup, or stopped half way).
+        if (savedState.get<String>(DRAFT_KEY) == null) {
+            viewModelScope.launch {
+                val kept = profile?.uid?.let { store.load(it) }?.takeIf { it.hasDonorAnswers } ?: return@launch
+                val draft = kept.copy(step = kept.step.coerceIn(0, STEPS - 1), bloodGroup = kept.bloodGroup ?: profile?.bloodGroup?.code)
+                state.update { it.copy(draft = draft, listingBlock = blockOf(draft)) }
+            }
+        }
     }
 
-    /** Any answer: clears the errors, and is kept for rotation and process death. */
+    /** Any answer: clears the errors, and is kept for rotation and process death, and on this phone (D28). */
     fun edit(change: SetupDraft.() -> SetupDraft) {
         state.update { s -> s.draft.change().let { d -> s.copy(draft = d, errors = emptySet(), formError = null, listingBlock = blockOf(d)) } }
-        savedState[DRAFT_KEY] = JSON.encodeToString(SetupDraft.serializer(), state.value.draft)
+        val draft = state.value.draft
+        savedState[DRAFT_KEY] = JSON.encodeToString(SetupDraft.serializer(), draft)
+        if (draft.uid.isNotEmpty()) viewModelScope.launch { store.save(draft) }
+    }
+
+    /** D28: "Need blood now? Skip this" in setup: nothing is sent; the answers stay on this phone. */
+    fun skip() {
+        if (state.value.saving) return
+        val draft = state.value.draft
+        viewModelScope.launch {
+            if (draft.uid.isNotEmpty()) store.save(draft)
+            events.send(BecomeDonorEvent.Skipped)
+        }
     }
 
     /** "I don't know my blood group" → "Skip for now" (P1): the details are saved, without listing. */
@@ -174,6 +200,7 @@ class BecomeDonorViewModel @Inject constructor(
                     // The session re-reads the profile; the alert topics follow it (PushTopicManager).
                     session.refresh()
                     savedState.remove<String>(DRAFT_KEY)
+                    store.clear()
                     AppSnackbars.show(AppSnackbar(R.string.become_donor_done))
                     events.send(BecomeDonorEvent.Done)
                 }

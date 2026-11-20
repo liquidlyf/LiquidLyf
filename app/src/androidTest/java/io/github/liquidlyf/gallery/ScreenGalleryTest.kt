@@ -153,6 +153,8 @@ import io.github.liquidlyf.feature.profilesetup.BecomeDonorScreen
 import io.github.liquidlyf.feature.profilesetup.BecomeDonorUiState
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupScreen
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupUiState
+import io.github.liquidlyf.feature.profilesetup.SetupChoiceScreen
+import io.github.liquidlyf.feature.profilesetup.SetupChoiceUiState
 import io.github.liquidlyf.feature.profilesetup.SetupDraft
 import io.github.liquidlyf.feature.profilesetup.SetupField
 import io.github.liquidlyf.feature.request.create.CreateRequestRoute
@@ -627,14 +629,25 @@ class ScreenGalleryTest {
         val signInErrors = SignInUiState(email = "nusrat@", emailError = R.string.error_invalid_email, passwordError = R.string.error_password_required)
         val draft = SetupDraft(uid = "me", division = "BD30", district = "BD3026", upazila = "BD30262000", bloodGroup = "B_POS",
             fullName = "Nusrat Jahan", gender = "FEMALE", birthYear = "1998", weightOk = true, phone = "01700000000", neverDonated = true)
-        // D1: the short setup, then Become a donor's 3 steps.
+        // D1: the short setup, then Become a donor's 3 steps. D28: the choice page first, so About you
+        // has a Back arrow; on the donor path it's step 1 of 4 and the donor steps 2 to 4, with Skip.
         val setup = { d: SetupDraft, errors: Set<SetupField>, terms: Boolean ->
             @Composable {
-                ProfileSetupScreen(ProfileSetupUiState(d, geo, loaded = true, errors = errors, needsTerms = terms), currentAppLocale(), {}, {}, {}, {})
+                ProfileSetupScreen(ProfileSetupUiState(d, geo, loaded = true, errors = errors, needsTerms = terms), currentAppLocale(), {}, {}, {}, {}, onBack = {})
+            }
+        }
+        val donorSetup = { d: SetupDraft, errors: Set<SetupField> ->
+            @Composable {
+                ProfileSetupScreen(ProfileSetupUiState(d, geo, loaded = true, errors = errors), currentAppLocale(), {}, {}, {}, {}, donorPath = true, onBack = {})
             }
         }
         val donorStep = { step: Int, d: SetupDraft, errors: Set<SetupField> ->
             @Composable { BecomeDonorScreen(BecomeDonorUiState(d.copy(step = step), geo = geo, area = d.district?.let { Area(d.division.orEmpty(), it, d.upazila.orEmpty()) }, errors = errors), {}, {}, {}) }
+        }
+        val setupStep = { step: Int, d: SetupDraft ->
+            @Composable {
+                BecomeDonorScreen(BecomeDonorUiState(d.copy(step = step), geo = geo, area = d.district?.let { Area(d.division.orEmpty(), it, d.upazila.orEmpty()) }), {}, {}, {}, setupMode = true)
+            }
         }
         val empty = SetupDraft(uid = "me")
         gallery(
@@ -689,10 +702,18 @@ class ScreenGalleryTest {
             Shot("verify-email-can-resend") { VerifyEmailScreen(VerifyEmailUiState(email = "nusrat@example.test", sender = SENDER, resendIn = 0), {}, {}, {}) },
             Shot("forgot-password-empty") { ForgotPasswordScreen(ForgotPasswordUiState(sender = SENDER), {}, {}, {}) },
             Shot("forgot-password-sent") { ForgotPasswordScreen(ForgotPasswordUiState(email = "nusrat@example.test", sentTo = "nusrat@example.test", sender = SENDER), {}, {}, {}) },
+            // D28: the choice page (donating chosen already), and with "only ask" chosen.
+            Shot("setup-choice") { SetupChoiceScreen(SetupChoiceUiState(donor = true, loaded = true), {}, {}) },
+            Shot("setup-choice-need") { SetupChoiceScreen(SetupChoiceUiState(donor = false, loaded = true), {}, {}) },
             Shot("profile-setup-empty", content = setup(empty, emptySet(), false)),
             Shot("profile-setup-errors", content = setup(empty, SetupField.entries.toSet(), true)),
             Shot("profile-setup-filled", content = setup(draft, emptySet(), false)),
             Shot("profile-setup-google-terms", content = setup(draft, emptySet(), true)),
+            Shot("profile-setup-donor-step-1", content = donorSetup(draft, emptySet())),
+            Shot("profile-setup-donor-step-1-errors", content = donorSetup(empty, SetupField.entries.toSet())),
+            Shot("setup-donor-step-2", content = setupStep(0, draft)),
+            Shot("setup-donor-step-3", content = setupStep(1, draft)),
+            Shot("setup-donor-step-4", content = setupStep(2, draft.copy(listed = true))),
             Shot("become-donor-1-empty", content = donorStep(0, empty, emptySet())),
             Shot("become-donor-1-errors", content = donorStep(0, empty, SetupField.entries.toSet())),
             Shot("become-donor-1-filled", content = donorStep(0, draft, emptySet())),

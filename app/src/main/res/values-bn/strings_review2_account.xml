@@ -117,7 +117,14 @@
 
     <!-- Profile setup -->
     <string name="setup_step">ধাপ %1$d / %2$d</string>
-    <string name="setup_donor_later">রক্তদাতার প্রশ্নগুলো পরে আসবে, শুধু আপনি রক্ত দিতে চাইলে।</string>
+    <!-- D28: approved by the maintainer (20 Nov 2026, "D28 BN OK"). -->
+    <string name="setup_choice_title">আপনি কী করতে চান?</string>
+    <string name="setup_choice_subtitle">পরে এটা বদলাতে পারবেন।</string>
+    <string name="setup_choice_donate">রক্ত দেব, দরকার হলে অনুরোধও করব</string>
+    <string name="setup_choice_donate_body">কাছাকাছি কারও আপনার গ্রুপের রক্ত দরকার হলে অ্যালার্ট পাবেন। ৪টি ছোট ধাপ।</string>
+    <string name="setup_choice_need">আপাতত শুধু রক্তের অনুরোধ করব</string>
+    <string name="setup_choice_need_body">১টি ছোট ধাপ। যেকোনো সময় রক্তদাতা হতে পারবেন।</string>
+    <string name="setup_skip_donor">এখনই রক্ত দরকার? এটা বাদ দিন</string>
     <string name="become_donor_details_title">রক্তদাতার কয়েকটি প্রশ্ন</string>
     <string name="become_donor_history_title">রক্তদান</string>
     <string name="become_donor_done">আপনি এখন রক্তদাতা। ধন্যবাদ!</string>

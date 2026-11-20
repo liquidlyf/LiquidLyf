@@ -348,3 +348,20 @@ class FakeAccountDeleter : io.github.liquidlyf.core.data.account.AccountDeleter 
         return AppResult.Success(Unit)
     }
 }
+
+/** D28: setup's answers kept on this phone (one slot, per account). */
+class FakeSetupDraftStore : io.github.liquidlyf.feature.profilesetup.SetupDraftStore {
+    var draft: io.github.liquidlyf.feature.profilesetup.SetupDraft? = null
+    var clears = 0
+
+    override suspend fun load(uid: String) = draft?.takeIf { it.uid == uid }
+
+    override suspend fun save(draft: io.github.liquidlyf.feature.profilesetup.SetupDraft) {
+        this.draft = draft
+    }
+
+    override suspend fun clear() {
+        draft = null
+        clears++
+    }
+}

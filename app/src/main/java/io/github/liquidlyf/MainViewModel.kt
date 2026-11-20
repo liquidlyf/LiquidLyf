@@ -7,6 +7,7 @@ import io.github.liquidlyf.core.data.session.SessionManager
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.data.settings.SettingsRepository
 import io.github.liquidlyf.core.data.settings.ThemeMode
+import io.github.liquidlyf.feature.profilesetup.SetupDraftStore
 import io.github.liquidlyf.navigation.GateZone
 import io.github.liquidlyf.navigation.TopLevelDestination
 import io.github.liquidlyf.navigation.startZone
@@ -38,6 +39,7 @@ sealed interface MainUiState {
 class MainViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val sessionManager: SessionManager,
+    private val setupDrafts: SetupDraftStore,
 ) : ViewModel() {
 
     // Eagerly: the start destination must survive the activity going to the background.
@@ -74,10 +76,12 @@ class MainViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, MainUiState.Loading)
 
     init {
-        // Signed out (from any screen, or the account is gone): the next person on this phone starts on Home.
+        // Signed out (from any screen, or the account is gone): the next person on this phone starts on
+        // Home, and the setup and donor answers kept on this phone go (D28).
         viewModelScope.launch {
             sessionManager.state.filter { it == SessionState.SignedOut }.collect {
                 settingsRepository.setLastSelectedTab(TopLevelDestination.HOME.name)
+                setupDrafts.clear()
             }
         }
     }

@@ -23,6 +23,7 @@ object LLIcons {
 
     // Actions
     val ArrowBack = R.drawable.ic_arrow_back
+    val ChevronRight = R.drawable.ic_chevron_right
     val Settings = R.drawable.ic_settings
     val Add = R.drawable.ic_add
     val Refresh = R.drawable.ic_refresh

@@ -1,5 +1,6 @@
 package io.github.liquidlyf.feature.profilesetup
 
+import androidx.lifecycle.SavedStateHandle
 import io.github.liquidlyf.core.data.geo.BdGeo
 import io.github.liquidlyf.core.data.geo.BdGeoParser
 import io.github.liquidlyf.core.data.geo.GeoRepository
@@ -57,7 +58,8 @@ class ProfileSetupViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun vm(s: FakeSessionManager = session) = ProfileSetupViewModel(s, profiles, geoRepo, store)
+    private fun vm(s: FakeSessionManager = session, donor: Boolean = false) =
+        ProfileSetupViewModel(SavedStateHandle(mapOf("donor" to donor)), s, profiles, geoRepo, store)
 
     private fun ProfileSetupViewModel.fillAll() {
         edit { copy(fullName = "Nasrin Akter", phone = "01812345678") }
@@ -178,5 +180,34 @@ class ProfileSetupViewModelTest {
         vm.next(AppLocale.EN)
         advanceUntilIdle()
         assertEquals(1, profiles.created.size)
+    }
+
+    // ---- D28: after the choice page ----
+
+    @Test
+    fun `the choice comes with the answers, and the Google name still fills in after the choice page saved first (D28)`() = runTest(dispatcher) {
+        store.saved = SetupDraft(uid = "u1", donor = true) // what the choice page keeps
+        val vm = vm(FakeSessionManager(SessionState.NeedsProfile(user.copy(displayName = "Nusrat Jahan"))), donor = true)
+        advanceUntilIdle()
+        assertEquals("Nusrat Jahan", vm.uiState.value.draft.fullName)
+        assertEquals(true, vm.uiState.value.draft.donor)
+        vm.edit { copy(phone = "01700000000") }
+        advanceUntilIdle()
+        assertEquals(true, store.saved?.donor) // so setup starts with the same choice if they stop now
+    }
+
+    @Test
+    fun `the choice page starts on the donor option, or on the choice made before on this phone (D28)`() = runTest(dispatcher) {
+        val first = SetupChoiceViewModel(session, store)
+        advanceUntilIdle()
+        assertTrue(first.uiState.value.donor)
+        first.choose(false)
+        assertEquals(false, first.confirm())
+        advanceUntilIdle()
+        assertEquals(false, store.saved?.donor)
+
+        val again = SetupChoiceViewModel(session, store)
+        advanceUntilIdle()
+        assertFalse(again.uiState.value.donor)
     }
 }

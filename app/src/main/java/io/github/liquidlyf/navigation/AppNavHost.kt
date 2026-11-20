@@ -1,6 +1,7 @@
 package io.github.liquidlyf.navigation
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -124,6 +125,7 @@ import io.github.liquidlyf.feature.placeholder.PlaceholderScreen
 import io.github.liquidlyf.feature.profile.ProfileRoute
 import io.github.liquidlyf.feature.profilesetup.BecomeDonorRoute
 import io.github.liquidlyf.feature.profilesetup.ProfileSetupRoute
+import io.github.liquidlyf.feature.profilesetup.SetupChoiceRoute
 import io.github.liquidlyf.feature.request.create.CreateRequestRoute
 import io.github.liquidlyf.feature.request.detail.RequestDetailRoute
 import io.github.liquidlyf.feature.request.list.RequestsRoute
@@ -174,10 +176,11 @@ fun AppNavHost(
 
     // The auth gate: when the session changes, move the user to where they now belong.
     LaunchedEffect(session) {
-        val current = navController.currentDestination ?: return@LaunchedEffect
-        val granted = Build.VERSION.SDK_INT < 33 ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        gateTarget(session, current.zone(), needsNotificationPermission(granted))?.let(navController::enterZone)
+        val entry = navController.currentBackStackEntry ?: return@LaunchedEffect
+        val current = entry.destination
+        // D28: About you on the donor path goes on to the donor steps once it has saved the account.
+        val donorNext = current.hasRoute(ProfileSetup::class) && entry.toRoute<ProfileSetup>().donor
+        gateTarget(session, current.zone(), notificationsNext(context), donorNext)?.let(navController::enterZone)
     }
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentTab = currentEntry?.destination?.let { destination ->
@@ -478,6 +481,13 @@ private fun NavGraphBuilder.authGraph(navController: NavController) {
 }
 
 /** Signed in, but not in the app yet: verify, set up, allow alerts, or retry an offline profile. */
+/** The notification rationale comes before the app (Android 13+, not granted yet). */
+private fun notificationsNext(context: Context): Boolean {
+    val granted = Build.VERSION.SDK_INT < 33 ||
+        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+    return needsNotificationPermission(granted)
+}
+
 private fun NavGraphBuilder.sessionScreens(
     navController: NavController,
     session: SessionState,
@@ -485,7 +495,21 @@ private fun NavGraphBuilder.sessionScreens(
     onSignOut: () -> Unit,
 ) {
     composable<VerifyEmail> { VerifyEmailRoute() }
-    composable<ProfileSetup> { ProfileSetupRoute() }
+    // D28: the choice, then About you (step 1 of 4 on the donor path), then the donor steps.
+    composable<SetupChoice> {
+        SetupChoiceRoute(onContinue = { donor -> navController.navigate(ProfileSetup(donor)) { launchSingleTop = true } })
+    }
+    composable<ProfileSetup> { entry ->
+        ProfileSetupRoute(donorPath = entry.toRoute<ProfileSetup>().donor, onBack = dropUnlessResumed { navController.popBackStack() })
+    }
+    composable<DonorSetup> {
+        val context = LocalContext.current
+        // Finished, or "Need blood now? Skip this": the alerts page (Android 13+), then Home.
+        BecomeDonorRoute(
+            onDone = dropUnlessResumed { navController.enterZone(if (notificationsNext(context)) GateZone.NOTIFICATION_PERMISSION else GateZone.MAIN) },
+            setupMode = true,
+        )
+    }
     composable<NotificationPermission> {
         NotificationPermissionScreen(onDone = dropUnlessResumed { navController.enterZone(GateZone.MAIN) })
     }

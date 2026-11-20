@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
  *   Onboarding                      (first run only)
  *   AuthGraph:  SignIn · SignUp · ForgotPassword · PhoneVerify      (signed out)
  *   VerifyEmail                     (signed in, email not verified)
- *   ProfileSetup → NotificationPermission                         (verified, no profile yet)
+ *   SetupChoice → ProfileSetup → [DonorSetup] → NotificationPermission (verified, no profile yet; D28)
  *   SessionProblem                  (verified, but the profile can't be read: offline)
  *   DeletingAccount                 (an account deletion is running or must resume)
  *   MainGraph:  HomeGraph(Home) · RequestsGraph(Requests) · DonorsGraph(Donors)
@@ -33,7 +33,14 @@ import kotlinx.serialization.Serializable
 @Serializable data object VerifyEmail
 @Serializable data object ForgotPassword
 @Serializable data object PhoneVerify
-@Serializable data object ProfileSetup
+/** D28: the first page of setup, "What would you like to do?" (donate, or only ask for blood). */
+@Serializable data object SetupChoice
+
+/** About you. [donor]: the choice page's first option, so About you is step 1 of 4 and the donor steps follow. */
+@Serializable data class ProfileSetup(val donor: Boolean = false)
+
+/** D28: Become a donor's steps as steps 2-4 of setup, once About you has saved the account. */
+@Serializable data object DonorSetup
 @Serializable data object NotificationPermission
 @Serializable data object SessionProblem
 @Serializable data object DeletingAccount

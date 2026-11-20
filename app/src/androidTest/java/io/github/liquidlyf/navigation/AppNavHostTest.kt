@@ -129,8 +129,8 @@ class AppNavHostTest {
         assertOnScreen(R.string.title_verify_email)
 
         setSession(SessionState.NeedsProfile(TestData.user()))
-        // D1: the short setup, one screen ("About you"), not 4 steps.
-        assertOnScreen(R.string.setup_about_title)
+        // D28: setup starts with the choice page.
+        assertOnScreen(R.string.setup_choice_title)
 
         // API 30 has no notification permission: setup goes straight to the app.
         setSession(ready)
@@ -297,6 +297,44 @@ class AppNavHostTest {
         tab(R.string.nav_donors_tab).assertIsSelected()
 
         pressBack()
+        assertOnScreen(R.string.nav_home)
+    }
+
+    // ---- D28: setup's choice page ----
+
+    private fun choose(@StringRes option: Int) {
+        compose.onNode(hasText(str(option), substring = true) and isSelectable()).performClick()
+        compose.waitForIdle()
+    }
+
+    @Test
+    fun theDonorPathGoesFromAboutYouToTheDonorStepsAndSkipLeadsHome() {
+        launch(GateZone.PROFILE_SETUP, SessionState.NeedsProfile(TestData.user()))
+        assertOnScreen(R.string.setup_choice_title)
+        choose(R.string.setup_choice_donate)
+        clickButton(R.string.action_continue)
+        assertOnScreen(R.string.setup_step, 1, 4) // About you, step 1 of 4
+        // About you saved the account: the gate goes on to the donor steps, not to Home.
+        setSession(ready)
+        assertOnScreen(R.string.setup_step, 2, 4)
+        assertOnScreen(R.string.setup_blood_title)
+        // "Need blood now? Skip this": straight on (API 30 has no notification page) to Home.
+        clickButton(R.string.setup_skip_donor)
+        assertOnScreen(R.string.nav_home)
+    }
+
+    @Test
+    fun theAskOnlyPathIsAboutYouThenHome() {
+        launch(GateZone.PROFILE_SETUP, SessionState.NeedsProfile(TestData.user()))
+        choose(R.string.setup_choice_need)
+        clickButton(R.string.action_continue)
+        assertOnScreen(R.string.setup_about_title)
+        assertEquals(0, compose.onAllNodesWithText(str(R.string.setup_step, 1, 4)).fetchSemanticsNodes().size)
+        // Back returns to the choice, which can be changed.
+        pressBack()
+        assertOnScreen(R.string.setup_choice_title)
+        clickButton(R.string.action_continue)
+        setSession(ready)
         assertOnScreen(R.string.nav_home)
     }
 }

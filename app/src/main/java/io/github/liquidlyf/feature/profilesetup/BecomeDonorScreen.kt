@@ -75,20 +75,27 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
+/**
+ * [setupMode] (D28): steps 2-4 of setup, right after About you saved the account: "Need blood now?
+ * Skip this" under the counter, and [onDone] goes on to the alerts page and Home (Finish and Skip
+ * alike). Back on the first step there skips too, since About you is saved already.
+ */
 @Composable
-fun BecomeDonorRoute(onDone: () -> Unit, viewModel: BecomeDonorViewModel = hiltViewModel()) {
+fun BecomeDonorRoute(onDone: () -> Unit, setupMode: Boolean = false, viewModel: BecomeDonorViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
-        viewModel.eventFlow.collect { e -> if (e == BecomeDonorEvent.Done) onDone() }
+        viewModel.eventFlow.collect { e -> if (e == BecomeDonorEvent.Done || e == BecomeDonorEvent.Skipped) onDone() }
     }
-    // Back steps inside; on the first step it leaves, as usual.
-    BackHandler(enabled = state.step > 0 && !state.saving) { viewModel.back() }
+    // Back steps inside; on the first step it leaves, as usual (in setup: the same as Skip).
+    BackHandler(enabled = !state.saving && (state.step > 0 || setupMode)) { if (!viewModel.back()) viewModel.skip() }
     BecomeDonorScreen(
         state = state,
         onEdit = viewModel::edit,
         onNext = viewModel::next,
         onBack = { if (!viewModel.back()) onDone() },
         onSkipBloodGroup = viewModel::skipBloodGroup,
+        setupMode = setupMode,
+        onSkip = viewModel::skip,
     )
 }
 
@@ -101,9 +108,13 @@ fun BecomeDonorScreen(
     onNext: () -> Unit,
     onBack: () -> Unit,
     onSkipBloodGroup: () -> Unit = {},
+    setupMode: Boolean = false,
+    onSkip: () -> Unit = {},
 ) {
+    // In setup, the first donor step has no way back: About you is saved already (Skip is there).
+    val canGoBack = !state.saving && (!setupMode || state.step > 0)
     Scaffold(
-        topBar = { LLTopBar(title = stringResource(R.string.action_become_donor), onBack = if (!state.saving) onBack else null) },
+        topBar = { LLTopBar(title = stringResource(R.string.action_become_donor), onBack = if (canGoBack) onBack else null) },
         bottomBar = {
             LLBottomBar(
                 primaryText = stringResource(if (state.isLastStep) R.string.action_finish else R.string.action_next),
@@ -128,12 +139,12 @@ fun BecomeDonorScreen(
                     .padding(horizontal = screenGutter(), vertical = Spacing.md),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
-                Text(
-                    stringResource(R.string.setup_step, state.step + 1, BecomeDonorViewModel.STEPS),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                LinearProgressIndicator(progress = { (state.step + 1f) / BecomeDonorViewModel.STEPS }, modifier = Modifier.fillMaxWidth())
+                // D28: in setup these are steps 2-4 (About you was 1), with the skip link.
+                if (setupMode) {
+                    SetupStepHeader(step = state.step + 2, onSkip = if (!state.saving) onSkip else null)
+                } else {
+                    SetupStepHeader(step = state.step + 1, total = BecomeDonorViewModel.STEPS)
+                }
                 StepContent(state.step) { step ->
                     when (step) {
                         0 -> BloodGroupStep(state, anchors, onEdit, onSkipBloodGroup)

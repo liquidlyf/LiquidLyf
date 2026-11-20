@@ -1,6 +1,7 @@
 package io.github.liquidlyf.feature.profilesetup
 
 import androidx.annotation.StringRes
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,13 +44,15 @@ data class ProfileSetupUiState(
 )
 
 /**
- * The short setup (FLOW-01, D1 = a, N3): name, mobile number and area on one screen, so someone who
- * needs blood can ask for it in a minute. Donor questions come later, only in "Become a donor". The
- * answers are saved locally as they're typed; Continue writes users and userStats in one batch (the
- * rules need the phone for that), then the session moves on to the app.
+ * About you (FLOW-01, D1, N3): name, mobile number and area on one screen, so someone who needs
+ * blood can ask for it in a minute. D28: after setup's choice page; on the donor path it's step 1 of
+ * 4 and the donor steps follow (the gate takes them there). The answers are saved locally as they're
+ * typed; Continue writes users and userStats in one batch (the rules need the phone for that), then
+ * the session moves on.
  */
 @HiltViewModel
 class ProfileSetupViewModel @Inject constructor(
+    savedState: SavedStateHandle,
     private val session: SessionManager,
     private val profiles: ProfileRepository,
     private val geoRepository: GeoRepository,
@@ -57,6 +60,9 @@ class ProfileSetupViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val user: AuthUser? = (session.state.value as? SessionState.NeedsProfile)?.user
+
+    /** D28: the choice page's first option (the route's `donor`), kept with the answers. */
+    private val donorPath: Boolean = savedState.get<Boolean>("donor") ?: false
 
     private val state = MutableStateFlow(
         ProfileSetupUiState(SetupDraft(uid = user?.uid.orEmpty()), needsTerms = user?.hasPassword == false),
@@ -66,8 +72,9 @@ class ProfileSetupViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val geo = geoRepository.geo()
-            val draft = user?.let { store.load(it.uid) }
-                ?: SetupDraft(uid = user?.uid.orEmpty(), fullName = user?.displayName.orEmpty())
+            val saved = user?.let { store.load(it.uid) } ?: SetupDraft(uid = user?.uid.orEmpty())
+            // The choice page may have saved the draft first (D28): the Google name still fills in.
+            val draft = saved.copy(fullName = saved.fullName.ifBlank { user?.displayName.orEmpty() }, donor = donorPath)
             state.update { it.copy(draft = draft, geo = geo, loaded = true) }
         }
     }

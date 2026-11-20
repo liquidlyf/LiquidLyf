@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
@@ -137,10 +138,9 @@ class SignUpToHomeTest {
         compose.waitForIdle()
     }
 
-    @Test
-    fun signUpVerifySetUpAndLandOnHome() = runBlocking {
+    /** From the first page to setup's choice page: sign up and verify, as a new user. */
+    private suspend fun signUpAndVerify(name: String) {
         val email = "ui-${System.nanoTime()}@example.test"
-
         // First run shows onboarding; later runs start at sign-in.
         compose.waitUntil(10_000) {
             compose.onAllNodesWithText(str(R.string.action_skip)).fetchSemanticsNodes().isNotEmpty() ||
@@ -156,7 +156,7 @@ class SignUpToHomeTest {
         // Sign up
         tap(R.string.action_create_account)
         waitFor(str(R.string.label_full_name))
-        type(R.string.label_full_name, "Test Donor")
+        type(R.string.label_full_name, name)
         type(R.string.label_email, email)
         type(R.string.label_password, "long-enough-1")
         type(R.string.label_confirm_password, "long-enough-1") // D24: typed twice
@@ -171,13 +171,32 @@ class SignUpToHomeTest {
         assertTrue("No verification email was sent to $email", verificationEmailSent(email))
         verifyEmail(auth.currentUser!!.uid)
         tap(R.string.action_i_have_verified)
+        waitFor(str(R.string.setup_choice_title))
+    }
 
-        // The short setup (D1): the name from sign-up, the number and the area, nothing else.
-        waitFor(str(R.string.setup_donor_later))
+    /** About you's own answers: the number and the area (the name came from sign-up). */
+    private fun answerAboutYou() {
         type(R.string.label_phone, "01712345678")
         pick(R.string.label_division, "Dhaka")
         pick(R.string.label_district, "Dhaka")
         pick(R.string.label_upazila, "Dhaka South City Corporation")
+    }
+
+    private fun choose(@StringRes option: Int) {
+        compose.onNode(hasText(str(option), substring = true) and isSelectable()).performClick()
+        compose.waitForIdle()
+    }
+
+    @Test
+    fun signUpVerifySetUpAndLandOnHome() = runBlocking {
+        signUpAndVerify("Test Donor")
+
+        // D28: setup asks first; "only ask for blood" is the short setup (D1): the name from sign-up,
+        // the number and the area, nothing else.
+        choose(R.string.setup_choice_need)
+        tap(R.string.action_continue)
+        waitFor(str(R.string.setup_about_title))
+        answerAboutYou()
         tap(R.string.action_continue)
 
         // Home as a requester (Android 11 has no notification permission screen)
@@ -227,6 +246,50 @@ class SignUpToHomeTest {
         assertEquals("Test D.", card.getString("displayName"))
         assertEquals(0L, card.getTimestamp("eligibleFrom")!!.seconds)
         assertTrue("The card must hold no phone", !card.contains("phone"))
+    }
+
+    /**
+     * D28's donor path: About you (step 1 of 4) saves the account as before, then the donor steps
+     * follow straight on, with no stop at Home in between, and Finish lands on Home as a listed donor.
+     */
+    @Test
+    fun theDonorPathSetsUpADonorInOneGo() = runBlocking {
+        signUpAndVerify("Test Giver")
+        choose(R.string.setup_choice_donate)
+        tap(R.string.action_continue)
+        waitFor(str(R.string.setup_step, 1, 4))
+        answerAboutYou()
+        tap(R.string.action_next)
+
+        // Step 2 of 4, after the account is saved: a requester's profile, no card yet.
+        waitFor(str(R.string.setup_step, 2, 4), timeoutMs = 15_000)
+        waitFor(str(R.string.setup_blood_title))
+        assertEquals(0, compose.onAllNodesWithText(str(R.string.home_become_donor_title)).fetchSemanticsNodes().size)
+        val uid = auth.currentUser!!.uid
+        val saved = db.userRef(uid).get(Source.SERVER).await()
+        assertEquals("+8801712345678", saved.getString("phone"))
+        assertEquals(false, saved.getBoolean("showInDonorSearch"))
+        waitFor(str(R.string.setup_skip_donor))
+
+        tapText("O+")
+        tap(R.string.action_next)
+        waitFor(str(R.string.setup_step, 3, 4))
+        tap(R.string.gender_female)
+        type(R.string.label_birth_year, "1998")
+        tap(R.string.answer_yes)
+        tap(R.string.action_next)
+        waitFor(str(R.string.setup_step, 4, 4))
+        tap(R.string.last_donation_never)
+        tap(R.string.consent_yes)
+        tap(R.string.action_finish)
+
+        waitFor(str(R.string.home_urgent_near_you), timeoutMs = 15_000)
+        val user = db.userRef(uid).get(Source.SERVER).await()
+        assertEquals("O_POS", user.getString("bloodGroup"))
+        assertEquals("FEMALE", user.getString("gender"))
+        assertEquals(true, user.getBoolean("showInDonorSearch"))
+        assertTrue(user.getTimestamp("consentAt") != null)
+        assertEquals("Test G.", db.donorRef(uid).get(Source.SERVER).await().getString("displayName"))
     }
 
     /** The Auth emulator lists every email it "sent"; waits up to 10 s for this one. */

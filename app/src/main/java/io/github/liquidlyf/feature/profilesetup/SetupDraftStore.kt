@@ -20,7 +20,9 @@ import javax.inject.Singleton
 /**
  * The profile-setup answers so far, saved after every step, so killing the app resumes at the
  * right step with everything filled in (Phase 3 acceptance). Nothing here goes to Firestore until
- * the last step; then the draft is deleted.
+ * that step saves; then the draft is deleted. D28: also the choice on setup's first page, and the
+ * donor answers of Become a donor until it's finished (or after "Need blood now? Skip this"), on
+ * this phone only, per account, never sent; cleared on sign-out.
  */
 @Serializable
 data class SetupDraft(
@@ -45,7 +47,14 @@ data class SetupDraft(
     val available: Boolean = true,
     /** 18+ and the Terms, asked here only from accounts that skipped the sign-up form (Google). */
     val termsAccepted: Boolean = false,
-)
+    /** D28: setup's first page. Null until chosen: the donor option is chosen then. */
+    val donor: Boolean? = null,
+) {
+    /** Some of Become a donor's answers (D28: kept on this phone after a skip or a stop). */
+    val hasDonorAnswers: Boolean
+        get() = bloodGroup != null || bloodGroupUnknown || gender != null || birthYear.isNotBlank() || weightOk != null ||
+            neverDonated != null || listed != null || step > 0
+}
 
 interface SetupDraftStore {
     suspend fun load(uid: String): SetupDraft?
