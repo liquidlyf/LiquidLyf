@@ -13,6 +13,7 @@ import io.github.liquidlyf.core.firebase.dto.UserDoc
 import io.github.liquidlyf.core.firebase.dto.UserStatsDoc
 import io.github.liquidlyf.core.firebase.dto.donations
 import io.github.liquidlyf.core.firebase.dto.donorRef
+import io.github.liquidlyf.core.firebase.dto.serverTime
 import io.github.liquidlyf.core.firebase.dto.statsRef
 import io.github.liquidlyf.core.firebase.dto.userRef
 import io.github.liquidlyf.core.firebase.getCacheFirst
@@ -52,6 +53,12 @@ interface ProfileRepository {
 
     /** At most once every 3 days (contract 4). Success(true) when it wrote, false when not due. */
     suspend fun touchLastActive(profile: UserProfile): AppResult<Boolean>
+
+    /**
+     * D30: after a change of email, the profile's copy (set once at setup) follows the signed-in
+     * one. The rules allow only exactly the token's email, so the token must be fresh.
+     */
+    suspend fun syncEmail(profile: UserProfile, email: String): AppResult<Unit>
 
     /** "Seen" for the whole inbox: one timestamp instead of a flag per item. */
     suspend fun markInboxSeen(profile: UserProfile): AppResult<Unit>
@@ -164,6 +171,14 @@ class FirestoreProfileRepository @Inject constructor(
         if (last != null && clock.now().isBefore(last.plus(LAST_ACTIVE_EVERY))) return AppResult.Success(false)
         return writeProfile(profile, profile, setOf(UserDoc.LAST_ACTIVE_AT)).map { true }
     }
+
+    override suspend fun syncEmail(profile: UserProfile, email: String): AppResult<Unit> =
+        if (profile.email == email) {
+            AppResult.Success(Unit)
+        } else {
+            // Only these two fields: the donor card has no email.
+            appResultOf { db.userRef(profile.uid).update(mapOf(UserDoc.EMAIL to email, UserDoc.UPDATED_AT to serverTime())).await() }
+        }
 
     override suspend fun markInboxSeen(profile: UserProfile): AppResult<Unit> =
         writeProfile(profile, profile, setOf(UserDoc.INBOX_SEEN_AT))

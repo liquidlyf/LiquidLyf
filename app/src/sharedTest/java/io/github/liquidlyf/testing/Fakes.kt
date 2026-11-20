@@ -226,6 +226,21 @@ class FakeProfileRepository(private val now: Instant = TestData.NOW) : ProfileRe
         AppResult.Success(Unit)
     }
 
+    /** D30: the addresses the email copy was moved to; [syncFailure] refuses every one. */
+    val emailSyncs = mutableListOf<String>()
+    var emailSyncAttempts = 0
+    var syncFailure: AppError? = null
+
+    override suspend fun syncEmail(profile: UserProfile, email: String): AppResult<Unit> {
+        emailSyncAttempts++
+        syncFailure?.let { return AppResult.Failure(it) }
+        return result {
+            emailSyncs += email
+            profiles[profile.uid]?.let { profiles[profile.uid] = it.copy(email = email) }
+            AppResult.Success(Unit)
+        }
+    }
+
     val availabilityWrites = mutableListOf<Boolean>()
 
     val listingWrites = mutableListOf<Boolean>()

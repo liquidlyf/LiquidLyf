@@ -103,6 +103,7 @@ class AppSessionManager @Inject constructor(
             var lastUid: String? = null
             var lastEligibleAgain: java.time.Instant? = null
             var unlistedFor: String? = null
+            var emailSyncTried: String? = null
             state.filterIsInstance<SessionState.Ready>().collect { ready ->
                 // D23: weight না or past 60 ends a listing made before (B's daily job does the same
                 // on the server, for phones that aren't opened). The next state syncs without it.
@@ -110,6 +111,18 @@ class AppSessionManager @Inject constructor(
                 if (p.showInDonorSearch && unlistedFor != p.uid && eligibility.listingBlock(p, clock.now()) != null) {
                     unlistedFor = p.uid
                     if (profiles.setListed(p, false) is AppResult.Success) {
+                        refresh()
+                        return@collect
+                    }
+                }
+                // D30: after a change of email the profile still holds the old address (set once at
+                // setup); it follows the signed-in one, once per account and address. A fresh token
+                // first: the rules allow only the token's own email.
+                val signedInEmail = ready.user.email.orEmpty()
+                if (signedInEmail.isNotBlank() && signedInEmail != p.email && emailSyncTried != "${p.uid}|$signedInEmail") {
+                    emailSyncTried = "${p.uid}|$signedInEmail"
+                    auth.reloadUser()
+                    if (profiles.syncEmail(p, signedInEmail) is AppResult.Success) {
                         refresh()
                         return@collect
                     }
