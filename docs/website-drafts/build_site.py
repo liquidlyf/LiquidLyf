@@ -34,6 +34,12 @@ where Git checks files out with CRLF. It stops if that list isn't valid, or if i
 website's list with one the phones ignore or refuse: a changed list whose version didn't go up, fewer
 than 80% as many hospitals, or over 2 MiB. Until the list is committed, it says so and skips it.
 
+It copies the request-link page (D31): site/r/index.html, with its own layout (site/_layouts/
+request.html), the only one whose Content-Security-Policy allows a script, /assets/r.js (C25 = a). The
+page isn't in the sitemap and asks not to be indexed. Once the release key's SHA-256 is in the committed
+.github/ci/release-cert-sha256.txt (A48), it writes .well-known/assetlinks.json from it, so Android
+opens /r/ links in the app; while that file says NOT-SET, it says so and skips it.
+
 It never deletes anything in the output folder. Files there that this build didn't write are listed
 at the end, to remove by hand if they're stale.
 
@@ -62,6 +68,11 @@ LOGOS = ["logo-full.svg", "logo-full-dark.svg", "logo-mark.svg", "logo-horizonta
 HOSPITALS = "app/src/main/assets/hospitals.json"
 HOSPITALS_URL_PATH = pathlib.Path("data/hospitals.json")
 HOSPITALS_MAX_BYTES = 2 * 1024 * 1024
+# The release key's certificate SHA-256 (A's file, the one release.yml checks), and the file that
+# tells Android the request links (/r/, D31) belong to the app. NOT-SET until the key exists (A48).
+RELEASE_CERT = ".github/ci/release-cert-sha256.txt"
+ASSETLINKS_URL_PATH = pathlib.Path(".well-known/assetlinks.json")
+APP_ID = "io.github.liquidlyf"
 
 COMMENT = re.compile(r"<!--.*?-->\n?", re.S)
 PLACEHOLDER = re.compile(r"\[[A-Z][A-Z0-9]*(?:[ \-–][A-Z0-9]+)*\]")
@@ -238,6 +249,36 @@ def hospital_list(out: pathlib.Path) -> bytes | None:
     return data
 
 
+def committed(path: str) -> bytes | None:
+    """A file as committed in the app repo (HEAD), or None if it isn't."""
+    try:
+        got = subprocess.run(["git", "-C", str(REPO), "cat-file", "blob", f"HEAD:{path}"], capture_output=True)
+    except FileNotFoundError:
+        raise SystemExit(f"git isn't on PATH: it's needed to read the committed {path}")
+    return got.stdout if got.returncode == 0 else None
+
+
+def parse_fingerprint(text: str) -> str | None:
+    """The certificate SHA-256 in A's file, as AA:BB:…; None while it says NOT-SET; stop if it's neither."""
+    lines = [l.strip() for l in text.splitlines() if l.strip() and not l.lstrip().startswith("#")]
+    if lines == ["NOT-SET"]:
+        return None
+    digits = lines[0].replace(":", "").replace(" ", "") if len(lines) == 1 else ""
+    if not re.fullmatch(r"[0-9A-Fa-f]{64}", digits):
+        raise SystemExit(f"{RELEASE_CERT} needs one SHA-256 (64 hex digits, with or without colons) or NOT-SET")
+    digits = digits.upper()
+    return ":".join(digits[i:i + 2] for i in range(0, 64, 2))
+
+
+def assetlinks(fingerprint: str) -> str:
+    """Digital Asset Links: the app with this signing certificate may open this site's links (App Links)."""
+    return json.dumps([{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {"namespace": "android_app", "package_name": APP_ID,
+                   "sha256_cert_fingerprints": [fingerprint]},
+    }], indent=2) + "\n"
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("out", type=pathlib.Path, help="the website repo's folder")
@@ -295,9 +336,11 @@ def main() -> None:
     write(pathlib.Path("_config.yml"), config)
     site_url = re.search(r"(?m)^url: (\S+)$", config).group(1)
     write(pathlib.Path("sitemap.xml"), sitemap(site_url, urls))
-    write(pathlib.Path("robots.txt"), f"# Every page of this site may be indexed.\nUser-agent: *\nDisallow:\n\n"
-                                      f"Sitemap: {site_url}/sitemap.xml\n")
-    for rel in ("_layouts/default.html", "404.md", "README.md"):
+    write(pathlib.Path("robots.txt"), f"# Every page may be crawled. The request-link page (/r/) and the 404 page\n"
+                                      f"# ask not to be indexed (noindex), and aren't in the sitemap.\n"
+                                      f"User-agent: *\nDisallow:\n\nSitemap: {site_url}/sitemap.xml\n")
+    # The request-link page (D31) has its own layout: the only one that allows a script (C25 = a).
+    for rel in ("_layouts/default.html", "_layouts/request.html", "r/index.html", "404.md", "README.md"):
         write(pathlib.Path(rel), (HERE / "site" / rel).read_text(encoding="utf-8"))
     # The 1 January rebuild that moves the footer's copyright year (C15).
     write(pathlib.Path(".github/workflows/yearly-rebuild.yml"),
@@ -315,6 +358,15 @@ def main() -> None:
     hospitals = hospital_list(out)
     if hospitals is not None:
         write(HOSPITALS_URL_PATH, hospitals)
+    # App Links for /r/ (D31), from the committed fingerprint file, so the site and release.yml agree.
+    cert = committed(RELEASE_CERT)
+    fingerprint = parse_fingerprint(cert.decode("utf-8")) if cert is not None else None
+    if fingerprint is None:
+        print(f"\nThe release key's fingerprint isn't set yet ({RELEASE_CERT}, A48): "
+              f"{ASSETLINKS_URL_PATH.as_posix()} not written, so Android opens /r/ in the browser.")
+    else:
+        write(ASSETLINKS_URL_PATH, assetlinks(fingerprint))
+        print(f"\nApp Links: {ASSETLINKS_URL_PATH.as_posix()} for {APP_ID}, {fingerprint[:8]}…")
 
     if problems:
         print("\nPlaceholders without a value:")
