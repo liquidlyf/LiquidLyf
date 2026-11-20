@@ -88,7 +88,10 @@ LiquidLyf একটা ওপেন সোর্স প্রজেক্ট, �
      come to us; deleted once saved to the account; Google's backup as the example; "তালিকায় না থাকলে"
      instead of "not a donor"; "sends us nothing". After round 3: "নাম না রাখা বেছে নিলেও" (choosing,
      as in the reviewed list item) and "the donor-step answers". Every meaning matched in each round.
-     Needs the maintainer's review (C26). §7's line waits for A's approved words.
+     §7's line (pv-n6) quotes A's approved words (20 Nov 2026 07:00: "আর মনে করাবেন না", "রক্তদাতা হওয়ার
+     রিমাইন্ডার"); 2 blind rounds. Fixed after round 1: "রক্তদাতা হলে" could mean "once you've given
+     blood"; the time came last. After round 2: "যেকোনো", from when the account is made, no repeated
+     "আর আসে না". All 6 lines need the maintainer's review (C26).
 
 §২, "রক্তদাতা না হওয়া পর্যন্ত…" অনুচ্ছেদের শেষে:
 রক্তদাতা হওয়ার ধাপগুলো শেষ করলে আপনার উত্তরগুলো আমাদের কাছে আসে আর আপনার অ্যাকাউন্টে সেভ হয়, শেষ
@@ -100,6 +103,12 @@ LiquidLyf একটা ওপেন সোর্স প্রজেক্ট, �
 
 §৩, বিরতির সারির পরে:
 | আপনি রক্তদাতা তালিকায় না থাকলে, নোটিফিকেশনে কয়েকবার মনে করিয়ে দেওয়া যে চাইলে আপনিও রক্তদাতা হতে পারেন | আপনি রক্তদাতা তালিকায় আছেন কি না, রক্তদাতা হওয়ার যেসব উত্তর ফোনে রাখা আছে, আর আপনার কোনো পোস্ট চালু আছে কি না। অ্যাপ এই রিমাইন্ডার আপনার ফোনেই তৈরি করে, এর জন্য আমাদের কাছে কিছুই পাঠায় না |
+
+§৭, "কিছুদিন নোটিফিকেশন বন্ধ রাখুন"-এর পরে:
+- **রক্তদাতা হওয়ার রিমাইন্ডার বন্ধ করুন:** যেকোনো রিমাইন্ডারে "আর মনে করাবেন না" চাপুন, অথবা প্রোফাইল →
+  ⚙ সেটিংস → নোটিফিকেশন খুলে "রক্তদাতা হওয়ার রিমাইন্ডার" বন্ধ করুন। রক্তদাতা হওয়ার ধাপগুলো শেষ করলে
+  এগুলো আর আসে না। অ্যাকাউন্ট খোলার পর প্রায় ৪ মাসের মধ্যে সব মিলিয়ে সর্বোচ্চ ৭টি আসে, তারপর বন্ধ
+  হয়ে যায়।
 -->
 
 ### অ্যাপ ব্যবহারের সময়

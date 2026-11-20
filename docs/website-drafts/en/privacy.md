@@ -91,8 +91,12 @@ simply off: being listed as a donor, and being available to donate.
      on the phone, the setup answers (to know they didn't finish) and whether their own request is
      open. Its state (how many shown, the next date, "don't remind me") stays on the phone, and
      sign-out clears it. At most 7; the first comes at least 7 days after setup.
-     CHECK when A commits D28 + D29: the code again, the switch's name and place, and the approved
-     words ("Don't remind me", the switch), EN + BN.
+     D28 committed in 1728a71 (20 Nov 2026), re-checked there: "profile_setup", cleared at sign-out
+     (MainViewModel) and when Become a donor is finished (BecomeDonorViewModel). D29's words approved
+     by the maintainer (20 Nov 2026 07:00): the button "Don't remind me" / "আর মনে করাবেন না", the
+     switch "Reminders to become a donor" / "রক্তদাতা হওয়ার রিমাইন্ডার" (shown only to non-donors).
+     A Friday with their own request open is skipped, not moved, so "at most 7".
+     CHECK when A commits D29: the code, and the switch's place (Profile → ⚙ Settings → Notifications).
 
 §2, replacing the paragraph "Until you choose to become a donor…":
 Until you choose to become a donor, the app doesn't ask for these. Until then, two of your settings are
@@ -109,9 +113,10 @@ finish the steps and they're saved to your account.
 | If you aren't listed as a donor, reminding you a few times, in a notification, that you can become a donor if you want | Whether you're listed as a donor, the donor-step answers kept on your phone, and whether you have an open request. The app makes these reminders on your phone and sends us nothing for them |
 
 §7, after "Pause alerts":
-- **Stop the "Become a donor" reminders:** tap **Don't remind me** on one, or turn them off in
-  Profile → ⚙ Settings → Notifications. They stop by themselves when you become a donor, and after 7
-  reminders (about 4 months).
+- **Stop the reminders to become a donor:** tap "Don't remind me" on any reminder, or open Profile → ⚙
+  Settings → Notifications and turn off "Reminders to become a donor". Once you finish the donor steps,
+  they don't come any more. There are at most 7 in all, within about 4 months of creating your account,
+  and then they stop.
 -->
 
 ### When you use the app
