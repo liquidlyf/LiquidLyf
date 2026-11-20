@@ -210,7 +210,9 @@ class StoreScreenshotsTest {
             Donation("d3", now.minus(Duration.ofDays(420)), BloodComponent.PLATELETS, null, requestId = null, verified = false, source = DonationSource.SELF, createdAt = now),
         )
         val calc = BadgeCalculator()
-        both("profile", R.string.profile_impact_title, tab = TopLevelDestination.PROFILE) {
+        // The impact card is below the first screen since N1 put the history before it: wait for
+        // something the picture shows.
+        both("profile", R.string.profile_history_title, tab = TopLevelDestination.PROFILE) {
             ProfileScreen(
                 ProfileUiState(
                     profile = donor, eligibility = eligibility, donations = history, geo = geo,
