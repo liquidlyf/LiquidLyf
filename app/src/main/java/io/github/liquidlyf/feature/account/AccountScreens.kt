@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -420,7 +421,8 @@ private fun PendingEmail(pending: String, current: String, resendIn: Int, onRese
             .padding(start = Spacing.sm, end = Spacing.sm, top = Spacing.sm),
         verticalArrangement = Arrangement.spacedBy(Spacing.xxs),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        // One TalkBack stop for the words; Resend is its own (D's §28).
+        Row(Modifier.semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             FirstLineIcon(LLIcons.Mail, MaterialTheme.typography.titleSmall, tint = colors.primary)
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
                 Text(stringResource(R.string.email_pending_title, pending), style = MaterialTheme.typography.titleSmall, color = colors.onSecondaryContainer)

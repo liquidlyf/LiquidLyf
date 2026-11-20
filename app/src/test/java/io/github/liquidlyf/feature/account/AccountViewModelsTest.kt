@@ -223,6 +223,18 @@ class AccountViewModelsTest {
     }
 
     @Test
+    fun `the 60-second wait counts from the last link, also on a new visit to the page`() = test {
+        signedIn()
+        // A link went out 20 seconds before the page opens.
+        auth.requestedEmail.value = io.github.liquidlyf.core.data.auth.RequestedEmail("rahim.new@example.test", TestData.NOW.minusSeconds(20))
+        val profiles = FakeProfileRepository().apply { profiles["uid-1"] = TestData.profile() }
+        val vm = editVm(profiles, FakeSessionManager(SessionState.Ready(TestData.user(), TestData.profile())))
+        runCurrent()
+        assertEquals(40, vm.uiState.value.resendIn)
+        advanceUntilIdle()
+    }
+
+    @Test
     fun `an old request isn't shown after 3 days (D34)`() = test {
         signedIn()
         auth.requestedEmail.value = io.github.liquidlyf.core.data.auth.RequestedEmail("rahim.new@example.test", TestData.NOW.minus(java.time.Duration.ofDays(3)))

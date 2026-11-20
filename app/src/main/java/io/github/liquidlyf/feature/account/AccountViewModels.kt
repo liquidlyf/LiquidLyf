@@ -317,7 +317,16 @@ class EditProfileViewModel @Inject constructor(
         // D34: the waiting address, and the email as it is now (it changes while this page is open
         // when the person comes back from the link).
         viewModelScope.launch {
-            auth.requestedEmail.collect { r -> state.update { it.copy(pendingEmail = r?.takeIf { x -> x.freshAt(clock.now()) }?.email) } }
+            auth.requestedEmail.collect { r ->
+                val fresh = r?.takeIf { it.freshAt(clock.now()) }
+                state.update { it.copy(pendingEmail = fresh?.email) }
+                // The wait counts from the last link sent (kept with the address), so leaving the
+                // page and coming back doesn't allow another at once (D's §28).
+                if (fresh != null) {
+                    val left = RESEND_WAIT_SECONDS - java.time.Duration.between(fresh.askedAt, clock.now()).seconds.toInt()
+                    if (left > 0) startCooldown(left)
+                }
+            }
         }
         viewModelScope.launch {
             auth.authState.mapNotNull { it?.email }.distinctUntilChanged().collect { email -> state.update { it.copy(email = email) } }
@@ -337,9 +346,9 @@ class EditProfileViewModel @Inject constructor(
         }
     }
 
-    private fun startCooldown() {
+    private fun startCooldown(seconds: Int = RESEND_WAIT_SECONDS) {
         countdown?.cancel()
-        state.update { it.copy(resendIn = RESEND_WAIT_SECONDS) }
+        state.update { it.copy(resendIn = seconds) }
         countdown = viewModelScope.launch {
             while (state.value.resendIn > 0) {
                 delay(1_000)
