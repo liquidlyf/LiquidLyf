@@ -78,16 +78,33 @@ simply off: being listed as a donor, and being available to donate.
      Skip this". D29 = a "Become a donor" reminder made by WorkManager on the phone, sent nowhere:
      Fridays for 4 weeks, then monthly for 3 months, then it stops (7 in all). The phone has no cloud
      backup or device transfer (allowBackup false, data_extraction_rules exclude everything).
-     CHECK with A: which answers stay on the phone, that sign-out deletes them and the reminder's
-     schedule, what "Not now" at "list me" saves, the switch's name and place, and the final words.
+     A's answers (20 Nov 2026), D28 checked in A's working copy the same day: the answers stay in the
+     app's DataStore file "profile_setup", for the signed-in account only: the setup choice, blood
+     group (or "don't know"), gender, birth year, the weight answer, last donation (or "never") and
+     the list-me answer if reached (SetupDraftStore.kt). They're deleted when Become a donor is
+     finished (BecomeDonorViewModel), at sign-out (MainViewModel), so at account deletion too, and
+     at uninstall. "Not now" at "list me" is the existing Become a donor finish, unchanged by D28:
+     bloodGroup, gender, birthYear, weightOk and lastDonationAt go to the person's own users
+     document with showInDonorSearch false, available false and no consentAt, and no donor card.
+     So B's 17 Nov note above ("absent until the person chooses to donate") means "until they finish
+     the donor steps". D29 (A's plan, not built yet): no network; it reads only the profile already
+     on the phone, the setup answers (to know they didn't finish) and whether their own request is
+     open. Its state (how many shown, the next date, "don't remind me") stays on the phone, and
+     sign-out clears it. At most 7; the first comes at least 7 days after setup.
+     CHECK when A commits D28 + D29: the code again, the switch's name and place, and the approved
+     words ("Don't remind me", the switch), EN + BN.
 
-§2, after "Until you choose to become a donor…":
-If you stop partway through becoming a donor, the answers you gave so far are kept **only on your
+§2, replacing the paragraph "Until you choose to become a donor…":
+Until you choose to become a donor, the app doesn't ask for these. Until then, two of your settings are
+simply off: being listed as a donor, and being available to donate. When you finish the donor steps,
+your answers are saved to your account, even if you choose not to be listed.
+
+If you stop partway through the donor steps, the answers you gave so far are kept **only on your
 phone**, so you don't have to type them again. They aren't sent to us or backed up, and they're deleted
-when you sign out.
+when you finish becoming a donor or sign out.
 
 §3, a row after the rest period:
-| Reminding you a few times that you can become a donor, if you aren't one yet | Whether you're a donor, and the answers kept on your phone. Your phone makes these reminders by itself and sends nothing |
+| Reminding you a few times that you can become a donor, if you aren't one yet | Whether you're a donor, the answers kept on your phone, and whether you have an open request. Your phone makes these reminders by itself and sends nothing |
 
 §7, after "Pause alerts":
 - **Stop the "Become a donor" reminders:** tap **Don't remind me** on one, or turn them off in
