@@ -130,9 +130,24 @@ describe('users: protected fields (doc 07 test 3)', () => {
     await assertFails(updateProfile(as('alice'), 'alice', { donationCount: 1, verifiedDonations: 1, lastDonationId: 'x' }));
   });
 
-  test('createdAt and email cannot change', async () => {
+  test('createdAt cannot change; email only to the signed-in account\'s email', async () => {
     await assertFails(updateProfile(as('alice'), 'alice', { createdAt: ts(-400 * DAY) }));
     await assertFails(updateProfile(as('alice'), 'alice', { email: 'new@example.test' }));
+  });
+
+  // D30 (the maintainer, 20 Nov 2026): after "Change email" (verifyBeforeUpdateEmail), the
+  // profile's copy follows the account's new, verified email, and nothing else.
+  test('after an email change, the copy can follow the token\'s verified email (D30)', async () => {
+    const moved = { email: 'alice.new@example.test' }; // the token after the change
+    await assertSucceeds(updateProfile(as('alice', moved), 'alice', { fullName: 'Alice A' })); // stale copy: other edits still work
+    await assertFails(updateProfile(as('alice', moved), 'alice', { email: 'other@example.test' }));
+    await assertFails(updateProfile(as('alice', { ...moved, email_verified: false }), 'alice', { email: moved.email }));
+    await assertFails(updateProfile(as('alice', moved), 'alice', { email: deleteField() }));
+    await assertFails(updateProfile(as('eve', moved), 'alice', { email: moved.email })); // only the owner
+    await assertSucceeds(updateProfile(as('alice', moved), 'alice', { email: moved.email }));
+    expect((await getDoc(doc(as('alice', moved), 'users/alice'))).data().email).toBe(moved.email);
+    // A listed donor: email isn't on the public card, so the card needn't change.
+    await assertSucceeds(updateProfile(as('bob', { email: 'bob.new@example.test' }), 'bob', { email: 'bob.new@example.test' }));
   });
 
   test('a normal profile edit works', async () => {

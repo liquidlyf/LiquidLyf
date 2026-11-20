@@ -252,7 +252,11 @@ service cloud.firestore {
                     && donorCardSynced(uid, data());
       allow update: if isOwner(uid) && verified() && validUser(data())
                     && data().updatedAt == request.time
-                    && !changed().hasAny(['createdAt','email','role','rapidResponder'])
+                    && !changed().hasAny(['createdAt','role','rapidResponder'])
+                    // D30 (the maintainer, 20 Nov 2026): after "Change email" (verified by its
+                    // link), the copy follows the account's email, and only that. verified()
+                    // above means the token's email is confirmed.
+                    && (!('email' in changed()) || data().email == request.auth.token.email)
                     && phoneVerifiedOk()
                     && lastActiveOk()
                     && donationCountersOk(uid)
