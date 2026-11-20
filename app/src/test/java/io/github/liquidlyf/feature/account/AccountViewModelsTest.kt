@@ -76,7 +76,7 @@ class AccountViewModelsTest {
         assertEquals(FieldCheck.OK, vm.uiState.value.newPassword.againCheck)
         vm.save()
         advanceUntilIdle()
-        assertEquals(R.string.error_invalid_credentials, vm.uiState.value.currentError)
+        assertEquals(R.string.error_wrong_password, vm.uiState.value.currentError)
         assertFalse(vm.uiState.value.done)
 
         vm.onCurrentChange("old-password")
@@ -116,7 +116,7 @@ class AccountViewModelsTest {
         vm.onPasswordChange("wrong")
         vm.confirm()
         advanceUntilIdle()
-        assertEquals(R.string.error_invalid_credentials, vm.uiState.value.passwordError)
+        assertEquals(R.string.error_wrong_password, vm.uiState.value.passwordError)
         assertNull(deleter.pendingUid)
 
         vm.onPasswordChange("old-password")
@@ -154,7 +154,13 @@ class AccountViewModelsTest {
         advanceUntilIdle()
         assertTrue(vm.uiState.value.needsPassword)
 
+        // D35: a wrong password in this box says so, not "Wrong email or password."
         deleter.failWith = null
+        vm.onPasswordChange("not-it")
+        vm.run()
+        advanceUntilIdle()
+        assertEquals(R.string.error_wrong_password, vm.uiState.value.error)
+
         vm.onPasswordChange("old-password")
         vm.run()
         advanceUntilIdle()
@@ -308,7 +314,7 @@ class AccountViewModelsTest {
         // A wrong password: the box stays, nothing is sent.
         vm.changeEmail(" new@example.test ", "not-it")
         advanceUntilIdle()
-        assertEquals(AppError.InvalidCredentials.messageRes, vm.uiState.value.passwordError)
+        assertEquals(R.string.error_wrong_password, vm.uiState.value.passwordError)
         assertFalse(vm.uiState.value.changeEmailSent)
         assertTrue(auth.emailChanges.isEmpty())
         // The right one: sent, and the box closes.

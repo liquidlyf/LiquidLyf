@@ -99,7 +99,7 @@ class ChangePasswordViewModel @Inject constructor(private val auth: AuthReposito
             if (reauth is AppResult.Failure) {
                 state.update {
                     if (reauth.error == AppError.InvalidCredentials) {
-                        it.copy(saving = false, currentError = reauth.error.messageRes)
+                        it.copy(saving = false, currentError = reauth.error.passwordBoxText())
                     } else {
                         it.copy(saving = false, formError = reauth.error.messageRes)
                     }
@@ -170,7 +170,7 @@ class DeleteAccountViewModel @Inject constructor(
                 if (reauth is AppResult.Failure) {
                     state.update {
                         if (reauth.error == AppError.InvalidCredentials) {
-                            it.copy(working = false, passwordError = reauth.error.messageRes)
+                            it.copy(working = false, passwordError = reauth.error.passwordBoxText())
                         } else {
                             it.copy(working = false, formError = reauth.error.messageRes)
                         }
@@ -219,7 +219,7 @@ class DeletingAccountViewModel @Inject constructor(
             if (state.value.needsPassword) {
                 val reauth = auth.reauthenticate(password)
                 if (reauth is AppResult.Failure) {
-                    state.update { it.copy(running = false, error = reauth.error.messageRes) }
+                    state.update { it.copy(running = false, error = reauth.error.passwordBoxText()) }
                     return@launch
                 }
             }
@@ -485,7 +485,7 @@ class EditProfileViewModel @Inject constructor(
             if (reauth is AppResult.Failure) {
                 state.update {
                     if (reauth.error == AppError.InvalidCredentials) {
-                        it.copy(changeEmailBusy = false, passwordError = reauth.error.messageRes)
+                        it.copy(changeEmailBusy = false, passwordError = reauth.error.passwordBoxText())
                     } else {
                         it.copy(changeEmailBusy = false, changeEmailError = reauth.error.messageRes)
                     }
@@ -510,6 +510,13 @@ class EditProfileViewModel @Inject constructor(
 
     fun onMessageShown() = state.update { it.copy(message = null, messageArg = null) }
 }
+
+/**
+ * D35's finding: a box that asks only for the password says "Wrong password. Try again.", not Sign in's
+ * "Wrong email or password." (Change email, Change password, Delete account and its last step).
+ */
+@StringRes
+private fun AppError.passwordBoxText(): Int = if (this == AppError.InvalidCredentials) R.string.error_wrong_password else messageRes
 
 /** D34: as the confirm-email page ([VerifyEmailViewModel.COOLDOWN_SECONDS]). */
 private const val RESEND_WAIT_SECONDS = VerifyEmailViewModel.COOLDOWN_SECONDS

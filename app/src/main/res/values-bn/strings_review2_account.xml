@@ -46,6 +46,8 @@
     <string name="detail_ask_donors_note">আমরা কাছের রক্তদাতাদের অ্যালার্ট পাঠিয়েছি। আপনি নিজেও রক্তদাতাদের অনুরোধ করতে পারেন।</string>
     <string name="error_unknown">কোনো একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।</string>
     <string name="error_invalid_credentials">ইমেইল বা পাসওয়ার্ড ভুল।</string>
+    <!-- D35: approved by the maintainer (20 Nov 2026 20:55, "D35 msg a"). -->
+    <string name="error_wrong_password">পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।</string>
     <string name="error_email_in_use">এই ইমেইল দিয়ে আগে থেকেই একটি অ্যাকাউন্ট আছে। নতুন অ্যাকাউন্ট না খুলে সাইন ইন করুন।</string>
     <string name="error_weak_password">আরও শক্ত পাসওয়ার্ড দিন: অন্তত ৮ অক্ষর।</string>
     <string name="error_invalid_email">সঠিক ইমেইল ঠিকানা দিন।</string>

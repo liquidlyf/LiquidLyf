@@ -62,6 +62,8 @@
     <string name="detail_ask_donors_note">We\'ve alerted donors nearby. You can also ask donors yourself.</string>
     <string name="error_unknown">Something went wrong. Please try again.</string>
     <string name="error_invalid_credentials">Wrong email or password.</string>
+    <!-- D35: in a box that asks only for the password (Change email, Change password, Delete account). -->
+    <string name="error_wrong_password">Wrong password. Try again.</string>
     <string name="error_email_in_use">An account with this email already exists. Sign in instead.</string>
     <string name="error_weak_password">Choose a stronger password: at least 8 characters.</string>
     <string name="error_invalid_email">Enter a valid email address.</string>
