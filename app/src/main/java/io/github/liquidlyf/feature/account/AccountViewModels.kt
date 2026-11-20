@@ -26,9 +26,14 @@ import io.github.liquidlyf.core.model.UserProfile
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
 import io.github.liquidlyf.core.util.Clock
+import io.github.liquidlyf.feature.auth.VerifyEmailViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -256,6 +261,10 @@ data class EditProfileUiState(
     val email: String = "",
     /** D30: signs in with Google only (no password): no Change email, Google keeps its own address. */
     val googleOnly: Boolean = false,
+    /** D34: the address "Change email" asked for, until its link is opened (3 days at most). */
+    val pendingEmail: String? = null,
+    /** D34: seconds until "Resend email" works again (the confirm-email page's 60). */
+    val resendIn: Int = 0,
     val geo: BdGeo? = null,
     @StringRes val nameError: Int? = null,
     @StringRes val birthYearError: Int? = null,
@@ -298,11 +307,44 @@ class EditProfileViewModel @Inject constructor(
         } ?: EditProfileUiState(),
     )
     val uiState: StateFlow<EditProfileUiState> = state.asStateFlow()
+    private var countdown: Job? = null
 
     init {
         viewModelScope.launch {
             val geo = geoRepository.geo()
             state.update { it.copy(geo = geo) }
+        }
+        // D34: the waiting address, and the email as it is now (it changes while this page is open
+        // when the person comes back from the link).
+        viewModelScope.launch {
+            auth.requestedEmail.collect { r -> state.update { it.copy(pendingEmail = r?.takeIf { x -> x.freshAt(clock.now()) }?.email) } }
+        }
+        viewModelScope.launch {
+            auth.authState.mapNotNull { it?.email }.distinctUntilChanged().collect { email -> state.update { it.copy(email = email) } }
+        }
+    }
+
+    /** D34: "Resend email" on the waiting line: the same link again, to the same address. */
+    fun resendEmailChange() {
+        val pending = state.value.pendingEmail ?: return
+        if (state.value.resendIn > 0) return
+        startCooldown()
+        viewModelScope.launch {
+            val result = auth.changeEmail(pending)
+            state.update {
+                it.copy(message = if (result is AppResult.Failure) result.error.messageRes else R.string.verify_email_sent, messageArg = null)
+            }
+        }
+    }
+
+    private fun startCooldown() {
+        countdown?.cancel()
+        state.update { it.copy(resendIn = RESEND_WAIT_SECONDS) }
+        countdown = viewModelScope.launch {
+            while (state.value.resendIn > 0) {
+                delay(1_000)
+                state.update { it.copy(resendIn = it.resendIn - 1) }
+            }
         }
     }
 
@@ -414,11 +456,16 @@ class EditProfileViewModel @Inject constructor(
                     it.copy(message = R.string.change_email_sent, messageArg = newEmail.trim())
                 }
             }
+            // A link was just sent: wait before offering another, as on the confirm-email page.
+            if (result is AppResult.Success) startCooldown()
         }
     }
 
     fun onMessageShown() = state.update { it.copy(message = null, messageArg = null) }
 }
+
+/** D34: as the confirm-email page ([VerifyEmailViewModel.COOLDOWN_SECONDS]). */
+private const val RESEND_WAIT_SECONDS = VerifyEmailViewModel.COOLDOWN_SECONDS
 
 /** The account-deletion confirmation words (A23). The screen shows DELETE; Bangla names both. */
 internal const val DELETE_WORD = "DELETE"

@@ -275,11 +275,12 @@ fun AppNavHost(
         AppSnackbars.current.collect { entry ->
             val s = entry?.snackbar ?: return@collect
             // Cancelled by a rotation mid-show: not done, so the new screen shows it again.
+            val text = resources.getString(s.message, *s.args.toTypedArray())
             val result = if (s.actionLabel == null && s.message in SuccessMessages.ids) {
-                snackbarHostState.showSnackbar(SuccessVisuals(resources.getString(s.message)))
+                snackbarHostState.showSnackbar(SuccessVisuals(text))
             } else {
                 snackbarHostState.showSnackbar(
-                    message = resources.getString(s.message),
+                    message = text,
                     actionLabel = s.actionLabel?.let(resources::getString),
                     duration = SnackbarDuration.Long,
                 )

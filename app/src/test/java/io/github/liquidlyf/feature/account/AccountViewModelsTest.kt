@@ -18,8 +18,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -190,6 +192,44 @@ class AccountViewModelsTest {
         assertTrue(vm(setOf("google.com")).uiState.value.googleOnly)
         assertFalse(vm(setOf("google.com", "password")).uiState.value.googleOnly)
         assertFalse(vm(setOf("password")).uiState.value.googleOnly)
+    }
+
+    @Test
+    fun `a new email waits for its link, with Resend after 60 seconds (D34)`() = test {
+        signedIn()
+        val profiles = FakeProfileRepository().apply { profiles["uid-1"] = TestData.profile() }
+        val vm = editVm(profiles, FakeSessionManager(SessionState.Ready(TestData.user(), TestData.profile())))
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.pendingEmail)
+
+        vm.changeEmail("rahim.new@example.test")
+        runCurrent()
+        assertEquals("rahim.new@example.test", vm.uiState.value.pendingEmail)
+        assertEquals(60, vm.uiState.value.resendIn) // a link was just sent
+        vm.resendEmailChange()
+        runCurrent()
+        assertEquals(1, auth.emailChanges.size) // not yet
+        advanceTimeBy(60_001)
+        vm.resendEmailChange()
+        runCurrent()
+        assertEquals(listOf("rahim.new@example.test", "rahim.new@example.test"), auth.emailChanges)
+        assertEquals(R.string.verify_email_sent, vm.uiState.value.message)
+
+        // The link opened: the line goes.
+        auth.requestedEmail.value = null
+        runCurrent()
+        assertNull(vm.uiState.value.pendingEmail)
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `an old request isn't shown after 3 days (D34)`() = test {
+        signedIn()
+        auth.requestedEmail.value = io.github.liquidlyf.core.data.auth.RequestedEmail("rahim.new@example.test", TestData.NOW.minus(java.time.Duration.ofDays(3)))
+        val profiles = FakeProfileRepository().apply { profiles["uid-1"] = TestData.profile() }
+        val vm = editVm(profiles, FakeSessionManager(SessionState.Ready(TestData.user(), TestData.profile())))
+        advanceUntilIdle()
+        assertNull(vm.uiState.value.pendingEmail)
     }
 
     @Test

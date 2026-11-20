@@ -1265,6 +1265,12 @@ class ScreenGalleryTest {
             Shot("edit-profile", prepare = { waitForText("Nusrat Jahan") }, content = editProfile {}),
             // D23 a: the weight question, answered না; after হ্যাঁ and Save, "list me" again.
             Shot("edit-profile-weight-no", prepare = { waitForText("Nusrat Jahan") }, content = editProfileOf(underWeight) {}),
+            // D34: a new email waits for its link (Resend counts down from 60 after the link went).
+            Shot("edit-profile-email-pending", prepare = { waitForText("Nusrat Jahan") }) {
+                val auth = signedIn().apply { requestedEmail.value = io.github.liquidlyf.core.data.auth.RequestedEmail("nusrat.new@example.test", now) }
+                val vm = remember { EditProfileViewModel(ready(me), FakeProfileRepository(now).apply { profiles[me.uid] = me }, auth, geoRepository, clock, EligibilityCalculator()) }
+                EditProfileRoute(onDone = {}, viewModel = vm)
+            },
             Shot("edit-profile-google", prepare = { waitForText("Nusrat Jahan") }) {
                 val p = me.copy(email = "nusrat@gmail.example")
                 val vm = remember { EditProfileViewModel(ready(p), FakeProfileRepository(now).apply { profiles[p.uid] = p }, googleOnly(), geoRepository, clock, EligibilityCalculator()) }

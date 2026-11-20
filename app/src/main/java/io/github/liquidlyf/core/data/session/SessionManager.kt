@@ -171,6 +171,7 @@ class AppSessionManager @Inject constructor(
     }
 
     private suspend fun forgetThisPerson() {
+        auth.forgetRequestedEmail() // D34
         alerts.clear()
         notifications.cancelAll()
         reminders.cancelAll()

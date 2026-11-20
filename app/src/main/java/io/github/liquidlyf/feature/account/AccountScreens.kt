@@ -1,9 +1,12 @@
 package io.github.liquidlyf.feature.account
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
@@ -43,6 +46,7 @@ import io.github.liquidlyf.core.designsystem.components.DialogBody
 import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.EdgeTextButton
 import io.github.liquidlyf.core.designsystem.components.FieldError
+import io.github.liquidlyf.core.designsystem.components.FirstLineIcon
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLNoticeCard
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
@@ -292,6 +296,7 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
             Text(stringResource(R.string.label_email_google, state.email), style = MaterialTheme.typography.bodyMedium)
         } else {
             Text(stringResource(R.string.label_email_readonly, state.email), style = MaterialTheme.typography.bodyMedium)
+            state.pendingEmail?.let { pending -> PendingEmail(pending, state.email, state.resendIn, onResend = viewModel::resendEmailChange) }
             TextButton(onClick = { changingEmail = true }) { Text(stringResource(R.string.action_change_email)) }
         }
         LLTextField(
@@ -397,5 +402,33 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
             },
             dismissButton = { TextButton(onClick = { changingEmail = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
+    }
+}
+
+/**
+ * D34: the new address waits for its link: say so, which address still signs in, and offer the
+ * link again (as the confirm-email page does, after 60 seconds). No Cancel: a new "Change email"
+ * replaces it, and an unopened link changes nothing.
+ */
+@Composable
+private fun PendingEmail(pending: String, current: String, resendIn: Int, onResend: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(colors.secondaryContainer, MaterialTheme.shapes.medium)
+            .padding(start = Spacing.sm, end = Spacing.sm, top = Spacing.sm),
+        verticalArrangement = Arrangement.spacedBy(Spacing.xxs),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+            FirstLineIcon(LLIcons.Mail, MaterialTheme.typography.titleSmall, tint = colors.primary)
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.xxs)) {
+                Text(stringResource(R.string.email_pending_title, pending), style = MaterialTheme.typography.titleSmall, color = colors.onSecondaryContainer)
+                Text(stringResource(R.string.email_pending_body, current), style = MaterialTheme.typography.bodyMedium, color = colors.onSecondaryContainer)
+            }
+        }
+        TextButton(onClick = onResend, enabled = resendIn == 0, modifier = Modifier.align(Alignment.End).heightIn(min = Spacing.minTouchTarget)) {
+            Text(if (resendIn > 0) stringResource(R.string.action_resend_in, resendIn) else stringResource(R.string.action_resend_email))
+        }
     }
 }

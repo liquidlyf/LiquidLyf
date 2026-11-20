@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.liquidlyf.core.data.auth.AccountChecker
+import io.github.liquidlyf.core.data.auth.RequestedEmailStore
 import io.github.liquidlyf.core.data.link.PendingRequestStore
 import io.github.liquidlyf.core.data.link.RequestLinks
 import io.github.liquidlyf.core.data.settings.OffScreenLanguage
@@ -66,6 +67,7 @@ class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var pendingRequests: PendingRequestStore
     @Inject lateinit var accountChecker: AccountChecker
+    @Inject lateinit var requestedEmails: RequestedEmailStore
 
     override fun onStart() {
         super.onStart()
@@ -110,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         keepLanguageForNotifications()
         if (savedInstanceState == null) {
             lifecycleScope.launch { pendingRequests.dropIfOld() } // before a new one is kept
+            lifecycleScope.launch { requestedEmails.dropIfOld() } // D34: 3 days after "Change email"
             keepRequestLink(intent)
         }
         val arts = start?.let { StartLogoArts(resources, it) }

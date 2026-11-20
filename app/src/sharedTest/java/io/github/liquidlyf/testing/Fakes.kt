@@ -139,7 +139,11 @@ class FakeAuthRepository : AuthRepository {
     /** D32: what the next account checks find; [checks] counts them. SessionEnded signs out. */
     var nextCheck: io.github.liquidlyf.core.data.auth.AccountCheck = io.github.liquidlyf.core.data.auth.AccountCheck.Same
     var checks = 0
-    override var requestedEmail: String? = null
+    override val requestedEmail = MutableStateFlow<io.github.liquidlyf.core.data.auth.RequestedEmail?>(null)
+
+    override suspend fun forgetRequestedEmail() {
+        requestedEmail.value = null
+    }
 
     override suspend fun checkAccount(): io.github.liquidlyf.core.data.auth.AccountCheck {
         checks++
@@ -179,7 +183,7 @@ class FakeAuthRepository : AuthRepository {
 
     override suspend fun changeEmail(newEmail: String) = result {
         emailChanges += newEmail.trim()
-        requestedEmail = newEmail.trim()
+        requestedEmail.value = io.github.liquidlyf.core.data.auth.RequestedEmail(newEmail.trim(), TestData.NOW)
         AppResult.Success(Unit)
     }
 

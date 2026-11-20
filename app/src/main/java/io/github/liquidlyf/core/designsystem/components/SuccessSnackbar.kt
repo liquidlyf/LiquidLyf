@@ -43,6 +43,7 @@ object SuccessMessages {
         R.string.become_donor_done,
         R.string.detail_marked_donated,
         R.string.add_donation_added,
+        R.string.email_changed_done, // D34
     )
 }
 

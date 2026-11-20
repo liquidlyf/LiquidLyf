@@ -2,10 +2,14 @@ package io.github.liquidlyf
 
 import android.view.View
 import androidx.annotation.StringRes
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -162,6 +166,34 @@ class AccountCheckE2ETest {
         val ready = withTimeout(20_000) { session.state.first { it is SessionState.Ready && it.profile.email == new } } as SessionState.Ready
         assertEquals(new, ready.user.email)
         assertEquals(new, db.userRef(uid).get(Source.SERVER).await().getString("email"))
+    }
+
+    /** D34: Edit profile shows the new address waiting, then the change and "Your email is now …". */
+    @Test
+    fun editProfileShowsTheWaitingEmail_thenTheChange() = runBlocking<Unit> {
+        val old = "check-old4$run@example.test"
+        val new = "check-new4$run@example.test"
+        signedInApp(old)
+        compose.onNode(hasText(str(R.string.nav_profile)) and hasClickAction()).performClick()
+        compose.waitUntil(10_000) { compose.onAllNodes(hasContentDescription(str(R.string.title_edit_profile)) and hasClickAction()).fetchSemanticsNodes().isNotEmpty() }
+        compose.onAllNodes(hasContentDescription(str(R.string.title_edit_profile)) and hasClickAction())[0].performClick()
+        waitFor(str(R.string.label_email_readonly, old))
+        // "Change email" on the page, as a person does.
+        compose.onNode(hasText(str(R.string.action_change_email)) and hasClickAction()).performClick()
+        compose.onNode(hasText(str(R.string.label_new_email)) and hasSetTextAction()).performTextInput(new)
+        compose.onNode(hasText(str(R.string.action_send_link)) and hasClickAction()).performClick()
+        waitFor(str(R.string.email_pending_title, new))
+        waitFor(str(R.string.email_pending_body, old))
+        waitFor(str(R.string.action_resend_in, 5).substringBefore("5")) // "Resend in N s", counting down
+        // The link opened, then back to the app.
+        val code = oobCodes().first { it.optString("requestType") == "VERIFY_AND_CHANGE_EMAIL" && it.optString("newEmail") == new }
+        auth.applyActionCode(code.getString("oobCode")).await()
+        leaveAndComeBack()
+        waitFor(str(R.string.email_changed_done, new), 20_000)
+        waitFor(str(R.string.label_email_readonly, new))
+        compose.waitForIdle()
+        assertEquals(0, compose.onAllNodesWithText(str(R.string.email_pending_title, new)).fetchSemanticsNodes().size)
+        assertEquals(null, authRepository.requestedEmail.value)
     }
 
     @Test

@@ -16,6 +16,8 @@ data class AppSnackbar(
     @param:StringRes val message: Int,
     @param:StringRes val actionLabel: Int? = null,
     val onAction: (() -> Unit)? = null,
+    /** The message's %1$s… (D34: "Your email is now {email}."). */
+    val args: List<String> = emptyList(),
 )
 
 /**

@@ -11,6 +11,7 @@ import io.github.liquidlyf.core.firebase.CrashReports
 import io.github.liquidlyf.core.firebase.appResultOf
 import io.github.liquidlyf.core.util.AppError
 import io.github.liquidlyf.core.util.AppResult
+import io.github.liquidlyf.core.util.Clock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,8 +104,11 @@ interface AuthRepository {
     /** Sends a link to [newEmail]; the email changes only when the user opens it. */
     suspend fun changeEmail(newEmail: String): AppResult<Unit>
 
-    /** D32: the address the last "Change email" on this phone asked for, until the change shows (memory only). */
-    val requestedEmail: String?
+    /** D34: the address the last "Change email" on this phone asked for, until the change shows (kept on the phone). */
+    val requestedEmail: StateFlow<RequestedEmail?>
+
+    /** Sign-out: the asked-for address goes too. */
+    suspend fun forgetRequestedEmail()
 
     /**
      * D32: reads the account again and renews this phone's session. Without it the phone shows the
@@ -120,7 +124,11 @@ interface AuthRepository {
 }
 
 @Singleton
-class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth) : AuthRepository {
+class FirebaseAuthRepository @Inject constructor(
+    private val auth: FirebaseAuth,
+    private val requested: RequestedEmailStore,
+    private val clock: Clock,
+) : AuthRepository {
 
     private val state = MutableStateFlow(auth.currentUser?.toAuthUser())
     override val authState: StateFlow<AuthUser?> = state.asStateFlow()
@@ -243,12 +251,13 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
         return appResultOf {
             auth.useAppLanguage()
             user.verifyBeforeUpdateEmail(newEmail.trim()).await()
-            requestedEmail = newEmail.trim()
+            requested.keep(newEmail.trim())
         }
     }
 
-    @Volatile override var requestedEmail: String? = null
-        private set
+    override val requestedEmail: StateFlow<RequestedEmail?> get() = requested.requested
+
+    override suspend fun forgetRequestedEmail() = requested.clear()
 
     override suspend fun checkAccount(): AccountCheck {
         val user = auth.currentUser ?: return AccountCheck.Same
@@ -274,16 +283,16 @@ class FirebaseAuthRepository @Inject constructor(private val auth: FirebaseAuth)
         }
         publish()
         if (now != null && now != before) {
-            requestedEmail = null
+            requested.clear()
             return AccountCheck.EmailChanged(now)
         }
         return AccountCheck.Same
     }
 
-    /** Only what the app knows: the new address from the account, or the one asked for here. */
-    private fun ended(newEmail: String?): AccountCheck {
-        val email = newEmail ?: requestedEmail
-        requestedEmail = null
+    /** Only what the app knows: the new address from the account, or the one asked for here (3 days). */
+    private suspend fun ended(newEmail: String?): AccountCheck {
+        val email = newEmail ?: requested.requested.value?.takeIf { it.freshAt(clock.now()) }?.email
+        requested.clear()
         auth.signOut()
         state.value = null
         return AccountCheck.SessionEnded(email)

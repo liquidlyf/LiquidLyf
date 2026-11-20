@@ -1,5 +1,8 @@
 package io.github.liquidlyf.core.data.auth
 
+import io.github.liquidlyf.R
+import io.github.liquidlyf.core.designsystem.components.AppSnackbar
+import io.github.liquidlyf.core.designsystem.components.AppSnackbars
 import io.github.liquidlyf.core.util.ApplicationScope
 import io.github.liquidlyf.core.util.Clock
 import kotlinx.coroutines.CoroutineScope
@@ -52,15 +55,18 @@ class AccountChecker @Inject constructor(
         val now = clock.now()
         val last = lastAt
         // After "Change email" here: every return, until the change shows.
-        if (auth.requestedEmail == null && last != null && now.isBefore(last.plus(EVERY))) return
+        val waiting = auth.requestedEmail.value?.freshAt(now) == true
+        if (!waiting && last != null && now.isBefore(last.plus(EVERY))) return
         lastAt = now
         scope.launch { check() }
     }
 
     internal suspend fun check() {
-        val found = auth.checkAccount()
-        if (found is AccountCheck.SessionEnded) {
-            notice.value = found.newEmail?.let(SignInNotice::EmailChanged) ?: SignInNotice.SignedOut
+        when (val found = auth.checkAccount()) {
+            // D34: "Your email is now {email}.", over whichever screen is open.
+            is AccountCheck.EmailChanged -> AppSnackbars.show(AppSnackbar(R.string.email_changed_done, args = listOf(found.email)))
+            is AccountCheck.SessionEnded -> notice.value = found.newEmail?.let(SignInNotice::EmailChanged) ?: SignInNotice.SignedOut
+            AccountCheck.Same -> Unit
         }
     }
 

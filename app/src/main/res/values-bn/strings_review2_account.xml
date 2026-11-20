@@ -231,6 +231,10 @@
     <string name="action_change_email">ইমেইল বদলান</string>
     <!-- D30: approved by the maintainer (20 Nov 2026 12:47, "D30 BN a"), as sign_out_account. -->
     <string name="label_email_google">Google দিয়ে সাইন ইন করা আছে: %1$s</string>
+    <!-- D34: approved by the maintainer (20 Nov 2026 19:04, "D34 BN OK"). -->
+    <string name="email_pending_title">নিশ্চিত করার অপেক্ষায়: %1$s</string>
+    <string name="email_pending_body">ওই ঠিকানায় পাঠানো লিংকটি খুলুন। ততক্ষণ %1$s দিয়েই সাইন ইন করুন।</string>
+    <string name="email_changed_done">আপনার ইমেইল এখন %1$s।</string>
     <string name="label_new_email">নতুন ইমেইল</string>
     <string name="change_email_sent">আমরা %1$s ঠিকানায় একটি লিংক পাঠিয়েছি। লিংকটি খুললে আপনার ইমেইল বদলে যাবে।</string>
 
