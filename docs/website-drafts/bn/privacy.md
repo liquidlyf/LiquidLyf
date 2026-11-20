@@ -113,7 +113,8 @@ LiquidLyf-এর সার্ভারে আপনার অ্যাকাউ�
 - **শেষ কবে অ্যাপ ব্যবহার করেছেন,** যা ৩ দিনে সর্বোচ্চ একবার আপডেট হয়।
 
 <!-- DRAFT for D31, the Bangla of the hidden English draft in en/privacy.md (facts there). Add both when
-     A commits the request share (the Bangla is approved: C28 OK, 20 Nov 2026 16:19). Meaning check, 20 Nov
+     A commits the request share (the Bangla is approved: C28 OK, 20 Nov 2026 16:19; its last sentence
+     C29 b, 16:47). Meaning check, 20 Nov
      2026: 2 blind rounds. Fixed after round 1: plainer words ("how many bags", "a random code", what
      the browser doesn't send, not "#" and "host"), no repeated lead-in, the reader as the subject, and
      when the kept code is deleted. After round 2: "র‍্যান্ডম" (not "এলোমেলো"), "LiquidLyf-এর ওয়েবসাইটে
@@ -125,8 +126,8 @@ LiquidLyf-এর সার্ভারে আপনার অ্যাকাউ�
   আপনিই ঠিক করেন। লিংকে পোস্টটা চেনার জন্য শুধু একটা র‍্যান্ডম কোড থাকে। লিংকের যে অংশে কোডটা থাকে,
   ব্রাউজার সেটা LiquidLyf-এর ওয়েবসাইটে (যা GitHub-এ চলে) পাঠায় না, আর লিংক থেকে খোলা পাতায় পোস্টের কোনো
   তথ্য থাকে না। যিনি লিংক পান, তাঁর অ্যাপে সাইন ইন করা না থাকলে অ্যাপ কোডটা শুধু তাঁর ফোনে রাখে, যাতে
-  সাইন ইন করার পর পোস্টটা খুলে দিতে পারে। পোস্টটা খোলার পর, বা লিংকে চাপ দেওয়ার ৩ দিন পরে, কোডটা মুছে
-  যায়।
+  সাইন ইন করার পর পোস্টটা খুলে দিতে পারে। পোস্টটা খোলা হলে কোডটা মুছে যায়। লিংকে চাপ দেওয়ার ৩ দিন পরে
+  কোডটা আর কাজে লাগানো হয় না, আর তার পরে প্রথমবার অ্যাপ খুললেই মুছে যায়।
 -->
 
 ### আপনার ফোন থেকে

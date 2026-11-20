@@ -133,7 +133,9 @@ sign out, or once you finish the steps and they're saved to your account.
      (the ID and when it was tapped), used once when the person reaches the app, then deleted; after
      3 days it's ignored, and deleted the next time it's read (not at sign-out; backups exclude it).
      No Share on a closed request (the icon and both bars need an OPEN request). So the item's last
-     sentence ("deleted … 3 days after the link was tapped") over-promises: the fix is C29.
+     sentence ("deleted … 3 days after the link was tapped") over-promised: fixed with C29 b (the
+     maintainer, 20 Nov 2026 16:47). A then changed the code to delete an expired ID at the app's next
+     start too, which is what the fixed sentence says.
      CHECK in A's commit (hash to come): the same facts.
 
 §2 "When you use the app", a last item:
@@ -143,8 +145,8 @@ sign out, or once you finish the steps and they're saved to your account.
   random code. Browsers don't send the part of the link with the code to LiquidLyf's website (which
   runs on GitHub), and the page the link opens shows nothing about the request. If the person who gets
   it isn't signed in to the app yet, the app keeps the code only on their phone, to open the request
-  once they're signed in. The code is deleted once the request is open, or 3 days after the link was
-  tapped.
+  once they're signed in. The code is deleted once the request is open. Three days after the link was
+  tapped, it's no longer used, and it's deleted the first time the app opens after that.
 -->
 
 ### From your phone
