@@ -113,7 +113,7 @@ LiquidLyf-এর সার্ভারে আপনার অ্যাকাউ�
 - **শেষ কবে অ্যাপ ব্যবহার করেছেন,** যা ৩ দিনে সর্বোচ্চ একবার আপডেট হয়।
 
 <!-- DRAFT for D31, the Bangla of the hidden English draft in en/privacy.md (facts there). Add both when
-     A commits the request share and the maintainer has reviewed the Bangla (C28). Meaning check, 20 Nov
+     A commits the request share (the Bangla is approved: C28 OK, 20 Nov 2026 16:19). Meaning check, 20 Nov
      2026: 2 blind rounds. Fixed after round 1: plainer words ("how many bags", "a random code", what
      the browser doesn't send, not "#" and "host"), no repeated lead-in, the reader as the subject, and
      when the kept code is deleted. After round 2: "র‍্যান্ডম" (not "এলোমেলো"), "LiquidLyf-এর ওয়েবসাইটে
