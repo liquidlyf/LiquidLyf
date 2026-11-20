@@ -61,6 +61,21 @@ LiquidLyf একটা ওপেন সোর্স প্রজেক্ট, �
 - আপনার পাসওয়ার্ড সামলায় Google-এর Firebase Authentication। আমরা কখনো সেটা দেখি না।
 - আপনি যে জানিয়েছেন আপনার বয়স ১৮ বা তার বেশি আর শর্তগুলো মেনেছেন: কবে মেনেছেন আর শর্তের কোন ভার্সন, সেটাসহ।
 
+<!-- DRAFT for D34, the Bangla of the hidden English draft in en/privacy.md (facts there). Add both only
+     if D34 is picked and built; the Bangla needs a meaning check and the maintainer's review (C30).
+     Words as in the app: "লিংকটি খুললে আপনার ইমেইল বদলে যাবে" (change_email_sent). Meaning check, 20 Nov
+     2026: 2 blind rounds, every meaning matched. Fixed after round 1: "ইমেইল ঠিকানা", "বদলটা" waits,
+     what's deleted is "ফোনে রাখা ঠিকানাটা" (not "এটা", which could read as the confirmed email), and
+     3 days from the request. After round 2: "অ্যাপও" (Firebase has the address too, so not "শুধু"), and
+     the result first, then the four cases.
+
+§২ "অ্যাকাউন্ট খোলার সময়", শেষ আইটেম:
+- **ইমেইল বদলালে:** নতুন ঠিকানায় পাঠানো লিংকটি খুললে তবেই আপনার ইমেইল বদলে যায় (লিংকটি পাঠায়
+  Google-এর Firebase Authentication)। ততক্ষণ অ্যাপও নতুন ইমেইল ঠিকানাটা আপনার ফোনে রাখে, যাতে দেখাতে
+  পারে যে বদলটা আপনার নিশ্চিত করার অপেক্ষায় আছে। ফোনে রাখা ঠিকানাটা মুছে যায়: বদল নিশ্চিত হলে, অন্য
+  কোনো ঠিকানায় বদলানোর অনুরোধ করলে, সাইন আউট করলে, বা অনুরোধের ৩ দিন পরে।
+-->
+
 ### আপনার প্রোফাইল
 - আপনার পুরো নাম আর ফোন নম্বর।
 - আপনার এলাকা: বিভাগ, জেলা, আর উপজেলা বা সিটি কর্পোরেশন।

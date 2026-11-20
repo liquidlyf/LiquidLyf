@@ -51,6 +51,24 @@ it does with your data.
 - Your password is handled by Google's Firebase Authentication. We never see it.
 - That you are 18 or older and accepted these terms, with the date and the version you accepted.
 
+<!-- DRAFT for D34 (not decided yet, the maintainer's idea, 20 Nov 2026 18:51): add only if D34 is
+     picked and A builds it, after checking A's code, with the Bangla reviewed (C30). Today (D32,
+     d54ce37) the address a "Change email" asked for is kept in memory only (AuthRepository's
+     requestedEmail), so nothing needs saying yet. D34 would keep it on the phone (private storage, no
+     backup) to show "waiting to confirm" in Edit profile, until the change is confirmed, a different
+     address is asked for, sign-out, or 3 days. Firebase Authentication sends the link to the new
+     address and holds the pending change. The app's own words: change_email_sent "We sent a link to
+     … Your email changes when you open it." CHECK in A's build: where it's kept, each way it's
+     deleted, and when exactly after 3 days (at that moment, or at the next app start, as in D31).
+
+§2 "When you create an account", a last item:
+- **If you change your email address:** it changes only once you open the link sent to the new address
+  (by Google's Firebase Authentication). Until then, the app also keeps the new email address on your
+  phone, to show that the change is waiting for you to confirm it. The address kept on your phone is
+  deleted when the change is confirmed, when you ask to change to a different address, when you sign
+  out, or 3 days after you asked for the change.
+-->
+
 ### Your profile
 - Your full name and phone number.
 - Your area: division, district, and upazila or city corporation.
