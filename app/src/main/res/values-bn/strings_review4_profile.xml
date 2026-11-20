@@ -72,7 +72,8 @@
     <string name="add_donation_update_yes">আপডেট করুন</string>
     <string name="add_donation_update_no">যেমন আছে রাখুন</string>
     <string name="action_share_app">LiquidLyf শেয়ার করুন</string>
-    <string name="share_app_text">আমি LiquidLyf-এ একজন রক্তদাতা। এটি একটি বিনামূল্যের অ্যাপ, যা কারও রক্ত দরকার হলে কাছের রক্তদাতাদের অ্যালার্ট পাঠায়। আপনিও যোগ দিন: %1$s</string>
+    <!-- D31: approved by the maintainer (20 Nov 2026 16:08, "D31 BN OK"). -->
+    <string name="share_app_text">LiquidLyf একটি বিনামূল্যের অ্যাপ, যা কারও রক্ত দরকার হলে কাছের রক্তদাতাদের অ্যালার্ট পাঠায়। এখান থেকে নিন: %1$s</string>
 
     <!-- Find donors -->
     <string name="donors_paused_title">রক্তদাতা খোঁজা আপাতত বন্ধ</string>

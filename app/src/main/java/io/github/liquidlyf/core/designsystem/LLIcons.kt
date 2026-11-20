@@ -24,6 +24,8 @@ object LLIcons {
     // Actions
     val ArrowBack = R.drawable.ic_arrow_back
     val ChevronRight = R.drawable.ic_chevron_right
+    /** D31: the waiting line ("the blood request you were sent"). */
+    val Mail = R.drawable.ic_mail
     val Settings = R.drawable.ic_settings
     val Add = R.drawable.ic_add
     val Refresh = R.drawable.ic_refresh

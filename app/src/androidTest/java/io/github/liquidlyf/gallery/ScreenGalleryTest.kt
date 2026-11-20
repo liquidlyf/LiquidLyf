@@ -669,6 +669,8 @@ class ScreenGalleryTest {
             Shot("onboarding-4", prepare = { repeat(3) { tap(R.string.action_next) } }) { OnboardingScreen(onFinished = {}) },
             Shot("sign-in-empty") { SignInScreen(SignInUiState(), {}, {}, {}, {}, {}, onContinueWithGoogle = {}) },
             Shot("sign-in-errors") { SignInScreen(signInErrors, {}, {}, {}, {}, {}, onContinueWithGoogle = {}) },
+            // D31: a shared request waits on this phone.
+            Shot("sign-in-waiting-request") { SignInScreen(SignInUiState(), {}, {}, {}, {}, {}, onContinueWithGoogle = {}, waitingRequest = true) },
             Shot("sign-in-wrong-password") {
                 SignInScreen(SignInUiState(email = "nusrat@example.test", password = "secret12", formError = AppError.InvalidCredentials.messageRes), {}, {}, {}, {}, {}, onContinueWithGoogle = {})
             },
@@ -705,6 +707,7 @@ class ScreenGalleryTest {
             // D28: the choice page (donating chosen already), and with "only ask" chosen.
             Shot("setup-choice") { SetupChoiceScreen(SetupChoiceUiState(donor = true, loaded = true), {}, {}) },
             Shot("setup-choice-need") { SetupChoiceScreen(SetupChoiceUiState(donor = false, loaded = true), {}, {}) },
+            Shot("setup-choice-waiting-request") { SetupChoiceScreen(SetupChoiceUiState(donor = true, loaded = true), {}, {}, waitingRequest = true) },
             Shot("profile-setup-empty", content = setup(empty, emptySet(), false)),
             Shot("profile-setup-errors", content = setup(empty, SetupField.entries.toSet(), true)),
             Shot("profile-setup-filled", content = setup(draft, emptySet(), false)),

@@ -49,6 +49,19 @@
                 <data android:host="moderation" />
                 <data android:host="become-donor" />
             </intent-filter>
+            <!-- D31: a shared request's link, https://liquidlyf.github.io/r/#{id} (C's /r/ page for people
+                 without the app). Verified once the site serves assetlinks.json with the release key (A48);
+                 until then Android 11 asks, and 12+ opens the page, whose button uses liquidlyf://request. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="liquidlyf.github.io" />
+                <data android:path="/r/" />
+                <data android:path="/r" />
+                <data android:path="/r/index.html" />
+            </intent-filter>
         </activity>
 
         <!-- D29: "Don't remind me" on the become-a-donor reminder. Only the app's own notification sends it. -->

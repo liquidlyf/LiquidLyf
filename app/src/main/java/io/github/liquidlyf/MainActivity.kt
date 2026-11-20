@@ -1,5 +1,6 @@
 package io.github.liquidlyf
 
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
@@ -21,6 +22,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.liquidlyf.core.data.link.PendingRequestStore
+import io.github.liquidlyf.core.data.link.RequestLinks
 import io.github.liquidlyf.core.data.settings.OffScreenLanguage
 import io.github.liquidlyf.core.data.settings.ThemeMode
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
@@ -37,6 +40,7 @@ import io.github.liquidlyf.start.StartLogoArts
 import io.github.liquidlyf.start.StartScreen
 import io.github.liquidlyf.start.StartViews
 import io.github.liquidlyf.start.animationsOff
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -59,6 +63,8 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
+    @Inject lateinit var pendingRequests: PendingRequestStore
+
     /**
      * The app's language for notifications ([OffScreenLanguage]): keeps a choice made before it was
      * kept there, or (Android 13+) in the phone's own app settings, and names the channels in it
@@ -73,11 +79,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * D31: a request link (a share's https://liquidlyf.github.io/r/#id, or the web page's button) is
+     * kept on this phone until the person is in the app, which then opens it ([AppNavHost]). Signed
+     * in, that's at once; otherwise after sign-in, the email and setup.
+     */
+    private fun keepRequestLink(intent: Intent?) {
+        val id = RequestLinks.idFromAny(intent?.dataString) ?: return
+        lifecycleScope.launch { pendingRequests.keep(id) }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // singleTop: a link tapped while the app is open comes here, not to a new screen.
+        keepRequestLink(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         val start = if (savedInstanceState == null) StartClock.begin() else null
         keepLanguageForNotifications()
+        if (savedInstanceState == null) {
+            lifecycleScope.launch { pendingRequests.dropIfOld() } // before a new one is kept
+            keepRequestLink(intent)
+        }
         val arts = start?.let { StartLogoArts(resources, it) }
         val reduced = animationsOff(this)
         // The drop and the line on the render thread (A46); not with Remove animations, nor before 7.1.

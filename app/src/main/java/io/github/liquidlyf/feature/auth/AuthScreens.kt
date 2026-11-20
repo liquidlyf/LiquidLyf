@@ -70,6 +70,7 @@ import io.github.liquidlyf.core.data.auth.GoogleSignInResult
 import io.github.liquidlyf.core.data.auth.googleWebClientId
 import io.github.liquidlyf.core.data.auth.requestGoogleIdToken
 import io.github.liquidlyf.core.data.settings.AppLanguage
+import io.github.liquidlyf.core.designsystem.components.PendingRequestLine
 import io.github.liquidlyf.core.domain.FieldCheck
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
@@ -178,6 +179,8 @@ fun SignInRoute(
     /** An email handed over from Sign up ("already has an account", FORM-04); [onPrefillUsed] clears it. */
     prefillEmail: String? = null,
     onPrefillUsed: () -> Unit = {},
+    /** D31: a shared request waits on this phone; the screen says so. */
+    waitingRequest: Boolean = false,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(prefillEmail) {
@@ -190,6 +193,7 @@ fun SignInRoute(
     SignInScreen(
         state, viewModel::onEmailChange, viewModel::onPasswordChange, viewModel::signIn, { onCreateAccount(state.email.trim()) }, onForgotPassword, onGoogle,
         onLanguageChange = language::set,
+        waitingRequest = waitingRequest,
     )
 }
 
@@ -246,6 +250,7 @@ fun SignInScreen(
     onForgotPassword: () -> Unit,
     onContinueWithGoogle: (() -> Unit)? = null,
     onLanguageChange: (AppLanguage) -> Unit = {},
+    waitingRequest: Boolean = false,
 ) {
     // Before sign-in, Settings → Language can't be reached: the switch is in the top bar.
     // N4 (BRAND-01): the big stacked logo on top, and "Sign in" pinned above the keyboard (UI-05).
@@ -263,6 +268,7 @@ fun SignInScreen(
         },
     ) {
         StackedLogo(Modifier.align(Alignment.CenterHorizontally).padding(bottom = Spacing.xs))
+        if (waitingRequest) PendingRequestLine()
         if (onContinueWithGoogle != null) GoogleOption(onContinueWithGoogle, enabled = !state.loading)
         LLTextField(
             value = state.email,

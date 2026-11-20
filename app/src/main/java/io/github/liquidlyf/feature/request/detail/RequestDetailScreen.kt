@@ -79,6 +79,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.liquidlyf.R
 import io.github.liquidlyf.core.data.backend.AlertStatus
+import io.github.liquidlyf.core.data.link.RequestLinks
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.LiquidLyfTheme
 import io.github.liquidlyf.core.designsystem.Spacing
@@ -142,6 +143,7 @@ import io.github.liquidlyf.feature.request.create.UnitsStepper
 import io.github.liquidlyf.feature.safety.ReportDialog
 import java.time.Duration
 import java.time.Instant
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 @Composable
@@ -200,7 +202,8 @@ private fun RequestDetailScreen(
     var checking by rememberSaveable { mutableStateOf(false) }
     val launcher = rememberSafeIntentLauncher()
     val copy = rememberCopy()
-    val shareText = request?.let { shareText(it, state) }
+    // D31: a closed request has no Share, in any of its 3 places (top bar, requester's bar, can't-offer bar).
+    val shareText = request?.takeIf { it.status == RequestStatus.OPEN }?.let { shareText(it, state) }
     // FLOW-06 part 1, P2-8: hand this request's groups and area to Find donors, then go there.
     val askDonors = {
         request?.let(DonorSearchHandoff::hand)
@@ -1135,20 +1138,26 @@ private fun RadioRow(label: String, selected: Boolean, onSelect: () -> Unit) {
     }
 }
 
-/** WhatsApp/Messenger text, in the app's language: how requests spread in Bangladesh today. */
+/**
+ * WhatsApp/Messenger text, in the app's language: how requests spread in Bangladesh today. D31: then
+ * a line with the request's own link, which opens it in the app, and what to do without the app.
+ */
 @Composable
 private fun shareText(r: BloodRequest, state: RequestDetailUiState): String {
     val locale = currentAppLocale()
     val place = state.geo?.placeLabel(r.district, r.upazila, locale) ?: r.district
-    return stringResource(
+    // In the middle of an English sentence: "2 bags of whole blood", not "Whole blood".
+    val component = stringResource(r.component.labelRes).let { if (locale == AppLocale.EN) it.lowercase(Locale.ENGLISH) else it }
+    val body = stringResource(
         R.string.detail_share_text,
         stringResource(r.bloodGroup.labelRes),
         pluralStringResource(R.plurals.request_units_plain, r.unitsNeeded, r.unitsNeeded),
-        stringResource(r.component.labelRes),
+        component,
         r.hospitalName,
         place,
         dateTimeText(r.neededBy),
     )
+    return body + "\n" + stringResource(R.string.detail_share_open, RequestLinks.of(r.id)) + "\n" + stringResource(R.string.detail_share_again)
 }
 
 /** A deleted account's name is stored as the English "Deleted user" (contract 16): show it in the app's language. */

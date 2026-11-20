@@ -45,6 +45,7 @@ import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.LLIcons
 import io.github.liquidlyf.core.designsystem.Spacing
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
+import io.github.liquidlyf.core.designsystem.components.PendingRequestLine
 import io.github.liquidlyf.core.designsystem.screenGutter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -93,13 +94,18 @@ class SetupChoiceViewModel @Inject constructor(
 }
 
 @Composable
-fun SetupChoiceRoute(onContinue: (donor: Boolean) -> Unit, viewModel: SetupChoiceViewModel = hiltViewModel()) {
+fun SetupChoiceRoute(
+    onContinue: (donor: Boolean) -> Unit,
+    /** D31: a shared request waits on this phone; the page says so. */
+    waitingRequest: Boolean = false,
+    viewModel: SetupChoiceViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    SetupChoiceScreen(state, onChoose = viewModel::choose, onContinue = { onContinue(viewModel.confirm()) })
+    SetupChoiceScreen(state, onChoose = viewModel::choose, onContinue = { onContinue(viewModel.confirm()) }, waitingRequest = waitingRequest)
 }
 
 @Composable
-fun SetupChoiceScreen(state: SetupChoiceUiState, onChoose: (Boolean) -> Unit, onContinue: () -> Unit) {
+fun SetupChoiceScreen(state: SetupChoiceUiState, onChoose: (Boolean) -> Unit, onContinue: () -> Unit, waitingRequest: Boolean = false) {
     // D's finding: at 200% (Bangla) the second option fell below the screen. From 1.5, the pictures
     // and the small lines go, so both options and Continue are in view.
     val compact = LocalDensity.current.fontScale >= COMPACT_FONT_SCALE
@@ -118,6 +124,7 @@ fun SetupChoiceScreen(state: SetupChoiceUiState, onChoose: (Boolean) -> Unit, on
                     .padding(top = Spacing.xl, bottom = Spacing.md),
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
+                if (waitingRequest) PendingRequestLine()
                 Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                     Text(stringResource(R.string.setup_choice_title), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
                     Text(stringResource(R.string.setup_choice_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

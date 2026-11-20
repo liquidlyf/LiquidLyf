@@ -117,6 +117,8 @@
 
     <!-- Profile setup -->
     <string name="setup_step">ধাপ %1$d / %2$d</string>
+    <!-- D31: approved by the maintainer (20 Nov 2026 16:08, "D31 BN OK"). -->
+    <string name="pending_request_line">এরপর আপনাকে পাঠানো রক্তের অনুরোধটি খুলে দেব।</string>
     <!-- D28: approved by the maintainer (20 Nov 2026, "D28 BN OK"). -->
     <string name="setup_choice_title">আপনি কী করতে চান?</string>
     <string name="setup_choice_subtitle">পরে এটা বদলাতে পারবেন।</string>

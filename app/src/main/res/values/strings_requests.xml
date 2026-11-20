@@ -297,7 +297,10 @@
     <string name="requests_offers_empty_body">When you offer to donate, you\'ll find the request here.</string>
     <string name="requests_see_nearby">See requests near you</string>
 
-    <string name="detail_share_text">%1$s blood needed: %2$s of %3$s at %4$s, %5$s. Needed by %6$s. Can you help? Shared from LiquidLyf, the free blood donation app.</string>
+    <!-- D31: the request, then a line with its link, then what to do without the app. -->
+    <string name="detail_share_text">%1$s blood needed: %2$s of %3$s at %4$s, %5$s. Needed by %6$s. Can you help?</string>
+    <string name="detail_share_open">Open it in LiquidLyf, the free blood donation app: %1$s</string>
+    <string name="detail_share_again">No app yet? Install it from the link, then tap the link again.</string>
     <string name="deleted_user">Deleted user</string>
 
     <!-- Phase 9.4 (A32-4): the Home card when a newer version is out. The card itself comes with

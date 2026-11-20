@@ -41,6 +41,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,8 +69,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -84,7 +87,9 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.liquidlyf.R
+import io.github.liquidlyf.core.data.link.PendingRequestStore
 import io.github.liquidlyf.core.data.session.SessionState
 import io.github.liquidlyf.core.designsystem.ExpandedLayoutMinWidth
 import io.github.liquidlyf.core.designsystem.LLIcons
@@ -141,6 +146,12 @@ import io.github.liquidlyf.feature.settings.LanguageViewModel
 import io.github.liquidlyf.feature.settings.NotificationPrefsRoute
 import io.github.liquidlyf.feature.settings.SettingsScreen
 import io.github.liquidlyf.start.StartScreen
+import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
 
 /** Used by the Phase 1 placeholders until real requests exist (Phase 4). */
 /** liquidlyf://request/{id} (the manifest declares the scheme and host). */
@@ -177,8 +188,12 @@ fun AppNavHost(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    // The auth gate: when the session changes, move the user to where they now belong.
-    LaunchedEffect(session) {
+    // The auth gate: when the session changes, move the user to where they now belong. D31: also when
+    // the screen does, since a link can land on a screen the person may not see yet (a request's
+    // page while signed out, from the web page's button): they go to sign in, and the request,
+    // kept on the phone, opens after it.
+    val gateDestination = navController.currentBackStackEntryAsState().value?.destination
+    LaunchedEffect(session, gateDestination) {
         val entry = navController.currentBackStackEntry ?: return@LaunchedEffect
         val current = entry.destination
         // D28: About you on the donor path goes on to the donor steps once it has saved the account.
@@ -186,6 +201,28 @@ fun AppNavHost(
         gateTarget(session, current.zone(), notificationsNext(context), donorNext)?.let(navController::enterZone)
     }
     val currentEntry by navController.currentBackStackEntryAsState()
+
+    // D31: a request link kept on this phone opens once the person is in the app (signed in, set
+    // up, past the alerts question), over Home, so Back goes Home. Taken once. An alert's tap may
+    // have opened it already; then it's only forgotten.
+    val pendingRequests: PendingRequestViewModel = hiltViewModel()
+    // A State, not its value, for the graph: the screens read it, so the graph isn't rebuilt.
+    val pendingState = pendingRequests.pending.collectAsStateWithLifecycle()
+    val pendingRequest = pendingState.value
+    // Signed in too: a link can land on a request's page before the gate has moved a signed-out person on.
+    val inApp = session is SessionState.Ready && currentEntry?.destination?.zone() == GateZone.MAIN
+    LaunchedEffect(inApp, pendingRequest) {
+        if (!inApp || pendingRequest == null) return@LaunchedEffect
+        val id = pendingRequests.take() ?: return@LaunchedEffect
+        // The store answers from its own thread: navigate on the main one.
+        withContext(Dispatchers.Main.immediate) {
+            val entry = navController.currentBackStackEntry
+            if (entry?.destination?.hasRoute(RequestDetail::class) == true && entry.toRoute<RequestDetail>().id == id) return@withContext
+            navController.navigateToTab(TopLevelDestination.HOME)
+            navController.navigate(RequestDetail(id = id)) { launchSingleTop = true }
+        }
+    }
+
     val currentTab = currentEntry?.destination?.let { destination ->
         TopLevelDestination.entries.firstOrNull { destination.isInTab(it) }
     }
@@ -286,8 +323,8 @@ fun AppNavHost(
                             ),
                     ) {
                         onboarding(navController, onOnboardingFinished)
-                        authGraph(navController)
-                        sessionScreens(navController, session, onRetrySession, onSignOut)
+                        authGraph(navController, pendingState)
+                        sessionScreens(navController, session, pendingState, onRetrySession, onSignOut)
                         mainGraph(navController, session, onSignOut)
                     }
                 }
@@ -448,7 +485,7 @@ private fun NavGraphBuilder.onboarding(navController: NavController, onFinished:
 }
 
 /** Signed out. Success needs no navigation here: the session changes and the gate moves on. */
-private fun NavGraphBuilder.authGraph(navController: NavController) {
+private fun NavGraphBuilder.authGraph(navController: NavController, pendingRequest: State<String?>) {
     navigation<AuthGraph>(startDestination = SignIn) {
         composable<SignIn> { entry ->
             val prefill by entry.savedStateHandle.getStateFlow<String?>(PREFILL_EMAIL, null).collectAsStateWithLifecycle()
@@ -457,6 +494,7 @@ private fun NavGraphBuilder.authGraph(navController: NavController) {
                 onForgotPassword = { navController.navigate(ForgotPassword) { launchSingleTop = true } },
                 prefillEmail = prefill,
                 onPrefillUsed = { entry.savedStateHandle[PREFILL_EMAIL] = null },
+                waitingRequest = pendingRequest.value != null,
             )
         }
         // Back to the existing sign-in screen, never a second copy on top (BUG-031).
@@ -494,13 +532,17 @@ private fun notificationsNext(context: Context): Boolean {
 private fun NavGraphBuilder.sessionScreens(
     navController: NavController,
     session: SessionState,
+    pendingRequest: State<String?>,
     onRetry: () -> Unit,
     onSignOut: () -> Unit,
 ) {
     composable<VerifyEmail> { VerifyEmailRoute() }
     // D28: the choice, then About you (step 1 of 4 on the donor path), then the donor steps.
     composable<SetupChoice> {
-        SetupChoiceRoute(onContinue = { donor -> navController.navigate(ProfileSetup(donor)) { launchSingleTop = true } })
+        SetupChoiceRoute(
+            onContinue = { donor -> navController.navigate(ProfileSetup(donor)) { launchSingleTop = true } },
+            waitingRequest = pendingRequest.value != null,
+        )
     }
     composable<ProfileSetup> { entry ->
         ProfileSetupRoute(donorPath = entry.toRoute<ProfileSetup>().donor, onBack = dropUnlessResumed { navController.popBackStack() })
@@ -649,3 +691,11 @@ private fun NavGraphBuilder.mainGraph(navController: NavController, session: Ses
 
 /** Sign up hands an email to Sign in through this saved-state key (FORM-04). */
 private const val PREFILL_EMAIL = "prefillEmail"
+
+/** D31: the request link kept on this phone ([PendingRequestStore]), for [AppNavHost]. */
+@HiltViewModel
+class PendingRequestViewModel @Inject constructor(private val store: PendingRequestStore) : ViewModel() {
+    val pending: StateFlow<String?> = store.pending.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    suspend fun take(): String? = store.take()
+}
