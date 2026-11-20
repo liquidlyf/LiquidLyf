@@ -324,6 +324,20 @@ class AccountViewModelsTest {
     }
 
     @Test
+    fun `no network shows inside the box, which stays open (D's §31)`() = test {
+        signedIn()
+        val vm = editVm(FakeProfileRepository(), FakeSessionManager(SessionState.Ready(TestData.user(), TestData.profile())))
+        auth.failNext = AppError.Network
+        vm.changeEmail("new@example.test", "old-password")
+        advanceUntilIdle()
+        assertEquals(AppError.Network.messageRes, vm.uiState.value.changeEmailError)
+        assertFalse(vm.uiState.value.changeEmailSent)
+        assertEquals(null, vm.uiState.value.message)
+        vm.onChangeEmailClosed()
+        assertEquals(null, vm.uiState.value.changeEmailError)
+    }
+
+    @Test
     fun `a Resend that needs a fresh sign-in opens the box again with the address (D35)`() = test {
         signedIn()
         auth.requestedEmail.value = io.github.liquidlyf.core.data.auth.RequestedEmail("rahim.new@example.test", TestData.NOW.minusSeconds(120))

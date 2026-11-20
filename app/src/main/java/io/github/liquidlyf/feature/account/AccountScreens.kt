@@ -50,6 +50,7 @@ import io.github.liquidlyf.core.designsystem.components.DialogText
 import io.github.liquidlyf.core.designsystem.components.EdgeTextButton
 import io.github.liquidlyf.core.designsystem.components.FieldError
 import io.github.liquidlyf.core.designsystem.components.FirstLineIcon
+import io.github.liquidlyf.feature.auth.FormError
 import io.github.liquidlyf.core.designsystem.components.LLBottomBar
 import io.github.liquidlyf.core.designsystem.components.LLNoticeCard
 import io.github.liquidlyf.core.designsystem.components.LLPrimaryButton
@@ -432,6 +433,7 @@ fun EditProfileRoute(onDone: () -> Unit, viewModel: EditProfileViewModel = hiltV
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                         keyboardActions = KeyboardActions(onDone = { viewModel.changeEmail(newEmail, emailPassword) }),
                     )
+                    FormError(state.changeEmailError) // in the box, not behind its dim (D's §31)
                 }
             },
             confirmButton = {

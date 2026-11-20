@@ -269,6 +269,8 @@ data class EditProfileUiState(
     val changeEmailBusy: Boolean = false,
     @StringRes val newEmailError: Int? = null,
     @StringRes val passwordError: Int? = null,
+    /** D's §31: any other failure (no network, too many tries) shows inside the box, not behind it. */
+    @StringRes val changeEmailError: Int? = null,
     val changeEmailSent: Boolean = false,
     /** D35: Resend met "sign in again": the box opens again with this address, for the password. */
     val askPasswordFor: String? = null,
@@ -477,7 +479,7 @@ class EditProfileViewModel @Inject constructor(
             state.update { it.copy(newEmailError = emailError, passwordError = passwordError) }
             return
         }
-        state.update { it.copy(changeEmailBusy = true, newEmailError = null, passwordError = null) }
+        state.update { it.copy(changeEmailBusy = true, newEmailError = null, passwordError = null, changeEmailError = null) }
         viewModelScope.launch {
             val reauth = auth.reauthenticate(password)
             if (reauth is AppResult.Failure) {
@@ -485,7 +487,7 @@ class EditProfileViewModel @Inject constructor(
                     if (reauth.error == AppError.InvalidCredentials) {
                         it.copy(changeEmailBusy = false, passwordError = reauth.error.messageRes)
                     } else {
-                        it.copy(changeEmailBusy = false, message = reauth.error.messageRes, messageArg = null)
+                        it.copy(changeEmailBusy = false, changeEmailError = reauth.error.messageRes)
                     }
                 }
                 return@launch
@@ -494,7 +496,7 @@ class EditProfileViewModel @Inject constructor(
             state.update {
                 when {
                     result is AppResult.Failure && result.error == AppError.EmailInUse -> it.copy(changeEmailBusy = false, newEmailError = result.error.messageRes)
-                    result is AppResult.Failure -> it.copy(changeEmailBusy = false, message = result.error.messageRes, messageArg = null)
+                    result is AppResult.Failure -> it.copy(changeEmailBusy = false, changeEmailError = result.error.messageRes)
                     else -> it.copy(changeEmailBusy = false, changeEmailSent = true, message = R.string.change_email_sent, messageArg = newEmail.trim())
                 }
             }
@@ -504,7 +506,7 @@ class EditProfileViewModel @Inject constructor(
     }
 
     /** The box closed (sent, or Cancel): its errors go. */
-    fun onChangeEmailClosed() = state.update { it.copy(changeEmailSent = false, newEmailError = null, passwordError = null) }
+    fun onChangeEmailClosed() = state.update { it.copy(changeEmailSent = false, newEmailError = null, passwordError = null, changeEmailError = null) }
 
     fun onMessageShown() = state.update { it.copy(message = null, messageArg = null) }
 }
