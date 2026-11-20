@@ -302,6 +302,9 @@ fun EdgeTextButton(
         onClick = onClick,
         enabled = enabled,
         contentPadding = PaddingValues(start = 0.dp, end = Spacing.sm, top = Spacing.xs, bottom = Spacing.xs),
+        // D's §19: with no start padding the default round ends cut each line's first letter when
+        // the words wrap (200%); small corners don't.
+        shape = MaterialTheme.shapes.small,
         modifier = modifier.heightIn(min = Spacing.minTouchTarget),
     ) {
         if (icon != null) {

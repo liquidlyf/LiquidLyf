@@ -51,6 +51,7 @@ internal fun SetupStepHeader(step: Int, total: Int = SETUP_STEPS, onSkip: (() ->
             TextButton(
                 onClick = onSkip,
                 contentPadding = PaddingValues(start = 0.dp, end = Spacing.sm, top = Spacing.xs, bottom = Spacing.xs),
+                shape = MaterialTheme.shapes.small, // as EdgeTextButton: round ends would cut wrapped lines' first letters
                 modifier = Modifier.heightIn(min = Spacing.minTouchTarget),
             ) {
                 // The chevron is part of the words, so it follows the last one when they wrap (Bangla
